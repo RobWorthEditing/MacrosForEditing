@@ -1,0 +1,23 @@
+Sub HighlightDuplicateSentences()
+' Version 01.05.16
+' Highlight pairs of identical sentences
+
+minWords = 10
+
+numSent = ActiveDocument.Sentences.Count
+For i = 1 To numSent - 1
+  If Not (ActiveDocument.Sentences(i).Words.Count < minWords) Then
+    For j = (i + 1) To numSent
+      If ActiveDocument.Sentences(i).Text = _
+           ActiveDocument.Sentences(j).Text Then
+        ActiveDocument.Sentences(i).HighlightColorIndex = wdGray25
+        ActiveDocument.Sentences(j).HighlightColorIndex = wdYellow
+        ActiveDocument.Sentences(i).Select
+      End If
+    Next j
+  End If
+  DoEvents
+  StatusBar = "To go: " & Str(numSent - i)
+Next i
+Selection.HomeKey Unit:=wdStory
+End Sub
