@@ -1,0 +1,327 @@
+Sub MultiSwitch()
+' Version 05.08.20
+' Scripted word/phrase switching
+
+maxWords = 6
+listName = "zzSwitchList.docx"
+myFolder = "C:\Documents and Settings\Paul\My Documents"
+
+' Set min number of chars for an abbreviation
+minChars = 3
+includeApostrophe = True
+useSpike = True
+
+defaultList = myFolder & listName
+CR = vbCr
+CR2 = CR & CR
+ReDim myStr(maxWords) As String
+ReDim endStr(maxWords) As Long
+
+' Read the context, noting if the word is selected
+wasSelected = (Selection.End > Selection.Start)
+If wasSelected = True Then maxWords = 1
+Selection.Expand wdWord
+
+' If the word is immediately after an apostrophe...
+apoPos = InStr(Selection, ChrW(8217))
+If apoPos > 0 And includeApostrophe = False Then
+  Selection.MoveStart , apoPos
+  Selection.InsertBefore Text:=" "
+  Selection.MoveStart , 1
+End If
+
+' If the word is immediately after comma, FP or ).
+Selection.MoveStart , -1
+prevChar = ChrW(AscW(Selection))
+If InStr(".,)", prevChar) > 0 Then
+  Selection.InsertBefore Text:=" "
+End If
+Selection.MoveStart , 1
+If InStr(".,;:?!)" & CR & Chr(12), ChrW(AscW(Selection))) > 0 Then
+  Selection.Collapse wdCollapseStart
+  Selection.MoveLeft , 1
+  Selection.Expand wdWord
+End If
+
+isAbbrev = Not (Len(Selection) > minChars)
+
+textStart = Selection.Start
+endNow = Selection.End
+Selection.MoveEndWhile cset:=ChrW(8217) & _
+     "' ", Count:=wdBackward
+endStr(1) = Selection.End
+myStr(1) = Selection
+
+Selection.End = endNow
+startNow = Selection.Start
+iMax = maxWords
+If iMax = 1 Then
+  i = 1
+  endNow = Selection.End
+  Selection.MoveEndWhile cset:=ChrW(8217) & _
+       "' ", Count:=wdBackward
+  endStr(i) = Selection.End
+  Selection.End = endNow
+  myStr(i) = Trim(Selection)
+Else
+  For i = 2 To maxWords
+    Selection.MoveEnd Unit:=wdWord, Count:=1
+    endNow = Selection.End
+    Selection.MoveEndWhile cset:=ChrW(8217) & _
+         "' ", Count:=wdBackward
+    endStr(i) = Selection.End
+    Selection.End = endNow
+    myStr(i) = Trim(Selection)
+    If InStr(Selection, Chr(13)) > 0 Or _
+         Selection.Range.Words.Count > maxWords Then
+      iMax = i - 1
+      i = maxWords
+    End If
+  Next i
+End If
+Selection.End = startNow
+Selection.Start = startNow
+
+' Find the zzSwitchList file
+Set thisDoc = ActiveDocument
+
+' Go and look for the list file
+gottaList = False
+For i = 1 To Documents.Count
+  Set dcu = Documents(i)
+  If InStr(dcu.Name, listName) > 0 Then
+    Set listDoc = dcu
+    gottaList = True
+  End If
+Next i
+If gottaList = False Then
+  On Error Resume Next
+  Documents.Open myFolder & "\" & listName
+  If Err.Number = 5174 Then
+    Err.Clear
+    Beep
+    myResponse = MsgBox("Can't find a zzSwitchList file!", _
+          vbOKOnly, "MultiSwitch")
+    Exit Sub
+  Else
+    On Error GoTo 0
+  End If
+Else
+  listDoc.Activate
+End If
+
+If Documents.Count = 1 Then Beep: Exit Sub
+
+' Just in case the switch list has any URLs
+Set rng = ActiveDocument.Content
+rng.Fields.Unlink
+
+Selection.HomeKey Unit:=wdStory
+Selection.End = 2
+If UCase(Selection) <> LCase(Selection) Then
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText Text:=CR2
+End If
+Selection.Collapse wdCollapseStart
+' Try to locate the selected text in the switch list
+Set rng = ActiveDocument.Content
+allWords = rng.Text
+lfPos = InStr(allWords, ChrW(11))
+If lfPos > 0 Then
+  Selection.Start = lfPos - 2
+  Selection.End = lfPos + 1
+  Beep
+  Application.Run "ShowFormatting"
+  MsgBox "The switch list must use paragraphs, not line breaks!"
+  Exit Sub
+End If
+
+For i = iMax To 1 Step -1
+  myPos = InStr(allWords, CR2 & myStr(i) & CR)
+  If myPos > 0 Then
+    allWords = Mid(allWords, myPos + 1)
+    gottaMatch = True
+    numWords = i
+    
+  'Display the options
+    numAlts = 1
+    altText = Split(allWords, Chr(13))
+    j = 0
+    Do
+      j = j + 1
+    Loop Until Len(altText(j)) = 0 Or j = 10
+    numAlts = j - 2
+    ' We now have j= number of options
+    ' altText contains all numAlts texts
+    Exit For
+  Else
+    gottaMatch = False
+  End If
+Next i
+
+' If it's not found at all, give up
+If gottaMatch = False Then
+  myWd = myStr(1)
+  Do
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "^p^p" & myWd
+      .Wrap = wdFindContinue
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchCase = True
+      .MatchWildcards = False
+      .Execute
+      .MatchCase = False
+    End With
+    myWd = Left(myWd, Len(myWd) - 1)
+  Loop Until Selection.Find.Found = True Or Len(myWd) = 1
+  Selection.Collapse wdCollapseStart
+  thisDoc.Activate
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+  Exit Sub
+  Else
+  Selection.Start = myPos + 20
+  Selection.MoveLeft , 19
+End If
+
+'Offer j optional texts to the user
+If numAlts > 1 And wasSelected = False Then
+  For i = 1 To numAlts
+    myPrompt = myPrompt & i & ":  " & altText(i + 1) & CR
+  Next
+  Beep
+  myResponse = InputBox(myPrompt, "MultiSwitch")
+  myChoice = Val(myResponse)
+  If myChoice > numAlts Or myChoice = 0 Then
+    thisDoc.Activate
+    Exit Sub
+  End If
+Else
+  myChoice = 1
+End If
+Selection.Start = myPos + 2
+Selection.Expand wdParagraph
+For i = 1 To myChoice
+  Selection.Collapse wdCollapseEnd
+  Selection.Expand wdParagraph
+Next i
+' Copy chosen line (check first for format change symbol)
+useFormat = False
+Selection.MoveEnd , -1
+myNewItem = Selection
+Set r = Selection.Range
+Dim gotFormat As Boolean
+gotFormat = r.Font.Bold Or r.Font.Italic Or r.Font.SmallCaps _
+     Or r.Font.Underline Or r.Font.Superscript Or r.Font.Subscript
+
+If AscW(Selection) = 172 Or gotFormat Then
+  useFormat = True
+  If AscW(Selection) = 172 Then Selection.MoveStart , 1
+  If useSpike = True Then
+    NormalTemplate.AutoTextEntries.AppendToSpike Range:=Selection.Range
+    WordBasic.EditUndo
+  Else
+    Selection.Copy
+  End If
+End If
+noTrack = (Selection.Font.StrikeThrough)
+thisDoc.Activate
+Selection.End = endStr(numWords)
+myTrack = ActiveDocument.TrackRevisions
+myState = ActiveWindow.View.ShowInsertionsAndDeletions
+If noTrack Then ActiveDocument.TrackRevisions = False
+If useFormat = True Then
+  If useSpike = True Then
+    With NormalTemplate.AutoTextEntries("Spike")
+      .Insert Where:=Selection.Range, RichText:=True
+      .Delete
+    End With
+    Selection.MoveStart , -1
+    Selection.Delete
+  Else
+    Selection.Paste
+  End If
+Else
+  Selection.TypeText Text:=myNewItem
+End If
+Selection.Start = textStart
+' Selection.Style = nowStyle
+textEnd = Selection.End
+If InStr(Selection, "^p") > 0 Then
+  numCRs = 0
+  oldFind = Selection.Find.Text
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^^p"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .Execute
+  End With
+  Do While Selection.Find.Found = True And Selection.Start < textEnd
+    Selection.TypeText Text:=vbCr
+    Selection.Find.Execute
+    numCRs = numCRs + 1
+  Loop
+  Selection.Start = textStart
+  Selection.End = textEnd - numCRs
+  Selection.Find.Text = oldFind
+End If
+If InStr(Selection, "^t") > 0 Then
+  numTabs = 0
+  oldFind = Selection.Find.Text
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^^t"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .Execute
+  End With
+  Do While Selection.Find.Found = True And Selection.Start < textEnd
+    Selection.TypeText Text:=vbTab
+    Selection.Find.Execute
+    numTabs = numTabs + 1
+  Loop
+  Selection.Start = textStart
+  Selection.End = textEnd - numCRs - numTabs
+  Selection.Find.Text = oldFind
+End If
+If Asc(Selection) = Asc("!") Then
+  myLen = Len(Selection)
+  Selection.End = Selection.Start + 1
+  Selection.Start = Selection.Start - 1
+  Selection.Delete
+  Selection.MoveEnd , myLen - 1
+End If
+tildePos = InStr(Selection, "~")
+Selection.Font.StrikeThrough = False
+If tildePos = 0 Then
+  If isAbbrev = True Then
+    Selection.Collapse wdCollapseEnd
+  Else
+    Selection.Collapse wdCollapseStart
+  End If
+Else
+  Selection.MoveEndUntil cset:="~", Count:=wdBackward
+  Selection.Start = Selection.End - 1
+  Selection.Delete
+End If
+
+If noTrack Then
+  ActiveDocument.TrackRevisions = myTrack
+  ActiveWindow.View.ShowInsertionsAndDeletions = myState
+End If
+End Sub
