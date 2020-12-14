@@ -1,0 +1,190 @@
+Sub WordSwitch()
+' Version 11.08.20
+' Scripted single-word switching
+
+listName = "zzSwitchList"
+myDir = "C:\Users\User\Documents\"
+
+doaBeep = True
+maxWords = 30
+specChar = ">"
+doAnErrorBeep = False
+
+defaultList = myDir & listName
+On Error GoTo ReportIt
+defaultLoaded = False
+Set thisDoc = ActiveDocument
+cursorPosn = Selection.Start
+dirName = ActiveDocument.Path
+' Go and look for the list file
+gottaList = False
+For i = 1 To Documents.Count
+  Set dcu = Documents(i)
+  If InStr(dcu.Name, listName) > 0 Then
+    Set listDoc = dcu
+    gottaList = True
+  End If
+Next i
+
+If gottaList = False Then
+  Documents.Open dirName & "\" & listName
+Else
+  listDoc.Activate
+End If
+ 
+carryOn:
+' Create one long string of all the words
+myWds = ""
+For Each myPara In ActiveDocument.Paragraphs
+  theLine = myPara
+  If InStr(theLine, specChar) > 0 Then
+    myWds = myWds & "|" & Replace(theLine, Chr(13), "")
+    myWds = Replace(myWds, "^=", ChrW(8211))
+    myWds = Replace(myWds, "^+", ChrW(8212))
+    myWds = Replace(myWds, "^32", " ")
+  End If
+Next myPara
+myWds = myWds & "|"
+
+' ActiveDocument.ActiveWindow.WindowState = wdWindowStateMinimize
+
+thisDoc.Activate
+wNum = Application.Windows.Count
+pNum = ActiveDocument.ActiveWindow.Panes.Count
+If Selection.Start <> cursorPosn And wNum > 1 Then _
+     Application.Windows(1).Activate
+If Selection.Start <> cursorPosn And pNum > 1 Then _
+     ActiveWindow.Panes(1).Activate
+
+If defaultLoaded = True Then StatusBar = _
+     ">>>>>>>>  Loaded from your default word list  <<<<<<<<"
+If Selection.LanguageID = wdEnglishUS Then
+  myWds = Replace(myWds, "%" & specChar & " per cent,", _
+       "%" & specChar & " percent,")
+End If
+
+startWas = Selection.Start
+' Set position at start of first word
+Selection.MoveLeft , 1
+Selection.Expand wdWord
+If Len(Selection) < 4 Then
+  Selection.MoveRight , 1
+  Selection.Expand wdWord
+End If
+Selection.Collapse wdCollapseStart
+
+i = 1
+Do
+' Select the whole of the word
+  Selection.MoveEnd wdWord, 1
+  endWord = Selection.End
+  If Right(Selection, 1) = " " Then Selection.MoveEnd , -1
+  ' check if this "word" includes a close single curly quote
+  If Right(Selection, 1) = ChrW(8217) Then Selection.MoveEnd , -1
+  apoPos = InStr(Selection, ChrW(8217))
+  If apoPos > 0 Then Selection.End = Selection.Start + apoPos - 1
+  thisWd = Selection
+  ' Check in the list of words to see if it's there
+  wordPos = InStr(myWds, "|" & thisWd & specChar)
+  If wordPos > 0 Then
+  ' If it's in the list, find the replacement word(s)
+    myWds = Right(myWds, Len(myWds) - wordPos - 1 - Len(thisWd))
+    newWd = Left(myWds, InStr(myWds, "|") - 1)
+    ' If it starts with "!", delete it and delete
+    ' the previous character in the text
+    If Len(newWd) > 0 Then
+      If Asc(newWd) = 33 Then
+        newWd = Right(newWd, Len(newWd) - 1)
+        Selection.Start = Selection.Start - 1
+      End If
+      Selection.TypeText newWd
+      Selection.Start = Selection.End
+      If Len(newWd) > 1 Then Selection.MoveEnd , -1
+    Else
+      Selection.Delete
+    End If
+  ' We've finished, so stop
+    Exit Sub
+  Else
+  ' get next char, to check for %
+    thisStart = Selection.Start
+    Selection.Start = endWord
+    nextchar = Selection
+    Selection.Start = thisStart
+
+  ' Is it a numeral?
+    If UCase(thisWd) = LCase(thisWd) And Asc(Left(thisWd, 1)) > 47 _
+         And Asc(Left(thisWd, 1)) < 58 And nextchar <> "%" Then GoTo NumToWords
+    Selection.Start = endWord
+  End If
+  i = i + 1
+Loop Until i > maxWords
+
+' If no word found beep for warning
+If doaBeep = True Then Beep
+
+Selection.End = startWas
+Exit Sub
+
+NumToWords:
+startHere = Selection.Start
+If Right(Selection, 1) = " " Then Selection.MoveEnd , -1
+' check if this "word" includes a close single curly quote
+If Right(Selection, 1) = ChrW(8217) Then Selection.MoveEnd , -1
+' or a hard space
+If Right(Selection, 1) = ChrW(160) Then Selection.MoveEnd , -1
+
+Set rng = ActiveDocument.Range
+rng.Start = Selection.End
+rng.End = Selection.End + 2
+moreText = rng
+i = Asc(Right(moreText, 1)) - 48
+j = Val(Right(moreText, 1))
+linkChar = Left(moreText, 1)
+If (linkChar = "," Or linkChar = " " Or linkChar _
+     = ChrW(160)) And i = j Then
+  sh = Selection.Start
+  Selection.Start = Selection.End + 1
+  Selection.TypeBackspace
+  Selection.MoveEnd , 3
+  Selection.Start = sh
+End If
+' Create a field containing the digits and a special format code
+Selection.Fields.Add Range:=Selection.Range, _
+   Type:=wdFieldEmpty, Text:="= " + Selection + " \* CardText", _
+   PreserveFormatting:=True
+
+' Select the field and copy it
+Selection.MoveStart Unit:=wdCharacter, Count:=-1
+Selection.Copy
+
+' Paste the text unformatted, replacing the field
+Selection.PasteSpecial Link:=False, DataType:=wdPasteText, _
+   Placement:=wdInLine, DisplayAsIcon:=False
+
+Selection.Start = startHere
+numWords = Selection
+If Right(numWords, 4) <> "dred" Then numWords = _
+     Replace(numWords, "hundred", "hundred and")
+If InStr(numWords, "hundred") > 0 Then
+  numWords = Replace(numWords, "thousand", "thousand,")
+Else
+  If Right(numWords, 4) <> "sand" Then numWords = _
+       Replace(numWords, "thousand", "thousand and")
+End If
+Selection.TypeText numWords
+
+Selection.MoveRight Unit:=wdCharacter, Count:=1
+Exit Sub
+
+ReportIt:
+If Err.Number = 5174 Then
+  If doAnErrorBeep = True Then Beep
+  defaultLoaded = True
+  Documents.Open defaultList
+  Resume carryOn
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
