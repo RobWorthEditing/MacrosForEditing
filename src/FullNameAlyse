@@ -1,0 +1,570 @@
+Sub FullNameAlyse()
+' Version 23.10.19
+' Creates a frequency list of all full names
+
+IncludeNamesWithInitials = vbYes
+
+' In this list, make sure every word has a space after it
+allowAbbrevs = "Mr. Mrs. Dr."
+
+nonoWords = "About After Although An And Any As At Before Because " & _
+     "But By For Has Have However If In Is Like My Since So Some " & _
+     "That The Then These This Those Though Through Unlike " & _
+     "Was We What When While Who Why Yet "
+
+nonoWords2 = "an and are do no nor on one or v "
+
+
+Set FUT = ActiveDocument
+doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
+
+myResponse = IncludeNamesWithInitials
+If doingSeveralMacros = False Then
+  myResponse = MsgBox("Include names with initials?", vbQuestion _
+          + vbYesNoCancel, "FullNameAlyse")
+  If myResponse = vbCancel Then Exit Sub
+End If
+
+Set rng = ActiveDocument.Content
+Documents.Add
+Set originalDoc = ActiveDocument
+Selection.FormattedText = rng.FormattedText
+
+' Now prepare the text
+numberCmnts = ActiveDocument.Comments.Count
+If numberCmnts > 0 Then ActiveDocument.DeleteAllComments
+
+Set rng = ActiveDocument.Content
+myEnd = rng.End
+' Make apostrophes straight
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8217)
+  .Wrap = wdFindContinue
+  .Replacement.Text = "'"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "'s"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+thisArray = Split(Trim(allowAbbrevs), " ")
+For i = 0 To UBound(thisArray)
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = thisArray(i)
+    .Wrap = wdFindContinue
+    .Replacement.Text = Replace(thisArray(i), ".", "")
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Next i
+
+Documents.Add
+CR = vbCr
+
+' First mark all two-word proper nouns, in order
+' to detect four-word names (= two + two)
+With rng.Find
+ .ClearFormatting
+ .Replacement.ClearFormatting
+ .Text = "<[A-Z][a-zA-Z\-']{1,} [A-Z][a-zA-Z\-']{1,}?"
+ .Font.StrikeThrough = False
+ .Wrap = wdFindStop
+ .Replacement.Font.DoubleStrikeThrough = True
+ .Replacement.Text = ""
+ .Forward = True
+ .MatchWildcards = True
+ .Execute Replace:=wdReplaceAll
+End With
+
+' Find four-word names
+rng.Start = 0
+rng.End = 0
+With rng.Find
+ .ClearFormatting
+ .Replacement.ClearFormatting
+ .Text = ""
+ .Font.StrikeThrough = False
+ .Font.DoubleStrikeThrough = True
+ .Wrap = wdFindStop
+ .Replacement.Text = ""
+ .Forward = True
+ .MatchWildcards = True
+ .Execute
+End With
+
+Set firstDoc = ActiveDocument
+Do While rng.Find.Found = True
+numWords = rng.Words.Count
+  If numWords > 2 And numWords < 7 Then
+    myText = Left(rng.Text, Len(rng.Text) - 1)
+    Selection.TypeText Text:=myText & CR
+    rng.Font.Shadow = True
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+
+' Find three-word names
+rng.Start = 0
+rng.End = 0
+With rng.Find
+ .ClearFormatting
+ .Replacement.ClearFormatting
+ .Text = "<[A-Z][a-zA-Z\-']{1,} [A-Z][a-zA-Z\-']{1,} [A-Z][a-zA-Z\-']{1,}"
+ .Font.StrikeThrough = False
+ .Font.Shadow = False
+ .Wrap = wdFindStop
+ .Replacement.Text = ""
+ .Forward = True
+ .MatchWildcards = True
+ .Execute
+End With
+
+CR = vbCr
+Set firstDoc = ActiveDocument
+Do While rng.Find.Found = True
+  Selection.TypeText Text:=rng.Text & CR
+  rng.Font.Shadow = True
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+' Find three-word names with van, von, der, de etc
+rng.Start = 0
+rng.End = 0
+With rng.Find
+ .ClearFormatting
+ .Replacement.ClearFormatting
+ .Text = "<[A-Z][a-zA-Z]{1,} [A-Z][a-zA-Z]{1,} [vanderol]{1,} [A-Z][a-zA-Z]{1,}"
+ .Font.StrikeThrough = False
+ .Font.Shadow = False
+ .Wrap = wdFindStop
+ .Replacement.Text = ""
+ .Forward = True
+ .MatchWildcards = True
+ .Execute
+End With
+
+CR = vbCr
+Set firstDoc = ActiveDocument
+Do While rng.Find.Found = True
+  Selection.TypeText Text:=rng.Text & CR
+  rng.Font.Shadow = True
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+rng.Start = 0
+rng.End = 0
+' Two-word names
+With rng.Find
+ .ClearFormatting
+ .Replacement.ClearFormatting
+ .Text = "<[A-Z][a-zA-Z\-']{1,} [A-Z][a-zA-Z\-']{1,}"
+ .Font.StrikeThrough = False
+ .Font.Shadow = False
+ .Wrap = wdFindStop
+ .Replacement.Text = ""
+ .Forward = True
+ .MatchWildcards = True
+ .Execute
+End With
+
+Do While rng.Find.Found = True
+  Selection.TypeText Text:=rng.Text & CR
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+rng.Start = 0
+rng.End = 0
+' Two-word names with van, von, der, de etc
+With rng.Find
+ .ClearFormatting
+ .Replacement.ClearFormatting
+ .Text = "<[A-Z][a-zA-Z]{1,} [vanderol]{1,} [A-Z][a-zA-Z]{1,}>"
+ .Font.StrikeThrough = False
+ .Font.Shadow = False
+ .Wrap = wdFindStop
+ .Replacement.Text = ""
+ .Forward = True
+ .MatchWildcards = True
+ .Execute
+End With
+
+Do While rng.Find.Found = True
+  Selection.TypeText Text:=rng.Text & CR
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+If myResponse = vbYes Then
+  ' Find such as P.E. Beverley
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = "<[A-Z.]{1,} [A-Z][a-zA-Z]{1,}>"
+   .Font.StrikeThrough = False
+   .Wrap = wdFindStop
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = True
+   .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    Selection.TypeText Text:=rng.Text & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+  
+  ' Find such as Paul E. Beverley
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = "<[A-Z][a-zA-Z]{1,} [A-Z.]{1,} [A-Z][a-zA-Z]{1,}>"
+   .Font.StrikeThrough = False
+   .Wrap = wdFindStop
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = True
+   .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    Selection.TypeText Text:=rng.Text & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+
+  ' Find such as P E Beverley
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = "<[A-Z ]{1,} [A-Z][a-zA-Z]{1,}>"
+   .Font.StrikeThrough = False
+   .Wrap = wdFindStop
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = True
+   .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    Selection.TypeText Text:=rng.Text & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+
+  ' Find such as Paul E H Beverley
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = "<[A-Z][a-zA-Z]{1,} [A-Z ]{1,} [A-Z][a-zA-Z]{1,}>"
+   .Font.StrikeThrough = False
+   .Wrap = wdFindStop
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = True
+   .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    Selection.TypeText Text:=rng.Text & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+  
+  ' Find such as P.E. Beverley + van der etc
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = "<[A-Z.]{1,} [vanderol]{1,} [A-Z][a-zA-Z]{1,}>"
+   .Font.StrikeThrough = False
+   .Wrap = wdFindStop
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = True
+   .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    Selection.TypeText Text:=rng.Text & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+  
+  ' Find such as Paul E. Beverley + van der etc
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = "<[A-Z][a-zA-Z]{1,} [A-Z.]{1,} [vanderol]{1,} [A-Z][a-zA-Z]{1,}>"
+   .Font.StrikeThrough = False
+   .Wrap = wdFindStop
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = True
+   .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    Selection.TypeText Text:=rng.Text & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+  
+  ' Find such as P E Beverley + van der etc
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = "<[A-Z ]{1,} [vanderol]{1,} [A-Z][a-zA-Z]{1,}>"
+   .Font.StrikeThrough = False
+   .Wrap = wdFindStop
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = True
+   .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    Selection.TypeText Text:=rng.Text & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+
+  ' Find such as Paul E H Beverley + van der etc
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = "<[A-Z][a-zA-Z]{1,} [A-Z ]{1,} [vanderol]{1,} [A-Z][a-zA-Z]{1,}>"
+   .Font.StrikeThrough = False
+   .Wrap = wdFindStop
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = True
+   .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    Selection.TypeText Text:=rng.Text & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+
+  ' Find such as Beverley, P.E.
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = "<[A-Z][a-zA-Z]{1,}, [A-Z. ]{1,}>"
+   .Font.StrikeThrough = False
+   .Wrap = wdFindStop
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = True
+   .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    nameInits = rng.Text
+    commaPos = InStr(nameInits, ",")
+    initsName = Mid(nameInits, commaPos - 1) & " " & Left(nameInits, commaPos - 1)
+    Selection.TypeText Text:=initsName & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+End If
+
+rng.Start = 0
+rng.End = myEnd
+rng.Font.Shadow = False
+rng.Font.DoubleStrikeThrough = False
+
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+Selection.EndKey Unit:=wdStory
+Selection.TypeText Text:=CR
+Selection.HomeKey Unit:=wdStory
+Selection.MoveEnd , 1
+Selection.Delete
+
+Dim myName(8000) As String
+Dim itemCount As Long
+Dim myCount As Integer
+Dim thisPara As String
+Dim prevPara As String
+
+myCount = 0
+prevName = ""
+For Each par In ActiveDocument.Paragraphs
+  thisPara = Replace(par.range.Text, CR, "")
+  If thisPara <> prevPara And prevPara <> "" Then
+    itemCount = itemCount + 1
+    myName(itemCount) = prevPara & vbTab & Trim(Str(myCount))
+    myCount = 1
+  Else
+    myCount = myCount + 1
+  End If
+  prevPara = thisPara
+Next par
+
+Documents.Add
+Set secondDoc = ActiveDocument
+
+For i = 1 To itemCount
+  If UCase(myName(i)) <> myName(i) Then
+    Selection.TypeText Text:=myName(i) & CR
+  End If
+Next i
+
+maxLine = ActiveDocument.Paragraphs.Count
+nonoWords = nonoWords & " "
+For i = maxLine To 1 Step -1
+  firstWord = ActiveDocument.Paragraphs(i).range.Words(1)
+  DeleteIt = (InStr(nonoWords, firstWord) > 0)
+  For j = 2 To ActiveDocument.Paragraphs(i).range.Words.Count - 1
+    thisWord = Trim(ActiveDocument.Paragraphs(i).range.Words(j))
+    If InStr(nonoWords2, thisWord & " ") > 0 Then DeleteIt = True
+  Next j
+  If DeleteIt = True Then ActiveDocument.Paragraphs(i).range.Delete
+Next i
+totalItems = ActiveDocument.Paragraphs.Count - 1
+
+' Copy the list and paste into the first document
+' as a place to manipulate it
+Selection.WholeStory
+Selection.Copy
+firstDoc.Activate
+Selection.WholeStory
+Selection.Delete
+Selection.Paste
+
+' Move the surname to the beginning of the line
+For Each par In ActiveDocument.Paragraphs
+  If Len(par.range.Text) > 2 Then
+    surnamePosn = par.range.Words.Count - 3
+    If InStr(par.range.Text, "-") = 0 Then
+      Surname = Trim(par.range.Words(surnamePosn))
+      par.range.Words(surnamePosn) = ""
+      par.range.Words(1) = Surname & ", " & par.range.Words(1)
+    Else
+      par.range.Words(surnamePosn).Select
+      Selection.MoveStartUntil cset:=" ", Count:=wdBackward
+      Selection.MoveStart , -1
+      fullSurname = Trim(Selection.Text)
+      Selection.Delete
+      Selection.HomeKey Unit:=wdLine
+      Selection.TypeText Text:=fullSurname & ", "
+      asdgfdfg = 0
+    End If
+  End If
+Next par
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = " ^t"
+  .Replacement.Text = "^t"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Format the list
+Selection.HomeKey Unit:=wdStory
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+
+Selection.HomeKey Unit:=wdStory
+Selection.MoveEnd , 2
+Selection.Delete
+Selection.TypeText Text:="Fullname List" & vbCr & vbCr
+Selection.TypeText Text:="Sorted by last name" & vbCr
+startTable = Selection.End
+ActiveDocument.Paragraphs(1).Style = ActiveDocument.Styles(wdStyleHeading2)
+ActiveDocument.Paragraphs(3).Style = ActiveDocument.Styles(wdStyleHeading2)
+Selection.Start = startTable
+Selection.End = ActiveDocument.range.End
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+Selection.Tables(1).Style = "Table Grid"
+Selection.Tables(1).AutoFitBehavior (wdAutoFitContent)
+Selection.Tables(1).Borders(wdBorderTop).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderRight).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+
+Selection.WholeStory
+Selection.Copy
+ActiveDocument.Close SaveChanges:=False
+
+' Format other list
+secondDoc.Activate
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Sorted by first name" & vbCr
+startTable = Selection.End
+ActiveDocument.Paragraphs(1).Style = ActiveDocument.Styles(wdStyleHeading2)
+Selection.Start = startTable
+Selection.End = ActiveDocument.range.End
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+Selection.Tables(1).Style = "Table Grid"
+Selection.Tables(1).AutoFitBehavior (wdAutoFitContent)
+Selection.Tables(1).Borders(wdBorderTop).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderRight).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+
+' Copy the other list in here
+Selection.HomeKey Unit:=wdStory
+Selection.Paste
+Selection.HomeKey Unit:=wdStory
+
+' Dummy copy to clear clipboard
+Set rng = ActiveDocument.Content
+rng.End = rng.Start + 1
+rng.Copy
+originalDoc.Activate
+ActiveDocument.Close SaveChanges:=False
+
+If doingSeveralMacros = False Then
+  Beep
+  MsgBox (Str(totalItems) & " names found")
+Else
+  FUT.Activate
+End If
+End Sub

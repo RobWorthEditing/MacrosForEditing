@@ -1,0 +1,104 @@
+Sub MegAlyse()
+' Version 10.12.19
+' Launches a selected series of analysis macros
+
+myAlyses = "DocAlyse, HyphenAlyse, ProperNounAlyse, FullNameAlyse, SpellingErrorLister, CapitAlyse, WordPairAlyse"
+' myAlyses = "DocAlyse, HyphenAlyse, ProperNounAlyse, SpellingErrorLister"
+
+saveResultsFiles = True
+
+myDir = "C:\Users\User\Documents\"
+
+myResponse = MsgBox("MegAlyse" & vbCr & vbCr & _
+     "Run:      " & myAlyses & "?", vbQuestion _
+     + vbYesNoCancel, "MegAlyse")
+If myResponse <> vbYes Then Exit Sub
+
+' Don't change this filename
+tempFile = myDir & "zzTestFile"
+stTime = Time
+Set rng = ActiveDocument.Content
+Documents.Add
+Set testFile = ActiveDocument
+
+testFile.Activate
+
+Selection.FormattedText = rng.FormattedText
+Selection.EndKey Unit:=wdStory
+If ActiveDocument.Endnotes.Count > 0 Then
+  Set thisDocRange = testFile.Content
+  thisDocRange.Collapse wdCollapseEnd
+  thisDocRange.FormattedText = _
+       testFile.StoryRanges(wdEndnotesStory).FormattedText
+End If
+If ActiveDocument.Footnotes.Count > 0 Then
+  Set thisDocRange = testFile.Content
+  thisDocRange.Collapse wdCollapseEnd
+  thisDocRange.FormattedText = _
+       testFile.StoryRanges(wdFootnotesStory).FormattedText
+End If
+
+' copy all the textboxes to the end of the text
+shCount = testFile.Shapes.Count
+If shCount > 0 Then
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText Text:=vbCr & vbCr
+  For j = 1 To shCount
+    Set shp = ActiveDocument.Shapes(j)
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.hasText Then
+        Set rng = shp.TextFrame.TextRange
+        Selection.FormattedText = rng.FormattedText
+        Selection.EndKey Unit:=wdStory
+      End If
+    End If
+  Next
+  For j = shCount To 1 Step -1
+    ActiveDocument.Shapes(j).Delete
+  Next
+End If
+Set rng = ActiveDocument.Content
+rng.Fields.Unlink
+rng.Revisions.AcceptAll
+For Each myPic In ActiveDocument.InlineShapes
+  myPic.Delete
+Next myPic
+ActiveDocument.SaveAs FileName:=tempFile
+
+myAlyses = Replace("," & myAlyses & ",", ",,", ",")
+myAlyses = Replace(myAlyses, " ", "")
+thisArray = Split(myAlyses, ",")
+For i = 1 To UBound(thisArray) - 1
+  rprt = thisArray(i) & " started: " & Left(Time, 5) & vbCr
+  Debug.Print rprt
+  Application.Run macroName:=thisArray(i)
+  DoEvents
+Next i
+rprt = vbCr & "Finished at: " & Left(Time, 5)
+Debug.Print rprt
+
+If saveResultsFiles Then
+  For Each myDoc In Documents
+    myName = myDoc.Name
+    If Left(myName, 8) = "Document" Then
+      Set rng = myDoc.Content
+      newName = Left(rng.Text, 40)
+      crPos = InStr(newName, vbCr)
+      If crPos > 3 Then
+        newName = Left(newName, crPos - 1)
+        myDoc.Activate
+        myFullFilename = myDir & newName
+        ActiveDocument.SaveAs FileName:=myFullFilename
+      End If
+    End If
+  Next myDoc
+End If
+
+testFile.Activate
+ActiveDocument.Close SaveChanges:=False
+Beep
+myTime = Timer
+Do
+Loop Until Timer > myTime + 0.2
+Beep
+End Sub
