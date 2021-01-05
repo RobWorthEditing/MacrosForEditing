@@ -1,28 +1,40 @@
 Sub HyphenAlyse()
-' Version 19.10.20
-' Creates a file of all the adjacent word pairs
+' Paul Beverley - Version 04.01.21
+' Creates a frequency list of all possible hyphenations
 
 myList = "anti,cross,eigen,hyper,inter,meta,mid,multi," _
      & "non,over,post,pre,pseudo,quasi,semi,sub,super"
-     
+    
+
 deleteTableBorders = True
 includeNumbers = True
 lighterColour = wdGray25
 ' lighterColour = wdColor50
 
+chs = " , . ! : [ ] { } ( ) / \ + "
+chs = chs & ChrW(8220) & " "
+chs = chs & ChrW(8221) & " "
+chs = chs & ChrW(8201) & " "
+chs = chs & ChrW(8222) & " "
+chs = chs & ChrW(8217) & " "
+chs = chs & ChrW(8216) & " "
+chs = chs & ChrW(8212) & " "
+chs = chs & ChrW(8722) & " "
+chs = chs & vbCr & " "
+chs = chs & vbTab & " "
+
 Dim myResult As String
 myList = "," & myList
 myList = Replace(myList, ",,", ",")
-includeNumbers = False
 pref = Split(myList, ",")
 
 Set FUT = ActiveDocument
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
 
 If doingSeveralMacros = False Then
-  myResponse = MsgBox("    HyphenAlyse" & vbCr & vbCr & _
+  myResponse = MsgBox("    HyphenAlyseNEW" & vbCr & vbCr & _
        "Analyse hyphenated words?", vbQuestion _
-       + vbYesNoCancel, "HyphenAlyse")
+       + vbYesNoCancel, "HyphenAlyseNEW")
   If myResponse <> vbYes Then Exit Sub
 End If
 Dim pr(8000) As String
@@ -212,6 +224,22 @@ Selection.TypeText vbCr & vbCr
 Selection.HomeKey Unit:=wdStory
 ActiveDocument.Paragraphs(1).Style = _
      ActiveDocument.Styles(wdStyleHeading1)
+
+allText = " " & ActiveDocument.Range.Text & " "
+     
+' At this point, change all "^p" to "^p "
+' all punctuation to " "
+' To force space at start; no space at end:
+chs = " " & chs & " "
+chs = Replace(chs, "  ", " ")
+chs = Left(chs, Len(chs) - 1)
+
+chars = Split(chs, " ")
+For i = 1 To UBound(chars)
+  allText = Replace(allText, chars(i), " ")
+Next i
+
+cnt = Len(allText)
 For i = 1 To myPairs
   totFinds = 0
   thisFind = ""
@@ -226,18 +254,9 @@ For i = 1 To myPairs
       Case 3: schWd = wd
       Case 4: schWd = Replace(wdHyph, "-", ChrW(8211))
     End Select
-    
-    With rng.Find
-      .ClearFormatting
-      .Replacement.ClearFormatting
-      .Text = "<" & schWd & ">"
-      .Replacement.Text = "^&!"
-      .MatchWildcards = True
-      .Execute Replace:=wdReplaceAll
-    End With
-    myCount = ActiveDocument.Content.End - myTot
+    sc = " " & schWd & " "
+    myCount = Len(Replace(allText, sc, sc & "!")) - cnt
     If myCount > 0 Then
-      WordBasic.EditUndo
       totFinds = totFinds + 1
       Selection.HomeKey Unit:=wdStory
       thisFind = thisFind & schWd & " . ." & _
@@ -256,11 +275,6 @@ For i = 1 To myPairs
   If Len(thisFind) > 8 Then myResult = myResult & "%" & _
        wd & "%" & thisFind & "!"
 Next i
-'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ActiveDocument.Paragraphs(1).Range.Text = vbCr
-'Selection.HomeKey Unit:=wdStory
-'Selection.MoveEnd , 1
-'Selection.Delete
-'ActiveDocument.Content.Style = ActiveDocument.Styles(wdStyleNormal)
 myResult = Replace(myResult, ":!", vbCr)
 myResult = Replace(myResult, ":", vbTab)
 Selection.WholeStory
@@ -391,6 +405,7 @@ End If
 Selection.HomeKey Unit:=wdStory
 
 timNow = Timer
+
 If doingSeveralMacros = False Then
   timGone = timNow - strttime
   Beep
@@ -410,3 +425,4 @@ Else
   FUT.Activate
 End If
 End Sub
+
