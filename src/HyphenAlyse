@@ -1,5 +1,5 @@
 Sub HyphenAlyse()
-' Paul Beverley - Version 04.01.21
+' Paul Beverley - Version 05.01.21
 ' Creates a frequency list of all possible hyphenations
 
 myList = "anti,cross,eigen,hyper,inter,meta,mid,multi," _
@@ -11,18 +11,6 @@ includeNumbers = True
 lighterColour = wdGray25
 ' lighterColour = wdColor50
 
-chs = " , . ! : [ ] { } ( ) / \ + "
-chs = chs & ChrW(8220) & " "
-chs = chs & ChrW(8221) & " "
-chs = chs & ChrW(8201) & " "
-chs = chs & ChrW(8222) & " "
-chs = chs & ChrW(8217) & " "
-chs = chs & ChrW(8216) & " "
-chs = chs & ChrW(8212) & " "
-chs = chs & ChrW(8722) & " "
-chs = chs & vbCr & " "
-chs = chs & vbTab & " "
-
 Dim myResult As String
 myList = "," & myList
 myList = Replace(myList, ",,", ",")
@@ -32,9 +20,9 @@ Set FUT = ActiveDocument
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
 
 If doingSeveralMacros = False Then
-  myResponse = MsgBox("    HyphenAlyseNEW" & vbCr & vbCr & _
+  myResponse = MsgBox("    HyphenAlyse" & vbCr & vbCr & _
        "Analyse hyphenated words?", vbQuestion _
-       + vbYesNoCancel, "HyphenAlyseNEW")
+       + vbYesNoCancel, "HyphenAlyse")
   If myResponse <> vbYes Then Exit Sub
 End If
 Dim pr(8000) As String
@@ -100,7 +88,8 @@ myPairs = 0
 allWords = ","
 Do While rng.Find.Found = True
   wdPair = Replace(rng.Text, ChrW(8211), "-")
-  If InStr(allWords, "," & wdPair & ",") = 0 Then
+  If InStr(allWords, "," & wdPair & ",") = 0 _
+       And (UCase(wdPair) <> wdPair) Then
     myPairs = myPairs + 1
     pr(myPairs) = wdPair
     allWords = allWords & wdPair & ","
@@ -217,7 +206,6 @@ For i = 1 To UBound(pref)
 Next i
 halfTime = Timer
 
-
 ' Count the frequencies
 Selection.HomeKey Unit:=wdStory
 Selection.TypeText vbCr & vbCr
@@ -229,8 +217,21 @@ allText = " " & ActiveDocument.Range.Text & " "
      
 ' At this point, change all "^p" to "^p "
 ' all punctuation to " "
+chs = " , . ! : ; [ ] { } ( ) / \ + "
+chs = chs & ChrW(8220) & " "
+chs = chs & ChrW(8221) & " "
+chs = chs & ChrW(8201) & " "
+chs = chs & ChrW(8222) & " "
+chs = chs & ChrW(8217) & " "
+chs = chs & ChrW(8216) & " "
+chs = chs & ChrW(8212) & " "
+chs = chs & ChrW(8722) & " "
+chs = chs & vbCr & " "
+chs = chs & vbTab & " "
+
 ' To force space at start; no space at end:
 chs = " " & chs & " "
+chs = Replace(chs, "  ", " ")
 chs = Replace(chs, "  ", " ")
 chs = Left(chs, Len(chs) - 1)
 
@@ -425,4 +426,3 @@ Else
   FUT.Activate
 End If
 End Sub
-
