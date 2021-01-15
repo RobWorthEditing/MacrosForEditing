@@ -2,6 +2,7 @@ Sub CapitAlyse()
 ' Version 02.08.20
 ' Analyses capitalised words
 
+
 ignoreWords = ",After,All,Although,Also,An,And,As,At,By,For,From,If,In,It,"
 ignoreWords = ignoreWords & "Of,On,Our,The,This,Those,There,These,They,Up,We,"
 
