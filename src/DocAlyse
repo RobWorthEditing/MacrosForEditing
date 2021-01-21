@@ -1,5 +1,5 @@
 Sub DocAlyse()
-' Version 21.11.20
+' Paul Beverley - Version 21.11.20
 ' Analyses various aspects of a document
 
 ' prompts to count number of tests
@@ -1873,3 +1873,4 @@ Else
   FUT.Activate
 End If
 End Sub
+
