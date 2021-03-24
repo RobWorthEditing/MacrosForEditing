@@ -1,0 +1,8 @@
+Sub ToggleNextCharCase2()
+' Paul Beverley - Version 28.09.09
+' Change case of the next character/selection
+Selection.MoveRight Unit:=wdCharacter, Count:=1, Extend:=wdExtend
+Selection.Range.Case = wdToggleCase
+Selection.MoveRight Unit:=wdCharacter, Count:=1
+End Sub
+

@@ -1,0 +1,72 @@
+Sub NumberSequenceCheckerDecimal()
+' Paul Beverley - Version 24.09.18
+' Checks consecutivity of numbering containing decimal point
+
+tooFar = 3000
+
+Do
+  Selection.MoveStartUntil cset:="0123456789", Count:=wdForward
+  Selection.MoveEndWhile cset:="0123456789.", Count:=wdForward
+  dotPos = InStr(Selection, ".")
+  DoEvents
+  If dotPos = 0 Then Selection.Collapse wdCollapseEnd
+Loop Until dotPos > 0
+myText = Selection
+dotPos = InStr(Selection, ".")
+chNumWas = Val(Left(myText, dotPos - 1))
+myNumWas = Val(Mid(myText, dotPos + 1))
+Set wasRange = Selection.range
+Selection.Collapse wdCollapseEnd
+Do
+  Do
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "^#"
+      .Wrap = wdFindContinue
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = False
+      .Execute
+    End With
+    DoEvents
+    If Not (Selection.Find.Found) Or _
+         Selection.Start > wasRange.Start + tooFar Then
+      wasRange.Select
+      ActiveWindow.ScrollIntoView wasRange, True
+      Selection.MoveStartWhile cset:="0123456789.", Count:=wdBackward
+      Beep
+      Exit Sub
+    End If
+    Selection.MoveEndWhile cset:="0123456789.", Count:=wdForward
+    DoEvents
+    dotPos = InStr(Selection, ".")
+    If dotPos = 0 Then Selection.Collapse wdCollapseEnd
+  Loop Until dotPos > 0
+  myText = Selection
+  chNum = Val(Left(myText, dotPos - 1))
+  myNum = Val(Mid(myText, dotPos + 1))
+  If (myNum = myNumWas + 1 And chNum = chNumWas) Or _
+       (chNum = chNumWas + 1 And myNum = 1) Then
+  ' carry on!
+  Else
+    If dotPos < Len(myText) Then
+      Beep
+      ActiveWindow.ScrollIntoView Selection.range, True
+      myTime = Timer
+      Do
+      Loop Until Timer > myTime + 0.2
+      Beep
+      Exit Sub
+    End If
+  End If
+  Selection.Collapse wdCollapseEnd
+  If dotPos < Len(myText) Then
+    myNumWas = myNum
+    chNumWas = chNum
+  End If
+  Set wasRange = Selection.range
+  ActiveWindow.ScrollIntoView wasRange, True
+Loop Until 0
+End Sub
+

@@ -1,0 +1,8 @@
+Sub DeleteAllComments()
+' Paul Beverley - Version 21.02.12
+' Delete all comments
+numberCmnts = ActiveDocument.Comments.Count
+If numberCmnts > 0 Then ActiveDocument.DeleteAllComments
+MsgBox ("Comments deleted: " & Str(numberCmnts))
+End Sub
+

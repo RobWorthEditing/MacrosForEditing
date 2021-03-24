@@ -1,0 +1,125 @@
+Sub PDFunderlineToLigature()
+' Paul Beverley - Version 04.01.14
+' Restore underline characters into ligatures
+
+' Colour if a suitable word found
+okColour = wdGray25
+
+' Colour if no suitable word found
+nogoColour = wdTurquoise
+
+' replace underlines with...
+ch = ChrW(126): ' A tilde ~
+
+
+myJump = 100
+Selection.HomeKey Unit:=wdStory
+langText = Languages(Selection.LanguageID).NameLocal
+
+' first get rid of odd underlines
+StatusBar = "Removing obvious non-words"
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "__"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ch & ch
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+StatusBar = "Removing obvious non-words"
+With rng.Find
+  .Text = "_([A-Z])"
+  .Replacement.Text = "\1" & ChrW(8211) & "\1"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+StatusBar = "Removing obvious non-words"
+With rng.Find
+  .Text = "([!a-zA-Z])_([!a-zA-Z])"
+  .Replacement.Text = "\1" & ChrW(8211) & "\2"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+StatusBar = "Removing obvious non-words"
+With rng.Find
+  .Text = "([!a-zA-Z])_([!bngrtx][!a-zA-Z])"
+  .Replacement.Text = "\1" & ch & "\2"
+  .Execute Replace:=wdReplaceAll
+End With
+
+StatusBar = "Removing obvious non-words"
+With rng.Find
+  .Text = "([!a-zA-Z])_([!a-zA-Z])"
+  .Replacement.Text = "\1" & ch & "\2"
+  .Execute Replace:=wdReplaceAll
+End With
+
+StatusBar = "Removing obvious non-words"
+With rng.Find
+  .Text = "<([a-zA-Z])_([!a-zA-Z])"
+  .Replacement.Text = "\1" & ch & "\2"
+  .Execute Replace:=wdReplaceAll
+End With
+
+
+' Go and find the first underline character
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "_"
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+StatusBar = ""
+
+okChars = "abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+myCount = 0
+Do While rng.Find.Found = True
+' find the whole word
+  rng.MoveStartWhile cset:=okChars, Count:=wdBackward
+  rng.MoveEndWhile cset:=okChars, Count:=wdForward
+  foundWord = rng
+  newWord = ""
+' Try each of the four ligatures in turn (most likely first)
+  For i = 1 To 4
+    Select Case i
+      Case 1: lig = "fi"
+      Case 2: lig = "ff"
+      Case 3: lig = "fl"
+      Case 4: lig = "ffi"
+    End Select
+    tryWord = Replace(foundWord, "_", lig)
+    isOK = Application.CheckSpelling(tryWord, MainDictionary:=langText)
+    If isOK = True Then
+      newWord = tryWord
+      Exit For
+    End If
+  Next i
+  If newWord > "" Then
+  ' If we've found a new word, replace it
+    rng.Text = newWord
+    rng.HighlightColorIndex = okColour
+  Else
+  ' If not, highlight them all
+    rng.Text = Replace(foundWord, "_", ch)
+    rng.HighlightColorIndex = nogoColour
+  End If
+  myCount = myCount + 1
+  myTest = myCount / myJump
+  If Int(myTest) = myTest Then rng.Select
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+Beep
+Selection.HomeKey Unit:=wdStory
+End Sub
+

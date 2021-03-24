@@ -1,0 +1,51 @@
+Sub HighlightLongQuotesDouble()
+' Paul Beverley - Version 11.08.11
+' Highlight all long quotes (double)
+' Alt-Ctrl-Num-9
+myColour = wdBrightGreen
+wordLimit = 50
+Set rng = ActiveDocument.Content
+Do
+  stopNow = False
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ChrW(8220)
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  If rng.Find.Found = True Then
+    quoteStart = rng.Start
+    rng.Start = rng.End
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ChrW(8221)
+      .Wrap = False
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = False
+      .Execute
+    End With
+  ' Highlight it
+    rng.Start = quoteStart
+    myText = rng
+    myText = Replace(myText, "  ", " ")
+    myText = Replace(myText, ChrW(8211) & " ", "")
+    myText = Replace(myText, " -", "")
+    myText = Replace(myText, ChrW(8212), " ")
+    myLen = Len(myText) - Len(Replace(myText, " ", "")) + 1
+    If myLen >= wordLimit Then
+      rng.HighlightColorIndex = myColour
+    End If
+  Else
+    stopNow = True
+  End If
+  rng.Start = rng.End
+Loop Until stopNow = True
+Beep
+End Sub
+

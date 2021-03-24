@@ -1,0 +1,22 @@
+Sub ChangeNext()
+' Paul Beverley - Version 30.05.20
+' Finds next change (but not comment)
+
+Set rng = Selection.Range.Duplicate
+On Error GoTo theEnd
+Do
+  Application.Run macroName:="NextChangeOrComment"
+  If Selection.Start < rng.Start And Not _
+       (Selection.Information(wdInCommentPane)) Then
+    Selection.EndKey Unit:=wdStory
+    rng.Select
+    Selection.Collapse wdCollapseEnd
+    Beep
+  End If
+Loop While Selection.Information(wdInCommentPane)
+Exit Sub
+
+theEnd:
+Beep
+End Sub
+

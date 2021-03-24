@@ -1,0 +1,17 @@
+Sub HighlightIndentedParas()
+' Paul Beverley - Version 01.03.11
+' Highlight all indented paragraphs
+
+myColour = wdBrightGreen
+' myStyleName = "Displayed Quote"
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+For Each myPara In ActiveDocument.Paragraphs
+  If myPara.Range.ParagraphFormat.LeftIndent > 0 Then
+    myPara.Range.HighlightColorIndex = myColour
+'    myPara.Range.Style = ActiveDocument.Styles(myStyleName)
+  End If
+Next
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

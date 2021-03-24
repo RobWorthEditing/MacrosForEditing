@@ -1,0 +1,490 @@
+Sub CitationListChecker()
+' Paul Beverley - Version 08.09.20
+' Checks citations against references list
+
+myColour = wdGray25
+myQueryColour = wdYellow
+myBrightColour = wdBrightGreen
+allPrefs = "van der de den da le la vahl di "
+maxAuthorsInEtAl = 6
+minDate = 1800 ' Earliest 'number' considered as being a date
+maxDate = 2100 ' Latest 'number' considered as being a date
+
+Selection.MoveEnd , 1
+If Selection.Font.Underline = False Then
+  promptUser = True
+Else
+  Selection.Expand wdParagraph
+  Selection.Collapse wdCollapseStart
+  Selection.MoveLeft , 1
+  Selection.Expand wdParagraph
+  If Selection.Font.Underline = True Then promptUser = True
+  Selection.Collapse wdCollapseEnd
+End If
+
+If promptUser = True Then
+  myResponse = MsgBox("Is the cursor at the start of the reference list?", _
+       vbQuestion + vbYesNoCancel, "Citation List Checker")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+timeNow = Timer
+Selection.HomeKey Unit:=wdLine
+Set rngOld = ActiveDocument.Range(Selection.Start, _
+     ActiveDocument.Content.End)
+rngOld.Start = Selection.Start
+rngOld.Select
+Documents.Add
+Set rngNew = ActiveDocument.Content
+rngNew.FormattedText = rngOld.FormattedText
+
+numberCmnts = ActiveDocument.Comments.Count
+If numberCmnts > 0 Then ActiveDocument.DeleteAllComments
+Set rng = ActiveDocument.Content
+rng.Select
+Selection.Range.Revisions.AcceptAll
+Selection.Range.HighlightColorIndex = myColour
+Selection.End = 0
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = " ([0-9]{4})([ .,]) "
+  .Wrap = wdFindContinue
+  .Replacement.Text = " (\1)\2"
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = " ([0-9]{4}[a-f]) "
+  .Wrap = wdFindContinue
+  .Replacement.Text = " (\1) "
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' To find final reference line, first clear blank underlined lines
+For i = 1 To ActiveDocument.Paragraphs.Count
+  If ActiveDocument.Paragraphs(i).Range.Font.Underline = True _
+       And Len(ActiveDocument.Paragraphs(i).Range.Text) < 3 Then _
+       ActiveDocument.Paragraphs(i).Range.Font.Underline = False
+Next i
+
+' Remove very first blank line (or lines)
+Set rng = ActiveDocument.Content
+If Asc(rng) = 13 Then
+  rng.End = 1
+  rng.Delete
+End If
+
+pCiteStart = 3
+Do
+  pCiteStart = pCiteStart + 1
+  Set rng = ActiveDocument.Paragraphs(pCiteStart).Range
+Loop Until rng.Font.Underline = False
+
+' Sort references into alpha order
+endRefs = rng.Start
+rng.Select
+Set rng = ActiveDocument.Content
+rng.End = endRefs - 1
+DoEvents
+Beep
+StatusBar = "Sorting all references - please wait."
+rng.Sort SortOrder:=wdSortOrderAscending
+
+Set rng = ActiveDocument.Content
+Do
+  done = True
+  rng.End = 1
+  If Asc(rng) = 13 Then
+    rng.Delete
+    done = False
+  End If
+Loop Until done = True
+
+' Find first citation line
+pCiteStart = 1
+Do
+  pCiteStart = pCiteStart + 1
+  Set rng = ActiveDocument.Paragraphs(pCiteStart).Range
+Loop Until rng.Font.Underline = False And rng.Words.Count > 1
+
+rng.Select
+pCiteEnd = ActiveDocument.Paragraphs.Count
+pRefsStart = 1
+pRefsEnd = pCiteStart - 2
+
+rng.Collapse wdCollapseStart
+Set rng = ActiveDocument.Content
+
+' Avoid page breaks
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^m"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "([!0-9])-([!0-9])"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "\1zczc\2"
+  .Forward = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  
+  .MatchWildcards = False
+  .Text = "'"
+  .Replacement.Text = "pqpq"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = ChrW(8217)
+  .Replacement.Text = "pqpq"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "(eds.)"
+  .Replacement.Text = "opopeds.clcl"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "(ed.)"
+  .Replacement.Text = "opopedclcl"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = " and "
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = False
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = " & "
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = False
+  .Execute Replace:=wdReplaceAll
+  
+  .MatchWildcards = True
+  .Text = "([A-Z])([A-Z])"
+  .Replacement.Text = "\1 \2"
+  .Replacement.Highlight = False
+  .Execute Replace:=wdReplaceAll
+  
+  .MatchWildcards = True
+  .Text = "([A-Z])([A-Z])"
+  .Replacement.Text = "\1 \2"
+  .Replacement.Highlight = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Do
+  spcPos = InStr(allPrefs, " ")
+  myPref = Left(allPrefs, spcPos)
+  If allPrefs <> myPref Then allPrefs = Mid(allPrefs, spcPos + 1)
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "<" & myPref
+    .Wrap = wdFindContinue
+    .Replacement.Text = Trim(myPref) & "zxzx "
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  myPref = UCase(Left(myPref, 1)) & Mid(myPref, 2)
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "<" & myPref
+    .Wrap = wdFindContinue
+    .Replacement.Text = Trim(myPref) & "zxzx "
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+Loop Until allPrefs = LCase(myPref)
+
+With rng.Find
+  .Text = "zxzx "
+  .Replacement.Text = "zxzx"
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Ensure that every 'van Blank' is shown as 'Van Blank'
+For Each myPara In ActiveDocument.Paragraphs
+  myChar = myPara.Range.Characters(1)
+  If Len(myPara.Range.Text) > 3 And LCase(myChar) = myChar Then
+    myPara.Range.Characters(1) = UCase(myChar)
+  End If
+Next myPara
+
+myCount = pCiteEnd - pCiteStart
+totCount = myCount
+
+Dim refStart(27) As Integer
+Dim refEnd(27) As Integer
+
+' Find beginning and end reference line number for each alpha letter
+myAlpha = 1
+refStart(1) = 1
+refStart(0) = 1
+refEnd(0) = pRefsEnd
+
+For RF = 1 To pRefsEnd
+  thisPara = ActiveDocument.Paragraphs(RF).Range
+  fstLttr = Chr(Asc(thisPara))
+  refEnd(myAlpha) = RF - 1
+  If fstLttr <> Chr(myAlpha + 64) And fstLttr < Chr(Asc("Z") + 1) And _
+       Len(thisPara) > 10 Then
+    If Asc(fstLttr) < 65 Then
+      ActiveDocument.Paragraphs(RF).Range.Select
+      myResponse = MsgBox("Formatting error in references list?" _
+           , , "Citation List Checker")
+      Exit Sub
+    End If
+    myAlpha = Asc(fstLttr) - 64
+    refStart(myAlpha) = RF
+  End If
+Next RF
+refEnd(myAlpha) = RF - 1
+
+myPairs = 0
+' Find the single author citations
+For cT = pCiteStart To pCiteEnd
+  Set rng = ActiveDocument.Paragraphs(cT).Range
+  If rng.Words.Count = 3 Then
+    aName = Trim(rng.Words(1))
+    aDate = Trim(rng.Words(2))
+    myAlpha = Asc(rng.Text) - 64
+    If myAlpha > 26 Or myAlpha < 0 Then myAlpha = 0
+    If refEnd(myAlpha) > 0 Then
+      For RF = refStart(myAlpha) To refEnd(myAlpha)
+        Set ch = ActiveDocument.Paragraphs(RF).Range.Characters(1)
+        If ch.HighlightColorIndex = myColour Then
+          Set rng2 = ActiveDocument.Paragraphs(RF).Range
+          foundName = Trim(rng2.Words(1))
+          If LCase(Trim(rng2.Words(1))) = LCase(aName) Then
+            dateWord = 0
+            numWds = rng2.Words.Count
+            For i = 2 To numWds
+              thisDate = Trim(rng2.Words(i))
+              If Val(thisDate) > minDate And Val(thisDate) < maxDate Then
+                rng2.Words(i).HighlightColorIndex = False
+                dateWord = i
+                Exit For
+              End If
+            Next i
+            ReDim txt(numWds) As String
+            allNameInfo = ""
+            For i = 1 To dateWord
+              txt(i) = rng2.Words(i)
+              If Len(txt(i)) > 2 Or txt(i) = "&" Then
+                allNameInfo = LCase(Trim(allNameInfo)) & " " & txt(i)
+              End If
+            Next i
+            allNameInfo = Replace(allNameInfo, "., ", "")
+' Debug.Print CT, RF, aDate, foundName, allNameInfo & vbCr
+            If thisDate = aDate And InStr(allNameInfo, " and ") = 0 And _
+                 InStr(allNameInfo, " & ") = 0 Then
+              rng.HighlightColorIndex = False
+              rng2.HighlightColorIndex = False
+              myPairs = myPairs + 1
+              myCount = myCount - 1
+              rng.Select
+' Debug.Print "Found ---------------"
+              StatusBar = "(Single) To go: " & myCount
+              Exit For
+              DoEvents
+            End If
+          End If
+        End If
+      Next RF
+    End If
+  End If
+Next cT
+  
+' Find the dual author citations
+For cT = pCiteStart To pCiteEnd
+  Set rng = ActiveDocument.Paragraphs(cT).Range
+  Set rng3 = ActiveDocument.Paragraphs(cT).Range.Characters(1)
+  gotAnd = InStr(rng, " and ") > 0
+  If rng3.HighlightColorIndex = myColour And gotAnd Then
+    aName1 = Trim(rng.Words(1))
+    aName2 = Trim(rng.Words(3))
+    aDate = rng.Words(4)
+    myAlpha = Asc(rng.Text) - 64
+    If myAlpha > 26 Then myAlpha = 0
+    rng.Select
+    If refEnd(myAlpha) > 0 Or myAlpha < 0 Then
+      For RF = refStart(myAlpha) To refEnd(myAlpha)
+        If ActiveDocument.Paragraphs(RF).Range.Characters(1).HighlightColorIndex = myColour Then
+          Set rng2 = ActiveDocument.Paragraphs(RF).Range
+          If LCase(Trim(rng2.Words(1))) = LCase(aName1) Then
+          ' Find the date
+            numWds = rng2.Words.Count
+            For i = 2 To numWds
+              thisDate = Trim(rng2.Words(i))
+              If Val(thisDate) > minDate And Val(thisDate) < maxDate Then
+                rng2.Words(i).HighlightColorIndex = False
+                Exit For
+              End If
+            Next i
+            If thisDate = aDate Then
+            ' Check for 'Bloggs and Brown' format
+              ReDim txt(numWds) As String
+              allNameInfo = ""
+              For i = 1 To numWds
+                txt(i) = rng2.Words(i)
+                If txt(i) = "& " Then txt(i) = "and "
+                If Len(txt(i)) > 2 Then
+                  allNameInfo = LCase(Trim(allNameInfo)) & " " & txt(i)
+                End If
+              Next i
+              allNameInfo = Replace(allNameInfo, "., ", "")
+              If InStr(allNameInfo, LCase(aName1) & " and " & LCase(aName2)) = 1 Then
+                rng.HighlightColorIndex = False
+                rng2.HighlightColorIndex = False
+                myCount = myCount - 1
+                rng.Select
+                StatusBar = "(Dual) To go: " & myCount
+                DoEvents
+              End If
+            End If
+          End If
+        End If
+      Next
+    End If
+  End If
+Next cT
+
+' Find the et al citations
+For cT = pCiteStart To pCiteEnd
+  Set rng = ActiveDocument.Paragraphs(cT).Range
+  Set rng3 = ActiveDocument.Paragraphs(cT).Range.Characters(1)
+  If rng3.HighlightColorIndex = myColour And InStr(rng, "et al") > 0 Then
+    aName = Trim(rng.Words(1))
+    aDate = rng.Words(4)
+    myAlpha = Asc(rng.Text) - 64
+    If myAlpha > 26 Then myAlpha = 0
+    If refEnd(myAlpha) > 0 Then
+      For RF = refStart(myAlpha) To refEnd(myAlpha)
+        If ActiveDocument.Paragraphs(RF).Range.Characters(1).HighlightColorIndex = myColour Then
+          Set rng2 = ActiveDocument.Paragraphs(RF).Range
+          If LCase(Trim(rng2.Words(1))) = LCase(aName) Then
+          ' Find the date
+            numWds = rng2.Words.Count
+            For i = 2 To numWds
+              thisDate = Trim(rng2.Words(i))
+              datePos = i
+              If Val(thisDate) > minDate And Val(thisDate) < maxDate Then
+                rng2.Words(i).HighlightColorIndex = False
+                Exit For
+              End If
+            Next i
+            If thisDate = aDate Then
+            ' Check for 'Bloggs and Brown' format
+              ReDim txt(numWds) As String
+              allNameInfo = ""
+              numBigWds = 0
+              For i = 1 To datePos - 1
+                txt(i) = Trim(rng2.Words(i))
+                isASurname = UCase(txt(i)) <> LCase(txt(i)) And UCase(txt(i)) <> txt(i) And LCase(txt(i)) <> txt(i)
+                If isASurname Then
+                  allNameInfo = Trim(allNameInfo) & " " & txt(i)
+                  numBigWds = numBigWds + 1
+                End If
+              Next i
+              allNameInfo = Replace(allNameInfo, "., ", "")
+              If numBigWds > 2 And numBigWds < maxAuthorsInEtAl + 1 Then
+                rng.HighlightColorIndex = False
+                rng2.HighlightColorIndex = False
+                myCount = myCount - 1
+                rng.Select
+                StatusBar = "(Et al's) To go: " & myCount
+                DoEvents
+              End If
+              If numBigWds > maxAuthorsInEtAl Then
+                rng.HighlightColorIndex = myQueryColour
+                rng2.HighlightColorIndex = myQueryColour
+                rng2.Select
+                Selection.Collapse wdCollapseEnd
+                Selection.MoveLeft , 1
+                hereNow = Selection.Start
+                addText = " [" & Replace(rng.Text, vbCr, "") & "]"
+                Selection.TypeText addText
+                Selection.Start = hereNow
+                Selection.Range.HighlightColorIndex = myBrightColour
+                myCount = myCount - 1
+                rng.Select
+                StatusBar = "(Et al's) To go: " & myCount
+                DoEvents
+              End If
+            End If
+          End If
+        End If
+      Next
+    End If
+  End If
+Next cT
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "zxzx"
+  .Replacement.Text = " "
+  .MatchCase = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .Text = "zczc"
+  .Replacement.Text = "-"
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .Text = "pqpq"
+  .Replacement.Text = ChrW(8217)
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .Text = "opop"
+  .Replacement.Text = "("
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .Text = "clcl"
+  .Replacement.Text = ")"
+  .Execute Replace:=wdReplaceAll
+End With
+Set rng = ActiveDocument.Content
+rng.Font.Underline = False
+ActiveDocument.Paragraphs(pCiteStart).Range.Select
+Selection.Collapse wdCollapseStart
+ActiveDocument.TrackRevisions = myTrack
+pc = Int((totCount - myCount) / totCount * 100)
+newTime = Timer
+MsgBox ("References checked: " & totCount - 1 & vbCr & _
+     "Citations unmatched = " & myCount & vbCr & "Approx. " & pc & "% success")
+totTime = newTime - timeNow
+If totTime > 3600 Then
+  MsgBox ((Int(10 * totTime / 3600) / 10) & _
+       "  hours")
+Else
+  If totTime > 60 Then
+    MsgBox ((Int(10 * totTime / 60) / 10) & _
+         "  minutes")
+  End If
+End If
+End Sub
+

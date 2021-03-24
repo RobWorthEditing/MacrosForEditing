@@ -1,0 +1,36 @@
+Sub ColonUnbold()
+' Paul Beverley - Version 06.01.18
+' Romanises bold colons that are followed by roman text
+
+Set rng = ActiveDocument.Content
+' Go and find the first occurrence
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ":"
+  .Font.Bold = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.End = rng.Start + 3
+  dontDoIt = (InStr(rng, Chr(13)) > 0)
+  rng.Start = rng.Start + 2
+  If rng.Font.Bold = False And dontDoIt = False Then
+    rng.Start = rng.Start - 2
+    rng.Font.Bold = False
+  End If
+  rng.Collapse wdCollapseEnd
+
+' Go and find the next occurence (if there is one)
+  rng.Find.Execute
+Loop
+Beep
+End Sub
+

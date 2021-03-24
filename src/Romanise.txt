@@ -1,0 +1,25 @@
+Sub Romanise()
+' Paul Beverley - Version 24.10.16
+' Removes italic from the next set of italic characters.
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Selection.Collapse wdCollapseStart
+Selection.MoveLeft , 1
+Selection.MoveEnd , 1
+Do
+  Selection.MoveEnd , 1
+  Selection.MoveStart , 1
+Loop Until Selection.Font.Italic = True
+startHere = Selection.Start
+Do
+  Selection.MoveEnd , 1
+  Selection.MoveStart , 1
+Loop Until Selection.Font.Italic = False
+Selection.MoveLeft , 1
+Selection.Start = startHere
+Selection.Font.Italic = False
+Selection.Collapse wdCollapseEnd
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

@@ -1,0 +1,7 @@
+Sub FixedFontBlue()
+' Paul Beverley - Version 13.05.20
+' Sets font to an 'almost' blue font colour
+
+Selection.Font.Color = &HFF1111
+End Sub
+

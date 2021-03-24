@@ -1,0 +1,63 @@
+Sub FReditListMenu()
+' Paul Beverley - Version 06.02.21
+' Provides a menu to run different FRedit lists
+
+
+' On Windows, it will need to be something like:
+myFolder = "C:\Documents and Settings\Paul\My Documents\MyLists"
+
+' On a Mac, it will need to be something like:
+myFolder = "/Users/Paul/My Documents/MyLists"
+
+
+Dim myList(30) As String
+Dim myLetter(30) As String
+n = 0
+s = ";"
+allLetters = s
+myName = Dir(myFolder)
+Do While myName <> ""
+    n = n + 1
+  myList(n) = myName
+  myLetter(n) = LCase(Left(myName, 1))
+  If InStr(allLetters, s & myLetter(n) & s) > 0 Then
+    myLetter(n) = myLetter(n) & myLetter(n)
+    If InStr(allLetters, s & myLetter(n) & s) > 0 Then
+      myResponse = MsgBox("Please don't have three items" & _
+           " with the same initial letter.", _
+           vbOKCancel, "FReditListMenu")
+      Exit Sub
+    End If
+  End If
+  allLetters = allLetters & myLetter(n) & s
+  myName = Dir()
+Loop
+
+For i = 1 To n
+  thisName = Replace(myList(i), ".docx", "")
+  thisName = Replace(thisName, ".doc", "")
+  myMenu = myMenu & myLetter(i) & _
+       " - " & thisName & vbCr
+Next i
+myMenu = myMenu & vbCr & "Which list (letter)?"
+myChoice = InputBox(myMenu, "FReditListMenu")
+
+For i = 1 To n
+  If myLetter(i) = LCase(myChoice) Then
+    goodChoice = True
+    doList = myList(i)
+    Exit For
+  End If
+Next i
+
+myChoice = myList(i)
+If myChoice = "" Then Exit Sub
+Set myDoc = ActiveDocument
+Documents.Open FileName:=myFolder & myChoice
+Set listDoc = ActiveDocument
+myDoc.Activate
+Call FRedit
+listDoc.Activate
+ActiveDocument.Close SaveChanges:=False
+End Sub
+

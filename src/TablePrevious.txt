@@ -1,0 +1,21 @@
+Sub TablePrevious()
+' Paul Beverley - Version 14.08.19
+' Steps through tables, one by one
+
+Set rng = ActiveDocument.range(0, Selection.End)
+tableNum = rng.Tables.Count
+totTables = ActiveDocument.Tables.Count
+If tableNum < 2 Then
+  Beep
+  Exit Sub
+End If
+ActiveDocument.Tables(tableNum - 1).Select
+Selection.Collapse wdCollapseStart
+Set rng = Selection.range.Duplicate
+ActiveDocument.ActiveWindow.LargeScroll Down:=1
+ActiveDocument.ActiveWindow.SmallScroll Down:=1
+Selection.MoveUp wdParagraph, 1
+rng.Select
+Selection.MoveEnd wdWord, 1
+End Sub
+

@@ -1,0 +1,39 @@
+Sub AuthorCaseChange()
+' Paul Beverley - Version 16.01.21
+' Lowercases author surnames (e.g. SMITH, J. to Smith, J.) in references list
+
+' Look for e.g. "SMITH, J."
+myFind = "([A-Z]{3,}), ([A-Z])."
+
+' Look for e.g. "SMITH, A" or "SMITH, AB" or "SMITH, ABC" or
+' myFind = "([A-Z]{3,}), ([A-Z]){1,3}>"
+
+myColour = wdColorBlue
+
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While Selection.Find.Found = True
+  Selection.MoveStart , 1
+  Do While InStr(",", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+
+  Selection.Range.Case = wdLowerCase
+  Selection.Range.Font.Color = myColour
+  Selection.Collapse wdCollapseEnd
+  Selection.Find.Execute
+Loop
+End Sub
+

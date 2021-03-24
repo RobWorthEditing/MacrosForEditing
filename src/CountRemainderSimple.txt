@@ -1,0 +1,14 @@
+Sub CountRemainderSimple()
+' Paul Beverley - Version 25.04.16
+' Count words below the cursor
+
+wordsTotal = ActiveDocument.Content.Words.Count
+Selection.End = ActiveDocument.Content.End
+wordsLeft = Selection.range.Words.Count
+Selection.Collapse wdCollapseStart
+perCent = Int(1000 * (wordsLeft / wordsTotal)) / 10
+
+MsgBox (perCent & "% left.   (Very roughly " & _
+     Int(0.0007 * wordsLeft) & " thousand words)")
+End Sub
+

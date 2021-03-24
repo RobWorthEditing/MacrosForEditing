@@ -1,0 +1,22 @@
+Sub FandRapostrophe()
+' Paul Beverley - Version 22.04.11
+' F&R text that contains curly quotes/apostrophe
+
+Options.AutoFormatReplaceQuotes = False
+Options.AutoFormatAsYouTypeReplaceQuotes = False
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^0145t Hooft"
+  .Replacement.Text = "^0146t Hooft"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Options.AutoFormatReplaceQuotes = True
+Options.AutoFormatAsYouTypeReplaceQuotes = True
+End Sub
+

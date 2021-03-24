@@ -1,0 +1,21 @@
+Sub QuoteCopier()
+' Paul Beverley - Version 24.09.18
+' Copies text from one quote pair to the next
+
+If Selection.Text = " " Then
+  Selection.MoveEnd , 1
+  Selection.Delete
+End If
+Selection.MoveEndUntil cset:=ChrW(8217), Count:=wdForward
+Selection.MoveStartUntil cset:=ChrW(8216), Count:=wdBackward
+Selection.Copy
+Selection.Collapse wdCollapseEnd
+Selection.MoveRight , 1
+Selection.MoveStartUntil cset:=ChrW(8216), Count:=wdForward
+Selection.MoveRight , 1
+hereNow = Selection.Start
+Selection.Paste
+Selection.Start = hereNow
+Selection.Collapse wdCollapseStart
+End Sub
+

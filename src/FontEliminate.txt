@@ -1,0 +1,23 @@
+Sub FontEliminate()
+' Paul Beverley - Version 16.02.13
+' Restore anything in this font to the default font
+
+myUnwantedFont = Selection.Font.Name
+myBaseStyle = ActiveDocument.Styles(wdStyleNormal)
+normalFont = ActiveDocument.Styles(myBaseStyle).Font.Name
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Wrap = wdFindContinue
+  .Font.Name = myUnwantedFont
+  .Replacement.Text = ""
+  .Replacement.Font.Name = normalFont
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+

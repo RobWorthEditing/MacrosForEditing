@@ -1,0 +1,109 @@
+Sub CharacterSwitch()
+' Paul Beverley - Version 06.02.21
+' Scripted character switching
+
+specChar = "_"
+
+listName = "zzSwitchList"
+
+' On Windows, it will need to be something like:
+myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff"
+
+' On a Mac, it will need to be something like:
+myFolder = "/Users/Paul/My Documents/Macro stuff"
+
+doaBeep = False
+maxChars = 200
+doAnErrorBeep = False
+
+On Error GoTo ReportIt
+defaultList = myFolder & listName
+defaultLoaded = False
+Set thisDoc = ActiveDocument
+cursorPosn = Selection.Start
+dirName = ActiveDocument.Path
+' Go and look for the list file
+gottaList = False
+For i = 1 To Documents.Count
+  Set dcu = Documents(i)
+  If InStr(dcu.Name, listName) > 0 Then
+    Set listDoc = dcu
+    gottaList = True
+  End If
+Next i
+
+If gottaList = False Then
+  Documents.Open dirName & "\" & listName
+Else
+  listDoc.Activate
+End If
+
+carryOn:
+' Create one long string of all the words
+myWds = ""
+For Each myPara In ActiveDocument.Paragraphs
+  theLine = myPara
+  If InStr(theLine, specChar) > 0 Then
+    myWds = myWds & "|" & Replace(theLine, Chr(13), "")
+    myWds = Replace(myWds, "^=", ChrW(8211))
+    myWds = Replace(myWds, "^+", ChrW(8212))
+    myWds = Replace(myWds, "^32", " ")
+  End If
+Next myPara
+myWds = myWds & "|"
+
+' ActiveDocument.ActiveWindow.WindowState = wdWindowStateMinimize
+
+thisDoc.Activate
+wNum = Application.Windows.Count
+pNum = ActiveDocument.ActiveWindow.Panes.Count
+If Selection.Start <> cursorPosn And wNum > 1 Then _
+     Application.Windows(1).Activate
+If Selection.Start <> cursorPosn And pNum > 1 Then _
+     ActiveWindow.Panes(1).Activate
+
+If defaultLoaded = True Then StatusBar = _
+    ">>>>>>>>  Loaded from your default word list  <<<<<<<<"
+If Selection.LanguageID = wdEnglishUS Then
+  myWds = Replace(myWds, "%" & specChar & " per cent", _
+       "%" & specChar & " percent")
+End If
+
+
+For i = 1 To maxChars
+' Select the character
+  Selection.End = Selection.Start + 1
+  thisChar = Selection
+  ' Check in the list of words to see if it's there
+  wordPos = InStr(myWds, "|" & thisChar & specChar)
+  If wordPos > 0 Then
+  ' If it's in the list, find the replacement text
+    myWds = Right(myWds, Len(myWds) - wordPos - 1 - Len(thisChar))
+    newWd = Left(myWds, InStr(myWds, "|") - 1)
+    Selection.TypeText newWd
+    Selection.Start = Selection.End
+  ' We've found it, so finish
+    Exit Sub
+  Else
+    Selection.Start = Selection.End
+  End If
+Next
+
+' If no character match found beep for warning
+If doaBeep = True Then Beep
+
+Selection.End = startWas
+Exit Sub
+
+ReportIt:
+If Err.Number = 5174 Then
+  If doAnErrorBeep = True Then Beep
+  defaultLoaded = True
+  Documents.Open defaultList
+  Resume carryOn
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+

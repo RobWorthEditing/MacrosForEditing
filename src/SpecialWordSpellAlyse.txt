@@ -1,0 +1,64 @@
+Sub SpecialWordSpellAlyse()
+' Paul Beverley - Version 01.12.20
+' Does a ProperNounAlyse of all long 'spelling error' words
+
+minLen = 5
+
+Selection.Collapse wdCollapseStart
+thisLanguage = Selection.LanguageID
+Select Case thisLanguage
+  Case wdEnglishUK: myLang = "UK spelling"
+  Case wdEnglishUS: myLang = "US spelling"
+  Case wdEnglishCanadian: myLang = "Canadian spelling"
+  Case Else: myLang = "unknown language"
+End Select
+myLang = "Using " & myLang & " dictionary. OK?"
+If doingSeveralMacros = False Then
+  myResponse = MsgBox(myLang, vbQuestion + vbYesNoCancel, _
+       "SpecialWordSpellAlyse")
+  If myResponse <> vbYes Then Exit Sub
+End If
+langName = Languages(thisLanguage).NameLocal
+
+Set rng = ActiveDocument.Content
+Documents.Add
+Set testDoc = ActiveDocument
+Selection.Text = rng.Text
+
+Set rng = ActiveDocument.Content
+rng.Case = wdLowerCase
+rng.Font.StrikeThrough = True
+myEnd = rng.End
+For Each wd In rng.Words
+  If Len(Trim(wd)) > (minLen - 1) Then
+    DoEvents
+    If Application.CheckSpelling(wd, MainDictionary:=langName) = False Then
+      pCent = Int((myEnd - wd.End) / myEnd * 100)
+      ' Report progress
+      StatusBar = "Generating errors list.             To go:  " _
+           & Trim(Str(pCent)) & "%"
+      Debug.Print "Generating errors list.             To go:  " _
+           & Trim(Str(pCent)) & "%"
+      wd.Font.StrikeThrough = False
+      wd.Characters(1) = UCase(wd.Characters(1))
+    End If
+  End If
+  DoEvents
+Next wd
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Wrap = wdFindContinue
+  .Replacement.Text = " "
+  .Forward = True
+  .Font.StrikeThrough = True
+  .MatchCase = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Call ProperNounAlyse
+testDoc.Close SaveChanges:=False
+End Sub
+

@@ -1,0 +1,180 @@
+Sub UKUShighlight()
+' Paul Beverley - Version 22.11.14
+' Mark US spellings within UK text and vice versa
+
+myColour = wdBrightGreen
+minLengthSpell = 3
+
+' List here any words that Word erroneously thinks are correct spellings
+' Highlight these in a UK text
+UKexceptions = "practicing,licencing"
+' Highlight these in a US text
+USexceptions = "practicing,licencing"
+
+If Selection.LanguageID = wdEnglishUK Then
+  mainLanguage = wdEnglishUK: altLanguage = wdEnglishUS
+  myList = UKexceptions
+Else
+  mainLanguage = wdEnglishUS: altLanguage = wdEnglishUK
+  myList = USexceptions
+End If
+
+' Find words from prefix wordlist
+myList = myList & ","
+myList = Replace(myList, ",,", ",")
+numExceptions = Len(myList) - Len(Replace(myList, ",", ""))
+ReDim exWord(numExceptions) As String
+For i = 1 To numExceptions
+  nextComma = InStr(myList, ",")
+  exWord(i) = Left(myList, nextComma - 1)
+  myList = Mid(myList, nextComma + 1)
+Next i
+
+' To measure the time taken
+timeStart = Timer
+
+' Check that tracking is off!
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+' Blank off all apostrophe-s
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8217) & "s"
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .MatchCase = True
+  .Replacement.Text = " zczc"
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Spellcheck the endnotes
+myJump = 100
+If ActiveDocument.Endnotes.Count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ChrW(8217) & "s"
+    .Replacement.Text = " zczc"
+    .Execute Replace:=wdReplaceAll
+  End With
+  countWds = rng.Words.Count
+  i = 0
+  For Each wd In rng.Words
+    If i Mod myJump = 0 Then StatusBar = "Checking words in endnotes: " _
+         & Str(Int(i / myJump) * myJump)
+    i = i + 1
+    If Len(wd) >= minLengthSpell And Application.CheckSpelling(wd, _
+         MainDictionary:=Languages(mainLanguage).NameLocal) = False Then
+      If Application.CheckSpelling(wd, _
+           MainDictionary:=Languages(altLanguage).NameLocal) _
+            = True Then wd.HighlightColorIndex = myColour
+    End If
+  Next wd
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = " zczc"
+    .Replacement.Text = ChrW(8217) & "s"
+    .Execute Replace:=wdReplaceAll
+  End With
+  For i = 1 To numExceptions
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = exWord(i)
+      .Replacement.Text = ""
+      .Replacement.Highlight = True
+      .MatchCase = False
+      .Execute Replace:=wdReplaceAll
+    End With
+  Next i
+End If
+
+' Spellcheck the footnotes
+If ActiveDocument.Footnotes.Count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ChrW(8217) & "s"
+    .Replacement.Text = " zczc"
+    .Execute Replace:=wdReplaceAll
+  End With
+  countWds = rng.Words.Count
+  i = 0
+  For Each wd In rng.Words
+    If i Mod myJump = 0 Then StatusBar = "Checking words in footnotes: " _
+         & i
+    i = i + 1
+    If Len(wd) >= minLengthSpell And Trim(wd) <> "zczc" And _
+         Application.CheckSpelling(wd, _
+         MainDictionary:=Languages(mainLanguage).NameLocal) = False Then
+      If Application.CheckSpelling(wd, _
+           MainDictionary:=Languages(altLanguage).NameLocal) _
+          = True Then wd.HighlightColorIndex = myColour
+    End If
+  Next wd
+  With rng.Find
+    .Text = " zczc"
+    .Replacement.Text = ChrW(8217) & "s"
+    .Execute Replace:=wdReplaceAll
+  End With
+  For i = 1 To numExceptions
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = exWord(i)
+      .Replacement.Text = ""
+      .Replacement.Highlight = True
+      .MatchCase = False
+      .Execute Replace:=wdReplaceAll
+    End With
+  Next i
+End If
+
+' Spellcheck the main text
+i = ActiveDocument.Words.Count
+For Each wd In ActiveDocument.Words
+  If Len(wd) >= minLengthSpell And Trim(wd) <> "zczc" And _
+       Application.CheckSpelling(wd, _
+       MainDictionary:=Languages(mainLanguage).NameLocal) = False Then
+    If Application.CheckSpelling(wd, _
+         MainDictionary:=Languages(altLanguage).NameLocal) = True _
+         Then wd.HighlightColorIndex = myColour
+  End If
+  i = i - 1
+  If i Mod 100 = 0 Then StatusBar = "Spellchecking. To go: " & Str(i)
+Next wd
+
+' restore all apostrophe-s
+Set rng = ActiveDocument.Range
+With rng.Find
+  .Text = " zczc"
+  .Replacement.Text = ChrW(8217) & "s"
+  .Replacement.Highlight = False
+  .Execute Replace:=wdReplaceAll
+End With
+For i = 1 To numExceptions
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = exWord(i)
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchCase = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Next i
+
+totTime = Timer - timeStart
+If totTime > 60 Then MsgBox ((Int(10 * totTime _
+     / 60) / 10) & "  minutes")
+ActiveDocument.TrackRevisions = nowTrack
+StatusBar = ""
+End Sub
+

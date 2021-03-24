@@ -1,0 +1,179 @@
+Sub MacroFetchUpdate()
+' Paul Beverley - Version 18.02.21
+' Updates an existing macro, preserving the keystroke
+
+addPrompt = False
+
+Selection.Collapse wdCollapseStart
+Selection.Expand wdWord
+If Len(Selection) < 3 Then
+  Selection.MoveLeft , 3
+  Selection.Expand wdWord
+End If
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+myMacroName = Selection
+
+myKeyString = ""
+For Each kb In KeyBindings
+  If kb.KeyCategory = 2 Then  ' It's a Macro
+    cmd = kb.Command
+    gottit = (InStr(cmd, "." & myMacroName) > 0)
+    If Left(cmd, 6) = "Normal" And gottit And _
+         Right(cmd, Len(myMacroName)) = myMacroName Then
+      myKeyString = kb.KeyString
+      Exit For
+    End If
+  End If
+Next kb
+
+If myKeyString = "" Then myKeyString = "Dummy"
+
+Debug.Print myKeyString
+Dim v As Variable
+varsExist = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "myKeyString" Then varsExist = True: Exit For
+Next v
+If varsExist = False Then
+  ActiveDocument.Variables.Add "myMacroName", myMacroName
+  ActiveDocument.Variables.Add "myKeyString", myKeyString
+End If
+
+If myKeyString > "" And myKeyString <> "Dummy" Then
+  savedMacroName = ActiveDocument.Variables("myMacroName")
+  Debug.Print savedMacroName
+Else
+  savedMacroName = ""
+End If
+If savedMacroName = "" Or savedMacroName = "Dummy" Then
+  myFolder = Left(myMacroName, 1)
+  myFullName = "http://www.wordmacrotools.com/macros/" & _
+       myFolder & "/" & myMacroName
+  ActiveDocument.FollowHyperlink Address:=myFullName
+  If addPrompt = True Then
+    MsgBox "1) Select and copy the text of the macro" _
+         & vbCr & vbCr & "2) Delete the existing copy of the macro" _
+         & vbCr & vbCr & "3) Paste the new macro into Visual Basic (VBA)" _
+         & vbCr & vbCr & vbCr & "Click OK when you've copied the macro."
+  End If
+  ActiveDocument.Variables("myMacroName") = myMacroName
+  ActiveDocument.Variables("myKeyString") = myKeyString
+  Exit Sub
+End If
+
+myKeyString = ActiveDocument.Variables("myKeyString")
+myResponse = MsgBox("Set keystroke for macro: " & myMacroName & _
+     vbCr & vbCr & " to: " & myKeyString & "?", _
+     vbQuestion + vbYesNoCancel, "MacroFetchUpdate")
+If myResponse = vbYes Then
+  ks = myKeyString
+  kCode = 0
+  If InStr(ks, "Ctrl+") > 0 Then
+    kCode = kCode + 512
+    ks = Replace(ks, "Ctrl+", "")
+  End If
+  If InStr(ks, "Alt+") > 0 Then
+    kCode = kCode + 1024
+    ks = Replace(ks, "Alt+", "")
+  End If
+  If InStr(ks, "Shift+") > 0 Then
+    kCode = kCode + 256
+    ks = Replace(ks, "Shift+", "")
+  End If
+  
+  ' Ordinary capital letters
+  If ks Like "[A-Z]" Then
+    aCode = Asc(UCase(ks))
+    ks = ""
+  End If
+  
+  ' Ordinary numbers
+  If ks Like "[0-9]" Then
+    aCode = Asc(UCase(ks))
+    ks = ""
+  End If
+  
+  ' F keys
+  If Left(ks, 1) = "F" And Len(ks) > 1 Then
+    aCode = 111 + Val(Replace(ks, "F", ""))
+    ks = ""
+  End If
+  
+  Select Case ks
+    Case "!": aCode = wdKey1: kCode = kCode + 256 ' Shifted number 1
+    Case """": aCode = wdKey2: kCode = kCode + 256 ' Shifted number 2
+    Case ChrW(163): aCode = wdKey3: kCode = kCode + 256 ' Shifted number 3
+    Case "$": aCode = wdKey4: kCode = kCode + 256 ' Shifted number 4
+    Case "%": aCode = wdKey5: kCode = kCode + 256 ' Shifted number 5
+    Case "^": aCode = wdKey6: kCode = kCode + 256 ' Shifted number 6
+    Case "&": aCode = wdKey7: kCode = kCode + 256 ' Shifted number 7
+    Case "*": aCode = wdKey8: kCode = kCode + 256 ' Shifted number 8
+    Case "(": aCode = wdKey9: kCode = kCode + 256 ' Shifted number 9
+    Case ")": aCode = wdKey0: kCode = kCode + 256 ' Shifted number 0
+    Case "'": aCode = 192
+    Case "-": aCode = wdKeyHyphen ' The - key
+    Case "#": aCode = 222
+    Case ",": aCode = wdKeyComma ' The , key
+    Case ".": aCode = wdKeyPeriod ' The  key
+    Case "/": aCode = wdKeySlash
+    Case ":": aCode = wdKeySemiColon: kCode = kCode + 256
+    Case ";": aCode = wdKeySemiColon ' The ; key
+    Case "?": aCode = wdKeySlash: kCode = kCode + 256
+    Case "@": aCode = 192: kCode = kCode + 256
+    Case "[": aCode = wdKeyOpenSquareBrace ' The ] key
+    Case "\": aCode = wdKeyBackSlash ' The \ key
+    Case "]": aCode = wdKeyCloseSquareBrace ' The ] key
+    Case "_": aCode = wdKeyHyphen ' Does it need? kCode = kCode + 256
+    Case "`": aCode = 223
+    Case "{": aCode = wdKeyOpenSquareBrace: kCode = kCode + 256
+    Case "}": aCode = wdKeyCloseSquareBrace: kCode = kCode + 256
+    Case "~": aCode = 222: kCode = kCode + 256
+    Case "+": aCode = wdKeyEquals ' kCode = kCode + 256
+    Case "<": aCode = wdKeyComma: kCode = kCode + 256
+    Case "=": aCode = wdKeyEquals ' The = key
+    Case ">": aCode = wdKeyPeriod: kCode = kCode + 256
+    Case "Backspace": aCode = wdKeyBackspace ' The Backspace key
+    Case "Clear (Num 5)": aCode = wdKeyNumeric5: kCode = kCode + 256
+    Case "Delete": aCode = wdKeyDelete ' The Delete key
+    Case "Down": aCode = 40 ' The Down Cursor key
+    Case "End": aCode = 35 ' The EndD key
+    Case "Home": aCode = wdKeyHome ' The HOME key
+    Case "Insert": aCode = wdKeyInsert ' The Insert key
+    Case "Left": aCode = 37 ' The Left Cursor key
+    Case "Num -": aCode = wdKeyNumericSubtract ' The - key on the keypad
+    Case "Num *": aCode = wdKeyNumericMultiply ' The * key on the keypad
+    Case "Num /": aCode = wdKeyNumericDivide ' The / key on the keypad
+    Case "Num +": aCode = wdKeyNumericAdd ' The + key on the keypad
+    Case "Num 0": aCode = wdKeyNumeric0 ' The 0 key on the keypad
+    Case "Num 1": aCode = wdKeyNumeric1 ' The 1 key on the keypad
+    Case "Num 2": aCode = wdKeyNumeric2 ' The 2 key on the keypad
+    Case "Num 3": aCode = wdKeyNumeric3 ' The 3 key on the keypad
+    Case "Num 4": aCode = wdKeyNumeric4 ' The 4 key on the keypad
+    Case "Num 5": aCode = wdKeyNumeric5 ' The 5 key on the keypad
+    Case "Num 6": aCode = wdKeyNumeric6 ' The 6 key on the keypad
+    Case "Num 7": aCode = wdKeyNumeric7 ' The 7 key on the keypad
+    Case "Num 8": aCode = wdKeyNumeric8 ' The 8 key on the keypad
+    Case "Num 9": aCode = wdKeyNumeric9 ' The 9 key on the keypad
+    Case "Page Down": aCode = 34 ' The Page Down key
+    Case "Page Up": aCode = 33 ' The Page Up key
+    Case "Return": aCode = wdKeyReturn ' The Enter or Return key
+    Case "Right": aCode = 39 ' The Right Cursor key
+    Case "Space": aCode = wdKeySpacebar ' The Spacebar key
+    Case "Up": aCode = 38 ' The Up Cursor key
+  End Select
+  kCode = kCode + aCode
+  hexCode = Replace(Hex(kCode), "FFFF", "")
+  KeyBindings.Add KeyCode:=kCode, _
+       KeyCategory:=wdKeyCategoryMacro, Command:=myMacroName
+  Beep
+  MsgBox "Keystroke restored"
+Else
+  Beep
+  ActiveDocument.Variables("myMacroName") = "Dummy"
+End If
+ActiveDocument.Variables("myMacroName") = "Dummy"
+End Sub
+

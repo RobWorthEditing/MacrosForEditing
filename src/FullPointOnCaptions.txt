@@ -1,0 +1,35 @@
+Sub FullPointOnCaptions()
+' Paul Beverley - Version 09.06.17
+' Finds captions and ensures that they have a full point
+
+myTag = "<Cap>"
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myTag
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.Expand wdParagraph
+  lastChar = Left(Right(rng.Text, 2), 1)
+  If lastChar = "." Or lastChar = "?" Or lastChar = "!" Then
+    ' No nothing!
+  Else
+    rng.Start = rng.End - 1
+    rng.Select
+    rng.InsertBefore Text:="."
+  End If
+  rng.Expand wdParagraph
+  rng.Collapse wdCollapseEnd
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+Loop
+End Sub
+

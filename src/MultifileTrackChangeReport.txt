@@ -1,0 +1,145 @@
+Sub MultifileTrackChangeReport()
+' Paul Beverley - Version 24.09.18
+' Creates a file of sentences containing TCs in multiple files
+
+mySpace = vbCr & vbCr
+
+Dim allMyFiles(200) As String
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+On Error GoTo ReportIt
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  myResponse = MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "Multifile Text Collection")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.Count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+
+  myResponse = MsgBox("Extract track-changed sentences from ALL " & _
+       "the files in this folder:" & dirName _
+       & " ?", vbQuestion + vbYesNoCancel, "Multifile Track-change reporter")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  myResponse = MsgBox("Extract track-changed sentences from just " & _
+       "the files listed here?", _
+       vbQuestion + vbYesNoCancel, "Multifile Track-change reporter")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+Documents.Add
+Set myReport = ActiveDocument
+Set rptRng = ActiveDocument.Content
+For i = 1 To numFiles
+  thisFile = myFolder & myDelimiter & allMyFiles(i)
+  Set sourceText = Application.Documents.Open(FileName:=thisFile)
+  StatusBar = allMyFiles(i)
+  DoEvents
+  ActiveDocument.TrackRevisions = False
+  myFileName = Left(sourceText.Name, InStr(sourceText.Name, ".") - 1)
+  rptRng.Text = vbCr & vbCr & "zczc" & myFileName & vbCr & "zczc" & vbCr
+  rptRng.Collapse wdCollapseEnd
+  rptRng.InsertAfter Text:=mySpace
+  rptRng.Collapse wdCollapseEnd
+
+  sntEnd = 0
+  For Each rv In sourceText.Revisions
+    If rv.range.End > sntEnd Then
+      Set rng = rv.range.Duplicate
+      rng.Expand wdSentence
+      rptRng.FormattedText = rng.FormattedText
+      rptRng.Collapse wdCollapseEnd
+      rptRng.InsertAfter Text:=mySpace
+      rptRng.Collapse wdCollapseEnd
+      rng.Collapse wdCollapseEnd
+      sntEnd = rng.End
+    End If
+  Next rv
+  sourceText.Close SaveChanges:=False
+Next
+myReport.Activate
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zczc(*)" & vbCr & "zczc"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "\1"
+  .Replacement.Style = wdStyleHeading2
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Edited sentences from: " & _
+     myFolder & vbCr & vbCr & vbCr & vbCr
+ActiveDocument.Paragraphs(1).range.Style = wdStyleHeading2
+Selection.MoveLeft , 2
+Beep
+Exit Sub
+
+ReportIt:
+If Err.Number = 5825 Then
+  Resume Next
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+

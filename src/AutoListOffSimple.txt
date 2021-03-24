@@ -1,0 +1,6 @@
+Sub AutoListOffSimple()
+' Paul Beverley - Version 01.06.10
+' Auto-lists to text
+ActiveDocument.ConvertNumbersToText
+End Sub
+

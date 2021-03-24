@@ -1,0 +1,306 @@
+Sub IZIScount()
+' Paul Beverley - Version 06.02.21
+' Counts IS/IZ spellings
+
+szExceptions = "analys,reanalys,overanalys,catalys,dialys,"
+szExceptions = szExceptions & "electrolys,paralys,hydrolys"
+
+changeZColour = wdTurquoise
+changeSColour = wdBrightGreen
+nonoStyles = "DisplayQuote,ReferenceList"
+
+ExceptionSFile = "IS_words"
+ExceptionZFile = "IZ_words"
+
+closeExceptionsFiles = True
+
+' Address where the IS exceptions file is held
+' On Windows, it will need to be something like:
+mySFile = "C:\Documents and Settings\Paul\My Documents\IS_words.docx"
+
+' On a Mac, it will need to be something like:
+mySFile = "/Users/Paul/My Documents/Macro stuff/IS_words.docx"
+
+
+' Address where the IZ exceptions file is held
+' On Windows, it will need to be something like:
+myZFile = "C:\Documents and Settings\Paul\My Documents\IZ_words.docx"
+
+' On a Mac, it will need to be something like:
+myZFile = "/Users/Paul/My Documents/Macro stuff/IZ_words.docx"
+
+Set mainDoc = ActiveDocument
+Selection.HomeKey Unit:=wdStory
+myResponse = MsgBox("Highlight the IS/IZ words?", _
+     vbQuestion + vbYesNoCancel, "ISIZcount")
+If myResponse = vbCancel Then Exit Sub
+If myResponse = vbYes Then doHighlight = True
+
+
+gottaSdoc = False
+For Each thisDoc In Application.Documents
+  thisName = thisDoc.Name
+  If InStr(thisName, ExceptionSFile) > 0 Then
+    gottaSdoc = True
+    thisDoc.Activate
+    Exit For
+  End If
+Next thisDoc
+
+On Error Resume Next
+
+If gottaSdoc = False Then
+  Documents.Open mySFile
+  If Err.Number = 5174 Then
+    MsgBox ("Please open the IS exceptions file")
+    Err.Clear
+    Exit Sub
+  Else
+    On Error GoTo 0
+  End If
+End If
+
+allSWords = "!"
+For Each wd In ActiveDocument.Words
+  thisWord = Trim(wd)
+  If Asc(thisWord) > 32 Then allSWords = allSWords & thisWord & "!"
+Next wd
+allSWords = LCase(allSWords)
+
+If closeExceptionsFiles = True And gottaSdoc = False Then
+  ActiveDocument.Close SaveChanges:=False
+End If
+
+gottaZdoc = False
+For Each thisDoc In Application.Documents
+  thisName = thisDoc.Name
+  If InStr(thisName, ExceptionZFile) > 0 Then
+    gottaZdoc = True
+    thisDoc.Activate
+    Exit For
+  End If
+Next thisDoc
+
+If gottaZdoc = False Then
+  Documents.Open myZFile
+  If Err.Number = 5174 Then
+    MsgBox ("Please open the IZ exceptions file")
+    Err.Clear
+    Exit Sub
+  Else
+    On Error GoTo 0
+  End If
+End If
+
+allZWords = "!"
+For Each wd In ActiveDocument.Words
+  thisWord = Trim(wd)
+  If Asc(thisWord) > 32 Then allZWords = allZWords & thisWord & "!"
+Next wd
+allZWords = LCase(allZWords)
+
+If closeExceptionsFiles = True And gottaZdoc = False Then
+  ActiveDocument.Close SaveChanges:=False
+End If
+
+mainDoc.Activate
+
+totZwords = 0
+For hit = 1 To 3
+  If hit = 1 Then
+    thisMany = ActiveDocument.Endnotes.Count
+    If thisMany > 0 Then
+      Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+      Set rng1 = ActiveDocument.StoryRanges(wdEndnotesStory)
+    End If
+  End If
+  If hit = 2 Then
+    thisMany = ActiveDocument.Footnotes.Count
+    If thisMany > 0 Then
+      Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+      Set rng1 = ActiveDocument.StoryRanges(wdFootnotesStory)
+    End If
+  End If
+  If hit = 3 Then
+    Set rng = ActiveDocument.Content
+    Set rng1 = ActiveDocument.Content
+    thisMany = 1
+  End If
+
+  If thisMany > 0 Then
+    theEnd = rng.End
+    Do
+      With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = "[iy]z[iea]"
+        .Wrap = wdFindStop
+        .Replacement.Text = ""
+        .Forward = True
+        .MatchWildcards = True
+        .MatchWholeWord = False
+        .MatchSoundsLike = False
+        .Execute
+      End With
+      If rng.Find.Found = True Then
+        fnd = rng
+        opposite = Replace(fnd, "z", "s")
+
+      ' Find end of word
+        rng1.Start = rng.End - 1
+        rng1.End = rng.End
+        Do
+          rng1.End = rng1.End + 1
+          rng1.Start = rng1.Start + 1
+        Loop Until UCase(rng1) = LCase(rng1)
+        wdEnd = rng1.Start
+
+      ' find start of word
+        rng1.Start = rng.Start
+        rng1.End = rng.Start + 1
+        Do
+          rng1.End = rng1.End - 1
+          rng1.Start = rng1.Start - 1
+        Loop Until UCase(rng1) = LCase(rng1)
+
+      ' set rng 1 to the whole word
+        rng1.Start = rng1.End
+        rng1.End = wdEnd
+
+        changeIt = True
+        ' But don't make the change if...
+        thisStyle = rng.Style
+        If InStr(nonoStyles, thisStyle) > 0 Then changeIt = False
+        If rng.Font.StrikeThrough = True Then changeIt = False
+
+      ' if it's not in the list of z's
+        If InStr(allZWords, "!" & LCase(rng1) & "!") = 0 And _
+             changeIt = True Then
+          If doHighlight = True Then rng1.HighlightColorIndex = _
+               changeZColour
+          totZwords = totZwords + 1
+        End If
+        stopNow = False
+      Else
+        stopNow = True
+      End If
+      rng.Start = rng.End
+      i = 2 * theEnd - rng.End
+      If (i Mod 100) = 0 And hit = 3 Then StatusBar = "To go: " & Str(i)
+    Loop Until stopNow = True
+  End If
+Next hit
+
+totSwords = 0
+For hit = 1 To 3
+  If hit = 1 Then
+    thisMany = ActiveDocument.Endnotes.Count
+    If thisMany > 0 Then
+      Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+      Set rng1 = ActiveDocument.StoryRanges(wdEndnotesStory)
+    End If
+  End If
+  If hit = 2 Then
+    thisMany = ActiveDocument.Footnotes.Count
+    If thisMany > 0 Then
+      Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+      Set rng1 = ActiveDocument.StoryRanges(wdFootnotesStory)
+    End If
+  End If
+  If hit = 3 Then
+    Set rng = ActiveDocument.Content
+    Set rng1 = ActiveDocument.Content
+    thisMany = 1
+  End If
+
+  If thisMany > 0 Then
+    theEnd = rng.End
+    xcvzxcv = rng.Start
+    Do
+      With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = "[iy]s[iea]"
+        .Wrap = wdFindStop
+        .Replacement.Text = ""
+        .Forward = True
+        .MatchWildcards = True
+        .Execute
+      End With
+      If rng.Find.Found = True Then
+        fnd = rng
+        opposite = Replace(fnd, "s", "z")
+
+      ' Find end of word
+        rng1.Start = rng.End - 1
+        rng1.End = rng.End
+        Do
+          rng1.End = rng1.End + 1
+          rng1.Start = rng1.Start + 1
+        Loop Until UCase(rng1) = LCase(rng1)
+        wdEnd = rng1.Start
+
+      ' find start of word
+        rng1.Start = rng.Start
+        rng1.End = rng.Start + 1
+        Do
+          rng1.End = rng1.End - 1
+          rng1.Start = rng1.Start - 1
+        Loop Until UCase(rng1) = LCase(rng1)
+
+      ' set rng 1 to the whole word
+        rng1.Start = rng1.End
+        rng1.End = wdEnd
+        startWord = rng1.Start
+
+        changeIt = True
+        ' But don't make the change if...
+        thisStyle = rng.Style
+        If InStr(nonoStyles, thisStyle) > 0 Then changeIt = False
+        If rng.Font.StrikeThrough = True Then changeIt = False
+
+        ' If -is- is  near the beginning of the word...
+        If rng.Start - rng1.Start < 4 Then
+          ' look for an -is- later in the word
+          rng.Start = rng1.Start + 4
+          rng.End = wdEnd
+          With rng.Find
+            .ClearFormatting
+            .Replacement.ClearFormatting
+            .Text = "is[iea]"
+            .Wrap = wdFindStop
+            .Replacement.Text = ""
+            .Forward = True
+            .MatchWildcards = True
+            .Execute
+          End With
+          opposite = Replace(rng, "s", "z")
+          If rng.Find.Found = False Or rng.Start > wdEnd _
+               Then changeIt = False
+        End If
+      ' Check that it's not in the list of s's
+        If InStr(allSWords, "!" & LCase(rng1) & "!") > 0 _
+             Then changeIt = False
+        If InStr(szExceptions, Left(LCase(rng1), 6)) > 0 _
+             And rng1.LanguageID = wdEnglishUK Then changeIt = False
+        If changeIt = True Then
+          If doHighlight = True Then rng1.HighlightColorIndex _
+               = changeSColour
+          totSwords = totSwords + 1
+        End If
+        stopNow = False
+      Else
+        stopNow = True
+      End If
+      rng.Start = wdEnd
+      rng.End = wdEnd
+      i = theEnd - rng.End
+      If (i Mod 100) = 0 And hit = 3 Then StatusBar = "To go: " & Str(i)
+    Loop Until stopNow = True
+  End If
+Next hit
+StatusBar = ""
+MsgBox ("IZ words:  " & Str(totZwords) & vbCr & vbCr & "IS words:  " _
+     & Str(totSwords))
+End Sub
+

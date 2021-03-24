@@ -1,0 +1,11 @@
+Sub CopyComments()
+' Paul Beverley - Version 01.06.10
+' Create a list of all the comments
+If ActiveDocument.Comments.Count >= 1 Then
+  ActiveDocument.StoryRanges(wdCommentsStory).Copy
+End If
+
+Documents.Add
+Selection.Paste
+End Sub
+

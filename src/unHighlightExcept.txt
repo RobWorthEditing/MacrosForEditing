@@ -1,0 +1,69 @@
+Sub unHighlightExcept()
+' Paul Beverley - Version 11.01.11
+' Remove all highlights except one/two chosen colours
+keepColour1 = wdYellow
+' And another colour as well?
+' keepColour2 = wdBrightGreen
+keepColour2 = wdTurquoise
+' keepColour2 = wdRed
+' keepColour2 = 0
+
+Set rng = ActiveDocument.Content
+theEnd = rng.End
+gotOne = False
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+rng.End = 0
+Do
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = ""
+   .Highlight = True
+   .Wrap = False
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = False
+   .Execute
+  End With
+  gotOne = rng.Find.Found
+  If gotOne = True Then
+    foundColour = rng.HighlightColorIndex
+    If foundColour > 99 Then
+    ' Mixed colours of highlighting
+      colEnd = rng.End
+      Do
+        rng.End = rng.Start + 1
+        foundColour = rng.HighlightColorIndex
+        If (foundColour <> keepColour1) And (foundColour <> keepColour2) Then
+          rng.HighlightColorIndex = 0
+        End If
+        If foundColour > 99 Then rng.HighlightColorIndex = 0
+        rng.Start = rng.End
+      Loop Until rng.End = colEnd
+    Else
+      If (foundColour <> keepColour1) And (foundColour <> keepColour2) Then
+        rng.HighlightColorIndex = 0
+      End If
+    End If
+    StatusBar = "On large files, this may take some time.  " _
+         & Str(theEnd - rng.End)
+    rng.Start = rng.End
+  End If
+Loop Until gotOne = False
+
+' Now remove all the 'Not formatted' track revisions
+theEnd = ActiveDocument.Content.End
+started = False
+For Each rev In ActiveDocument.Range.Revisions
+  Set rng = rev.Range
+  myType = rev.FormatDescription
+  If myType = "Formatted: Not Highlight" Then rng.Revisions.AcceptAll
+  StatusBar = "Getting rid of 'Formatted: Not Highlight'..." _
+       & Str(theEnd - rng.End)
+Next rev
+ActiveDocument.TrackRevisions = nowTrack
+StatusBar = "               Finished!!!!!!!!!!!!!!!"
+Selection.HomeKey Unit:=wdStory
+End Sub
+

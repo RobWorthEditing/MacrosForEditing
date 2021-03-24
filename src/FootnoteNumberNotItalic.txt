@@ -1,0 +1,12 @@
+Sub FootnoteNumberNotItalic()
+' Paul Beverley - Version 01.06.10
+' Makes changes to all footnotes
+
+For i = 1 To ActiveDocument.Footnotes.Count
+  Set rng = ActiveDocument.Footnotes(i).Range
+  rng.End = rng.Start
+  rng.Start = rng.Start - 3
+  rng.Font.Italic = False
+Next
+End Sub
+

@@ -1,0 +1,100 @@
+Sub FindThisOrThat()
+' Paul Beverley - Version 24.02.14
+' Find the next occurrence of certain specific words
+
+Dim v As Variable
+varsExist = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "findText" Then varsExist = True: Exit For
+Next v
+
+If varsExist = False Then
+  Call FindThisOrThatSetUp
+  Exit Sub
+End If
+
+listWds = Trim(ActiveDocument.Variables("findText"))
+If InStr(listWds, "|") > 0 Then
+  de = "|"
+Else
+  de = ","
+End If
+
+numWds = Len(listWds) - Len(Replace(listWds, de, "")) + 1
+
+ReDim findWds(numWds) As String
+findWds = Split(listWds, de)
+
+Selection.Collapse wdCollapseEnd
+Set rng = ActiveDocument.Content
+hereStart = Selection.Start
+
+' Find the nearest of the required words
+nearest = ActiveDocument.Range.End
+wdNum = -1
+For i = 0 To numWds - 1
+  rng.Start = hereStart
+  rng.End = nearest
+  w = findWds(i)
+  If Left(w, 1) = "~" Then
+    w = Mid(w, 2)
+    wc = True
+  Else
+    wc = False
+  End If
+  If Left(w, 1) = "$" Then
+    w = Mid(w, 2)
+    sens = True
+  Else
+    sens = False
+  End If
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = w
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchCase = sens
+    .MatchWildcards = wc
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  wdPos = rng.Start
+  If wdPos < nearest And wdPos <> hereStart Then
+    nearest = wdPos
+    wdNum = i
+  End If
+Next i
+
+If wdNum >= 0 Then
+  w = findWds(wdNum)
+  If Left(w, 1) = "~" Then
+    w = Mid(w, 2)
+    wc = True
+  Else
+    wc = False
+  End If
+  If Left(w, 1) = "$" Then
+    w = Mid(w, 2)
+    sens = True
+  Else
+    sens = False
+  End If
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = w
+    .Wrap = False
+    .Replacement.Text = ""
+    .MatchCase = sens
+    .MatchWildcards = wc
+    .Forward = True
+    .Execute
+  End With
+Else
+  Beep
+End If
+End Sub
+

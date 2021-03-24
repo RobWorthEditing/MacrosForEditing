@@ -1,0 +1,106 @@
+Sub HyphenSpaceWordCount()
+' Paul Beverley - Version 14.01.21
+' Count hyphenated word forms
+
+If Len(Selection) = 1 Then Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+
+startHere = Selection.Start
+selText = Selection
+mySplit = InStr(selText, " ") + InStr(selText, "-") _
+     + InStr(selText, ChrW(8211))
+If mySplit = 0 Then
+  If Len(Selection) = 1 Then
+    Selection.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+    selText = Selection
+  End If
+  Beep
+  wd1 = InputBox("First word?", "HyphenSpaceWordCount", selText)
+  If wd1 = selText Then
+    Selection.MoveRight wdWord, 1
+    Selection.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+    wd2 = Selection
+    If wd2 = "-" Or wd2 = ChrW(8211) Then
+      Selection.MoveRight wdWord, 1
+      Selection.Expand wdWord
+      Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+        Selection.MoveEnd , -1
+        DoEvents
+      Loop
+      wd2 = Selection
+    End If
+    endHere = Selection.End
+  Else
+    wd2 = Mid(selText, Len(wd1) + 1)
+  End If
+  Selection.Start = startHere
+Else
+  myText = Trim(Selection)
+  hyphenPos = InStr(myText, "-")
+  spacePos = InStr(myText, " ")
+  enPos = InStr(myText, ChrW(8211))
+  markerPos = hyphenPos + spacePos + enPos
+  wd1 = Left(myText, markerPos - 1)
+  wd2 = Mid(myText, markerPos + 1)
+End If
+
+chs = " , . ! : ; [ ] { } ( ) / \ + "
+chs = chs & ChrW(8220) & " "
+chs = chs & ChrW(8221) & " "
+chs = chs & ChrW(8201) & " "
+chs = chs & ChrW(8222) & " "
+chs = chs & ChrW(8217) & " "
+chs = chs & ChrW(8216) & " "
+chs = chs & ChrW(8212) & " "
+chs = chs & ChrW(8722) & " "
+chs = chs & vbCr & " "
+chs = chs & vbTab & " "
+
+chs = " " & chs & " "
+chs = Replace(chs, "  ", " ")
+chs = Left(chs, Len(chs) - 1)
+
+Set rng = ActiveDocument.Content
+allText = rng.Text
+
+chars = Split(chs, " ")
+For i = 1 To UBound(chars)
+  allText = Replace(allText, chars(i), " ")
+Next i
+p = " " & myPhrase & " "
+allText = LCase(allText)
+wd1 = LCase(wd1)
+wd2 = LCase(wd2)
+myTot = Len(allText)
+
+p = wd1 & " " & wd2
+spaceCount = Len(Replace(allText, p, p & "!")) - myTot
+
+p = wd1 & "-" & wd2
+hyphenCount = Len(Replace(allText, p, p & "!")) - myTot
+
+p = wd1 & ChrW(8211) & wd2
+dashCount = Len(Replace(allText, p, p & "!")) - myTot
+
+p = wd1 & wd2
+oneWordCount = Len(Replace(allText, p, p & "!")) - myTot
+
+myResult = wd1 & wd2 & ":   " & Str(oneWordCount) & vbCr
+myResult = myResult & wd1 & " " & wd2 & ":   " & Str(spaceCount) & vbCr
+myResult = myResult & wd1 & "-" & wd2 & ":   " & Str(hyphenCount) & vbCr
+myResult = myResult & wd1 & "<dash>" & wd2 & ":   " & Str(dashCount)
+
+MsgBox myResult, 0, "HyphenSpaceWordCount"
+End Sub
+

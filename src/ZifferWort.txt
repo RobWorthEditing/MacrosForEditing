@@ -1,0 +1,57 @@
+Sub ZifferWort()
+' Paul Beverley - Version 06.04.20
+' Converts the next number (1 to 12) into German text
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+' Find a number (six figures max)
+Selection.End = Selection.Start
+With Selection.Find
+  .ClearFormatting
+  .Text = "[0-9]{1,5}"
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Forward = True
+  .Execute
+End With
+
+myNum = Val(Selection)
+Select Case myNum
+  Case 1: myText = "eins"
+  Case 2: myText = "zwei"
+  Case 3: myText = "drei"
+  Case 4: myText = "vier"
+  Case 5: myText = "fünf"
+  Case 6: myText = "sechs"
+  Case 7: myText = "sieben"
+  Case 8: myText = "acht"
+  Case 9: myText = "neun"
+  Case 10: myText = "zehn"
+  Case 11: myText = "elf"
+  Case 12: myText = "zwölf"
+  Case 13: myText = ""
+  Case 14: myText = ""
+  Case 15: myText = ""
+  Case 16: myText = ""
+  Case 17: myText = ""
+  Case 18: myText = ""
+  Case 19: myText = ""
+  Case 20: myText = ""
+  
+  Case Else: myText = ""
+End Select
+If myText = "" Then
+  Beep
+  Selection.Collapse wdCollapseEnd
+Else
+  Selection.TypeText Text:=myText
+End If
+
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchWildcards = False
+End With
+End Sub
+

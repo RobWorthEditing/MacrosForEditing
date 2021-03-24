@@ -1,0 +1,14 @@
+Sub DeleteAllImagesAndCloseUp()
+' Paul Beverley - Version 13.12.16
+' Deletes all images and closes the gaps
+
+For Each pic In ActiveDocument.InlineShapes
+  pic.range.Select
+  Selection.Delete
+  Selection.MoveEndWhile cset:=Chr(13), Count:=wdForward
+  Selection.MoveStartWhile cset:=Chr(13), Count:=wdBackward
+  Selection.MoveStart , 1
+  Selection.Delete
+Next pic
+End Sub
+

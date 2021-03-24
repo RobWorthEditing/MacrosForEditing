@@ -1,0 +1,29 @@
+Sub UnifyFormatBackwards()
+' Paul Beverley - Version 27.11.20
+' Makes start of para (or selection) same format as the end
+
+doTrack = False
+
+myTrack = ActiveDocument.TrackRevisions
+startHere = Selection.Start
+If doTrack = False Then ActiveDocument.TrackRevisions = False
+If Selection.Start = Selection.End Then
+  Selection.Expand wdParagraph
+  Selection.End = startHere
+End If
+startHere = Selection.Start
+Selection.Start = Selection.End - 1
+Selection.Collapse wdCollapseEnd
+Selection.MoveEnd , -1
+If Selection = " " Or Selection = vbCr Then
+  Selection.MoveStart , -1
+  Selection.MoveEnd , -1
+End If
+Selection.MoveEnd , 1
+Selection.CopyFormat
+Selection.Start = startHere
+Selection.PasteFormat
+Selection.Collapse wdCollapseEnd
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

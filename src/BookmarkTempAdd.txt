@@ -1,0 +1,11 @@
+Sub BookmarkTempAdd()
+' Paul Beverley - Version 12.01.16
+' Add temporary marker
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Selection.Collapse wdCollapseStart
+ActiveDocument.Bookmarks.Add Name:="myTempMark"
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

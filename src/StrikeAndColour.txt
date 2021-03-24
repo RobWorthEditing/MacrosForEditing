@@ -1,0 +1,11 @@
+Sub StrikeAndColour()
+' Paul Beverley - Version 01.09.16
+' Adds strikethrough and colour
+
+If Selection.Start = Selection.End Then Selection.Expand wdParagraph
+Set rng = Selection.range.Duplicate
+Call ColourPlus
+rng.Select
+Call StrikeSingle
+End Sub
+

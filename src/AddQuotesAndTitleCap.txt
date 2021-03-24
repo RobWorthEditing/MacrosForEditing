@@ -1,0 +1,28 @@
+Sub AddQuotesAndTitleCap()
+' Paul Beverley - Version 13.12.16
+' Puts quotes on sentence, then makes it title case
+
+useDoubleQuotes = True
+' i.e. say False for single quotes
+
+Selection.Expand wdSentence
+Selection.Collapse wdCollapseStart
+If useDoubleQuotes Then
+  Selection.TypeText Text:=ChrW(8220)
+Else
+  Selection.TypeText Text:=ChrW(8216)
+End If
+
+Selection.Expand wdSentence
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 1
+If useDoubleQuotes Then
+  Selection.TypeText Text:=ChrW(8221)
+Else
+  Selection.TypeText Text:=ChrW(8217)
+End If
+
+Selection.MoveLeft , 2
+Call TitleInQuotesCapper
+End Sub
+

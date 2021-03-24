@@ -1,0 +1,27 @@
+Sub Pluralise()
+' Paul Beverley - Version 14.01.21
+' Tries to make the current word plural
+
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+myWord = Selection
+Selection.Collapse wdCollapseEnd
+
+Select Case Right(myWord, 1)
+  Case "o":
+      Selection.TypeText "es"
+  Case "y":
+      Selection.MoveStart , -1
+      Selection.TypeText "ies"
+  Case Else
+      Selection.TypeText "s"
+End Select
+Selection.MoveStart , -3
+If Selection = "chs" Then Selection.TypeText "ches"
+Selection.Collapse wdCollapseEnd
+Selection.MoveRight , 1
+End Sub
+

@@ -1,0 +1,63 @@
+Sub WordTotaller()
+' Paul Beverley - Version 21.01.11
+' Adds up word numbers in selected texts
+addPageNum = True
+wordsQuote = 3
+
+myTotal = Selection.Words.Count
+ss = Selection.Start
+se = Selection.End
+Selection.End = ss
+Selection.MoveEnd wdWord, wordsQuote
+myQuote = Selection
+If addPageNum = True Then
+  Selection.Start = se
+  Selection.Fields.Add Range:=Selection.Range, Type:=wdFieldEmpty, Text:= _
+      "PAGE  \* Arabic ", PreserveFormatting:=True
+  Selection.MoveLeft Unit:=wdCharacter, Count:=1, Extend:=wdExtend
+  pageNum = Selection
+  Selection.Delete
+  Selection.Start = ss
+  Selection.End = se
+End If
+Set thisDoc = ActiveDocument
+' Find the doc with the totals
+For Each myDoc In Documents
+  myDoc.Activate
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .MatchWildcards = False
+    .Text = "====="
+    .Replacement.Text = ""
+    .Execute
+  End With
+  If rng.Find.Found Then
+    gotOne = True
+    Exit For
+  Else
+    gotOne = False
+  End If
+Next myDoc
+' If no totals file, create one
+If gotOne = False Then
+  Documents.Add
+  Selection.TypeText Text:="=====" & vbCrLf & "0" & vbCrLf & vbCrLf
+  Selection.HomeKey Unit:=wdStory
+  Selection.MoveDown Unit:=wdLine, Count:=1, Extend:=wdExtend
+Else
+  rng.End = rng.End + 1
+  rng.Select
+End If
+' Add current word number to total
+Selection.InsertBefore Text:=Str(myTotal) & Chr(9) & "p." & _
+     pageNum & " - " & myQuote & vbCrLf
+Selection.Start = Selection.End
+Selection.MoveDown Unit:=wdLine, Count:=1, Extend:=wdExtend
+myTotal = myTotal + Val(Selection)
+Selection.TypeText Text:=Str(myTotal)
+Selection.MoveRight Unit:=wdCharacter, Count:=1
+thisDoc.Activate
+End Sub
+

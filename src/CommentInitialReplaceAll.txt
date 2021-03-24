@@ -1,0 +1,10 @@
+Sub CommentInitialReplaceAll()
+' Paul Beverley - Version 14.08.19
+' Changes all comment initials
+
+newInitial = "PEB"
+For i = 1 To ActiveDocument.Comments.Count
+  ActiveDocument.Comments(i).Initial = newInitial
+Next i
+End Sub
+

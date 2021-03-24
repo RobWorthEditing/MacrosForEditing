@@ -1,0 +1,274 @@
+Sub SentenceAlyse()
+' Paul Beverley - Version 28.09.19
+' Analyse the lengths of sentences
+
+myStep = 4
+showReadability = True
+
+Dim tot(5000) As Integer
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.Text = rng.Text
+
+' Remove multispaces
+Set rng = ActiveDocument.range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Text = " {2,}"
+  .Replacement.Text = " "
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Execute Replace:=wdReplaceAll
+End With
+DoEvents
+
+' and multi-returns
+Set rng = ActiveDocument.range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = "^13{2,}"
+  .Replacement.Text = "^p"
+  .Wrap = wdFindContinue
+  .Execute Replace:=wdReplaceAll
+End With
+DoEvents
+
+' Abbreviations that Word thinks are sentences!
+Set rng = ActiveDocument.range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = ". ([a-z])"
+  .Replacement.Text = " \1"
+  .Wrap = wdFindContinue
+  .Execute Replace:=wdReplaceAll
+End With
+DoEvents
+
+' Spaces off paragraph ends
+Set rng = ActiveDocument.range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = False
+  .Text = " ^p"
+  .Replacement.Text = "^p"
+  .Wrap = wdFindContinue
+  .Execute Replace:=wdReplaceAll
+End With
+DoEvents
+
+' Spaces off dashes & hyphens
+Set rng = ActiveDocument.range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = " [-^0150] "
+  .Replacement.Text = " "
+  .Wrap = wdFindContinue
+  .Execute Replace:=wdReplaceAll
+End With
+DoEvents
+
+' Spaces off dashes & hyphens
+Set rng = ActiveDocument.range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = "[\?\!]"
+  .Replacement.Text = "."
+  .Wrap = wdFindContinue
+  .Execute Replace:=wdReplaceAll
+End With
+DoEvents
+
+' Beware multiple dots
+Set rng = ActiveDocument.range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = "[.]{2,}"
+  .Replacement.Text = "."
+  .Wrap = wdFindContinue
+  .Execute Replace:=wdReplaceAll
+End With
+DoEvents
+
+'Find average sentence length
+totalWords = 0
+maxLen = 0
+maxCol = 0
+For Each sn In ActiveDocument.Sentences
+  mySnt = sn
+  mySnt = Replace(mySnt, Chr(13), "")
+  If Right(mySnt, 1) = " " Then myCrrn = 0 Else myCrrn = 1
+  wds = Len(mySnt) - Len(Replace(mySnt, " ", "")) + myCrrn
+  totalWords = totalWords + wds
+  If wds > maxLen Then maxLen = wds
+  col = Int((wds - 1) / myStep)
+  tot(col) = tot(col) + 1
+  If col > maxCol Then maxCol = col
+' This is for diagnosis
+  sn.Select
+  Selection.Start = Selection.End - 2
+  Selection.End = Selection.End - 1
+  Selection.range.HighlightColorIndex = wdYellow
+  DoEvents
+Next sn
+sentNum = ActiveDocument.Sentences.Count
+meanLength = totalWords / sentNum
+
+' Find standard deviation
+Dsq = 0
+sntCnt = 0
+For Each sn In ActiveDocument.Sentences
+  sntCnt = sntCnt + 1
+  mySnt = sn
+  mySnt = Replace(mySnt, Chr(13), "")
+  If Right(mySnt, 1) = " " Then myCrrn = 0 Else myCrrn = 1
+  myWds = Len(mySnt) - Len(Replace(mySnt, " ", "")) + myCrrn
+  Dsq = Dsq + (meanLength - myWds) ^ 2
+Next sn
+sd = Sqr(Dsq / sentNum)
+
+' Prepare text of results printout
+Blank = vbCr & vbCr
+myAnswer = Blank & "zczcComplete textczcz" & vbCr
+myAnswer = myAnswer & "Words = " & Str(totalWords) & vbCr
+myAnswer = myAnswer & "Sentences = " & Str(sntCnt) & vbCr
+myAnswer = myAnswer & "Average sentence length = " & Str(Int(meanLength * 10) / 10) & vbCr
+myAnswer = myAnswer & "Standard deviation = " & Str(Int(sd * 10) / 10) & Blank
+
+' Now create the set of frequencies
+myFreq = Blank & "zczcWith headingsczcz" & vbCr
+For col = 0 To Int((maxLen - 1) / myStep)
+  myFreq = myFreq & Str((col * myStep) + 1) & _
+       " to " & Str((col + 1) * myStep) & " = " & _
+       tot(col) & vbCr
+Next
+
+' Delete headings = any line with no full stop
+' and then do the stats again
+For Each pa In ActiveDocument.Paragraphs
+  myText = pa
+  If Len(myText) > 3 Then
+    ch = Mid(myText, Len(myText) - 1, 1)
+    If InStr("!.?:", ch) = 0 Then pa.range.Font.Underline = True
+  End If
+  i = i + 1: If i Mod 100 = 0 Then DoEvents
+Next pa
+
+Set rng = ActiveDocument.range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = ""
+  .Font.Underline = True
+  .Replacement.Text = ""
+  .Wrap = wdFindContinue
+  .Execute Replace:=wdReplaceAll
+End With
+DoEvents
+
+'Find average sentence length
+totalWords = 0
+' Zero the counts ready for next set
+For i = 0 To maxCol
+  tot(i) = 0
+Next
+maxLen = 0
+maxCol = 0
+
+For Each sn In ActiveDocument.Sentences
+  mySnt = sn
+  mySnt = Replace(mySnt, Chr(13), "")
+  If Right(mySnt, 1) = " " Then myCrrn = 0 Else myCrrn = 1
+  wds = Len(mySnt) - Len(Replace(mySnt, " ", "")) + myCrrn
+  totalWords = totalWords + wds
+  If wds > maxLen Then maxLen = wds
+  col = Int((wds - 1) / myStep)
+  tot(col) = tot(col) + 1
+  If col > maxCol Then maxCol = col
+Next sn
+sentNum = ActiveDocument.Sentences.Count
+meanLength = totalWords / sentNum
+
+
+' Find standard deviation
+Dsq = 0
+sntCnt = 0
+For Each sn In ActiveDocument.Sentences
+  sntCnt = sntCnt + 1
+  mySnt = sn
+  mySnt = Replace(mySnt, Chr(13), "")
+  If Right(mySnt, 1) = " " Then myCrrn = 0 Else myCrrn = 1
+  myWds = Len(mySnt) - Len(Replace(mySnt, " ", "")) + myCrrn
+  Dsq = Dsq + (meanLength - myWds) ^ 2
+Next sn
+sd = Sqr(Dsq / sentNum)
+
+' Prepare text of results printout
+myAnswer = myAnswer & Blank & "zczcWithout headingsczcz" & vbCr
+myAnswer = myAnswer & "Words = " & Str(totalWords) & vbCr
+myAnswer = myAnswer & "Sentences = " & Str(sntCnt) & vbCr
+myAnswer = myAnswer & "Average sentence length = " & Str(Int(meanLength * 10) / 10) & vbCr
+myAnswer = myAnswer & "Standard deviation = " & Str(Int(sd * 10) / 10) & Blank
+
+' Now create the set of frequencies
+myFreq = myFreq & Blank & "zczcWithout headingsczcz" & vbCr
+For col = 0 To Int((maxLen - 1) / myStep)
+  myFreq = myFreq & Str((col * myStep) + 1) & _
+       " to " & Str((col + 1) * myStep) & " = " & _
+       tot(col) & vbCr
+Next
+
+ActiveDocument.TrackRevisions = False
+
+' ActiveDocument.Close SaveChanges:=False
+
+Selection.EndKey Unit:=wdStory
+Selection.TypeText Text:=myAnswer
+Selection.TypeText Text:=myFreq
+
+Set rng = ActiveDocument.Content
+rng.LanguageID = wdEnglishUK
+rng.NoProofing = False
+
+If showReadability = True Then
+  DocStats = Blank & "zczcWord's Readability Statistics:czcz" & Blank
+  With ActiveDocument.Content
+    For i = 1 To 10
+    If i = 1 Or i = 6 Then DocStats = DocStats & "zczc"
+    DocStats = DocStats & .ReadabilityStatistics(i) & ": " _
+            & .ReadabilityStatistics(i).Value & vbCr
+    If i = 1 Or i = 6 Then DocStats = DocStats & "czcz"
+    Next i
+  End With
+  Selection.TypeText Text:=DocStats
+End If
+
+' Embolden headings
+Set rng = ActiveDocument.range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = "zczc(*)czcz"
+  .Replacement.Text = "\1"
+  .Wrap = wdFindStop
+  .Replacement.Font.Bold = True
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+

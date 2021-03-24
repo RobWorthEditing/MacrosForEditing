@@ -1,0 +1,65 @@
+Sub ListAllColouredWords()
+' Paul Beverley - Version 02.12.16
+' Creates an alphabetic list of all words in the selected font colour.
+
+selColour = Selection.range.Font.Color
+
+Set rng = ActiveDocument.Content
+rng.Copy
+Documents.Add
+Selection.Paste
+
+Set rng = ActiveDocument.Content
+rng.HighlightColorIndex = wdNoHighlight
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Color = selColour
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = False
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .Forward = True
+  .MatchCase = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Set rng = ActiveDocument.Content
+rng.Copy
+Selection.WholeStory
+Selection.PasteSpecial DataType:=wdPasteText
+Set rng = ActiveDocument.Content
+Selection.Sort SortOrder:=wdSortOrderAscending
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^$"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .Execute
+End With
+Selection.Collapse wdCollapseStart
+Selection.Start = 0
+Selection.Delete
+End Sub
+

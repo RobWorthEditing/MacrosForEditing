@@ -1,0 +1,37 @@
+Sub CommentChangeScope()
+' Paul Beverley - Version 04.03.20
+' Reduces or extends the scope of a comment
+
+Set rng = Selection.range.Duplicate
+Set rng1 = Selection.range.Duplicate
+myStart = rng.Start
+myEnd = rng.End
+rng.Expand wdParagraph
+gottaComment = False
+For i = 1 To rng.Comments.Count
+  Set cmt = rng.Comments(i)
+  cmtStart = cmt.Scope.Start
+  cmtEnd = cmt.Scope.End
+  If (myStart > cmtStart And myStart < cmtEnd) _
+       Or (myEnd > cmtStart And myEnd < cmtEnd) _
+       Or (cmtStart > myStart And cmtStart < myEnd) _
+       Or (cmtEnd > myStart And cmtEnd < myEnd) Then
+    gottaComment = True
+    Exit For
+  End If
+Next i
+If gottaComment = True Then
+  cmt.Edit
+  cmt.range.Select
+  Selection.Copy
+  cmt.Scope.Select
+  cmt.Delete
+  Set cmt = Selection.Comments.Add(range:=rng1)
+  cmt.Edit
+  Selection.Paste
+  cmt.Scope.Select
+Else
+  Beep
+End If
+End Sub
+

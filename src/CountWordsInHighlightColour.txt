@@ -1,0 +1,52 @@
+Sub CountWordsInHighlightColour()
+' Paul Beverley - Version 10.02.16
+' Count the number of words in a given highlight colour
+
+selColour = Selection.range.HighlightColorIndex
+If selColour = 0 Then
+  myResponse = MsgBox("Count words in ANY colour?", vbQuestion _
+          + vbYesNoCancel, "CountWordsInHighlightColour")
+  If myResponse = vbCancel Then Exit Sub
+  If myResponse = vbNo Then
+    MsgBox ("Place cursor in area of colour to be counted")
+    Exit Sub
+  End If
+End If
+
+Set rng = ActiveDocument.Content
+With rng.Find
+ .ClearFormatting
+ .Replacement.ClearFormatting
+ .Text = ""
+ .Highlight = True
+ .Wrap = False
+ .Replacement.Text = ""
+ .Forward = True
+ .MatchWildcards = False
+ .Execute
+End With
+
+Documents.Add
+Do While rng.Find.Found = True
+  If selColour = 0 Then
+    Selection.TypeText Text:=rng.Text & vbCr
+    Selection.EndKey Unit:=wdStory
+  Else
+    If rng.HighlightColorIndex = selColour Then
+      Selection.TypeText Text:=rng.Text & vbCr
+      Selection.EndKey Unit:=wdStory
+    End If
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+Selection.HomeKey Unit:=wdStory
+Set rng = ActiveDocument.Content
+rng.LanguageID = wdEnglishUK
+rng.NoProofing = False
+myComment = Str(ActiveDocument.Content.ComputeStatistics(wdStatisticWords))
+myComment = "Word count: " & myComment
+MsgBox (myComment)
+End Sub
+

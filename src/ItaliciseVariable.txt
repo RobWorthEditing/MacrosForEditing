@@ -1,0 +1,74 @@
+Sub ItaliciseVariable()
+' Paul Beverley - Version 17.01.18
+' Runs along, finds alpha chars and italicises them
+
+greekItalic = True
+ucaseGreekItalic = False
+avoidWords = ",to,and,or,at,"
+doTrack = False
+maxChars = 10
+
+myTrack = ActiveDocument.TrackRevisions
+If doTrack = False Then ActiveDocument.TrackRevisions = False
+If Selection.Start = Selection.End Then
+  Selection.MoveEnd , 1
+  While LCase(Selection) = UCase(Selection) And _
+       Not (Selection.Font.Name = "Symbol" And greekItalic)
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveEnd , 1
+  Wend
+  myStart = Selection.Start
+  isItalic = Selection.Font.Italic
+  Do
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveEnd , 1
+  Loop Until LCase(Selection) = UCase(Selection) And _
+       Not (Selection.Font.Name = "Symbol" And greekItalic)
+  Selection.Collapse wdCollapseStart
+  Selection.Start = myStart
+  If InStr(avoidWords, "," & Selection & ",") = 0 Then
+    numChars = Len(Selection)
+    myStart = Selection.Start
+    Set rng = Selection.range
+    For i = 1 To numChars
+      gotVar = False
+      rng.End = myStart + i
+      rng.Start = rng.End - 1
+      ch = rng.Text
+      a = Asc(ch)
+      u = AscW(ch)
+      
+      ' Ordinary letter
+      If a = u Then gotVar = True
+      If greekItalic = True Then
+        If a = Asc("?") Then gotVar = True
+        If u > 915 And u < 970 Then
+          gotVar = True
+          If ucaseGreekItalic = False And u < 945 Then gotVar = False
+        End If
+        If ucaseGreekItalic = False And u < -3999 Then gotVar = False
+      End If
+      If gotVar = True Then
+        rng.Font.Italic = Not (isItalic)
+      Else
+        rng.Select
+        Selection.Collapse wdCollapseEnd
+        ActiveDocument.TrackRevisions = myTrack
+        Exit Sub
+      End If
+      If i > maxChars Then
+        Beep
+        MsgBox "Stopped after " & Trim(Str(maxChars)) & " characters"
+        ActiveDocument.TrackRevisions = myTrack
+        Exit Sub
+      End If
+    Next i
+  End If
+  Selection.Collapse wdCollapseEnd
+Else
+  If Selection <> " " Then Selection.Font.Italic = Not (Selection.Font.Italic)
+  Selection.Collapse wdCollapseEnd
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

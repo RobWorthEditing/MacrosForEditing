@@ -1,0 +1,9 @@
+Sub SelectCurrentPage()
+' Paul Beverley - Version 26.01.11
+' Select the current page
+Selection.GoTo What:=wdGoToPage, Which:=wdGoToNext, Count:=1
+endHere = Selection.Start
+Selection.GoTo What:=wdGoToPage, Which:=wdGoToPrevious, Count:=1
+Selection.End = endHere
+End Sub
+

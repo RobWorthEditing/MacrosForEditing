@@ -1,0 +1,57 @@
+Sub ColumnTotal()
+' Paul Beverley - Version 12.05.15
+' Check the column total
+
+allowErrorPercent = 0.01
+okChars = "0123456789.,-" & ChrW(8211) & ChrW(8212)
+myTotal = 0
+On Error GoTo ReportIt
+Do
+  gogo = True
+  Selection.Expand wdCell
+  myText = Selection
+  ' Change sign if it starts with a hyphen or en dash
+  signBit = 1
+  aBit = Left(myText, 1)
+  ' A hyphen or en or em dash means either minus
+  ' or nothing (zero); this will cope with either
+  If aBit = "-" Or aBit = ChrW(8211) Or aBit = ChrW(8212) Then
+    myText = Right(myText, Len(myText) - 1)
+    signBit = -1
+  End If
+
+' Remove any commas and find the value
+  previousNumber = thisNumber
+  thisNumber = signBit * Val(Replace(myText, ",", ""))
+  If thisNumber = 0 And InStr(okChars, aBit) = 0 Then gogo = False
+  myTotal = myTotal + thisNumber
+  Selection.MoveDown Unit:=wdLine, Count:=1
+' Go down a line and check for a characterless cell
+  Do
+    myNext = Asc(Selection)
+    If myNext <> 13 Then
+      Selection.MoveRight Unit:=wdCharacter, Count:=1
+      myNext = Asc(Selection)
+    End If
+  Loop Until myNext = 13
+' Keep going until you drop out of the table
+Loop Until Asc(Right(Selection, 1)) <> 7 Or gogo = False
+If thisNumber = 0 Then thisNumber = previousNumber
+' At this point, the total of the column should be twice
+' the final figure, i.e. the total plus the total
+myDiff = myTotal - 2 * thisNumber
+' Make the difference a positive number
+If myDiff < 0 Then myDiff = -myDiff
+
+' Check how small the difference is compared to the total
+If myDiff / myTotal < allowErrorPercent / 100 Then
+  Beep
+Else
+  MsgBox ("I make the total: " & myTotal - thisNumber)
+End If
+Exit Sub
+
+ReportIt:
+MsgBox ("Please ensure that the cursor is the a cell containing a number")
+End Sub
+

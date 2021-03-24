@@ -1,0 +1,15 @@
+Sub CellsAddChar()
+' Paul Beverley - Version 20.10.11
+' Check that there is a full point ending each cell
+myChar = "."
+Selection.Font.Shadow = True
+For Each myCell In Selection.Tables(1).Range.Cells
+  Set rng = myCell.Range
+  myText = rng
+  If rng.Font.Shadow = True And InStr(Right(myText, 3), myChar) = 0 Then
+    rng.InsertAfter myChar
+  End If
+Next myCell
+Selection.Tables(1).Range.Font.Shadow = False
+End Sub
+

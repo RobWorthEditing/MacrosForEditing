@@ -1,0 +1,51 @@
+Sub RenumberNotes()
+' Paul Beverley - Version 02.12.20
+' Renumbers all note numbers in selected text
+
+' Check if user wants to work on whole file of selection
+If Selection.End = Selection.Start Then
+  myResponse = MsgBox("Do this to the WHOLE file?", _
+       vbQuestion + vbYesNo)
+  If myResponse = vbNo Then Exit Sub
+  Set rngAll = ActiveDocument.Content
+Else
+  Set rngAll = Selection.Range.Duplicate
+End If
+
+Set rng = rngAll.Duplicate
+fstWord = rng.Words(1)
+
+rng.Collapse wdCollapseStart
+rng.Expand wdParagraph
+rng.Select
+rng.End = rngAll.End
+rng.Start = rng.Start - 1
+If Val(fstWord) <> 1 Then
+  myResponse = MsgBox("Is this the first line of the notes?", _
+       vbQuestion + vbYesNo)
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+i = 1
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = "^13[0-9]{1,}"
+  .Replacement.Text = ""
+  .Wrap = False
+  .Execute
+End With
+rng.Select
+Do While rng.Find.Found = True And rng.End < rngAll.End
+  rng.MoveStart wdCharacter, 1
+  rng.Delete
+  rng.InsertAfter Text:=Trim(Str(i))
+  i = i + 1
+  DoEvents
+  rng.End = rngAll.End
+  rng.Find.Execute
+Loop
+Beep
+End Sub
+

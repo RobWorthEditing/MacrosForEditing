@@ -1,0 +1,17 @@
+Sub DeleteAllInlineImages()
+' Paul Beverley - Version 06.12.16
+' Delete all inline from a file
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+i = ActiveDocument.InlineShapes.Count
+For Each pic In ActiveDocument.InlineShapes
+  pic.Delete
+  DoEvents
+  i = i - 1
+  StatusBar = "                                        " & i
+Next pic
+Beep
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

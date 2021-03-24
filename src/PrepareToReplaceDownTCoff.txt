@@ -1,0 +1,41 @@
+Sub PrepareToReplaceDownTCoff()
+' Paul Beverley - Version 13.01.21
+' Copy text into the F&R box
+
+tcColour = True
+
+myColour = 200
+ActiveDocument.TrackRevisions = False
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+End If
+myText = Selection
+If Asc(myText) <> 32 Then myText = Trim(myText)
+myText = Replace(myText, vbCr, "^p")
+myText = Replace(myText, vbTab, "^t")
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Forward = True
+  .Text = myText
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Replacement.Text = myText
+  .MatchCase = True
+End With
+Selection.End = Selection.Start
+If tcColour = True Then
+  With ActiveDocument.Background.Fill
+    .ForeColor.RGB = RGB(255, 255, myColour)
+    .Visible = msoTrue
+    .Solid
+  End With
+End If
+CommandBars("Menu Bar").Controls("Edit").Controls("Replace...").Execute
+End Sub
+

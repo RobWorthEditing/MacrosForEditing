@@ -1,0 +1,81 @@
+Sub HighlightWithTrackChange()
+' Paul Beverley - Version 03.04.19
+' Use allcaps, smallcaps, underline for tracking highlighting
+
+myAllCaps = wdYellow
+mySmallCaps = wdBrightGreen
+myUnderline = wdNoHighlight
+
+If myAllCaps > 0 Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.AllCaps = True
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  Do While rng.Find.Found = True
+    EndNow = rng.End
+    ActiveDocument.TrackRevisions = False
+    rng.Font.AllCaps = False
+    ActiveDocument.TrackRevisions = True
+    rng.HighlightColorIndex = myAllCaps
+    rng.Start = EndNow
+    rng.Find.Execute
+  Loop
+End If
+
+If mySmallCaps > 0 Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.SmallCaps = True
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  Do While rng.Find.Found = True
+    EndNow = rng.End
+    ActiveDocument.TrackRevisions = False
+    rng.Font.SmallCaps = False
+    ActiveDocument.TrackRevisions = True
+    rng.HighlightColorIndex = mySmallCaps
+    rng.Start = EndNow
+    rng.Find.Execute
+  Loop
+End If
+
+If myUnderline > 0 Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Underline = True
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  Do While rng.Find.Found = True
+    EndNow = rng.End
+    ActiveDocument.TrackRevisions = False
+    rng.Font.Underline = False
+    ActiveDocument.TrackRevisions = True
+    rng.HighlightColorIndex = myUnderline
+    rng.Start = EndNow
+    rng.Find.Execute
+  Loop
+End If
+End Sub
+

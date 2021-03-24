@@ -1,0 +1,102 @@
+Sub AcronymDefinitionLister()
+' Paul Beverley - Version 17.09.17
+' Creates a list of acronyms with definitions
+
+myBuffer = 2
+myMax = 8
+
+myMaxText = Trim(Str(myMax))
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.Text = rng.Text
+Selection.HomeKey unit:=wdStory
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\<*\>"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Go and find the first acronym in brackets
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\([A-Za-z0-9\-" & ChrW(8211) & "]{2," & myMaxText & "}\)"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+allAcronyms = ""
+Do While rng.Find.Found = True
+  myPosn = rng.End
+  myAcronym = Replace(rng, "(", "")
+  myAcronym = Replace(myAcronym, ")", "")
+  lenAcro = Len(myAcronym)
+  myAcronym = myAcronym & "xzx"
+  myAcronym = Replace(myAcronym, "sxzx", "")
+  myAcronym = Replace(myAcronym, "xzx", "")
+  rng.Collapse wdCollapseStart
+  If LCase(myAcronym) <> UCase(myAcronym) And LCase(Mid(myAcronym, 2)) <> Mid(myAcronym, 2) Then
+    rng.Select
+    Selection.MoveLeft unit:=wdCharacter, Count:=1
+    Selection.MoveStart unit:=wdWord, Count:=-lenAcro - myBuffer
+    myDefn = Trim(Selection)
+    returnPos = InStr(myDefn, Chr(13))
+    myDefn = Mid(myDefn, returnPos + 1)
+    If Left(myDefn, 3) = "in " Then myDefn = Mid(myDefn, 4)
+    If Left(myDefn, 3) = "on " Then myDefn = Mid(myDefn, 4)
+    If Left(myDefn, 3) = "of " Then myDefn = Mid(myDefn, 4)
+    If Left(myDefn, 4) = "the " Then myDefn = Mid(myDefn, 5)
+    If Left(myDefn, 4) = "and " Then myDefn = Mid(myDefn, 5)
+    If Left(myDefn, 4) = "The " Then myDefn = Mid(myDefn, 5)
+    If Left(myDefn, 2) = "a " Then myDefn = Mid(myDefn, 3)
+    If Left(myDefn, 2) = ". " Then myDefn = Mid(myDefn, 3)
+    allAcronyms = allAcronyms & myAcronym & Chr(9) & myDefn & vbCr
+  End If
+  rng.Start = myPosn
+' Go and find the next occurence (if there is one)
+  rng.Find.Execute
+  posNow = rng.End
+  If posNow = posWas Then
+    rng.Select
+    Selection.MoveDown unit:=wdLine, Count:=1
+    rng.Start = Selection.Start
+    rng.Find.Execute
+    posNow = rng.End
+  End If
+  posWas = posNow
+Loop
+Selection.WholeStory
+
+' type the acronyms to replace the copy of the text
+Selection.TypeText allAcronyms
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+Selection.HomeKey unit:=wdStory
+
+' Remove duplicate line
+For j = ActiveDocument.Paragraphs.Count To 2 Step -1
+  Set rng1 = ActiveDocument.Paragraphs(j).range
+  Set rng2 = ActiveDocument.Paragraphs(j - 1).range
+  If rng1 = rng2 Then rng1.Delete
+Next j
+
+Selection.HomeKey unit:=wdStory
+Selection.TypeText Text:="Acronym list" & vbCr & vbCr
+Beep
+End Sub
+

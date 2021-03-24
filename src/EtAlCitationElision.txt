@@ -1,0 +1,52 @@
+Sub EtAlCitationElision()
+' Paul Beverley - Version 09.09.20
+' Crops multi-author citation to single name + 'et al'
+
+isItalic = False
+etAlText = " et al. "
+
+Selection.Expand wdWord
+Selection.Collapse wdCollapseEnd
+Selection.MoveEnd , 1
+If Selection = "," Then Selection.Delete
+Selection.MoveEnd Unit:=wdWord, Count:=10
+
+myStart = Selection.Start
+
+For i = 1 To 10
+  Debug.Print Selection.Words(i)
+  If InStr("12", Selection.Words(i).Characters(1)) > 0 Then Exit For
+Next i
+Selection.Words(i).Select
+Selection.Collapse wdCollapseStart
+Selection.Start = myStart
+Selection.TypeText Text:=etAlText
+If isItalic Then
+  Selection.Start = Selection.Start - 8
+  Selection.End = Selection.End - 2
+  Selection.Font.Italic = True
+  Selection.Collapse wdCollapseEnd
+End If
+
+Exit Sub
+
+Selection.MoveStartUntil cset:="(;", Count:=wdBackward
+Selection.Collapse wdCollapseStart
+Selection.MoveEndUntil cset:=",", Count:=wdForward
+
+myStart = Selection.End
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^#^#^#^#"
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+End With
+
+Selection.Collapse wdCollapseStart
+Selection.Start = myStart
+Selection.TypeText " et al. "
+End Sub
+

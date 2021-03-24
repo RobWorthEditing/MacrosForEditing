@@ -1,0 +1,40 @@
+Sub HeadingStyler()
+' Paul Beverley - Version 02.02.11
+' Styles all headings by depth of section number
+
+delimiter = Chr(9)
+' delimiter = " "
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+For Each para In ActiveDocument.Paragraphs
+  myText = para
+  tabPos = InStr(myText, delimiter) - 1
+  If tabPos > 2 Then
+    myText = Left(myText, tabPos)
+    ' this should now hold just the heading number, e.g. 2.4.5.1
+    ' but let's just check there are no alpha characters in there
+    If LCase(myText) = UCase(myText) Then
+      noPeriods = Replace(myText, ".", "")
+      headLevel = Len(myText) - Len(noPeriods)
+    ' No of periods = heading level
+      Select Case headLevel
+        Case 1: para.Style = ActiveDocument.Styles("Heading 1")
+        Case 2: para.Style = ActiveDocument.Styles("Heading 2")
+        Case 3: para.Style = ActiveDocument.Styles("Heading 3")
+        Case 4: para.Style = ActiveDocument.Styles("Heading 4")
+        Case 5: para.Style = ActiveDocument.Styles("Heading 5")
+        Case 6: para.Style = ActiveDocument.Styles("Heading 6")
+        Case Else
+          para.Range.Select
+          Beep
+          Exit Sub
+      End Select
+    End If
+  End If
+Next para
+Beep
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

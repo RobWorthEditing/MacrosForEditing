@@ -1,0 +1,14 @@
+Sub ListCheckStart()
+' Paul Beverley - Version 28.08.14
+' Jump to an auto-list number
+
+hereNow = Selection.Start
+For i = 1 To ActiveDocument.ListParagraphs.Count
+  itemEnd = ActiveDocument.ListParagraphs(i).Range.End
+  If itemEnd > hereNow Then
+    MsgBox "Use: myOffset = " & Str(i - 1)
+  Exit Sub
+  End If
+Next i
+End Sub
+

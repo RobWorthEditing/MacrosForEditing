@@ -1,0 +1,7 @@
+Sub MarkFinalOnOff()
+' Paul Beverley - Version 14.05.11
+' Switch "Mark as final" facility on/off
+
+ActiveDocument.Final = Not (ActiveDocument.Final)
+End Sub
+

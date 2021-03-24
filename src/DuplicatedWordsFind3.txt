@@ -1,0 +1,19 @@
+Sub DuplicatedWordsFind3()
+' Paul Beverley - Version 03.02.16
+' Find next consecutive three-word duplicate
+
+With Selection.Find
+  .ClearFormatting
+  .Text = "(<[a-zA-Z]{1,}^32[a-zA-Z]{1,}^32[a-zA-Z]{1,})" _
+         & "[ .,\!\?:;]{1,}\1[ .,\!\?:;]"
+  .Replacement.Text = ""
+  .Forward = True
+  .Wrap = False
+  .Format = False
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute
+End With
+If Selection.Find.Found = False Then Beep
+End Sub
+

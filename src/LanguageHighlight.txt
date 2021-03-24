@@ -1,0 +1,22 @@
+Sub LanguageHighlight()
+' Paul Beverley - Version 05.12.11
+' Highlight all text not in main language
+
+myColour = wdGray25
+
+mainLanguage = Selection.LanguageID
+For Each myPara In ActiveDocument.Paragraphs
+  If myPara.Range.LanguageID <> mainLanguage Then
+    If myPara.Range.LanguageID = 9999999 Then
+      For Each myWord In myPara.Range.Words
+        If myWord.LanguageID <> mainLanguage Then
+          myWord.HighlightColorIndex = myColour
+        End If
+      Next myWord
+    Else
+      myPara.Range.HighlightColorIndex = myColour
+    End If
+  End If
+Next myPara
+End Sub
+

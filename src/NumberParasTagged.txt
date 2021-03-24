@@ -1,0 +1,38 @@
+Sub NumberParasTagged()
+' Paul Beverley - Version 18.06.20
+' Adds numbering to first-level headings tagged with <a>
+
+myTag = "<a>"
+
+titleLine = ActiveDocument.Paragraphs(1)
+anglePos = InStr(titleLine, ">")
+chapNumText = Mid(titleLine, anglePos + 1)
+chapNum = Val(chapNumText)
+secNum = 0
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myTag
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  endNow = rng.End
+  rng.Collapse wdCollapseEnd
+  rng.Select
+  secNum = secNum + 1
+  Selection.TypeText Text:=Trim(Str(chapNum)) & "." & _
+       Trim(Str(secNum)) & vbTab
+  rng.Start = endNow
+  rng.Find.Execute
+Loop
+End Sub
+

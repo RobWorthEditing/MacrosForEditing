@@ -1,0 +1,35 @@
+Sub PunctuationOff()
+' Paul Beverley - Version 24.08.17
+' Delete the next punctuation item
+' Alt-Backspace
+
+myChars = ""
+myChars = myChars + ";:.,\!\?"
+' Curly quotes
+myChars = myChars + ChrW(8216) & ChrW(8217) & ChrW(8220) & ChrW(8221)
+' Straight quotes
+myChars = myChars + "'" & Chr(34)
+' Brackets
+myChars = myChars + "\(\)\[\]\{\}"
+
+oldFind = Selection.Find.Text
+
+Selection.End = Selection.Start
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[" & myChars & "]"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceOne
+End With
+
+With Selection.Find
+  .Text = oldFind
+  .MatchWildcards = False
+End With
+End Sub
+

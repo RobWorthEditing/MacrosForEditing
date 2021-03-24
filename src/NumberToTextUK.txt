@@ -1,0 +1,54 @@
+Sub NumberToTextUK()
+' Paul Beverley - Version 06.04.20
+' Convert next number into text
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+' Find a number (six figures max)
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Text = "[0-9]{1,6}"
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute
+End With
+
+startHere = Selection.Start
+
+' Create a field containing the digits and a special format code
+Selection.Fields.Add range:=Selection.range, _
+   Type:=wdFieldEmpty, Text:="= " + Selection + " \* CardText", _
+   PreserveFormatting:=True
+
+' Select the field and copy it
+Selection.MoveStart , -1
+Selection.Copy
+Selection.Delete
+DoEvents
+
+' Paste the text as unformatted, replacing the field
+Selection.PasteSpecial Link:=False, DataType:=wdPasteText, _
+   Placement:=wdInLine, DisplayAsIcon:=False
+
+Selection.Start = startHere
+numWords = Selection
+If Right(numWords, 4) <> "dred" Then numWords = _
+     Replace(numWords, "hundred", "hundred and")
+If InStr(numWords, "hundred") > 0 Then
+  numWords = Replace(numWords, "thousand", "thousand,")
+Else
+  If Right(numWords, 4) <> "sand" Then numWords = _
+       Replace(numWords, "thousand", "thousand and")
+End If
+Selection.TypeText Text:=numWords
+
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchWildcards = False
+End With
+End Sub
+

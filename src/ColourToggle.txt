@@ -1,0 +1,15 @@
+Sub ColourToggle()
+' Paul Beverley - Version 05.05.10
+' Red text on/off
+' F11
+
+nowColour = Selection.Font.Color
+
+' If it's red or a mix of red and black, switch to black
+If nowColour = wdColorRed Or nowColour > 100 Then
+   Selection.Font.Color = wdColorAutomatic
+Else
+   Selection.Font.Color = wdColorRed
+End If
+End Sub
+

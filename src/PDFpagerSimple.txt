@@ -1,0 +1,110 @@
+Sub PDFpagerSimple()
+' Paul Beverley - Version 11.05.11
+' Highlight all the page numbers
+
+numDashes = 20
+FontSize = 24
+
+' Find the first number
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\>\>[0-9]@\<\<"
+  .MatchWildcards = True
+  .Replacement.Text = ""
+  .Execute
+End With
+
+If rng.Find.Found = False Then
+  MsgBox ("Mark first and last page numbers, e.g. >>1<<")
+  Exit Sub
+End If
+
+startHere = rng.Start
+rng.Start = rng.Start + 2
+firstNum = Val(rng)
+rng.Start = rng.End + 2
+
+' Find the final number
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\>\>[0-9]@\<\<"
+  .MatchWildcards = True
+  .Replacement.Text = ""
+  .Execute
+End With
+If rng.Find.Found = False Then
+  MsgBox ("Mark first and last page numbers like this: >>123<<")
+  Exit Sub
+End If
+
+rng.Start = rng.Start + 2
+lastNum = Val(rng)
+
+Set rng = ActiveDocument.Range
+rng.Start = startHere
+For i = lastNum - 1 To firstNum + 1 Step -1
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^p" & Trim(Str(i))
+    .MatchWildcards = False
+    .Forward = False
+    .Replacement.Text = ""
+    .Execute
+  End With
+  If rng.Find.Found = True Then
+    rng.MoveStart wdCharacter, 1
+    rng.InsertBefore ">>"
+    rng.InsertAfter "<<"
+  Else
+    rng.InsertBefore vbCrLf & ">>" & Trim(Str(i)) & "<<" & vbCrLf
+  End If
+  rng.End = rng.Start
+  StatusBar = "Page: " & Str(i)
+Next i
+
+dottedLine = ""
+For i = 1 To numDashes
+  dottedLine = dottedLine & ChrW(8211) & " "
+Next i
+
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13([ixv]@)^13"
+  .Replacement.Text = "^p>>\1<<^p"
+  .Replacement.Font.Size = FontSize
+  .Forward = True
+  .Replacement.Font.Bold = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\>\>[0-9ixv]@\<\<"
+  .Replacement.Text = dottedLine & "^p^&"
+  .Replacement.Font.Size = FontSize
+  .Replacement.Font.Bold = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ">>" & Trim(Str(firstNum)) & "<<"
+  .MatchWildcards = False
+  .Replacement.Text = ""
+  .Execute
+End With
+Selection.End = Selection.Start
+End Sub
+

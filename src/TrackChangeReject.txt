@@ -1,0 +1,13 @@
+Sub TrackChangeReject()
+' Paul Beverley - Version 23.11.11
+' Rejects the track changes on the current line
+If Selection.Start = Selection.End Then
+  Selection.HomeKey Unit:=wdLine
+  Selection.MoveDown Unit:=wdLine, Count:=1, Extend:=wdExtend
+  Selection.Range.Revisions.RejectAll
+  Selection.Start = Selection.End
+Else
+  Selection.Range.Revisions.RejectAll
+End If
+End Sub
+

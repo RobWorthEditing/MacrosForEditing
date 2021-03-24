@@ -1,0 +1,128 @@
+Sub FindInContextLoad()
+' Paul Beverley - Version 04.10.18
+' Loads name and date ready for FindInContext macro
+
+myDistance = "12"
+assumeWholeWords = False
+
+listName = "zzSwitchList"
+
+Set nowFile = ActiveDocument
+myEnd = Selection.End
+Selection.Collapse wdCollapseStart
+If assumeWholeWords = True Then
+  Selection.Expand wdWord
+  mainWord = Trim(Selection)
+  Selection.Start = myEnd
+  Selection.Expand wdWord
+  nearWord1 = Selection
+  Selection.Collapse wdCollapseEnd
+Else
+  myStart = Selection.Start
+  Selection.Expand wdWord
+  Selection.Start = myStart
+  mainWord = Trim(Selection)
+  Selection.Start = myEnd
+  Selection.Expand wdWord
+  Selection.End = myEnd
+  nearWord1 = Selection
+  Selection.Collapse wdCollapseEnd
+End If
+
+myDistance = InputBox("Search distance?", _
+     "FindInContextLoad", myDistance)
+
+On Error Resume Next
+defaultLoaded = False
+
+Set thisDoc = ActiveDocument.ActiveWindow
+paneNumber = thisDoc.ActiveWindow.Caption
+dirName = ActiveDocument.Path
+
+' Go and look for the list file
+gottaList = False
+For i = 1 To Application.Windows.Count
+  If InStr(Application.Windows(i).Document.Name, _
+       listName) > 0 Then
+    Set listDoc = Application.Windows(i).Document
+    gottaList = True
+  End If
+Next i
+If gottaList = False Then
+  Documents.Open dirName & "\" & listName
+  If Err.Number = 5174 Then
+    Err.Clear
+    Documents.Open defaultList
+    If Err.Number = 5174 Then
+      Err.Clear
+      Documents.Open defaultList & ".docx"
+      If Err.Number = 5174 Then
+        Err.Clear
+        defaultList = Replace(defaultList, ".", _
+             " [Compatibility Mode].")
+        Application.Windows(defaultList).Activate
+      End If
+    End If
+    If Err.Number = 5174 Then GoTo ReportIt
+    If doAnErrorBeep = True Then Beep
+    defaultLoaded = True
+  Else
+    If Err.Number > 0 And Err.Number <> 438 Then GoTo ReportIt
+  End If
+Else
+  listDoc.Activate
+End If
+
+If Documents.Count = 1 Then Exit Sub
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "mainWord = " & Chr$(34)
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+End With
+Selection.Collapse wdCollapseEnd
+Selection.MoveEndUntil cset:=Chr$(34), Count:=wdForward
+Selection.TypeText Text:=mainWord
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "nearWord1 = " & Chr$(34)
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+End With
+Selection.Collapse wdCollapseEnd
+Selection.MoveEndUntil cset:=Chr$(34), Count:=wdForward
+Selection.TypeText Text:=nearWord1
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "distance = "
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+End With
+rng.Select
+Selection.Collapse wdCollapseEnd
+Selection.Expand wdWord
+Selection.TypeText Text:=myDistance
+nowFile.Activate
+Exit Sub
+
+ReportIt:
+If Err.Number = 5174 Then
+  MsgBox ("Couldn't find file: " & listName)
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+

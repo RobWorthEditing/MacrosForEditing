@@ -1,0 +1,43 @@
+Sub NumberToText()
+' Paul Beverley - Version 15.06.19
+' Converts next number into text
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+' Find a number (six figures max)
+Selection.End = Selection.Start
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{1,6}"
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute
+End With
+
+' Create a field containing the digits and a special format code
+Selection.Fields.Add range:=Selection.range, _
+   Type:=wdFieldEmpty, Text:="= " + Selection + " \* CardText", _
+   PreserveFormatting:=True
+
+' Select the field and copy it
+Selection.MoveStart , -1
+Selection.Copy
+Selection.Delete
+DoEvents
+
+' Paste the text as unformatted, replacing the field
+Selection.PasteSpecial Link:=False, DataType:=wdPasteText, _
+   Placement:=wdInLine, DisplayAsIcon:=False
+Selection.MoveRight , 1
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchWildcards = False
+End With
+End Sub
+

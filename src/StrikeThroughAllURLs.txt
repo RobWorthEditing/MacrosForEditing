@@ -1,0 +1,34 @@
+Sub StrikeThroughAllURLs()
+' Paul Beverley - Version 27.06.17
+' Strikes through all URLs to protect them from changes
+
+charsInURLs = "[%./:a-zA-Z0-9_\-+\?=]"
+
+myFind = "[wh][wt][wt][ps.]" & charsInURLs & "{1,}"
+
+highlightToo = True
+myColour = wdBrightGreen
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.StrikeThrough = True
+  If highlightToo Then .Replacement.Highlight = True
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+Options.DefaultHighlightColorIndex = oldColour
+
+End Sub
+

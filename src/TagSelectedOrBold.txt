@@ -1,0 +1,52 @@
+Sub TagSelectedOrBold()
+' Paul Beverley - Version 02.05.16
+' Add red tags to the currently selected text or italic text
+
+tagTextSelected = "<xx></xx>"
+tagTextBold = "<b></b>"
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+If Selection.Start = Selection.End Then
+  tagStop = InStr(tagTextBold, "><")
+  startTag = Left(tagTextBold, tagStop)
+  endTag = Mid(tagTextBold, tagStop + 1)
+' Go and find the first occurrence
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Bold = True
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+Else
+  startTag = Left(tagTextSelected, InStr(tagTextSelected, "><"))
+  endTag = Mid(tagTextSelected, InStr(tagTextSelected, "><") + 1)
+End If
+
+startNow = Selection.Start
+Selection.Collapse wdCollapseEnd
+Selection.TypeText Text:=endTag
+endNow = Selection.End
+Selection.MoveStart , -(Len(endTag))
+
+' Here's where the colour is added
+Selection.Font.Color = wdColorRed
+Selection.End = startNow
+Selection.TypeText Text:=startTag
+Selection.MoveStart , -(Len(startTag))
+
+' And here
+Selection.Font.Color = wdColorRed
+Selection.Start = endNow + Len(startTag)
+Selection.Collapse wdCollapseEnd
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

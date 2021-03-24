@@ -1,0 +1,107 @@
+Sub BasicIndexer()
+' Paul Beverley - Version 27.12.10
+' Basic indexing
+textFile = "ReadyForIndexing"
+listFile = "Keywords_Plus"
+pageMarker = "Page Proof page "
+searchDelimiter = ","
+listDelimiter = ", "
+repeatNumbers = True
+
+Application.Windows(listFile).Activate
+For Each para In ActiveDocument.Paragraphs
+  Set rng = para.Range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .MatchWildcards = True
+    .Text = "[" & searchDelimiter & "]"
+    .Replacement.Text = ""
+    .Execute
+  End With
+  rng.End = rng.Start
+  rng.Start = para.Range.Start
+ 
+  headWord = rng
+  StatusBar = ">>>>>>>>>>>>   " & headWord
+
+' Various dashes and apostrophes to "any character"
+  headWord = Replace(headWord, "-", "^?")
+  headWord = Replace(headWord, ChrW(8211), "^?")
+  headWord = Replace(headWord, ChrW(8212), "^?")
+  headWord = Replace(headWord, "'", "^?")
+  headWord = Replace(headWord, ChrW(8217), "^?")
+  If Len(headWord) > 3 Then
+    Application.Windows(textFile).Activate
+    Set rng2 = ActiveDocument.Range
+    foundPages = ""
+    Do
+    previousPage = ""
+    ' Find each occurrence of headword
+      With rng2.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .MatchWildcards = False
+        .MatchCase = False
+        .MatchWholeWord = True
+        .Text = headWord
+        .Replacement.Highlight = True
+        .Replacement.Text = ""
+        .Execute Replace:=wdReplaceOne
+      End With
+      comeBackHere = rng2.End
+      rng2.Start = rng2.End
+      If rng2.Find.Found Then
+      ' Find current page number
+        With rng2.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .MatchWildcards = False
+          .Text = pageMarker
+          .Replacement.Text = ""
+          .Execute
+        End With
+        If rng2.Find.Found = True Then
+          rng2.Start = rng2.End
+          rng2.MoveEnd wdCharacter, 6
+          textBit = rng2
+          pageNum = Left(textBit, InStr(textBit, " ") - 1)
+          If repeatNumbers = True Then
+            foundPages = foundPages & pageNum & listDelimiter
+          Else
+            If previousNumber <> pageNum Then
+              foundPages = foundPages & pageNum & listDelimiter
+              previousNumber = pageNum
+            End If
+          End If
+          rng2.Start = comeBackHere
+          rng2.End = comeBackHere
+        Else
+          comeBackHere = 0
+        End If
+      Else
+        comeBackHere = 0
+      End If
+    Loop Until comeBackHere = 0
+    Application.Windows(listFile).Activate
+   
+    rng.Start = para.Range.End - 1
+    rng.InsertAfter Text:=": " & foundPages
+    Application.Windows(textFile).Activate
+  End If
+Next para
+
+' Remove trailing commas from list
+Application.Windows(listFile).Activate
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = False
+  .Text = ", ^p"
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+End With
+Selection.HomeKey Unit:=wdStory
+End Sub
+

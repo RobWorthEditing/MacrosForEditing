@@ -1,0 +1,27 @@
+Sub EquationsConvertAll()
+' Paul Beverley - Version 24.10.16
+' Converts all Equation Editor items to their text equivalent.
+
+highlightConversion = True
+myColour = wdYellow
+
+numMaths = ActiveDocument.OMaths.Count
+If numMaths > 0 Then
+  myTrack = ActiveDocument.TrackRevisions
+  ActiveDocument.TrackRevisions = False
+  For Each myMath In ActiveDocument.OMaths
+    myMath.range.Select
+    Selection.MoveStart , -1
+    Selection.Cut
+    startHere = Selection.Start
+    Selection.PasteSpecial DataType:=wdPasteText
+    Selection.Start = startHere
+    If highlightConversion = True Then
+      Selection.range.HighlightColorIndex = myColour
+    End If
+  Next myMath
+  ActiveDocument.TrackRevisions = myTrack
+  MsgBox numMaths & " equation editor items converted"
+End If
+End Sub
+

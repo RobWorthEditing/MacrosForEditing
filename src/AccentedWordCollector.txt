@@ -1,0 +1,218 @@
+Sub AccentedWordCollector()
+' Paul Beverley - Version 03.02.20
+' Creates a list of all the accented words in a text
+
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.TypeText vbCr
+Selection.Text = rng.Text
+
+Set rng = ActiveDocument.Content
+' preserve hyphens
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "-"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "zczc"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' preserve "single high reverse 9 quotation mark"!
+With rng.Find
+  .Text = ChrW(8219)
+  .Replacement.Text = "cvcv"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' preserve apostrophes
+With rng.Find
+  .Text = "([a-zA-Z])['" & ChrW(8217) & "]([a-zA-Z])"
+  .Replacement.Text = "\1qcqc\2"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+'Convert any non-word stuff to spaces
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[\$€£(c)°+~\#|_\*\@\\%^^=0-9\<\>\)\(\[\]\}\{`^0133" _
+       & "\/^0160^t.,:;\&\!\?^34^39^=^+^2" _
+       & ChrW(8216) & ChrW(8217) & ChrW(8220) & ChrW(8722) _
+       & ChrW(8242) & ChrW(8243) & ChrW(8201) & ChrW(8221) & "]{1,}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "  "
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' ensure at least two spaces between words
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = " "
+  .Wrap = wdFindContinue
+  .Replacement.Text = "  "
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "^p"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p "
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' remove any multiple spaces
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = " {3,}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "  "
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Set rng = ActiveDocument.Content
+rng.HighlightColorIndex = wdGray25
+
+' unhighlight any accent-less characters
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "[ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]{1,}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Set thisDoc = ActiveDocument
+
+Documents.Add
+Set newDoc = ActiveDocument
+Set rng = ActiveDocument.Content
+
+thisDoc.Activate
+For Each myPara In ActiveDocument.Paragraphs
+  If myPara.range.HighlightColorIndex > 0 Then
+    For Each wd In myPara.range.Words
+      If wd.HighlightColorIndex > 0 Then
+        rng.InsertAfter Text:=wd & vbCr
+        DoEvents
+      End If
+    Next wd
+  End If
+Next myPara
+
+thisDoc.Close SaveChanges:=False
+newDoc.Activate
+
+'Restore hyphens
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "zczc"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "-"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+'Restore apostrophes
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "qcqc"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ChrW(8217)
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+'Restore funny things
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "cvcv"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ChrW(8219)
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = " "
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "^13{2,}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+DoEvents
+rng.Find.Execute Replace:=wdReplaceAll
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending
+DoEvents
+Selection.EndKey Unit:=wdStory
+Selection.TypeText vbCr
+' Exchange rogue linefeed (ascii 10)
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^10"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+Selection.MoveEndWhile cset:=Chr(13), Count:=wdForward
+Selection.TypeBackspace
+Selection.TypeText "List of accented words" & vbCr & vbCr
+ActiveDocument.Paragraphs(1).range.Font.Bold = True
+ActiveDocument.Paragraphs(1).range.Font.Size = 14
+Beep
+myResponse = MsgBox("Remove duplicates?", _
+        vbQuestion + vbYesNoCancel, "AccentedWordCollector")
+If myResponse <> vbYes Then Exit Sub
+For j = ActiveDocument.Paragraphs.Count To 2 Step -1
+  Set rng1 = ActiveDocument.Paragraphs(j).range
+  Set rng2 = ActiveDocument.Paragraphs(j - 1).range
+  If anyCase = True Then
+    r1 = LCase(rng1)
+    r2 = LCase(rng2)
+  Else
+    r1 = rng1
+    r2 = rng2
+  End If
+  If r1 = r2 Then rng1.Delete
+  DoEvents
+Next j
+End Sub
+

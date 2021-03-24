@@ -1,0 +1,32 @@
+Sub TagNI()
+' Paul Beverley - Version 04.11.17
+' Adds an <ni> tag after every heading
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\<[ABC]\>"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While Selection.Find.Found = True
+  Selection.Expand wdParagraph
+  Selection.Collapse wdCollapseEnd
+  Selection.TypeText Text:="<ni>"
+  Selection.MoveEnd , 1
+  If Asc(Selection) = 13 Then Selection.Delete
+  Selection.Collapse wdCollapseEnd
+  Selection.Find.Execute
+Loop
+ActiveDocument.TrackRevisions = myTrack
+Selection.HomeKey Unit:=wdStory
+End Sub
+

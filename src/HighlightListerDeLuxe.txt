@@ -1,0 +1,83 @@
+Sub HighlightListerDeLuxe()
+' Paul Beverley - Version 27.05.11
+' List all the highlight colours used
+
+Dim gotCol(16) As Boolean
+mixCol = 9999999
+' Copy the whole text
+Selection.WholeStory
+Selection.Copy
+Documents.Add
+Selection.Paste
+' Delete unhighlighted text
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Highlight = False
+  .Text = ""
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Find which colours are used
+For Each wd In rng.Words
+  thisCol = wd.HighlightColorIndex
+  If thisCol < mixCol Then
+    gotCol(thisCol) = True
+  Else
+    For Each ch In wd.Characters
+      thisCol = ch.HighlightColorIndex
+      gotCol(thisCol) = True
+    Next ch
+  End If
+Next wd
+ActiveDocument.Close SaveChanges:=False
+
+' List colours used and not used
+' avoiding 1 = white and 8 = black
+Selection.HomeKey Unit:=wdStory
+For i = 2 To 16
+' Make the used colour stand out
+  If gotCol(i) = True Then Selection.TypeText Text:=vbTab & vbTab & "aaa"
+  Select Case i
+    Case wdWhite: col = "White"
+    Case wdBlack: col = "Black"
+    Case wdYellow: col = "Yellow"
+    Case wdBrightGreen: col = "BrightGreen"
+    Case wdGreen: col = "Green"
+    Case wdPink: col = "Pink"
+    Case wdRed: col = "Red"
+    Case wdBlue: col = "Blue"
+    Case wdGray25: col = "Gray25"
+    Case wdGray50: col = "Gray50"
+    Case wdTurquoise: col = "Turquoise"
+    Case wdTeal: col = "Teal"
+    Case wdDarkBlue: col = "DarkBlue"
+    Case wdDarkYellow: col = "DarkYellow"
+    Case wdDarkRed: col = "DarkRed"
+    Case wdViolet: col = "Violet"
+  End Select
+  If i <> 8 Then Selection.InsertBefore Text:=col & vbCrLf
+  Selection.Range.HighlightColorIndex = i
+  Selection.Start = Selection.End
+Next i
+
+Selection.Start = 0
+Selection.Style = wdStyleNormal
+Selection.Sort SortOrder:=wdSortOrderAscending
+' Remove the 'used' markers
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Highlight = False
+  .Text = "aaa"
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+End Sub
+

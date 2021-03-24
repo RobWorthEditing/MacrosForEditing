@@ -1,0 +1,19 @@
+Sub GreekPicker()
+' Paul Beverley - Version 20.06.14
+' Call up the Insert Symbol window set to Greek characters
+' Ctrl-Alt-Shift-G
+If Selection.Start = Selection.End Then
+  Selection.TypeText Text:=ChrW(937)
+  Selection.MoveStart wdCharacter, -1
+  Application.Run MacroName:="InsertSymbol"
+Else
+  myLen = Len(Selection)
+  Selection.Collapse wdCollapseStart
+  Selection.TypeText Text:=ChrW(937)
+  Selection.MoveStart wdCharacter, -1
+  Selection.MoveRight , 1
+  Selection.MoveEnd , myLen
+  Selection.Delete
+End If
+End Sub
+

@@ -1,0 +1,30 @@
+Sub CodeIndentedParas()
+' Paul Beverley - Version 07.07.11
+' Add codes to indented paragraphs
+
+beforeText = "<disp>"
+afterText = "</disp>"
+
+For Each para In ActiveDocument.Paragraphs
+  Set rng = para.Range
+  If rng.ParagraphFormat.LeftIndent <> CentimetersToPoints(0) _
+       And Len(rng) > 10 Then
+    rng.Select
+    Selection.InsertBefore Text:=beforeText
+    Selection.Start = Selection.End - 1
+    Selection.End = Selection.Start
+    Selection.TypeText Text:=afterText
+  End If
+Next para
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = afterText & "^p" & beforeText
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+

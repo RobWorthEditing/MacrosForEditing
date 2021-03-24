@@ -1,0 +1,278 @@
+Sub TagVariousAttributes()
+' Paul Beverley - Version 13.07.17
+' Add red tags to all italic text
+
+myColour = wdColorRed
+' for no colour, use myColour = wdColorBlack
+
+doItalic = True
+italON = "<em>"
+
+doBold = True
+boldON = "<strong>"
+
+doSBSS = True
+sbON = "<sub>"
+ssON = "<sup>"
+
+doUL = True
+ulON = "<u>"
+
+doStrike = True
+strikeON = "<del>"
+
+
+offMarker = "/"
+' i.e. the italic markers will be <em> and </em>
+
+
+italOFF = Replace(italON, "<", "<" & offMarker)
+boldOFF = Replace(boldON, "<", "<" & offMarker)
+ssOFF = Replace(ssON, "<", "<" & offMarker)
+sbOFF = Replace(sbON, "<", "<" & offMarker)
+ulOFF = Replace(ulON, "<", "<" & offMarker)
+strikeOFF = Replace(strikeON, "<", "<" & offMarker)
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+myCount = 0
+' Go and find the first italic bit
+If doItalic = True Then
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Italic = True
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  Do While Selection.Find.Found = True
+  ' If you want to count them...
+    myCount = myCount + 1
+  ' Note where the start of the found item is
+    startNow = Selection.Start
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=italOFF
+    endNow = Selection.End
+    Selection.MoveStart , -Len(italOFF)
+    If myColour > 0 Then Selection.Font.Color = myColour
+    Selection.End = startNow
+    Selection.TypeText Text:=italON
+    Selection.MoveStart , -Len(italON)
+    If myColour > 0 Then Selection.Font.Color = myColour
+    Selection.Start = endNow + Len(italON)
+    Selection.Collapse wdCollapseEnd
+  ' Go and find the next occurrence (if there is one)
+    Selection.Find.Execute
+  Loop
+  myItalic = myCount
+End If
+
+myCount = 0
+' Go and find the first bold bit
+If doBold = True Then
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Bold = True
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  Do While Selection.Find.Found = True
+  ' If you want to count them...
+    myCount = myCount + 1
+  ' Note where the start of the found item is
+    startNow = Selection.Start
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=boldOFF
+    endNow = Selection.End
+    Selection.MoveStart , -Len(boldOFF)
+    If myColour > 0 Then Selection.Font.Color = myColour
+    Selection.End = startNow
+    Selection.TypeText Text:=boldON
+    Selection.MoveStart , -Len(boldON)
+    If myColour > 0 Then Selection.Font.Color = myColour
+    Selection.Start = endNow + Len(boldON)
+    Selection.Collapse wdCollapseEnd
+  ' Go and find the next occurrence (if there is one)
+    Selection.Find.Execute
+  Loop
+  myBold = myCount
+End If
+
+myCount = 0
+' Go and find the first underline bit
+If doUL = True Then
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Underline = True
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  Do While Selection.Find.Found = True
+  ' If you want to count them...
+    myCount = myCount + 1
+  ' Note where the start of the found item is
+    startNow = Selection.Start
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=ulOFF
+    endNow = Selection.End
+    Selection.MoveStart , -Len(ulOFF)
+    If myColour > 0 Then Selection.Font.Color = myColour
+    Selection.End = startNow
+    Selection.TypeText Text:=ulON
+    Selection.MoveStart , -Len(ulON)
+    If myColour > 0 Then Selection.Font.Color = myColour
+    Selection.Start = endNow + Len(ulON)
+    Selection.Collapse wdCollapseEnd
+  ' Go and find the next occurrence (if there is one)
+    Selection.Find.Execute
+  Loop
+  myUL = myCount
+End If
+
+myCount = 0
+' Go and find the first StrikeThrough bit
+If doStrike = True Then
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.StrikeThrough = True
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  Do While Selection.Find.Found = True
+  ' If you want to count them...
+    myCount = myCount + 1
+  ' Note where the start of the found item is
+    startNow = Selection.Start
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=strikeOFF
+    endNow = Selection.End
+    Selection.MoveStart , -Len(strikeOFF)
+    If myColour > 0 Then Selection.Font.Color = myColour
+    Selection.End = startNow
+    Selection.TypeText Text:=strikeON
+    Selection.MoveStart , -Len(strikeON)
+    If myColour > 0 Then Selection.Font.Color = myColour
+    Selection.Start = endNow + Len(strikeON)
+    Selection.Collapse wdCollapseEnd
+  ' Go and find the next occurrence (if there is one)
+    Selection.Find.Execute
+  Loop
+  myStrike = myCount
+End If
+
+myCount = 0
+' Go and find the first subscript bit
+If doSBSS = True Then
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Subscript = True
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  Do While Selection.Find.Found = True
+  ' If you want to count them...
+    myCount = myCount + 1
+  ' Note where the start of the found item is
+    startNow = Selection.Start
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=sbOFF
+    endNow = Selection.End
+    Selection.MoveStart , -Len(sbOFF)
+    If myColour > 0 Then Selection.Font.Color = myColour
+    Selection.Font.Subscript = False
+    Selection.End = startNow
+    Selection.TypeText Text:=sbON
+    Selection.MoveStart , -Len(sbON)
+    If myColour > 0 Then Selection.Font.Color = myColour
+    Selection.Start = endNow + Len(sbON)
+    Selection.Collapse wdCollapseEnd
+  ' Go and find the next occurrence (if there is one)
+    Selection.Find.Execute
+  Loop
+  mySB = myCount
+
+' Go and find the first superscript bit
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Superscript = True
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  myCount = 0
+  Do While Selection.Find.Found = True
+  ' If you want to count them...
+    myCount = myCount + 1
+  ' Note where the start of the found item is
+    startNow = Selection.Start
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=ssOFF
+    endNow = Selection.End
+    Selection.MoveStart , -Len(ssOFF)
+    If myColour > 0 Then Selection.Font.Color = myColour
+    Selection.Font.Superscript = False
+    Selection.End = startNow
+    Selection.TypeText Text:=ssON
+    Selection.MoveStart , -Len(ssON)
+    If myColour > 0 Then Selection.Font.Color = myColour
+    Selection.Start = endNow + Len(ssON)
+    Selection.Collapse wdCollapseEnd
+  ' Go and find the next occurrence (if there is one)
+    Selection.Find.Execute
+  Loop
+  mySS = myCount
+End If
+
+myMsg = "Changed:" & vbCr
+If doItalic = True Then myMsg = myMsg & myItalic & " Italic" & vbCr
+If doBold = True Then myMsg = myMsg & myBold & " Bold" & vbCr
+If doSBSS = True Then
+  myMsg = myMsg & mySB & " Subscript" & vbCr
+  myMsg = myMsg & mySS & " Superscript" & vbCr
+End If
+If doUL = True Then myMsg = myMsg & myUL & " Underline" & vbCr
+If doStrike = True Then myMsg = myMsg & myStrike & " StrikeThrough" & vbCr
+MsgBox myMsg
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

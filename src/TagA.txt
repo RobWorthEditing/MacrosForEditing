@@ -1,0 +1,36 @@
+Sub TagA()
+' Paul Beverley - Version 29.10.11
+' Adds a tag to the current paragraph
+
+newLine = vbCr
+startText = "<A>8.zxzx."
+startText = "<A>"
+'endText = "<ni>"
+'endText = "</A>" & newLine
+'endText = "</A>"
+endTextOnSameLine = False
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Selection.TypeText startText
+' Add close tag, if there is one
+If endText > "" Then
+  Selection.Expand wdParagraph
+  Selection.Collapse wdCollapseEnd
+' Tag on this line or next?
+  If endTextOnSameLine = True Then
+    Selection.MoveLeft Unit:=wdCharacter, Count:=1
+  End If
+  If Asc(Selection) = 13 Then
+    Selection.MoveRight , 1
+    Selection.MoveStart , -1
+    Selection.Delete
+  End If
+  Selection.TypeText endText
+  Selection.MoveEnd , -6
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

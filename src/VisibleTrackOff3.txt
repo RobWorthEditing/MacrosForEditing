@@ -1,0 +1,19 @@
+Sub VisibleTrackOff3()
+' Paul Beverley - Version 14.03.17
+' A visible trackchange reminder - using a wiggly line!
+' based on a macro by Thiers Halliwell
+
+Set myRng = ActiveDocument.range.Borders(wdBorderRight)
+Set myRng2 = ActiveDocument.range.Borders(wdBorderLeft)
+
+If ActiveDocument.TrackRevisions = False Then
+  myRng.LineStyle = wdLineStyleNone
+  myRng2.LineStyle = wdLineStyleNone
+  ActiveDocument.TrackRevisions = True
+Else
+  ActiveDocument.TrackRevisions = False
+  myRng.LineStyle = wdLineStyleSingleWavy
+  myRng2.LineStyle = wdLineStyleSingleWavy
+End If
+End Sub
+

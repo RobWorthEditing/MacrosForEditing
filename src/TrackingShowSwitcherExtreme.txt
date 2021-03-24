@@ -1,0 +1,21 @@
+Sub TrackingShowSwitcherExtreme()
+' Paul Beverley - Version 23.02.11
+' Toggle visibility of track changes
+
+If ActiveDocument.ActiveWindow.View.ShowFormatChanges = True Then
+  ActiveDocument.ActiveWindow.View.ShowFormatChanges = False
+  Exit Sub
+End If
+If ActiveDocument.ActiveWindow.View.ShowInsertionsAndDeletions = True Then
+  ActiveDocument.ActiveWindow.View.ShowInsertionsAndDeletions = False
+  Exit Sub
+End If
+If ActiveDocument.ActiveWindow.View.ShowComments = True Then
+  ActiveDocument.ActiveWindow.View.ShowComments = False
+  Exit Sub
+End If
+ActiveDocument.ActiveWindow.View.ShowFormatChanges = True
+ActiveDocument.ActiveWindow.View.ShowInsertionsAndDeletions = True
+ActiveWindow.View.ShowComments = True
+End Sub
+

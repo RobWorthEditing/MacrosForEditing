@@ -1,0 +1,24 @@
+Sub LinesToParagraphs()
+' Paul Beverley - Version 16.08.19
+' Converts lots of individual lines of text into paragraphs
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p^p"
+  .Wrap = wdFindStop
+  .Replacement.Text = "zczc"
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "^p"
+  .Replacement.Text = " "
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "zczc"
+  .Replacement.Text = "^p^p"
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+

@@ -1,0 +1,173 @@
+Sub WhatChar()
+' Paul Beverley - Version 10.08.20
+' Show ASCII and unicode and character names
+
+
+' To use voice, "uncomment" this line:
+' Set speech = New SpVoice
+
+' Decide where to show results
+showOnStatusbar = False
+showInMessageBox = True
+useVoice = False
+
+' If the macro gives an error on locked files, make this True
+lockedFile = False
+' lockedFile = True
+
+' If the character is a space, don't show a message box.
+justBeepForSpace = False
+
+' If you also want to know what the hex of the ANSI code is:
+showHexANSI = True
+
+' If you also want to use this code in FRedit:
+prepareFReditCode = True
+
+
+If showOnStatusbar + showInMessageBox + useVoice = 0 Then _
+     Beep: MsgBox "Alter options in macro code to show results.": _
+     Exit Sub
+
+charSelected = (Selection.Start <> Selection.End)
+If AscW(Selection) = 32 And justBeepForSpace Then Beep: Exit Sub
+
+CR2 = vbCr & vbCr
+If Selection.Start = Selection.End Then Selection.MoveEnd wdCharacter, 1
+If lockedFile = False Then Selection.Range.Revisions.AcceptAll
+ansicode = Asc(Selection)
+uCode = Val(Dialogs(wdDialogInsertSymbol).CharNum)
+If Asc(ansicode) = 63 And uCode <> 63 Then
+  ansiBit = "ANSI: ???"
+Else
+  ansiBit = ">>>>>>  ANSI: " & Str(ansicode)
+  If showHexANSI = True Then ansiBit = ansiBit & _
+       " (hex " & Hex(ansicode) & ")"
+End If
+hexCode = Replace(Hex(uCode), "FFFF", "")
+ucodeBit = vbCr & "Unicode: " & Str(uCode) & "   (hex " & _
+      hexCode & ")"
+If Selection.Font.Name <> _
+     ActiveDocument.Styles(wdStyleNormal).Font.Name Then
+  fontBit = vbCr & "Font:   " & Selection.Font.Name
+Else
+  fontBit = ""
+End If
+fntSize = Selection.Font.Size
+normalSize = ActiveDocument.Styles(wdStyleNormal).Font.Size
+If normalSize <> fntSize Then _
+     fontBit = fontBit & "           Font Size:  " & Str(fntSize)
+
+HexBit = ""
+If uCode < 0 Then
+  HexBit = vbCr & vbCr & "For FRedit, use Find: <&H" & hexCode & ">"
+  If prepareFReditCode = True Then
+    Selection.Collapse wdCollapseStart
+    startCode = Selection.Start
+    Selection.TypeText "<&H" & hexCode & ">|"
+    Selection.Start = startCode
+    Selection.Cut
+  End If
+End If
+
+' To correct for Mac codes
+Select Case ansicode
+  Case 2: extraBit = "Foot note end note marker"
+  Case 32: extraBit = "Ordinary space"
+  Case 34: extraBit = "Straight double quote"
+  Case 39: extraBit = "Straight apostrophe"
+  Case 40: If Selection.Font.Name = "Symbol" Then extraBit = "Funny Symbol font character!"
+  Case 45: extraBit = "Ordinary hyphen"
+  Case 46: extraBit = "Full point"
+  Case 48: extraBit = "Number 0"
+  Case 49: extraBit = "Number 1"
+  Case 50: extraBit = "Number 2"
+  Case 51: extraBit = "Number 3"
+  Case 58: extraBit = "Colon"
+  Case 59: extraBit = "Semicolon"
+  Case 63: extraBit = "Question mark"
+  Case 73: extraBit = "Uppercase I(eye)"
+  Case 76: extraBit = "Uppercase L"
+  Case 79: extraBit = "Uppercase O"
+  Case 88: extraBit = "Uppercase X"
+  Case 96: extraBit = "Back tick"
+  Case 105: extraBit = "Lowercase i (eye)"
+  Case 108: extraBit = "Lowercase l (el)"
+  Case 111: extraBit = "Lowercase o"
+  Case 120: extraBit = "Lowercase x"
+  Case 150: extraBit = "En dash"
+  Case 151: extraBit = "Em dash"
+  Case 174: extraBit = "Registered trademark"
+  Case 176: extraBit = "Proper degree symbol"
+
+  Case Else: extraBit = ""
+End Select
+
+' The unicode information will overwrite the ANSI
+Select Case uCode
+  Case 9: extraBit = "Tab character"
+  Case 11: extraBit = "Manual line break"
+  Case 13: extraBit = "Just an ordinary paragraph end"
+  Case 30: extraBit = "Non-breaking hyphen"
+  Case 31: extraBit = "Optional hyphen"
+  Case 124: extraBit = "Vertical bar"
+  Case 160: extraBit = "Non-breaking space"
+  Case 176: extraBit = "Proper degree symbol"
+  Case 178: extraBit = "Dodgy squared symbol!"
+  Case 179: extraBit = "Dodgy cubed symbol!"
+  Case 180: extraBit = "Dodgy apostrophe!"
+  Case 186: extraBit = "Masculine ordinal"
+  Case 215: extraBit = "Proper multiply symbol"
+  Case 937: extraBit = "Omega"
+  Case 956: extraBit = "Mu = micro"
+  Case 8194: extraBit = "En space"
+  Case 8195: extraBit = "Em space"
+  Case 8201: extraBit = "Thin space"
+  Case 8216: extraBit = "Single open curly quote"
+  Case 8217: extraBit = "Single close curly quote = apostrophe"
+  Case 8211: extraBit = "En dash"
+  Case 8212: extraBit = "Em dash"
+  Case 8220: extraBit = "Double open curly quote"
+  Case 8221: extraBit = "Double close curly quote"
+  Case 8222: extraBit = "German open curly quote"
+  Case 8226: extraBit = "Ordinary bullet"
+  Case 8230: extraBit = "Ellipsis"
+  Case 8242: extraBit = "Unicode: single prime"
+  Case 8243: extraBit = "Unicode: double prime"
+  Case 8249: extraBit = "French open quote"
+  Case 8250: extraBit = "French close quote"
+  Case 8722: extraBit = "Proper minus sign"
+End Select
+
+If extraBit > "" Then extraBit = "      >>>>  " & extraBit
+
+If Selection.Font.Superscript = True Then
+  extraBit = extraBit & "      >>>>  superscripted"
+End If
+If Selection.Font.Subscript = True Then
+  extraBit = extraBit & "      >>>>  subscripted"
+End If
+If Selection.Font.Italic = True Then
+  extraBit = extraBit & "      >>>>  italic"
+End If
+
+' This isn't a 'funny' Symbol font, undo the Revisions.AcceptAll
+If lockedFile = False And uCode > 0 Then WordBasic.EditUndo
+
+' Show on the status bar
+s = "                   "
+If showOnStatusbar = True Then _
+       StatusBar = s & s & s & s & ansiBit & "    " & extraBit _
+       & "    " & ucodeBit & "    " & fontBit & HexBit
+
+If useVoice And extraBit > "" And charSelected = False Then _
+     speech.Speak extraBit, SVSFPurgeBeforeSpeak
+     
+' Display in a message box
+If (useVoice And charSelected) Or showInMessageBox _
+     Or extraBit = "" Or uCode < 0 Then _
+     MsgBox ansiBit & extraBit & vbCr & ucodeBit & vbCr & fontBit _
+    & HexBit, , "WhatChar"
+Selection.Collapse wdCollapseStart
+End Sub
+

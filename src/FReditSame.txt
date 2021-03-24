@@ -1,0 +1,31 @@
+Sub FReditSame()
+' Paul Beverley - Version 21.08.19
+' Create FRedit item with ^&
+
+addColorAndStrike = True
+myColour = wdColorPink
+
+Selection.Expand wdParagraph
+If Len(Selection) < 2 Then
+  Selection.MoveRight Count:=1
+  Exit Sub
+End If
+Selection.MoveEnd wdCharacter, -1
+tabPos = InStr(Selection, Chr(9))
+If tabPos = 0 Then tabPos = InStr(Selection, " .")
+If tabPos > 0 Then
+  Selection.MoveStart wdCharacter, tabPos - 1
+  Selection.Delete
+Else
+  Selection.Collapse wdCollapseEnd
+End If
+Selection.TypeText Text:=ChrW(124) & "^&"
+If addColorAndStrike = True Then
+  Selection.Expand wdParagraph
+  Selection.Font.StrikeThrough = True
+  Selection.range.Font.Color = myColour
+  Selection.Collapse wdCollapseEnd
+End If
+Selection.MoveRight , 1
+End Sub
+

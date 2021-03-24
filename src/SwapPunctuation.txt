@@ -1,0 +1,15 @@
+Sub SwapPunctuation()
+' Version 02.02.21
+' Swaps the punctuation at the end of some words
+
+Selection.Collapse wdCollapseStart
+Selection.MoveEnd , 1
+Do
+  Selection.MoveEnd , 1
+  Selection.MoveStart , 1
+  DoEvents
+Loop Until (UCase(Selection) = LCase(Selection) And Selection <> " ")
+Selection.Collapse wdCollapseEnd
+Call SwapCharacters
+End Sub
+

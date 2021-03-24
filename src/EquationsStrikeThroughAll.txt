@@ -1,0 +1,17 @@
+Sub EquationsStrikeThroughAll()
+' Paul Beverley - Version 31.08.16
+' Ensure that no equations are edited by FRedit etc.
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+numEqs = ActiveDocument.OMaths.Count
+For i = numEqs To 1 Step -1
+  ActiveDocument.OMaths(i).range.Font.StrikeThrough = True
+  DoEvents
+  StatusBar = "                        " & i
+Next i
+ActiveDocument.TrackRevisions = myTrack
+Beep
+StatusBar = ""
+End Sub
+

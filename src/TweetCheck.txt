@@ -1,0 +1,49 @@
+Sub TweetCheck()
+' Paul Beverley - Version 10.05.18
+' Highlights paragraphs with too many characters
+
+maxChars = 280
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+If Selection.End > Selection.Start Then
+  Set rng = ActiveDocument.Content
+  gotOne = False
+  For Each myPara In ActiveDocument.Paragraphs
+  
+    If myPara.range.End > Selection.End Then
+    ' Allowing one character for the newline...
+      If myPara.range.Characters.Count > maxChars + 1 Then
+        If gotOne = False Then
+          myPara.range.Select
+          Beep
+          Selection.Collapse wdCollapseStart
+        End If
+        rng.Start = myPara.range.Start
+        rng.End = rng.Start + maxChars
+        rng.HighlightColorIndex = wdGray25
+        gotOne = True
+      End If
+    End If
+  Next myPara
+  If gotOne = False Then
+    Beep
+    myTime = Timer
+    Do
+    Loop Until Timer > myTime + 0.2
+    Beep
+    Selection.Collapse wdCollapseStart
+  End If
+Else
+  Selection.Expand wdParagraph
+  If Selection.range.Characters.Count > maxChars + 1 Then
+    Selection.End = Selection.Start + maxChars
+    Selection.range.HighlightColorIndex = wdGray25
+  Else
+    Beep
+  End If
+  Selection.Collapse wdCollapseEnd
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

@@ -1,0 +1,117 @@
+Sub HighlightSame()
+' Paul Beverley - Version 16.01.21
+' Highlight all occurrences of this text in this colour
+
+nonTextColour = wdGray25
+textColour = wdBrightGreen
+' colour for thin spaces
+otherColour = wdYellow
+
+' Preserve TC status and existing highlight colour
+oldColour = Options.DefaultHighlightColorIndex
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Dim v As Variable, nowColour As Long
+varsExist = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "selStart" Then varsExist = True: Exit For
+Next v
+
+If varsExist Then
+  wasStart = ActiveDocument.Variables("selStart")
+  wasEnd = ActiveDocument.Variables("selEnd")
+  If Selection.Start > wasStart - 1 And Selection.End < wasEnd + 1 Then
+    Selection.Start = wasStart
+    Selection.End = wasEnd
+  End If
+End If
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start - 1
+rng.End = Selection.Start
+If Selection.End = Selection.Start Then
+  If AscW(Selection) = 8201 Then nonTextColour = otherColour
+  partWord = False
+  Selection.MoveEnd , 1
+  myChar = Selection
+  nonText = (UCase(myChar) = LCase(myChar))
+  If nonText = True Then
+    nowColour = Selection.Range.HighlightColorIndex
+    If nowColour = wdNoHighlight Then
+      Options.DefaultHighlightColorIndex = nonTextColour
+    Else
+      Options.DefaultHighlightColorIndex = wdNoHighlight
+    End If
+  Else
+    If UCase(rng) <> LCase(rng) And rng.HighlightColorIndex > 0 Then
+      Options.DefaultHighlightColorIndex = wdNoHighlight
+    Else
+      nowColour = Selection.Range.HighlightColorIndex
+      If nowColour = wdNoHighlight Then
+        Options.DefaultHighlightColorIndex = textColour
+      Else
+        Options.DefaultHighlightColorIndex = nowColour
+      End If
+    End If
+    Selection.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+  End If
+Else
+  partWord = True
+  nowColour = Selection.Range.HighlightColorIndex
+'  If nowColour = 0 Then nowColour = nontextColour
+  If nowColour > 1000 Then
+    Set rng = ActiveDocument.Content
+    rng.Start = Selection.Start
+    rng.End = Selection.Start + 1
+    nowColour = rng.HighlightColorIndex
+  End If
+  Options.DefaultHighlightColorIndex = nowColour
+End If
+
+findText = Selection
+Select Case Asc(findText)
+  Case 9:  findText = "^t"
+  Case 30:  findText = "^~": partWord = True ' non-breaking hyphen
+End Select
+
+Selection.Collapse wdCollapseStart
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = findText
+  .MatchCase = True
+  .Forward = True
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Wrap = wdFindContinue
+  If partWord = False And nonText = False Then .MatchWholeWord = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Restore to original state
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = oldColour
+ActiveDocument.TrackRevisions = nowTrack
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchCase = False
+  .MatchWholeWord = False
+  .Replacement.Highlight = False
+End With
+If Selection.End = Selection.Start Then
+   myChar = Selection
+  If UCase(myChar) <> LCase(myChar) Then
+    Selection.Move , 1
+  End If
+End If
+End Sub
+

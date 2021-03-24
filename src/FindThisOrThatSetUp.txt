@@ -1,0 +1,24 @@
+Sub FindThisOrThatSetUp()
+' Paul Beverley - Version 22.02.14
+' Set-up for finding the next occurrence of certain specific words
+
+Dim v As Variable
+varsExist = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "findText" Then varsExist = True: Exit For
+Next v
+
+If varsExist = False Then
+  ActiveDocument.Variables.Add "findText", " "
+  textNow = ""
+Else
+  textNow = ActiveDocument.Variables("findText")
+End If
+
+t = InputBox("Search for?", "Find This Or That", textNow)
+If t = "" Then Exit Sub
+ActiveDocument.Variables("findText") = t
+ 
+Call FindThisOrThat
+End Sub
+

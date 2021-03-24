@@ -1,0 +1,12 @@
+Sub OvertypeBeep()
+' Paul Beverley - Version 01.01.10
+' Sound warning beep on overtype
+Options.Overtype = Not Options.Overtype
+beep
+If Options.Overtype = True Then
+  Do
+  Loop Until Timer > myTime + 0.2
+  beep
+End If
+End Sub
+

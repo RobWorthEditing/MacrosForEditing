@@ -1,0 +1,19 @@
+Sub BookmarkTempClear()
+' Paul Beverley - Version 12.01.16
+' Delete temporary markers
+
+If ActiveDocument.Bookmarks.Exists("myTempMark2") Then _
+  ActiveDocument.Bookmarks("myTempMark2").Delete
+
+If ActiveDocument.Bookmarks.Exists("myTempMark") Then
+  ActiveDocument.Bookmarks("myTempMark").Delete
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+Else
+  MsgBox "Temporary bookmark not found"
+End If
+End Sub
+

@@ -1,0 +1,21 @@
+Sub TableEmDasher()
+' Paul Beverley - Version 05.03.13
+' Empty cells and hyphen/en dash to em dash
+
+dashIfEmpty = True
+trackIt = False
+
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+For Each myTable In ActiveDocument.Tables
+  For Each myCell In myTable.Range.Cells
+    myText = Trim(Left(myCell.Range, Len(myCell.Range) - 2))
+    If myText = "-" Or myText = ChrW(8211) Or (dashIfEmpty = True _
+         And myText = "") Then
+      myCell.Range = ChrW(8212)
+    End If
+  Next myCell
+Next myTable
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

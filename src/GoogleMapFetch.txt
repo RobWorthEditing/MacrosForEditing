@@ -1,0 +1,29 @@
+Sub GoogleMapFetch()
+' Paul Beverley - Version 16.01.21
+' Launches selected text to Google Maps
+
+mySite = "http://www.google.co.uk/maps/dir/"
+
+myHome = "NR8 6TR"
+myWork = "M21 1UW"
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  DoEvents
+End If
+
+s = Trim(Selection)
+If Left(s, 1) = "h" Then s = myHome & "/" & Mid(s, 2)
+If Left(s, 1) = "w" Then s = myWork & "/" & Mid(s, 2)
+
+s = Replace(s, " to ", "/")
+s = Replace(s, " ", "+")
+s = Replace(s, "&", "%26")
+s = Replace(s, ChrW(8217), "'")
+ActiveDocument.FollowHyperlink Address:=mySite & mySubject
+End Sub
+

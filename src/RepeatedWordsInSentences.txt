@@ -1,0 +1,69 @@
+Sub RepeatedWordsInSentences()
+' Paul Beverley - Version 12.09.19
+' Highlights any words duplicated within a given sentence
+
+wdsIgnore = ",about,been,from,have,here,some,into,"
+wdsIgnore = wdsIgnore & ",that,their,them,then,there,these,they,"
+wdsIgnore = wdsIgnore & ",this,those,very,were,will,what,with,"
+wdsIgnore = wdsIgnore & ",it" & ChrW(8217) & "s," ' This is for "it's"
+
+useHighlight = True
+useColour = False
+useManyColours = True
+
+Dim myCol(20)
+myCol(1) = wdYellow
+myCol(2) = wdBrightGreen
+myCol(3) = wdTurquoise
+myCol(4) = wdPink
+
+myCol(11) = wdColorPink
+myCol(12) = wdColorBlue
+myCol(13) = wdColorRed
+myCol(14) = wdColorBrightGreen
+myColTotal = 4
+
+myCount = 0
+col = 1
+senNum = ActiveDocument.range(0, Selection.Sentences(1).End).Sentences.Count
+For sen = senNum To ActiveDocument.Sentences.Count
+  Set se = ActiveDocument.Sentences(sen)
+  txt = LCase(se.Text)
+  lensen = Len(txt)
+  wds = ","
+  For i = 1 To se.Words.Count
+    wd = LCase(Trim(se.Words(i)))
+    lnw = Len(wd)
+    If lnw > 3 And InStr(wdsIgnore, "," & wd & ",") = 0 Then
+      Set rng = se.Duplicate
+      rs = rng.Start
+      newtxt = Replace(txt, wd, "")
+      If (lensen - Len(newtxt)) > lnw And _
+           InStr(wds, "," & wd & ",") = 0 Then
+        wds = wds & wd & ","
+        For j = 1 To lensen - lnw
+          If Mid(txt, j, lnw) = wd Then
+            rng.Start = rs + j - 1
+            rng.End = rng.Start + lnw
+            If useHighlight Then
+              rng.HighlightColorIndex = myCol(col)
+            End If
+            If useColour Then
+              rng.Font.Color = myCol(col + 10)
+            End If
+            j = j + lnw
+          End If
+        Next j
+        If useManyColours Then col = col Mod myColTotal + 1
+        DoEvents
+      End If
+    End If
+  Next i
+  myCount = myCount + 1
+  If myCount = 10 Then
+    se.Words(1).Select
+    myCount = 0
+  End If
+Next sen
+End Sub
+

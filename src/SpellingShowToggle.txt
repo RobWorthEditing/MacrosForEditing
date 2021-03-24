@@ -1,0 +1,27 @@
+Sub SpellingShowToggle()
+' Paul Beverley - Version 25.05.20
+' Switches visible spelling error indication on and off
+
+Set rng = Selection.Range.Duplicate
+Application.ScreenUpdating = False
+Selection.HomeKey Unit:=wdStory
+If Options.CheckSpellingAsYouType = True Then
+  Options.CheckSpellingAsYouType = False
+  ActiveDocument.ShowSpellingErrors = False
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+Else
+  Options.CheckSpellingAsYouType = True
+  ActiveDocument.ShowSpellingErrors = True
+  Beep
+End If
+Selection.TypeText Text:="!"
+Selection.MoveStart , -1
+Selection.Delete
+rng.Select
+Application.ScreenUpdating = True
+End Sub
+

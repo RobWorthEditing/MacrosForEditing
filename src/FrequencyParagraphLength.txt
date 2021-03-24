@@ -1,0 +1,191 @@
+Sub FrequencyParagraphLength()
+' Paul Beverley - Version 15.04.20
+' Creates a histogram of paragraph length
+
+maxNumColumns = 30
+maxBlocks = 60
+bigDoc = 250000
+
+CR = vbCr: CR2 = CR & CR
+
+myResponse = MsgBox("Allow macro to choose the column width?", vbQuestion _
+    + vbYesNoCancel, "Frequency Paragraph Length")
+
+If myResponse = vbCancel Then Exit Sub
+If myResponse = vbNo Then
+  myText = InputBox("New column width?", "Frequency Paragraph Length")
+  myWidth = Val(myText)
+  If myWidth = 0 Then Exit Sub
+End If
+
+Set rng = ActiveDocument.Content
+n = InStr(ActiveDocument.Content, vbCr & "The end" & vbCr)
+If n > 0 Then
+  rng.End = n + 1
+Else
+  Set rng = ActiveDocument.Content
+  Documents.Add
+  Selection.Text = rng.Text
+  Selection.Collapse wdCollapseEnd
+  Selection.TypeText Text:=vbCr & "The end" & vbCr
+  DoEvents
+  Set rng = ActiveDocument.Content
+End If
+
+For Each pa In ActiveDocument.Paragraphs
+  wdCount = pa.Range.Words.Count - 1
+  If wdCount > numMax And wdCount > 10 Then
+    numMax = wdCount
+  End If
+Next pa
+
+If myWidth = 0 Then
+  myWidth = Int(numMax / maxNumColumns) + 1
+  myWidth = Int((myWidth + 3) / 5) * 5
+  asdgfsdf = 0
+End If
+heads = Int(numMax / myWidth) + 1
+ReDim h(heads) As Integer
+
+For Each pa In ActiveDocument.Paragraphs
+  If InStr(pa, "The end") > 0 Then Exit For
+  wdCount = pa.Range.Words.Count - 1
+  lastChar = Left(Right(pa.Range.Text, 2), 1)
+  If wdCount > 1 And LCase(lastChar) = UCase(lastChar) Then
+  cat = Int((wdCount + myWidth - 1) / myWidth)
+  h(cat) = h(cat) + 1
+  End If
+Next pa
+
+maxCount = 0
+For i = 1 To heads
+  If h(i) > maxCount Then maxCount = h(i)
+Next i
+
+oneBlock = maxCount / maxBlocks
+If oneBlock < 1 Then oneBlock = 1
+Selection.EndKey Unit:=wdStory
+Selection.TypeText Text:=vbCr & vbCr
+myResult = ""
+For i = 1 To heads
+  fm = myWidth * (i - 1) + 1
+  too = fm + myWidth - 1
+  If fm = 1 Then fm = 2
+  myRange = Trim(Str(fm)) & "-" & Trim(Str(too))
+  numLeft = 0
+  For j = i To heads
+    numLeft = numLeft + h(j)
+  Next j
+  If numLeft = 0 Then Exit For
+  myResult = myResult & myRange & vbTab
+  For j = 1 To Int(h(i) / oneBlock)
+    myResult = myResult & ChrW(9632)
+  Next j
+  myResult = myResult & "   " & Trim(Str(h(i))) & vbCr
+Next i
+st = Selection.Start
+Selection.TypeText Text:=myResult
+Selection.Start = st
+Selection.ParagraphFormat.TabStops.Add Position:=CentimetersToPoints(1.5)
+Selection.Collapse wdCollapseEnd
+Beep
+
+myResponse = MsgBox("Create sorted list?", vbQuestion _
+     + vbYesNoCancel, "Sentence Length Distribution")
+     
+If myResponse <> vbYes Then Exit Sub
+If ActiveDocument.Words.Count > bigDoc Then
+  Beep
+  myResponse = MsgBox("This may take some time. OK?", vbQuestion _
+      + vbYesNoCancel, "Frequency Paragraph Length")
+  If myResponse <> vbYes Then Exit Sub
+End If
+     
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.TypeText Text:=CR
+Selection.Text = rng.Text
+Selection.Collapse wdCollapseEnd
+Set tempDoc = ActiveDocument
+n = InStr(ActiveDocument.Content, "The end" & vbCr)
+If n > 0 Then
+  Set rng = ActiveDocument.Range(n - 1, ActiveDocument.Content.End)
+  rng.Delete
+End If
+
+For Each pa In ActiveDocument.Paragraphs
+  wdCount = pa.Range.Words.Count - 1
+  If wdCount > 1 Then
+    myData = "[" & Trim(Str(wdCount + 1000)) & "] "
+  Else
+    myData = "x000x"
+  End If
+  pa.Range.InsertBefore Text:=myData
+Next pa
+
+' Sort by straight searching & typing into new doc
+If ActiveDocument.Words.Count < bigDoc Then
+  Set rng = ActiveDocument.Content
+  rng.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+
+  Set rng = ActiveDocument.Content
+  n = InStr(rng.Text, "x000x")
+  If n > 0 Then
+    rng.Start = n - 1
+    rng.Delete
+  End If
+  rng.InsertAfter Text:=vbCr
+Else
+  Set tempDoc = ActiveDocument
+  Documents.Add
+  Set listDoc = ActiveDocument
+  For i = 1002 To 1000 + numMax
+    Set rng = tempDoc.Content
+    myText = ""
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "\[" & Trim(Str(i)) & "\]*^13"
+      .Wrap = False
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = True
+      .Execute
+    End With
+    
+    Do While rng.Find.Found = True
+      myText = myText & rng.Text
+      Selection.Collapse wdCollapseEnd
+      rng.Find.Execute
+    Loop
+    ss = Selection.Start
+    Selection.TypeText Text:=myText
+    Selection.Start = ss
+    Selection.Sort SortOrder:=wdSortOrderAscending
+    Selection.Collapse wdCollapseEnd
+  Next i
+  tempDoc.Close SaveChanges:=False
+  listDoc.Activate
+  Selection.EndKey Unit:=wdStory
+End If
+
+' Now strip leading zeros
+Set rng = ActiveDocument.Content
+With rng.Find
+' Remove leading 1000's
+  .Text = "[1"
+  .Replacement.Text = "^p["
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  .Text = "\[[0]{1,}"
+  .Replacement.Text = "["
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

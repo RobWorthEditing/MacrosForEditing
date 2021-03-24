@@ -1,0 +1,16 @@
+Sub CommaAddPrevious()
+' Paul Beverley - Version 19.09.18
+' Adds a comma before the current word
+
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+Selection.TypeText Text:=", "
+Selection.MoveLeft , 2
+Selection.MoveStart , -1
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Selection.Delete
+ActiveDocument.TrackRevisions = myTrack
+Selection.MoveRight , 1
+End Sub
+

@@ -1,0 +1,20 @@
+Sub SpellcheckWordUSUK()
+' Paul Beverley - Version 19.12.11
+' Spellcheck single word in NOT the current language
+
+Selection.Words(1).Select
+If Selection.LanguageID = wdEnglishUK Then
+  checkLang = wdEnglishUS
+Else
+  checkLang = wdEnglishUK
+End If
+
+If Application.CheckSpelling(Selection, _
+       MainDictionary:=Languages(checkLang).NameLocal) = False Then
+  ActiveDocument.CheckSpelling
+Else
+  Selection.Start = Selection.End
+  Beep
+End If
+End Sub
+

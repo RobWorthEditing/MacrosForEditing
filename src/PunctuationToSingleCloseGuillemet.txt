@@ -1,0 +1,32 @@
+Sub PunctuationToSingleCloseGuillemet()
+' Paul Beverley - Version 31.01.20
+' Changes next quote mark to single close guillemet
+
+trackit = True
+
+myTrack = ActiveDocument.TrackRevisions
+If trackit = False Then ActiveDocument.TrackRevisions = False
+
+searchChars = Chr(34) & Chr(39) & ChrW(8217) _
+       & ChrW(8220) & ChrW(8249) & ChrW(8250) _
+       & ChrW(8218) & ChrW(139) & ChrW(96)
+
+Selection.Collapse wdCollapseEnd
+startHere = Selection.Start
+Set rng = ActiveDocument.Content
+theEnd = rng.End
+Do While InStr(searchChars, Selection) = 0
+  Selection.MoveRight , 1
+  If Selection.Start > startHere + 1000 Or _
+       Selection.Start > theEnd - 2 Then
+    Beep
+    ActiveDocument.TrackRevisions = myTrack
+    Exit Sub
+  End If
+Loop
+Selection.MoveEnd wdCharacter, 1
+Selection.Delete
+Selection.TypeText Text:=ChrW(8250)
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

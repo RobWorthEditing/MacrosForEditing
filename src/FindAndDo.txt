@@ -1,0 +1,46 @@
+Sub FindAndDo()
+' Paul Beverley - Version 15.05.17
+' Find something specific and do things to each one
+
+
+' Start from the top
+Selection.HomeKey Unit:=wdStory
+
+' Go and find the first occurrence
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "e"
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchCase = False
+  .Execute
+End With
+
+myCount = 0
+Do While Selection.Find.Found = True
+' If you want to count them...
+  myCount = myCount + 1
+' Note where the end of the found item is
+  endNow = Selection.End
+
+' Make that character the same highlight colour
+  If Selection.Text = "e" Then
+    Selection.Range.Case = wdUpperCase
+    Selection.Range.HighlightColorIndex = wdYellow
+  Else
+    Selection.Range.Case = wdLowerCase
+    Selection.Range.HighlightColorIndex = wdRed
+  End If
+  ' Be sure you're past the previous occurrence
+  Selection.End = endNow
+  Selection.Collapse wdCollapseEnd
+
+' Go and find the next occurrence (if there is one)
+  Selection.Find.Execute
+Loop
+MsgBox "Changed: " & myCount
+End Sub
+

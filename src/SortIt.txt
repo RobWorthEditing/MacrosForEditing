@@ -1,0 +1,19 @@
+Sub SortIt()
+' Paul Beverley - Version 02.11.19
+' Sort the selected text
+
+anyCase = False
+promptForWholeText = False
+
+If Selection.End = Selection.Start And promptForWholeText _
+     = True Then
+  myResponse = MsgBox("Sort the WHOLE file?", _
+       vbQuestion + vbYesNo)
+  If myResponse = vbNo Then Exit Sub
+  Selection.WholeStory
+End If
+Selection.Sort ExcludeHeader:=False, FieldNumber:="Paragraphs", _
+     CaseSensitive:=Not (anyCase), SortOrder:=wdSortOrderAscending, _
+    SortFieldType:=wdSortFieldAlphanumeric
+End Sub
+

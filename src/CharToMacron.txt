@@ -1,0 +1,13 @@
+Sub CharToMacron()
+' Paul Beverley - Version 13.09.19
+' Adds a macron accent to the next vowel
+
+myChars = "aeiouAEIOU"
+myAccents = ChrW(257) & ChrW(275) & ChrW(299) & ChrW(333) & ChrW(363) & ChrW(256) & ChrW(274) & ChrW(298) & ChrW(332) & ChrW(362)
+
+Selection.MoveUntil cset:=myChars, Count:=wdForward
+Selection.MoveEnd , 1
+charPos = InStr(myChars, Selection)
+Selection.TypeText Text:=Mid(myAccents, charPos, 1)
+End Sub
+

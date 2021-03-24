@@ -1,0 +1,61 @@
+Sub CaseSecondNextWord2()
+' Paul Beverley - Version 12.08.10
+' Changes case of next-but-one word
+
+trackIt = True
+
+Dim v As Variable, trackNow As Boolean
+varExists = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "caseTrack" Then varExists = True: Exit For
+Next v
+
+If varExists = False Then
+  ActiveDocument.Variables.Add "caseTrack", trackIt
+Else
+  trackIt = ActiveDocument.Variables("caseTrack")
+End If
+
+' Don't track case change if TC is OFF
+If ActiveDocument.TrackRevisions = False Then trackIt = False
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start
+rng.End = rng.Start
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[!a-zA-Z][0-9a-zA-Z]"
+  .Replacement.Text = ""
+  .Wrap = wdFindContinue
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+rng.Start = rng.End
+rng.Find.Execute
+
+rng.Select
+
+If Selection.End < wasEnd + 2 Then
+  Selection.MoveRight Unit:=wdWord, Count:=1
+  Selection.MoveLeft Unit:=wdCharacter, Count:=1
+End If
+
+If trackIt = False Then
+  Selection.Range.Case = wdToggleCase
+  Selection.MoveRight Unit:=wdCharacter, Count:=1
+Else
+  Selection.Start = Selection.Start + 1
+  myChar = Selection
+   If Asc(myChar) > 96 Then
+    myChar = UCase(myChar)
+  Else
+    myChar = LCase(myChar)
+  End If
+  Selection.Start = Selection.End
+  Selection.TypeBackspace
+  Selection.TypeText Text:=myChar
+End If
+End Sub
+

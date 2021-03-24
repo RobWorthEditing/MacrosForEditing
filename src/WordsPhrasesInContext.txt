@@ -1,0 +1,225 @@
+Sub WordsPhrasesInContext()
+' Paul Beverley - Version 19.02.18
+' Copies paragraphs containing specific names into a new file
+
+myListName = "zzSwitchList"
+' myListName = "zzFReditList"
+
+' findWords = "Brown | Jones | Green"
+findWords = ""
+
+myBasicColour = wdBrightGreen
+
+returnToText = False
+
+maxWds = 10
+
+CaseSensitive = True
+multiSpace = 4
+CR = vbCr
+For i = 1 To multiSpace
+  sp = sp & vbCr
+Next i
+
+myWords = ""
+Set rng = ActiveDocument.Range(Selection.Start, ActiveDocument.Content.End)
+parasToEnd = rng.Paragraphs.Count
+totParas = ActiveDocument.Paragraphs.Count
+If (totParas / parasToEnd) > 10 Then
+  Selection.Expand wdParagraph
+  myResponse = MsgBox("Start with this line?", vbQuestion _
+          + vbYesNoCancel, "WordsPhrasesInContext")
+  If myResponse = vbCancel Then Exit Sub
+  If myResponse = vbYes Then
+    Set rng = Selection.Range.Duplicate
+    rng.Collapse wdCollapseStart
+    rng.End = ActiveDocument.Content.End
+    myWords = rng.Text
+    myWords = Replace(CR & myWords & CR, CR & CR, CR)
+    myWords = Replace(myWords, CR & CR, CR)
+    myWords = Replace(myWords, CR & CR, CR)
+    rng.Collapse wdCollapseStart
+    rng.Expand wdParagraph
+    myWd = Split(myWords, CR)
+    totWords = UBound(myWd) - 1
+    ReDim myCol(totWords) As Integer
+    If rng.HighlightColorIndex = wdNoHighlight Then
+      For i = 1 To totWords
+        myCol(i) = myBasicColour
+      Next i
+    Else
+      For i = 1 To totWords
+        myCol(i) = rng.HighlightColorIndex
+        rng.Collapse wdCollapseEnd
+        rng.Expand wdParagraph
+      Next i
+    End If
+  Else
+    Selection.HomeKey Unit:=wdStory
+  End If
+End If
+
+Set mainDoc = ActiveDocument
+If myWords = "" Then
+  gotExternalList = False
+' Does a FRedit/Switch list have a "Context words:" line?
+  For Each myWnd In Application.Windows
+    thisName = myWnd.Document.Name
+    If InStr(thisName, myListName) > 0 Then
+      myWnd.Document.Activate
+      gotExternalList = True
+      Exit For
+    End If
+  Next myWnd
+
+  If gotExternalList = False Then mainDoc.Activate
+' If so, load the word and colour arrays from it
+  DoEvents
+  Set rng = ActiveDocument.Content
+  DoEvents
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "Context words:"
+    .Replacement.Text = ""
+    .MatchCase = True
+    .MatchWildcards = False
+    .Execute
+    DoEvents
+  End With
+  
+  If rng.Find.Found = False Then
+    mainDoc.Activate
+    DoEvents
+    Set rng = ActiveDocument.Content
+    DoEvents
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "Context words:"
+      .Replacement.Text = ""
+      .MatchCase = True
+      .MatchWildcards = False
+      .Execute
+    End With
+    DoEvents
+  End If
+
+  If rng.Find.Found Then
+    rng.Expand wdParagraph
+    rng.Collapse wdCollapseEnd
+    rng.End = ActiveDocument.Content.End
+    myWords = rng.Text
+    myWords = Replace(CR & myWords & CR, CR & CR, CR)
+    myWords = Replace(myWords, CR & CR, CR)
+    myWords = Replace(myWords, CR & CR, CR)
+    rng.Collapse wdCollapseStart
+    rng.Expand wdParagraph
+    myWd = Split(myWords, CR)
+    totWords = UBound(myWd) - 1
+    ReDim myCol(totWords) As Integer
+    For i = 1 To totWords
+      myCol(i) = rng.HighlightColorIndex
+      rng.Collapse wdCollapseEnd
+      rng.Expand wdParagraph
+    Next i
+  End If
+End If
+
+If myWords = "" Then
+  If Selection.Start = Selection.End Then Selection.Expand wdWord
+  If findWords = "" Then
+    myWords = InputBox("Names to find?", "WordsInContext", _
+         Trim(Selection))
+    If myWords = "" Then Exit Sub
+  Else
+    myWords = findWords
+  End If
+  myWords = Replace(myWords, "| ", "|")
+  myWords = Replace(myWords, " |", "|")
+  myWords = Replace(myWords, "|", CR)
+  myWords = Replace(CR & myWords & CR, CR & CR, CR)
+  myWords = Replace(myWords, CR & CR, CR)
+  myWords = Replace(myWords, CR & CR, CR)
+  myWd = Split(myWords, CR)
+  totWords = UBound(myWd) - 1
+  ReDim myCol(totWords) As Integer
+  For i = 1 To totWords
+    myCol(i) = myBasicColour
+  Next i
+End If
+
+' In case we're in the external list...
+mainDoc.Activate
+Set rng = ActiveDocument.Content
+Documents.Add
+myTestWords = Replace(myWords, ChrW(172), "")
+For Each myPara In rng.Paragraphs
+  parText = myPara.Range.Text
+  StatusBar = parText
+  copyIt = False
+  If Left(parText, 13) = "Context words" Then Exit For
+  For Each wd In myPara.Range.Words
+    DoEvents
+    Set myrange = wd.Duplicate
+    For i = 1 To maxWds
+      theseWds = Trim(myrange.Text)
+      myTest = CR & theseWds & CR
+      If InStr(LCase(myTestWords), LCase(myTest)) > 0 Then
+        copyIt = True
+        Exit For: Exit For
+      End If
+      myrange.MoveEnd wdWord, 1
+    Next i
+  Next wd
+  
+  If copyIt Then
+    myPara.Range.Copy
+    Selection.Paste
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText sp
+    DoEvents
+  End If
+Next myPara
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText "Words/phrases in context" & vbCr & vbCr
+ActiveDocument.Paragraphs(1).Range.Style = wdStyleHeading2
+Selection.MoveLeft , 2
+ActiveDocument.Content.HighlightColorIndex = wdNoHighlight
+oldColour = Options.DefaultHighlightColorIndex
+myWd = Split(myWords, CR)
+For i = 1 To totWords
+  If Asc(myWd(i)) = 172 Then
+    myWd(i) = Mid(myWd(i), 2)
+    CaseSensitive = False
+  Else
+    CaseSensitive = True
+  End If
+  Options.DefaultHighlightColorIndex = myCol(i)
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myWd(i)
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchCase = CaseSensitive
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Next i
+Options.DefaultHighlightColorIndex = oldColour
+For i = ActiveDocument.Paragraphs.Count To 2 Step -1
+  Set myPara = ActiveDocument.Paragraphs(i).Range
+  If Len(myPara.Text) > 1 And myPara.HighlightColorIndex = wdNoHighlight Then
+    myPara.Select
+    Selection.MoveEnd , multiSpace
+    Selection.Delete
+  End If
+Next i
+If returnToText = True Then mainDoc.Activate
+Beep
+End Sub
+

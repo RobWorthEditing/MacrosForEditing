@@ -1,0 +1,183 @@
+Sub SpellingErrorListerBilingual()
+' Paul Beverley - Version 03.09.20
+' Generates an alphabetic list all the bilingual spelling 'errors'
+
+myLanguage_1 = wdEnglishUK
+' myLanguage_2 = wdPortugueseBrazil
+' myLanguage_2 = wdPortugueseBoth
+myLanguage_2 = wdFrench
+
+spellingListName = "SpellingErrors"
+
+
+myFind = "´a,´e,¨a,¨e,¨o,¨u,ˆo,"
+myReplace = "á,é,ä,ë,ö,ü,ô,"
+
+CR = vbCr
+CR2 = CR & CR
+
+Set FUT = ActiveDocument
+doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
+
+lang1 = Languages(myLanguage_1).NameLocal
+lang2 = Languages(myLanguage_2).NameLocal
+
+myLang = "Using " & lang1 & " and " & lang2 & " dictionary. OK?"
+If doingSeveralMacros = False Then
+  myResponse = MsgBox(myLang, vbQuestion + vbYesNoCancel, _
+       "Spelling Error Lister")
+  If myResponse <> vbYes Then Exit Sub
+End If
+timeStart = Timer
+
+' lang = Languages(thisLanguage).NameLocal
+Set rngOK = ActiveDocument.Content
+OKstart = InStr(rngOK.Text, "OKwords")
+If OKstart > 0 Then
+  rngOK.Start = OKstart + 6
+  OKwords = rngOK.Text
+Else
+  OKwords = ""
+End If
+
+' Change ligature characters into character pairs
+myFind = myFind & "," & ChrW(-1280) & "," & ChrW(-1279) & _
+     "," & ChrW(-1278) & "," & ChrW(-1277) & "," _
+     & ChrW(-1276)
+myReplace = myReplace & ",ff,fi,fl,ffi,ffl"
+fnd = Split(myFind, ",")
+rpl = Split(myReplace, ",")
+For i = 0 To UBound(fnd)
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = fnd(i)
+    .Wrap = wdFindContinue
+    .Replacement.Text = rpl(i)
+    .MatchCase = False
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  If ActiveDocument.Footnotes.Count > 0 Then
+    Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = fnd(i)
+      .Wrap = wdFindContinue
+      .Replacement.Text = rpl(i)
+      .MatchCase = False
+      .MatchWildcards = False
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+  If ActiveDocument.Endnotes.Count > 0 Then
+    Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = fnd(i)
+      .Wrap = wdFindContinue
+      .Replacement.Text = rpl(i)
+      .MatchCase = False
+      .MatchWildcards = False
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+Next i
+
+' Create spelling error list
+erList1 = CR
+erList2 = CR
+numFootnotes = ActiveDocument.Footnotes.Count
+numEndnotes = ActiveDocument.Endnotes.Count
+
+myEnd = ActiveDocument.Content.End
+For i = 1 To 3
+  If myResponse = vbNo Then i = 3
+  If i = 1 And numFootnotes = 0 Then i = 2
+  If i = 1 Then Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+  If i = 2 And numEndnotes = 0 Then i = 3
+  If i = 2 Then Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  If i = 3 Then Set rng = ActiveDocument.Content
+  For Each wd In rng.Words
+    If Len(Trim(wd)) > 2 And LCase(wd) <> UCase(wd) And _
+         wd.Font.StrikeThrough = False And wd <> "OKwords" Then
+         padWd = " " & Trim(wd) & " "
+      OKword = (InStr(OKwords, CR & Trim(wd) & CR) > 0)
+      DoEvents
+      If Application.CheckSpelling(wd, MainDictionary:=lang1) = False _
+           And Application.CheckSpelling(wd, MainDictionary:=lang2) = _
+           False And OKword = False Then
+        pCent = Int((myEnd - wd.End) / myEnd * 100)
+
+        ' Report progress
+        If i = 1 Then myPrompt = "Checking footnote text."
+        If i = 2 Then myPrompt = "Checking endnote text."
+        If i = 3 Then myPrompt = "Checking main text."
+        StatusBar = "Generating errors list. " & myPrompt & _
+             " To go:  " & Trim(Str(pCent)) & "%"
+        Debug.Print "Generating errors list. " & myPrompt & _
+             " To go:  " & Trim(Str(pCent)) & "%"
+        erWord = Trim(wd)
+        lastChar = Right(erWord, 1)
+        If lastChar = "'" Or lastChar = ChrW(8217) Then _
+          erWord = Left(erWord, Len(erWord) - 1)
+        myCap = Left(erWord, 1)
+        If UCase(myCap) = myCap Then
+          If InStr(erList2, CR & erWord & CR) = 0 Then _
+              erList2 = erList2 & erWord & CR
+        Else
+          If InStr(erList1, CR & erWord & CR) = 0 Then _
+              erList1 = erList1 & erWord & CR
+        End If
+      End If
+    End If
+  Next wd
+Next i
+mainFileName = ActiveDocument.Name
+Documents.Add
+
+Selection.TypeText erList1
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+erList1 = Selection
+Selection.Delete
+
+Selection.TypeText erList2
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+erList2 = Selection
+Selection.Delete
+
+Selection.TypeText Text:=erList1
+'Selection.TypeText CR2
+Selection.TypeText Text:=erList2
+'Selection.TypeText CR2
+
+Selection.HomeKey Unit:=wdStory
+
+If numFootnotes > 0 Then
+  Selection.TypeText CR & "| footnotes = yes" & CR
+End If
+If numEndnotes > 0 Then
+  Selection.TypeText CR & "| endnotes = yes" & CR
+End If
+
+StatusBar = ""
+Selection.TypeText spellingListName & vbCr
+ActiveDocument.Paragraphs(1).Style = ActiveDocument.Styles(wdStyleHeading1)
+
+If doingSeveralMacros = False Then
+  totTime = Int(10 * (Timer - timeStart) / 60) / 10
+  If totTime > 2 Then myResponse = MsgBox((totTime & "  minutes"), _
+  vbOKOnly, "Spelling Error Lister")
+  Beep
+Else
+  FUT.Activate
+End If
+End Sub
+

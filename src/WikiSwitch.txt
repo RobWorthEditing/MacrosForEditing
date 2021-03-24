@@ -1,0 +1,21 @@
+Sub WikiSwitch()
+' Paul Beverley - Version 01.01.10
+' Convert text to and from Wiki format
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "=" & "=^p"
+  .Execute
+End With
+
+If rng.Find.Found = True Then
+  Call WikiToStyles
+Else
+  Call WikiToText
+End If
+
+Selection.HomeKey Unit:=wdStory
+
+End Sub
+

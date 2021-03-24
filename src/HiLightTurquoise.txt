@@ -1,0 +1,7 @@
+Sub HiLightTurquoise()
+' Paul Beverley - Version 01.01.10
+' Adds highlight in turquoise
+   Selection.Range.HighlightColorIndex = wdTurquoise
+   Selection.Start = Selection.End
+End Sub
+

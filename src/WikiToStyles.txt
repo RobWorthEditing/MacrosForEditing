@@ -1,0 +1,89 @@
+Sub WikiToStyles()
+' Paul Beverley - Version 01.01.10
+' Convert from Wiki format to text
+Dim Eq2, Eq3 As String
+Eq2 = "=" & "=": Eq3 = Eq2 + "="
+Tk2 = "'" & "'": Tk3 = Tk2 + "'"
+pr = "pre": npr = "</" & pr & ">"
+pr = "<" & pr & ">"
+
+' Convert <=><=><=>Title<=><=><=> to Heading 2
+Dim rng As Range
+Set rng = ActiveDocument.Range
+With rng.Find
+   .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = Eq3 & "(*)" & Eq3 & "^13"
+  .Replacement.Text = "\1^p"
+  .Replacement.Style = "Heading 2"
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Convert <=><=>Title<=><=> to Heading 1
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = Eq2 & "(*)" & Eq2 & "^13"
+  .Replacement.Text = "\1^p"
+  .Replacement.Style = "Heading 1"
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Convert <'><'><'>word<'><'><'> to Bold
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = Tk3 & "(*)" & Tk3
+  .Replacement.Text = "\1"
+  .Replacement.Font.Bold = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Convert <'><'>word<'><'> to Italic
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = Tk2 & "(*)" & Tk2
+  .Replacement.Text = "\1"
+  .Replacement.Font.Italic = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Convert [pre]section[/pre] to HTML sample
+Do
+  Set rng = ActiveDocument.Range
+  fileEnd = rng.End
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .MatchWildcards = False
+    .Text = "^p" & pr & "^p"
+    .Replacement.Text = "^p"
+    .Execute Replace:=wdReplaceOne
+  End With
+  codeStart = rng.End
+
+  If rng.End <> fileEnd Then
+    Set rng = ActiveDocument.Range
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .MatchWildcards = False
+      .Text = "^p" & npr & "^p"
+      .Replacement.Text = "^p"
+      .Execute Replace:=wdReplaceOne
+    End With
+    codeEnd = rng.End
+    rng.Start = codeStart
+    rng.Style = "HTML Sample"
+  End If
+Loop Until rng.End = fileEnd
+End Sub
+

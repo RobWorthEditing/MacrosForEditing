@@ -1,0 +1,104 @@
+Sub PhraseCount()
+' Paul Beverley - Version 06.07.16
+' Count each of a list of words/phrases
+
+CaseSensitive = True
+
+Selection.HomeKey Unit:=wdStory
+' Hide the hyphens
+Dim rng As range
+Set rng = ActiveDocument.range
+With rng.Find
+  .ClearFormatting
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Text = "-"
+  .Replacement.Text = "zczc"
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Find beginning of phrase list
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Text = "......^p"
+  .MatchWildcards = False
+  .Execute
+End With
+Selection.Collapse wdCollapseEnd
+listStart = Selection.End
+
+Set rng = ActiveDocument.Content
+rng.Start = listStart
+listText = rng.Text
+numItems = Len(listText) - Len(Replace(listText, vbCr, ""))
+
+totaltotal = 0
+diffWords = 0
+myPhrase = "something"
+i = numItems
+Do While Asc(myPhrase) > 13
+  ' Select the next phrase
+  With Selection.Find
+    .ClearFormatting
+    .MatchWildcards = True
+    .Text = "*^13"
+    .Execute
+  End With
+
+  Selection.End = Selection.End - 1
+  myPhrase = Selection
+
+  If Asc(myPhrase) > 13 Then
+    ' Prepare to find the phrase
+    Set rng = ActiveDocument.range
+    With rng.Find
+      .ClearFormatting
+      If CaseSensitive = False Then
+        .MatchCase = False
+      Else
+        .MatchCase = True
+      End If
+      .MatchWholeWord = True
+      .MatchWildcards = False
+      .Text = myPhrase
+      .Execute
+    End With
+
+    ' Count the no. of occurrences
+    wordsTotal = 0
+    Do
+      wordsTotal = wordsTotal + 1
+      rng.Find.Execute
+    Loop Until rng.End > listStart
+    ' Type frequency figure next to the phrase
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=". . . . " & Str(wordsTotal)
+    Selection.MoveRight Unit:=wdCharacter, Count:=1
+    ' Update totals
+    totaltotal = totaltotal + wordsTotal
+    diffWords = diffWords + 1
+  End If
+  DoEvents
+  StatusBar = "               To go: " & Str(i)
+  i = i - 1
+Loop
+
+' Restore the hyphens
+Set rng = ActiveDocument.range
+With rng.Find
+  .ClearFormatting
+  .MatchCase = False
+  .MatchWildcards = False
+  .Text = "zczc"
+  .Replacement.Text = "-"
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.TypeText Text:=vbCr & _
+     "Words counted = " & Str(totaltotal) & _
+     vbCr & "Different words =" & Str(diffWords)
+End Sub
+

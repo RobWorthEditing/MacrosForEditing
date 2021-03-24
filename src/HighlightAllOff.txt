@@ -1,0 +1,18 @@
+Sub HighlightAllOff()
+' Paul Beverley - Version 02.04.13 (minor mod 07.12.15)
+' Remove all highlighting, including in boxes
+
+Set rng = ActiveDocument.Content
+rng.HighlightColorIndex = 0
+If ActiveDocument.Shapes.Count > 0 Then
+  For Each shp In ActiveDocument.Shapes
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.HasText Then
+        shp.TextFrame.TextRange.HighlightColorIndex = 0
+      End If
+    End If
+  Next
+  Beep
+End If
+End Sub
+

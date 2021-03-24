@@ -1,0 +1,10 @@
+Sub JustifyOFF()
+' Paul Beverley - Version 01.06.10
+' Turn format off on all paragraphs
+For Each myPara In ActiveDocument.Paragraphs
+ If myPara.Range.ParagraphFormat.Alignment = wdAlignParagraphJustify Then
+   myPara.Range.ParagraphFormat.Alignment = wdAlignParagraphLeft
+ End If
+Next
+End Sub
+

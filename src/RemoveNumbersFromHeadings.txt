@@ -1,0 +1,19 @@
+Sub RemoveNumbersFromHeadings()
+' Paul Beverley - Version 15.10.19
+' Removes automatic numbering from headings
+' Based on code provided by Santhosh Matthew Paul
+
+myTargets = "Heading 1,Heading 2,Heading 3,Heading 4,Heading 5"
+
+For Each para In ActiveDocument.Paragraphs
+  inAtable = para.range.Information(wdWithInTable)
+  If inAtable = False Then
+    head = para.Style
+    If InStr(myTargets, head) > 0 Then
+      para.range.ListFormat.RemoveNumbers
+      para.range.Select
+    End If
+  End If
+Next para
+End Sub
+

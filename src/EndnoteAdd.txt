@@ -1,0 +1,12 @@
+Sub EndnoteAdd()
+' Paul Beverley - Version 30.11.17
+' Creates a new endnote (in a given style and/or sq. brackets)
+
+' myEndnoteStyle = "Heading 2"
+myEndnoteStyle = wdStyleHeading2
+
+Selection.Endnotes.Add range:=Selection.range
+' Selection.Style = ActiveDocument.Styles(wdStyleEndnoteText)
+Selection.Style = ActiveDocument.Styles(myEndnoteStyle)
+End Sub
+

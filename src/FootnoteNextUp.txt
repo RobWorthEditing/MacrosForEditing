@@ -1,0 +1,7 @@
+Sub FootnoteNextUp()
+' Paul Beverley - Version 13.10.10
+' Jump to previous footnote
+Selection.GoTo What:=wdGoToFootnote, Which:=wdGoToPrevious, _
+     Count:=1, Name:=""
+End Sub
+

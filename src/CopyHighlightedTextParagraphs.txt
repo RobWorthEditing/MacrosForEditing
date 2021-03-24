@@ -1,0 +1,23 @@
+Sub CopyHighlightedTextParagraphs()
+' Paul Beverley - Version 06.01.18
+' Copies paragraphs containing highlighted text into a new file
+
+doColouredText = True
+doubleSpace = True
+
+Set rng = ActiveDocument.Content
+Documents.Add
+For Each myPara In rng.Paragraphs
+  copyIt = (myPara.range.HighlightColorIndex > 0)
+  If doColouredText = True Then
+    If myPara.range.Font.Color > 0 Then copyIt = True
+  End If
+  If copyIt = True Then
+    myPara.range.Copy
+    Selection.Paste
+    Selection.Collapse wdCollapseEnd
+    If doubleSpace = True Then Selection.TypeText Text:=vbCr
+  End If
+Next myPara
+End Sub
+

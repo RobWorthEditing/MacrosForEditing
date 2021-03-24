@@ -1,0 +1,108 @@
+Sub NotesUnembedBySections()
+' Paul Beverley - Version 28.12.11
+' Unembed endnotes that are numbered in sections
+doHighlight = True
+' Remember the existing highlight colour
+oldColour = Options.DefaultHighlightColorIndex
+' Select preferred colour
+Options.DefaultHighlightColorIndex = wdTurquoise
+
+myNoteNum = 0
+Set rng = ActiveDocument.Content
+For I = 1 To ActiveDocument.Sections.Count
+  mySectionNotes = ""
+  Set secRng = ActiveDocument.Sections(I).Range
+  mySectionStart = secRng.Start
+  mySectionEnd = secRng.End
+  mySectionNoteNum = 0
+  charsAdded = 0
+  rng.Start = mySectionStart
+  rng.End = mySectionStart
+  Do
+    myNoteNum = myNoteNum + 1
+    mySectionNoteNum = mySectionNoteNum + 1
+  ' Copy the note text
+    If myNoteNum <= ActiveDocument.Endnotes.Count Then
+      ActiveDocument.Endnotes(myNoteNum).Range.Copy
+    End If
+  ' Find next note citation
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "^2"
+      .Wrap = False
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = False
+      .Execute
+    End With
+    foundOne = rng.Find.Found
+    absNotePos = rng.Start
+    absNotePos2 = rng.End
+
+    If foundOne = True Then
+    ' If still within current section...
+      If rng.Start < mySectionEnd Then
+        ' We've found a note in the section
+        myCitation = "zct" & mySectionNoteNum & "zct"
+        charsAdded = charsAdded + Len(myCitation)
+        rng.Start = absNotePos
+      ' Add citation number as text
+        rng.InsertBefore myCitation
+        rng.Start = rng.End
+        startAgainHere = rng.Start
+        Set secRng = ActiveDocument.Sections(I).Range
+        mySectionEnd = secRng.End
+        secRng.Start = secRng.End - 1
+        secRng.End = secRng.Start
+      ' Paste the note text
+        secRng.PasteAndFormat (wdFormatSurroundingFormattingWithEmphasis)
+      ' or use just:        secRng.Paste
+      ' Add the note number (within this section)
+        secRng.InsertBefore vbCrLf & "znt" & mySectionNoteNum & "znt"
+      Else
+        myNoteNum = myNoteNum - 1
+      End If
+    End If
+    StatusBar = "Adding note number: " & Str(myNoteNum)
+  Loop Until foundOne = False Or absNotePos > mySectionEnd
+Next I
+
+' Convert citation numbers to superscript
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zct([0-9]{1,})zct"
+  .Replacement.Text = "\1"
+  .Replacement.Font.Superscript = True
+  If doHighlight = True Then .Replacement.Highlight = True
+  .Wrap = wdFindContinue
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Convert note numbers to superscript
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "znt([0-9]{1,})znt"
+  .Replacement.Text = "\1"
+  .Replacement.Font.Superscript = True
+  .Wrap = wdFindContinue
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Delete original notes
+For Each myNote In ActiveDocument.Endnotes
+  myNote.Delete
+  myNoteNum = myNoteNum - 1
+  StatusBar = "Deleting note number: " & Str(myNoteNum)
+Next myNote
+StatusBar = "Finished! But please wait for it to reformat the document."
+Selection.EndKey Unit:=wdStory
+Beep
+End Sub
+

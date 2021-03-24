@@ -1,0 +1,14 @@
+Sub OvertypeBeep2()
+' Paul Beverley - Version 01.01.10
+' Sound warning beep on overtype + visual
+Options.Overtype = Not Options.Overtype
+beep
+myTime = Timer
+If Options.Overtype = True Then
+  StatusBar = String(100, "#")
+  Do
+  Loop Until Timer > myTime + 0.2
+  beep
+End If
+End Sub
+

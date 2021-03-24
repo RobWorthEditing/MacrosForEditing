@@ -1,0 +1,24 @@
+Sub TagBulletLists()
+' Paul Beverley - Version 30.04.12
+' Add tags to all bullet lists
+
+For Each myPara In ActiveDocument.Paragraphs
+  If myPara.FirstLineIndent < 0 Then
+    myPara.Range.InsertBefore "<BL>"
+    myPara.Range.InsertAfter "</BL>"
+  End If
+Next myPara
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<BL></BL>"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+

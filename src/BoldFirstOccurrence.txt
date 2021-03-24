@@ -1,0 +1,47 @@
+Sub BoldFirstOccurrence()
+' Paul Beverley - Version 13.09.19
+' Emboldens the first occurrence of words in a list
+
+' myColour = wdBlue
+myColour = 0
+myHighlight = wdYellow
+' myHighlight = 0
+
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Set rng = ActiveDocument.range(Selection.Start, ActiveDocument.Content.End)
+
+myFirst = ""
+Dim myText As String
+For Each para In rng.Paragraphs
+  myText = Replace(para.range.Text, vbCr, "")
+  If myFirst = "" Then myFirst = myText
+  Set rng2 = ActiveDocument.Content
+  With rng2.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myText
+    .Forward = True
+    .MatchCase = False
+    .Replacement.Text = ""
+    .Replacement.Font.Bold = True
+    .Execute Replace:=wdReplaceOne
+  End With
+    If myColour > 0 Then rng2.Font.ColorIndex = myColour
+  If myHighlight > 0 Then rng2.HighlightColorIndex = myHighlight
+Next para
+Beep
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFirst
+  .Forward = True
+  .MatchCase = False
+  .Execute
+End With
+rng.Select
+Selection.Collapse wdCollapseStart
+MsgBox "Finished"
+End Sub
+

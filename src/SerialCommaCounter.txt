@@ -1,0 +1,197 @@
+Sub SerialCommaCounter()
+' Paul Beverley - Version 12.11.19
+' Counts serial (or not) commas in lists
+
+maxWords = 7
+
+serialColour = wdBrightGreen
+notSerialColour = wdYellow
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = " and "
+  .Font.Underline = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Execute
+End With
+
+If rng.Find.Found = False Then
+  serCount = 0
+  notCount = 0
+  myResponse = MsgBox("Count serial commas?", _
+          vbQuestion + vbYesNoCancel, "SerialCommaCounter")
+  If myResponse <> vbYes Then Exit Sub
+  Set rng = ActiveDocument.Content
+  Documents.Add
+  Selection.Text = rng.Text
+  Selection.HomeKey Unit:=wdStory
+
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "[a-zA-Z\-]@, [a-zA-Z\- ]@> and "
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  
+  While rng.Find.Found
+    If rng.Words.Count < maxWords + 1 Then
+      rng.Underline = True
+      notCount = notCount + 1
+      StatusBar = "Serial: " & Str(serCount) & _
+           "             NO serial: " & Str(notCount)
+    End If
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+    DoEvents
+    If rng.End < rng.Start Then
+      rng.End = rng.Start + 2
+      rng.Start = rng.End
+    End If
+  Wend
+  
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "[a-zA-Z\-]@, [a-zA-Z\- ]@, and "
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  
+  While rng.Find.Found
+    If rng.Words.Count < maxWords + 1 Then
+      rng.Underline = True
+      serCount = serCount + 1
+      StatusBar = "Serial: " & Str(serCount) & _
+           "             NO serial: " & Str(notCount)
+    End If
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+    DoEvents
+    If rng.End < rng.Start Then
+      rng.End = rng.Start + 2
+      rng.Start = rng.End
+    End If
+  Wend
+  
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .Text = "[a-zA-Z\-]@, [a-zA-Z\- ]@> or "
+    .MatchWildcards = True
+    .Replacement.Text = ""
+    .Wrap = wdFindStop
+    .Execute
+  End With
+  
+  While rng.Find.Found
+    If rng.Words.Count < maxWords + 1 Then
+      rng.Underline = True
+      notCount = notCount + 1
+      StatusBar = "Serial: " & Str(serCount) & _
+           "             NO serial: " & Str(notCount)
+    End If
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+    DoEvents
+    If rng.End < rng.Start Then
+      rng.End = rng.Start + 2
+      rng.Start = rng.End
+    End If
+  Wend
+  
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .Text = "[a-zA-Z\-]@, [a-zA-Z\- ]@, or "
+    .MatchWildcards = True
+    .Replacement.Text = ""
+    .Wrap = wdFindStop
+    .Execute
+  End With
+  
+  While rng.Find.Found
+    If rng.Words.Count < maxWords + 1 Then
+      rng.Underline = True
+      serCount = serCount + 1
+      StatusBar = "Serial: " & Str(serCount) & _
+           "             NO serial: " & Str(notCount)
+    End If
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+    DoEvents
+    If rng.End < rng.Start Then
+      rng.End = rng.Start + 2
+      rng.Start = rng.End
+    End If
+  Wend
+  Beep
+End If
+
+myResponse = MsgBox("Check which items really are lists?", _
+        vbQuestion + vbYesNoCancel, "SerialCommaCounter")
+If myResponse <> vbYes Then Exit Sub
+
+serCount = 0
+notCount = 0
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Execute
+End With
+
+While rng.Find.Found
+  colourHere = rng.HighlightColorIndex
+  myResponse = vbYes
+  If colourHere <> wdNoHighlight Then
+    If colourHere = serialColour Then
+      serCount = serCount + 1
+    Else
+      notCount = notCount + 1
+    End If
+  Else
+    rng.Select
+    ActiveDocument.ActiveWindow.LargeScroll Down:=1
+    ActiveDocument.ActiveWindow.SmallScroll Down:=1
+    rng.Select
+    myResponse = MsgBox("Is this a list?", _
+            vbQuestion + vbYesNoCancel, "SerialCommaCounter")
+    If myResponse = vbCancel Then Exit Sub
+    If myResponse = vbNo Then rng.Font.Underline = False
+  End If
+  If myResponse = vbYes Then
+    If InStr(rng, ", and ") > 0 Or InStr(rng, ", or ") > 0 Then
+      Selection.range.HighlightColorIndex = serialColour
+      serCount = serCount + 1
+    Else
+      Selection.range.HighlightColorIndex = notSerialColour
+      notCount = notCount + 1
+    End If
+  End If
+  StatusBar = "Serial: " & Str(serCount) & _
+       "             NO serial: " & Str(notCount)
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Wend
+Beep
+MsgBox "Finished!" & vbCr & vbCr & "Serial:  " & Str(serCount) & _
+     "             NO serial:  " & Str(notCount)
+End Sub
+

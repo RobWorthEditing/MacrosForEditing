@@ -1,0 +1,19 @@
+Sub LongSentenceHighlighter()
+' Paul Beverley - Version 19.05.12
+' Highlight all sentences more than a certain length
+
+mediumLength = 80
+megaLength = 120
+
+For Each mySent In ActiveDocument.Sentences
+  If mySent.Words.Count > megaLength Then
+    mySent.HighlightColorIndex = wdRed
+    mySent.Select
+  Else
+    If mySent.Words.Count > mediumLength Then _
+         mySent.HighlightColorIndex = wdYellow
+    mySent.Select
+  End If
+Next
+End Sub
+

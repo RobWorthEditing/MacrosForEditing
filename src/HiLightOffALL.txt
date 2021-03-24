@@ -1,0 +1,9 @@
+Sub HiLightOffALL()
+' Paul Beverley - Version 01.01.10
+' Removes ALL highlights (text colour) from whole text
+   Selection.WholeStory
+   Selection.Range.HighlightColorIndex = wdNoHighlight
+'  Selection.Range.Font.Color = wdColorAutomatic
+   Selection.Start = Selection.End
+End Sub
+

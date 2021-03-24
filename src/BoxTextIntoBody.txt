@@ -1,0 +1,49 @@
+Sub BoxTextIntoBody()
+' Paul Beverley - Version 08.10.15
+' Copy text out of textboxes, then delete the boxes
+
+placeTextAfterParagraph = True
+addHighlight = True
+myColour = wdYellow
+
+'beforeText = ""
+'afterText = ""
+
+beforeText = "<Box>"
+afterText = "</Box>"
+
+
+For Each shp In ActiveDocument.Shapes
+  If shp.Type = msoTextBox Then
+    shp.TextFrame.TextRange.Select
+    Selection.Copy
+    ' set the range to insert the text
+    Set rng = shp.Anchor.Paragraphs(1).range
+    ' paste the text after the range object
+    If placeTextAfterParagraph = True Then
+      rng.Collapse wdCollapseEnd
+    Else
+      rng.Collapse wdCollapseStart
+    End If
+    If Len(beforeText) > 0 Then rng.InsertBefore Text:=beforeText
+    rng.Collapse wdCollapseEnd
+    startText = rng.Start
+    rng.Paste
+    rng.Start = startText
+    If addHighlight = True Then
+      rng.HighlightColorIndex = myColour
+    End If
+    rng.Collapse wdCollapseEnd
+    If Len(afterText) > 0 Then rng.InsertBefore Text:=afterText
+  End If
+Next shp
+
+numShapes = ActiveDocument.Shapes.Count
+For i = numShapes To 1 Step -1
+  Set shp = ActiveDocument.Shapes(i)
+  If shp.Type = msoTextBox Then
+    shp.Delete
+  End If
+Next i
+End Sub
+

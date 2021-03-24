@@ -1,0 +1,128 @@
+Sub BibSortWithDittos()
+' Paul Beverley - Version 07.07.20
+' Sorts bibliographic list including ditto marks
+
+' myDitto1 = "-^t"
+myDitto2 = "^+^+^+"
+myDitto1 = "<bib>--"
+
+' Don't do this with track changes on!
+ActiveDocument.TrackRevisions = False
+
+' Can't use auto lists, either!
+Call AutoListOff
+
+If Selection.Start <> Selection.End Then
+  Set rng = Selection.Range.Duplicate
+Else
+  Set rng = ActiveDocument.Content
+End If
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13" & ChrW(8220) & "([a-zA-Z ]{1,})"
+  .Wrap = wdFindStop
+  .Replacement.Text = "^p\1vbvb"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<bib>" & ChrW(8220)
+  .Wrap = wdFindStop
+  .Replacement.Text = "<bib>"
+  .Replacement.Font.Underline = True
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p" & myDitto1
+  .Wrap = wdFindStop
+  .Replacement.Text = "zczc"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+ 
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p" & myDitto2
+  .Wrap = wdFindStop
+  .Replacement.Text = "cqcq"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+rng.Sort SortOrder:=wdSortOrderAscending
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zczc"
+  .Wrap = wdFindStop
+  .Replacement.Text = "^p" & myDitto1
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "cqcq"
+  .Wrap = wdFindStop
+  .Replacement.Text = "^p" & myDitto2
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+With rng.Find
+  .Text = "^13([a-zA-Z ]{1,})vbvb"
+  .Wrap = wdFindStop
+  .Replacement.Text = "^p" & ChrW(8220) & "\1"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Font.Underline = True
+  .Text = "<bib>"
+  .Wrap = wdFindStop
+  .Replacement.Text = "<bib>" & ChrW(8220)
+  .Replacement.Font.Underline = False
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+End Sub
+

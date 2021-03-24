@@ -1,0 +1,36 @@
+Sub CommentPickerInserter()
+' Paul Beverley - Version 14.11.13
+' Copy a comment from a list and paste into text
+
+commentDoc = "CommentList"
+
+Set mainDoc = ActiveDocument
+Documents(commentDoc).Activate
+myCode = InputBox("WhichComment number?", "CommentPicker")
+
+For Each pa In ActiveDocument.Paragraphs
+  myText = pa.Range.Text
+
+  If Len(myText) < 4 And Asc(myText) = Asc(myCode) Then
+    pa.Range.Select
+    Selection.Collapse wdCollapseEnd
+    Selection.Paragraphs(1).Range.Select
+    Selection.MoveEnd , -1
+    Selection.Copy
+    theText = Selection.Text
+    mainDoc.Activate
+    Selection.Collapse wdCollapseEnd
+    theStart = Selection.Start
+    Selection.Paste
+    cursorPosn = InStr(theText, "><")
+    If cursorPosn > 0 Then
+      Selection.Start = theStart + cursorPosn - 1
+      Selection.End = theStart + cursorPosn + 1
+      Selection.Delete
+    End If
+    Exit Sub
+  End If
+Next
+MsgBox ("Can't find comment >> " & myCode & " <<")
+End Sub
+

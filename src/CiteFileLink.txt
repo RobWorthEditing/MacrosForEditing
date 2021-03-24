@@ -1,0 +1,81 @@
+Sub CiteFileLink()
+' Paul Beverley - Version 18.04.12
+' Link text and references files for CiteCheck
+Set textDoc = ActiveDocument
+
+Application.GoBack
+Set refsDoc = ActiveDocument
+
+' We are now in the references
+varExists = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "textDocName" Then varExists = True
+  If v.Name = "refsDocName" Then v.Delete
+Next v
+If varExists = False Then
+  ActiveDocument.Variables.Add "textDocName", textDoc.Name
+Else
+  ActiveDocument.Variables("textDocName") = textDoc.Name
+End If
+
+' Now go to the text file
+textDoc.Activate
+varExists = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "refsDocName" Then varExists = True
+  If v.Name = "textDocName" Then v.Delete
+Next v
+If varExists = False Then
+  ActiveDocument.Variables.Add "refsDocName", refsDoc.Name
+Else
+  ActiveDocument.Variables("refsDocName") = refsDoc.Name
+End If
+
+myResponse = MsgBox("Text = " & textDoc.Name & "    References = " & refsDoc.Name, _
+     vbQuestion + vbYesNoCancel)
+If myResponse = vbCancel Then Exit Sub
+If myResponse = vbNo Then
+  myResponse = MsgBox("Text = " & refsDoc.Name & "    References = " & textDoc.Name, _
+       vbQuestion + vbYesNoCancel)
+  If myResponse = vbCancel Then Exit Sub
+  If myResponse = vbYes Then
+    textDoc.Activate
+    ' We are now in the references
+    varExists = False
+    For Each v In ActiveDocument.Variables
+      If v.Name = "textDocName" Then varExists = True
+      If v.Name = "refsDocName" Then v.Delete
+    Next v
+    If varExists = False Then
+      ActiveDocument.Variables.Add "textDocName", refsDoc.Name
+    Else
+      ActiveDocument.Variables("textDocName") = refsDoc.Name
+    End If
+    refsDoc.Activate
+    ' We are now in the text
+    varExists = False
+    For Each v In ActiveDocument.Variables
+      If v.Name = "refsDocName" Then varExists = True
+      If v.Name = "textDocName" Then v.Delete
+    Next v
+    If varExists = False Then
+      ActiveDocument.Variables.Add "refsDocName", textDoc.Name
+    Else
+      ActiveDocument.Variables("refsDocName") = textDoc.Name
+    End If
+  End If
+End If
+' Prepare the Find to look for dates
+With Selection.Find
+  .ClearFormatting
+  .Highlight = False
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{4}[a-k\);:,]"
+  .Replacement.Text = ""
+  .Forward = True
+  .Wrap = False
+  .MatchWildcards = True
+  .Execute
+End With
+End Sub
+

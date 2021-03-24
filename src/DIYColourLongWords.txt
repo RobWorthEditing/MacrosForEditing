@@ -1,0 +1,16 @@
+Sub DIYColourLongWords()
+' Paul Beverley - Version 24.11.20
+' Adds a highlight to sentences longer than 40 words
+
+Set rng = ActiveDocument.Content
+For Each wd In rng.Words
+  If wd.Characters.Count > 12 Then
+    wd.Font.ColorIndex = wdBlue
+    wd.Font.Bold = True
+  End If
+  wd.Select
+  DoEvents
+Next wd
+Beep
+End Sub
+

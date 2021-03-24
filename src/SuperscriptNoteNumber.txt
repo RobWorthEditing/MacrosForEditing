@@ -1,0 +1,29 @@
+Sub SuperscriptNoteNumber()
+' Paul Beverley - Version 11.08.11
+' Superscript note number
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p"
+  .Replacement.Text = ""
+  .Wrap = wdFindContinue
+  .Execute
+End With
+startHere = Selection.End
+Selection.Start = Selection.End
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = " "
+  .Replacement.Text = ""
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Execute
+End With
+Selection.End = Selection.Start
+Selection.Start = startHere
+Selection.Font.Superscript = True
+Selection.Start = Selection.End
+End Sub
+

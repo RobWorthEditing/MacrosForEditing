@@ -1,0 +1,14 @@
+Sub SpellcheckWordCurrent()
+' Paul Beverley - Version 10.12.11
+' Spellcheck single word in current language
+' Alt-`
+Selection.Words(1).Select
+If Application.CheckSpelling(Selection, _
+     MainDictionary:=Languages(Selection.LanguageID).NameLocal) = False Then
+  ActiveDocument.CheckSpelling
+Else
+  Selection.End = Selection.Start
+  beep
+End If
+End Sub
+

@@ -1,0 +1,34 @@
+Sub SortNumberedList()
+' Paul Beverley - Version 03.07.12
+' Sort references, ignoring the number at the beginning
+
+numChars = 20
+myDelimiter = " "
+' If it's a tab, use...
+' myDelimiter = Chr(9)
+
+For Each myPara In ActiveDocument.Paragraphs
+  If Len(myPara.Range.Text) > numChars Then
+    myPara.Range.Select
+    firstChars = Left(myPara.Range.Text, numChars)
+    firstChars = Right(firstChars, Len(firstChars) - InStr(firstChars, myDelimiter))
+    Selection.InsertBefore Text:="xx" & firstChars & "yy"
+  End If
+Next myPara
+
+Selection.WholeStory
+Selection.Sort ExcludeHeader:=False, FieldNumber:="Paragraphs", _
+     SortOrder:=wdSortOrderAscending, SortFieldType:=wdSortFieldAlphanumeric
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "xx*yy"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+

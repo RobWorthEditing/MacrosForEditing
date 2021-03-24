@@ -1,0 +1,18 @@
+Sub InitialCapItalicText()
+' Paul Beverley - Version 03.12.11
+' Initial caps on significant words in italic text in notes
+
+For Each wd In ActiveDocument.Words
+  If wd.Italic = True Then
+    myWord = wd
+    initChar = wd.Characters(1)
+    If UCase(initChar) <> initChar Then
+      If InStr(lclist, myWord) = 0 Then
+        wd.Characters(1) = UCase(initChar)
+        If doHighlight = True Then wd.HighlightColorIndex = myColour
+      End If
+    End If
+  End If
+Next wd
+End Sub
+

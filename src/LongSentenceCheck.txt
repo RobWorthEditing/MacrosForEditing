@@ -1,0 +1,26 @@
+Sub LongSentenceCheck()
+' Paul Beverley - Version 06.01.11
+' Colour long sentences
+myCol1 = wdColorBlue
+myCol2 = wdColorSeaGreen
+minLen = 40
+
+' nowTrack = ActiveDocument.TrackRevisions
+' ActiveDocument.TrackRevisions = False
+myCol = myCol1
+For Each snt In ActiveDocument.Sentences
+  allWords = snt
+  wordNum = Len(allWords) - Len(Replace(allWords, " ", ""))
+  If wordNum > minLen Then
+    snt.Font.Color = myCol
+  ' Swap between the two colours ready for next long sentence
+    If myCol = myCol1 Then
+      myCol = myCol2
+    Else
+      myCol = myCol1
+    End If
+  End If
+Next snt
+' ActiveDocument.TrackRevisions = nowTrack
+End Sub
+

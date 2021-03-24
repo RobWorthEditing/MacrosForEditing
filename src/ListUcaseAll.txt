@@ -1,0 +1,22 @@
+Sub ListUcaseAll()
+' Paul Beverley - Version 07.01.10
+' Upper case initial letter of all list items
+Selection.End = Selection.Start
+With Selection.Find
+  .Text = "^0149^t"
+  .Replacement.Text = ""
+  .Format = False
+  .Wrap = False
+'  .Wrap = wdFindContinue
+  .MatchCase = False
+  .MatchWildcards = False
+End With
+
+Do While Selection.Find.Execute
+  Selection.MoveRight Unit:=wdCharacter, Count:=1, Extend:=wdExtend
+  Selection.Range.Case = wdUpperCase
+' Now move on past the selected character
+  Selection.Collapse wdCollapseEnd
+Loop
+End Sub
+

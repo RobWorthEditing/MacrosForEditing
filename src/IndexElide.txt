@@ -1,0 +1,95 @@
+Sub IndexElide()
+' Paul Beverley - Version 23.12.10
+' Add elision to an index
+For Each para In ActiveDocument.Paragraphs
+Set rng = para.Range
+thisNum = 0: firstNum = 0: topNum = 0: prevNum = 0
+' Read thisNumber
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = "[0-9]{1,}"
+  .Replacement.Text = ""
+  .Execute
+End With
+If rng.Find.Found = True Then
+  thisText = rng
+  thisNum = Val(thisText)
+  thisNumStart = rng.Start
+  thisNumEnd = rng.End
+  rng.Start = rng.End
+End If
+
+If thisNum = 0 Then GoTo nextPara
+
+gotJustOne:
+' Got first number in a possible run
+firstNum = thisNum
+firstNEnd = thisNumEnd
+
+onARun:
+' Come here top look for the next number
+topNum = thisNum: prevNum = thisNum
+topNumStart = thisNumStart
+
+' Read next number
+' but first find where the line ends
+Set rng2 = para.Range
+lineEnd = rng2.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = "[0-9]{1,}"
+  .Replacement.Text = ""
+  .Execute
+End With
+' If we've found a number and it's on the current line
+If rng.Find.Found = True And rng.Start < lineEnd Then
+  thisText = rng
+  thisNum = Val(thisText)
+  thisNumStart = rng.Start
+  thisNumEnd = rng.End
+  rng.Start = rng.End
+End If
+
+If thisNum = prevNum Then
+' If no more numbers, and this is only
+' a single number then go to next para
+  If topNum = firstNum Then GoTo nextPara
+Else
+' If the run is continuing
+  If thisNum = prevNum + 1 Then GoTo onARun
+End If
+
+' If we're at the beginning of a new run ...
+If firstNum = topNum Then GoTo gotJustOne
+
+' ...type the hyphen in the previous run
+rng.Start = firstNEnd
+rng.End = topNumStart
+chopLength = topNumStart - firstNEnd - 1
+rng.Select
+Selection.Delete
+Selection.TypeText Text:= chr(150)
+thisNumStart = thisNumStart - chopLength
+thisNumEnd = thisNumEnd - chopLength
+rng.Start = thisNumEnd
+rng.End = thisNumEnd
+prevNum = 0
+
+If topNum = thisNum Then
+' If the end of line has been reached
+  GoTo nextPara
+Else
+' If not, then we've got a first number
+' so go and find a second one.
+  GoTo gotJustOne
+End If
+
+nextPara:
+Next para
+Selection.HomeKey Unit:=wdStory
+End Sub
+

@@ -1,0 +1,53 @@
+Sub CompareTexts()
+' Paul Beverley - Version 14.11.19
+' Compares copied text (i.e. clipboard contents) with selected text
+
+myColour = wdYellow
+minLength = 10
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+myText = Selection
+Selection.range.HighlightColorIndex = myColour
+myStart = Selection.Start
+myEnd = Selection.End
+Selection.Collapse wdCollapseEnd
+Selection.Paste
+Selection.Start = myEnd
+myOtherText = Selection
+WordBasic.editunDo
+
+If myText = myOtherText Then
+  Selection.Start = myStart
+  Selection.range.HighlightColorIndex = wdNoHighlight
+  Selection.Collapse wdCollapseEnd
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+  Exit Sub
+End If
+
+Selection.Start = myStart
+wds = Selection.range.Words.Count
+Do
+  Do
+    Selection.MoveEnd wdWord, -1
+    txtPos = InStr(myOtherText, Selection.Text)
+    If txtPos > 0 Then
+      Selection.range.HighlightColorIndex = wdNoHighlight
+      Selection.Collapse wdCollapseEnd
+      Selection.End = myEnd
+      Selection.MoveStart wdWord, 1
+      DoEvents
+    End If
+  Loop Until Len(Selection.Text) < minLength
+  Selection.End = myEnd
+  Selection.MoveStart wdWord, 1
+Loop Until Len(Selection.Text) < minLength
+Beep
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

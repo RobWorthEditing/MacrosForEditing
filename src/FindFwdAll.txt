@@ -1,0 +1,70 @@
+Sub FindFwdAll()
+' Paul Beverley - Version 27.06.20
+' Moves forward to next match: text > notes > comments
+
+Selection.Collapse wdCollapseEnd
+hereNow = Selection.End
+With Selection.Find
+  .Wrap = wdFindStop
+  .Forward = True
+  .MatchCase = False
+  .Execute
+End With
+
+If Selection.Start = hereNow Then
+  inFootnotes = Selection.Information(wdInFootnote)
+  inEndnotes = Selection.Information(wdInEndnote)
+  inComments = Selection.Information(wdInCommentPane)
+  inText = Not (inFootnotes Or inEndnotes Or inComments)
+  anyComments = (ActiveDocument.Comments.Count > 0)
+  anyFootnotes = (ActiveDocument.Footnotes.Count > 0)
+  anyEndnotes = (ActiveDocument.Endnotes.Count > 0)
+  If Selection.Find.Found = False Then
+    If inText And anyFootnotes Then
+      Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+      rng.Select
+      Selection.Collapse wdCollapseStart
+      With Selection.Find
+        .Wrap = wdFindStop
+        .Forward = True
+        .MatchCase = False
+        .Execute
+      End With
+      If Selection.Find.Found = True Then
+        GoTo CleanUp
+      End If
+      inFootnotes = True
+    Else
+      inFootnotes = True
+    End If
+    If inFootnotes And anyEndnotes Then
+      windowNow = ActiveWindow.WindowNumber
+      ActiveDocument.Endnotes(1).Range.Select
+      ActiveDocument.Windows(windowNow).Activate
+      Selection.Collapse wdCollapseStart
+      Selection.Find.Execute
+      If Selection.Find.Found = True Then GoTo CleanUp
+       inEndnotes = True
+    Else
+      inEndnotes = True
+    End If
+    If inEndnotes And anyComments Then
+      If inComments Then GoTo CleanUp
+      ActiveDocument.Comments(1).Edit
+      Selection.WholeStory
+      Selection.Collapse wdCollapseStart
+      With Selection.Find
+        .Wrap = wdFindStop
+        .Forward = True
+        .MatchCase = False
+        .Execute
+      End With
+    End If
+  End If
+End If
+CleanUp:
+If Selection.Find.Found = False Then Beep
+' Leave F&R dialogue in a sensible state
+Selection.Find.Wrap = wdFindContinue
+End Sub
+

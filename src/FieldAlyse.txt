@@ -1,0 +1,50 @@
+Sub FieldAlyse()
+' Paul Beverley - Version 06.09.19
+' Counts all fields of different types
+
+Dim n(100) As Integer
+
+knownTypes = " 13 33 58 72 81 88 "
+stopAtUnknown = True
+Set myFile = ActiveDocument
+Set rng = ActiveDocument.Content
+For i = 1 To myFile.Fields.Count
+  Set fld = myFile.Fields(i)
+  myType = fld.Type
+  n(myType) = n(myType) + 1
+  If stopAtUnknown = True And InStr(knownTypes, Str(myType)) = 0 Then
+    fld.Select
+    myResponse = MsgBox("Type: " & Str(myType) & "  Continue?", _
+         vbQuestion + vbYesNoCancel)
+    If myResponse <> vbYes Then Exit Sub
+    knownTypes = knownTypes & " " & Str(myType)
+  End If
+Next i
+
+myResult = ""
+For i = 1 To 100
+  If n(i) > 0 Then
+    myResult = myResult & Str(n(i)) & "  " & _
+         "field type" & Str(i) & "  ("
+    Select Case i
+      Case 13: myType = "table of contents"
+      Case 33: myType = "page"
+      Case 58: myType = "equation"
+      Case 72: myType = "note reference"
+      Case 81: myType = "citation"
+      Case 88: myType = "hyperlink"
+      Case Else: myType = "type unknown by this macro)" & vbCr & _
+           "https://docs.microsoft.com/en-us/dotnet/api/microsoft." & _
+           "sharepoint.spfieldtype?view=sharepoint-server"
+    End Select
+    myResult = myResult & myType & ")" & vbCr & vbCr
+  End If
+Next i
+Selection.EndKey Unit:=wdStory
+If myResult = "" Then
+  Beep
+Else
+    myTrack = ActiveDocument.TrackRevisions
+  ActiveDocument.TrackRevisions = False
+
+  Selection.TypeText Text:=v

@@ -1,0 +1,70 @@
+Sub CiteFileLink2()
+' Paul Beverley - Version 25.06.12
+' Link text and references files for CiteCheck
+
+notTheseFiles = "zzSwitchList,zzFReditList,AllTextWord"
+
+gottaRefs = False
+gottaText = False
+Do Until gottaRefs = True And gottaText = True
+  For Each myWnd In Application.Windows
+    myWnd.Document.Activate
+    thisFile = Replace(myWnd.Document.Name, ".docx", "")
+    thisFile = Replace(myWnd.Document.Name, ".doc", "")
+    If InStr(notTheseFiles, thisFile) = 0 Then
+      thisOne = InputBox("Text or Refs?", "CiteFileLink")
+      If Len(thisOne) > 0 Then
+        If Asc(LCase(thisOne)) = Asc("r") Then
+          Set refsDoc = myWnd.Document
+          gottaRefs = True
+        End If
+        If Asc(LCase(thisOne)) = Asc("t") Then
+          Set textDoc = myWnd.Document
+          gottaText = True
+        End If
+      End If
+    End If
+    If gottaRefs = True And gottaText = True Then Exit For
+  Next myWnd
+Loop
+
+refsDoc.Activate
+varExists = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "textDocName" Then varExists = True
+  If v.Name = "refsDocName" Then v.Delete
+Next v
+If varExists = False Then
+  ActiveDocument.Variables.Add "textDocName", textDoc.Name
+Else
+  ActiveDocument.Variables("textDocName") = textDoc.Name
+End If
+
+textDoc.Activate
+varExists = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "refsDocName" Then varExists = True
+  If v.Name = "textDocName" Then v.Delete
+Next v
+If varExists = False Then
+  ActiveDocument.Variables.Add "refsDocName", refsDoc.Name
+Else
+  ActiveDocument.Variables("refsDocName") = refsDoc.Name
+End If
+
+' Prepare the Find to look for dates
+With Selection.Find
+  .ClearFormatting
+  .Highlight = False
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{4}[a-k\);:,]"
+  .Replacement.Text = ""
+  .Forward = True
+  .Wrap = False
+  .MatchWildcards = True
+  .Execute
+End With
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

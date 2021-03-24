@@ -1,0 +1,80 @@
+Sub IndexChecker()
+' Paul Beverley - Version 16.01.21
+' Lists all pages on which this word(s) occur(s)
+
+' Either zero or the first page number of the index
+indexPageStart = 0
+
+myColour = wdYellow
+doWholeWordsOnly = False
+
+If Selection.Start = Selection.End Then Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+myWord = Selection
+indexPage = Selection.Information(wdActiveEndAdjustedPageNumber)
+
+Set rng = ActiveDocument.Content
+If indexPageStart = 0 Then indexPageStart = _
+     rng.Information(wdActiveEndAdjustedPageNumber)
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myWord
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .Execute
+  .IgnoreSpace = True
+  .IgnorePunct = True
+End With
+wasNum = 0
+
+myFinds = ""
+stopNow = False
+Do While rng.Find.Found And stopNow = False
+  pageNum = rng.Information(wdActiveEndAdjustedPageNumber)
+  gotOne = True
+  If doWholeWordsOnly = True Then
+    rng.MoveEnd wdCharacter, 1
+    rng.MoveStart wdCharacter, -1
+    preChar = Left(rng, 1)
+    postChar = Right(rng, 1)
+    If UCase(preChar) <> LCase(preChar) Then gotOne = False
+    If UCase(postChar) <> LCase(postChar) Then gotOne = False
+  End If
+' Got this page already?
+  If wasNum = pageNum Then gotOne = False
+' This is the page in the index where the word occurs!
+  If pageNum = indexPage Then gotOne = False
+' We've arrived at the index, so give up looking
+  If pageNum >= indexPageStart Then gotOne = False: stopNow = True
+' Add it to the list of finds
+  If gotOne = True Then myFinds = myFinds & ", " & Trim(Str(pageNum))
+  wasNum = pageNum
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+With Selection.Find
+  .IgnoreSpace = False
+  .IgnorePunct = False
+End With
+
+myFinds = Mid(myFinds, 3)
+myResponse = MsgBox(myFinds & vbCr & vbCr & "OK?", vbQuestion + vbYesNo)
+If myResponse = vbYes Then
+  Selection.Collapse wdCollapseStart
+  Selection.MoveDown Unit:=wdLine, Count:=1
+Else
+  Selection.EndKey Unit:=wdLine
+  Selection.InsertAfter Text:=" >>>>>>> " & myFinds
+  Selection.Range.HighlightColorIndex = myColour
+  Selection.Range.Font.Bold = True
+  Selection.Collapse wdCollapseEnd
+End If
+End Sub
+

@@ -1,0 +1,58 @@
+Sub SelectSentence()
+' Paul Beverley - Version 15.07.13
+' Select the current sentence
+Selection.End = Selection.Start
+hereNow = Selection.Start
+Selection.Sentences(1).Select
+If Right(Selection, 1) = Chr(13) Then
+  Selection.MoveEnd , -2
+End If
+If AscW(Right(Selection, 1)) = 8217 Or AscW(Right(Selection, 1)) = 8221 Then
+  Selection.MoveEnd , -1
+End If
+If AscW(Left(Selection, 1)) = 8211 Or Asc(Left(Selection, 1)) = 8220 Then
+  Selection.MoveStart , 1
+End If
+
+' That should be it - sentence selected -
+' but Word sometimes picks up the following sentence...
+If Selection.Start > hereNow Then
+  Selection.MoveStart wdSentence, -1
+  Selection.MoveEnd wdSentence, -1
+End If
+
+' or it picks up two sentences...
+startSent = Selection.Start
+endSent = Selection.End
+mySent = Selection
+sentMiddle = InStr(mySent, ".' ")
+If sentMiddle = 0 Then sentMiddle = InStr(mySent, ".' ")
+If sentMiddle = 0 Then sentMiddle = InStr(mySent, "."" ")
+If sentMiddle = 0 Then sentMiddle = InStr(mySent, "." & ChrW(8221) & " ")
+If sentMiddle = 0 Then sentMiddle = InStr(mySent, "!' ")
+If sentMiddle = 0 Then sentMiddle = InStr(mySent, "!' ")
+If sentMiddle = 0 Then sentMiddle = InStr(mySent, "!"" ")
+If sentMiddle = 0 Then sentMiddle = InStr(mySent, "!" & ChrW(8221) & " ")
+If sentMiddle = 0 Then sentMiddle = InStr(mySent, "?' ")
+If sentMiddle = 0 Then sentMiddle = InStr(mySent, "?' ")
+If sentMiddle = 0 Then sentMiddle = InStr(mySent, "?"" ")
+If sentMiddle = 0 Then sentMiddle = InStr(mySent, "?" & ChrW(8221) & " ")
+If sentMiddle > 0 And sentMiddle < Len(mySent) - 2 Then
+  If sentMiddle > hereNow - startSent Then
+    Selection.End = Selection.Start + sentMiddle + 2
+  Else
+    Selection.Start = Selection.Start + sentMiddle + 2
+  End If
+End If
+
+' and it can get confused by curly quotes at the beginning...
+mySent = Selection
+If Left(mySent, 2) = ChrW(8217) & " " Or Left(mySent, 2) = ChrW(8221) & " " Then
+  Selection.MoveStart , 2
+End If
+Selection.MoveStartWhile cset:=ChrW(8216) & "' ", Count:=wdForward
+
+' or end of a sentence.
+Selection.MoveEndWhile cset:=ChrW(8217) & "' ", Count:=wdBackward
+End Sub
+

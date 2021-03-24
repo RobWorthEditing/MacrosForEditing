@@ -1,0 +1,27 @@
+Sub CommentBubblesToBrackets()
+' Paul Beverley - Version 26.05.18
+' Copies comments into brackets in running text
+
+addBold = True
+addHighlight = True
+myColour = wdBrightGreen
+removeComments = True
+
+For Each cmt In ActiveDocument.Comments
+  Set rng = cmt.Scope
+  cmt.range.Copy
+  rng.Start = rng.Start + Len(rng.Text)
+  myStart = rng.Start
+  rng.InsertAfter Text:="["
+  rng.Collapse wdCollapseEnd
+  rng.Paste
+  rng.InsertAfter Text:="]"
+  rng.Start = myStart
+  If addBold = True Then rng.Font.Bold = True
+  If addHighlight = True Then rng.HighlightColorIndex = myColour
+Next cmt
+If removeComments = True Then
+  ActiveDocument.DeleteAllComments
+End If
+End Sub
+

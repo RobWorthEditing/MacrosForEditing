@@ -1,0 +1,9 @@
+Sub NonCurlyApostrophe()
+' Paul Beverley - Version 01.01.10
+' Add non-curly single quote
+
+Options.AutoFormatReplaceQuotes = False
+Selection.TypeText Text:="'"
+Options.AutoFormatReplaceQuotes = True
+End Sub
+

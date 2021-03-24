@@ -1,0 +1,53 @@
+Sub HighlightDuplicateSentences2()
+' Paul Beverley - Version 01.05.16
+' Highlight pairs of identical sentences
+
+minWords = 5
+Set rng = ActiveDocument.Content
+rng.HighlightColorIndex = wdNoHighlight
+numSent = ActiveDocument.Sentences.Count
+For i = 1 To numSent - 1
+  Set rngS = ActiveDocument.Sentences(i)
+  If rngS.Words.Count > minWords Then
+    Set rng = rngS.Duplicate
+    rng.Collapse wdCollapseEnd
+    
+    rngS.Select
+    numChars = rngS.Characters.Count
+    mySearch = rngS.Text
+    longSentence = False
+    If numChars > 254 Then
+      longSentence = True
+      mySearch = Left(rngS.Text, 254)
+    End If
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = mySearch
+      .Wrap = False
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchCase = False
+      .MatchWildcards = False
+      .MatchWholeWord = False
+      .MatchSoundsLike = False
+      .Execute
+    End With
+
+    If rng.Find.Found Then
+      rng.Select
+      If longSentence = True Then
+        rngS.HighlightColorIndex = wdGray25
+        rng.HighlightColorIndex = wdGray25
+      Else
+        rngS.HighlightColorIndex = wdYellow
+        rng.HighlightColorIndex = wdYellow
+      End If
+      rngS.Select
+    End If
+  End If
+  DoEvents
+  StatusBar = "To go: " & Str(numSent - i)
+Next i
+End Sub
+

@@ -1,0 +1,15 @@
+Sub GoogleFetchQuotesNL()
+' Paul Beverley - Version 08.08.20
+' Launches selected text - with quotes - on GoogleNL
+
+mySite = "http://www.google.nl/search?q="
+
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, vbCr, "")
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = "%22" & mySubject & "%22"
+ActiveDocument.FollowHyperlink Address:=mySite & mySubject
+Selection.Collapse wdCollapseEnd
+End Sub
+

@@ -1,0 +1,49 @@
+Sub TooDifficultWordHighlighter()
+' Paul Beverley - Version 15.02.12
+' Highlights any words not included in word list
+
+ignoreLength = 3
+easyWords = "this that these those" & " "
+easyWords = easyWords & "your yours their theirs some" & " "
+easyWords = easyWords & "will would could were have give take" & " "
+
+' How many files are open. Warn if wrong number.
+numDocs = Word.Documents.Count
+If numDocs < 2 Then
+  MsgBox "Please open a text file and a word list file."
+  Exit Sub
+End If
+If numDocs > 2 Then
+  MsgBox "Too many files open."
+  Exit Sub
+End If
+
+' Work out which file is which
+For Each myDoc In Documents
+  myDoc.Activate
+  Set rng = ActiveDocument.Content
+  rng.End = rng.Start + 50
+  myText = LCase(rng.Text)
+  If InStr(LCase(rng.Text), "word list") > 0 Then
+    Set TheList = myDoc
+  Else
+    Set TheText = myDoc
+  End If
+Next myDoc
+
+' Pick up all the words in the word list, and add the easy words
+TheList.Activate
+Set rng = ActiveDocument.Content
+allWords = Replace(rng.Text & " " & easyWords, Chr(13), " ")
+
+' Highlight any words longer than ignoreLength
+' and that are not in the word list or the easy words
+TheText.Activate
+For Each myWord In ActiveDocument.Words
+  thisWord = Trim(myWord.Text) & " "
+  longer = Len(thisWord) > ignoreLength + 1
+  notInList = InStr(allWords, thisWord) = 0
+  If longer And notInList Then myWord.HighlightColorIndex = wdYellow
+Next myWord
+End Sub
+

@@ -1,0 +1,74 @@
+Sub TaggedTextToSmallCaps()
+' Paul Beverley - Version 01.02.20
+' Finds tagged text, lowercases it and changes to small caps
+
+tagPre = "<sc>"
+tagPost = "</sc>"
+removeTags = True
+
+' thinCode = "<th>/</th>"
+thinCode = ""
+
+tPr = Replace(tagPre, "\", "\\")
+tPr = Replace(tPr, "<", "\<")
+tPr = Replace(tPr, ">", "\>")
+
+tPo = Replace(tagPost, "\", "\\")
+tPo = Replace(tPo, "<", "\<")
+tPo = Replace(tPo, ">", "\>")
+
+mySearch = tPr & "*" & tPo
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = mySearch
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  newText = Replace(rng.Text, tagPre, "")
+  newText = Replace(newText, tagPost, "")
+  newText = LCase(newText)
+  
+  rng.Text = newText
+  rng.Font.SmallCaps = True
+  myEnd = rng.End
+  If removeTags = False Then
+    rng.InsertBefore Text:=tagPre
+    rng.InsertAfter Text:=tagPost
+    myEnd = myEnd + Len(tagPre) + Len(tagPost)
+    rng.End = rng.Start + Len(tagPre)
+    rng.Font.SmallCaps = False
+    rng.End = myEnd
+    rng.Start = myEnd - Len(tagPost)
+    rng.Font.SmallCaps = False
+  End If
+    rng.Start = myEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+
+If Len(thinCode) > 0 Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = thinCode
+    .Wrap = wdFindContinue
+    .Replacement.Text = ChrW(8201)
+    .Forward = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+MsgBox "Changed: " & myCount & " small caps"
+End Sub
+

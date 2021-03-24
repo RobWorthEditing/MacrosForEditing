@@ -1,0 +1,25 @@
+Sub BodyTexter()
+' Paul Beverley - Version 02.02.11
+' Apply 'Body Text' to every paragraph in 'Normal'
+
+fromStyle = "Normal"
+toStyle = "Body Text"
+' Or use two other styles:
+' fromStyle = "Caption"
+' toStyle = "Figure Heading"
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+i = ActiveDocument.Paragraphs.Count
+For Each para In ActiveDocument.Paragraphs
+  thisStyle = para.Style
+  If thisStyle = ActiveDocument.Styles(fromStyle) Then
+    para.Style = ActiveDocument.Styles(toStyle)
+  End If
+  i = i - 1
+  StatusBar = "Paragraphs to go: " & Str(i)
+Next para
+Beep
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

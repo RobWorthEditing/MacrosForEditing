@@ -1,0 +1,16 @@
+Sub FunnyFontFind()
+' Paul Beverley - Version 07.09.17
+' Finds the next paragraph that has mixed fonts
+
+Set rng = ActiveDocument.range(0, Selection.End)
+myStart = rng.Paragraphs.Count
+For i = myStart + 1 To ActiveDocument.Paragraphs.Count
+  If ActiveDocument.Paragraphs(i).range.Font.Name = "" Then
+    ActiveDocument.Paragraphs(i).range.Select
+    Exit Sub
+  End If
+Next i
+Selection.EndKey Unit:=wdStory
+Beep
+End Sub
+

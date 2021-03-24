@@ -1,0 +1,101 @@
+Sub SortListInText()
+' Paul Beverley - Version 16.01.21
+' Sorts items in a list in the text alphabetically.
+' This is based on an idea by Gary Smith
+
+
+' If last item might possibly have a conjunction only
+' e.g. "fish, chips and peas", then say "True"
+allowSplitAtConjunction = True
+
+If Selection.Start = Selection.End Then
+  Selection.MoveStartUntil cset:="(", Count:=wdBackward
+  Selection.MoveEndUntil cset:=")", Count:=wdForward
+Else
+  theEnd = Selection.End
+  Selection.Collapse wdCollapseStart
+  Selection.Expand wdWord
+  theStart = Selection.Start
+  Selection.End = theEnd
+  Selection.Collapse wdCollapseEnd
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Start = theStart
+End If
+
+myList = Selection
+myDelim = ", "
+If InStr(myList, ";") > 0 Then myDelim = "; "
+
+myBits = Split(myList, myDelim)
+lastItem = UBound(myBits)
+ReDim myGroup(lastItem) As String
+myGroup = myBits
+
+' Is the final "item" really a single item, or rather
+' a pair, separated by "and" or "&"?
+lastText = myGroup(lastItem)
+serialcomma = True
+If InStr(lastText, " and ") + InStr(lastText, " & ") > 0 _
+     And allowSplitAtConjunction = True Then
+  myResponse = MsgBox(lastText & vbCr & "Is this a single item?", _
+          vbQuestion + vbYesNoCancel, "SortListInText")
+  If myResponse = vbCancel Then Exit Sub
+  If myResponse = vbNo Then
+    myList = Replace(myList, " & ", ", & ")
+    myList = Replace(myList, " and ", ", and ")
+    myBits = Split(myList, myDelim)
+    lastItem = UBound(myBits)
+    myGroup = myBits
+    lastText = myGroup(lastItem)
+    serialcomma = False
+  End If
+End If
+
+spPos = InStr(lastText, " ")
+If spPos > 0 Then firstWd = Left(lastText, spPos) Else firstWd = ""
+
+' If there's a conjunction, delete it
+If firstWd = "and " Or firstWd = "& " Then
+  lastText = myGroup(lastItem)
+  lastText = Mid(lastText, Len(firstWd) + 1)
+  myGroup(lastItem) = lastText
+Else
+  firstWd = ""
+End If
+
+WordBasic.SortArray myGroup()
+
+tempStr = ""
+For i = 0 To lastItem - 1
+  tempStr = tempStr & myGroup(i) & myDelim
+Next i
+If serialcomma = False Then
+  tempStr = Left(tempStr, Len(tempStr) - 2) & " "
+End If
+tempStr = tempStr & firstWd & myGroup(i)
+
+etalItalic = (Selection.Font.Italic > 0)
+
+myStart = Selection.Start
+Selection.TypeText tempStr
+
+If etalItalic = True Then
+  Selection.Start = myStart
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "et al"
+    .Wrap = wdFindStop
+    .Replacement.Text = "^&"
+    .Replacement.Font.Italic = True
+    .Forward = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  Selection.Collapse wdCollapseEnd
+End If
+End Sub
+

@@ -1,0 +1,18 @@
+Sub PrepareToReplaceFromTop()
+' Paul Beverley - Version 09.12.10
+' Copy text into the F&R box from top
+
+myText = Selection
+If Asc(myText) <> 32 Then myText = Trim(myText)
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myText
+  .Replacement.Text = myText
+  .MatchWildcards = False
+  .MatchWholeWord = False
+End With
+Selection.HomeKey Unit:=wdStory
+CommandBars("Menu Bar").Controls("Edit").Controls("Replace...").Execute
+End Sub
+

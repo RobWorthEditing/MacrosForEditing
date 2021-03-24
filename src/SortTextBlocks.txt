@@ -1,0 +1,87 @@
+Sub SortTextBlocks()
+' Paul Beverley - Version 28.10.17
+' Alpha sorts blocks of text by first line
+
+If Selection.Start = Selection.End Then
+  doingAll = True
+  Set rng = ActiveDocument.Content
+Else
+  doingAll = False
+  Selection.Copy
+  Documents.Add
+  Selection.Paste
+  Set rng = ActiveDocument.Content
+End If
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[^13]{3,}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p^p"
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p^p"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "zczc"
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p"
+  .Replacement.Text = "pqpq"
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zczc"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "zczc^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+rng.Sort ExcludeHeader:=False, FieldNumber:="Paragraphs"
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "pqpq"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zczc"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+If doingAll = False Then
+  Selection.WholeStory
+  Selection.Copy
+  ActiveDocument.Close SaveChanges:=False
+  Selection.Paste
+End If
+End Sub
+

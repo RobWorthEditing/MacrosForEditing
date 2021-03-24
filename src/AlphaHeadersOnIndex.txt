@@ -1,0 +1,20 @@
+Sub AlphaHeadersOnIndex()
+' Paul Beverley - Version 10.09.19
+' Adds alpha headers to an index
+
+myHead = "`" ' One less than "a"
+
+For Each pa In ActiveDocument.Paragraphs
+  myNewHead = ""
+  paText = LCase(pa.range.Text)
+  If Asc(paText) > Asc(myHead) Then
+    myNewHead = Left(paText, 1)
+    pa.range.Select
+    Selection.InsertBefore Text:=vbCr & UCase(myNewHead) & vbCr
+    Selection.End = Selection.Start + 2
+    Selection.range.Font.Bold = True
+    myHead = myNewHead
+  End If
+Next pa
+End Sub
+

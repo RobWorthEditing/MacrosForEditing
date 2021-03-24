@@ -1,0 +1,19 @@
+Sub GoogleSSFetch()
+' Paul Beverley - Version 12.01.21
+' Uses Google to search a single specific site
+
+'mySite = "wordmacrotools.com"
+'mySite = "archivepub.co.uk"
+mySite = "uea.ac.uk"
+
+myGoogle = "http://www.google.co.uk/search?q="
+If Len(Selection) = 1 Then Selection.Expand wdWord
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubject, ChrW(8217), "'")
+mySubject = mySubject & " site:" & mySite
+ActiveDocument.FollowHyperlink Address:=myGoogle & mySubject
+Selection.Collapse wdCollapseEnd
+End Sub
+

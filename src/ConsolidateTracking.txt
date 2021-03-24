@@ -1,0 +1,12 @@
+Sub ConsolidateTracking()
+' Paul Beverley - Version 12.11.14
+' Turns split tracking into a single change
+
+If Selection.Start = Selection.End Then
+  Selection.Words(1).Select
+  Selection.MoveEnd , -1
+End If
+Selection.Cut
+Selection.Paste
+End Sub
+

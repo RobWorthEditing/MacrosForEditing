@@ -1,0 +1,122 @@
+Sub AddKeys()
+' Paul Beverley - Version 08.07.20
+' Adds keybindings to macros
+
+' Sub CustomKeys = Shift-Alt-K
+' Sub AccentAlyse = Shift-Alt-A
+' Sub DocAlyse = Shift-Alt-D
+' Sub FindBack = Alt-Left
+' Sub FindBackCase = Shift-Alt-Left
+' Sub FindFwd = Alt-Right
+' Sub FindFwdCase = Shift-Alt-Right
+' Sub FRedit = Shift-Alt-F
+' Sub HyphenAlyse = Shift-Alt-H
+' Sub InstantFindDown = Shift-Alt-Down
+' Sub InstantFindUp = Shift-Alt-Up
+' Sub IStoIZ = Shift-Alt-Z
+' Sub IZIScount = Shift-Alt-I
+' Sub IZtoIS = Shift-Alt-S
+' Sub MultiSwitch = Alt-Q
+' Sub CopyTextSimple = Alt-C
+' Sub MultiFileText = Alt-T
+' Sub ProperNounAlyse = Shift-Alt-P
+' Sub SpellingErrorHighlighter = Shift-Alt-E
+' Sub SpellingErrorLister = Shift-Alt-L
+' Sub UKUSCount = Shift-Alt-U
+' Sub WhatChar = Shift-Alt-Slash
+' Sub WordPairAlyse = Shift-Alt-W
+' Sub MacroMenu = Shift-Alt-M
+
+
+keyCount = 0
+For Each myPara In ActiveDocument.Paragraphs
+  myLine = Replace(myPara.Range.Text, vbCr, "")
+  myLine = Replace(myLine, " ", "")
+  If Left(myLine, 6) = "EndSub" Then
+    If keyCount > 0 Then
+      MsgBox keyCount & " shortcut keys programmed."
+    Else
+      Beep
+      MsgBox "Please ensure that 'The_Starter_Macros' document is" & vbCr _
+           & "still open on screen, and that the cursor" & vbCr _
+           & "is in that file. Now re-run this macro."
+    End If
+    Exit Sub
+  End If
+  gotOne = False
+  If Left(myLine, 4) = "'Sub" Then myLine = Mid(myLine, 5): gotOne = True
+  eqPos = InStr(myLine, "=")
+  If gotOne And eqPos > 0 Then
+    keyCount = keyCount + 1
+    myMacroName = Left(myLine, eqPos - 1)
+    myKeyCode = 0
+    myKeyText = Mid(myLine, eqPos + 1)
+    i = Len(myKeyText)
+    myKeyText = Replace(myKeyText, "Ctrl-", "")
+    If Len(myKeyText) < i Then myKeyCode = myKeyCode + wdKeyControl
+    i = Len(myKeyText)
+    myKeyText = Replace(myKeyText, "Shift-", "")
+    If Len(myKeyText) < i Then myKeyCode = myKeyCode + wdKeyShift
+    i = Len(myKeyText)
+    myKeyText = Replace(myKeyText, "Alt-", "")
+    If Len(myKeyText) < i Then myKeyCode = myKeyCode + wdKeyAlt
+    If Len(myKeyText) = 1 Then
+      myKeyCode = myKeyCode + Asc(myKeyText)
+    Else
+      If Asc(myKeyText) = Asc("F") Then
+        aCode = 111 + Val(Replace(myKeyText, "F", ""))
+      Else
+        Select Case myKeyText
+          Case "Up": aCode = vbKeyUp '  The Up Cursor key
+          Case "Down": aCode = vbKeyDown '  The Down Cursor key
+          Case "Right": aCode = vbKeyRight '  The Right Cursor key
+          Case "Left": aCode = vbKeyLeft '  The Left Cursor key
+          Case "BackSingleQuote": aCode = wdKeyBackSingleQuote '  The ` key
+          Case "BackSlash": aCode = wdKeyBackSlash '  The \ key
+          Case "Backspace": aCode = wdKeyBackspace '  The Backspace key
+          Case "CloseSquareBrace": aCode = wdKeyCloseSquareBrace '  The ] key
+          Case "Comma": aCode = wdKeyComma '  The , key
+          Case "Delete": aCode = wdKeyDelete '  The Delete key
+          Case "End": aCode = wdKeyEnd '  The EndD key
+          Case "Equals": aCode = wdKeyEquals '  The = key
+          Case "Home": aCode = wdKeyHome '  The HOME key
+          Case "Hyphen": aCode = wdKeyHyphen '  The - key
+          Case "Insert": aCode = wdKeyInsert '  The Insert key
+          Case "NumAdd": aCode = wdKeyNumericAdd '  The + key on the keypad
+          Case "NumDecimal": aCode = wdKeyNumericDecimal
+               '  The . key on the keypad
+          Case "NumDivide": aCode = wdKeyNumericDivide
+               '  The / key on the keypad
+          Case "NumMultiply": aCode = wdKeyNumericMultiply
+               '  The * key on the keypad
+          Case "NumSubtract": aCode = wdKeyNumericSubtract
+               '  The - key on the keypad
+          Case "OpenSquareBrace": aCode = wdKeyOpenSquareBrace
+               '  The [ key
+          Case "PageDown": aCode = wdKeyPageDown '  The Page Down key
+          Case "PageUp": aCode = wdKeyPageUp '  The Page Up key
+          Case "Period": aCode = wdKeyPeriod '  The  key
+          Case "Return": aCode = wdKeyReturn '  The Enter or Return key
+          Case "SemiColon": aCode = wdKeySemiColon '  The ; key
+          Case "SingleQuote": aCode = wdKeySingleQuote '  The ' key
+          Case "Slash": aCode = wdKeySlash '  The / key
+
+          Case "Spacebar": aCode = wdKeySpacebar '  The Spacebar key
+          Case Else: MsgBox ("Error - Can't find: " & myLine): Exit Sub
+        End Select
+      End If
+      myKeyCode = myKeyCode + aCode
+    End If
+    KeyBindings.Add KeyCode:=myKeyCode, KeyCategory:=wdKeyCategoryMacro, _
+       Command:=myMacroName
+  End If
+Next myPara
+If keyCount > 0 Then
+  MsgBox keyCount & " shortcut keys programmed."
+Else
+  Beep
+  MsgBox "Please reopen the Word file containing" & vbCr _
+       & "all the macros: TheStarterMacros."
+End If
+End Sub
+

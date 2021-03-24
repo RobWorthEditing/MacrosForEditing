@@ -1,0 +1,12 @@
+Sub CommentsDeleteSelectively()
+' Paul Beverley - Version 13.05.20
+' Deletes all comments that have a specific tag
+
+myDeletionMarker = "***"
+
+For i = ActiveDocument.Comments.Count To 1 Step -1
+Set cmt = ActiveDocument.Comments(i)
+  If InStr(cmt.Range.Text, myDeletionMarker) > 0 Then cmt.Delete
+Next i
+End Sub
+

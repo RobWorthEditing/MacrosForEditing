@@ -1,0 +1,111 @@
+Sub ContentsListerByTag()
+' Paul Beverley - Version 17.09.18
+' Creates a contents list from tags, <A>, <B>, etc.
+
+bringMainToFront = True
+removeTags = True
+
+myText = "B"
+
+Dim fnd(5) As String
+Dim rpl(5) As String
+
+' two levels
+fnd(2) = "<CHN>,<CH>,<A>,<B>"
+rpl(2) = "^p^p<CHN>^t,<CH>^p,<A>,^t<B>"
+
+' three levels
+fnd(3) = "<CHN>,<CH>,<A>,<B>,<C>"
+rpl(3) = "^p^p<CHN>^t,<CH>^p,<A>,^t<B>,^t^t<C>"
+
+' four levels
+fnd(4) = "<CHN>,<CH>,<A>,<B>,<C>,<D>"
+rpl(4) = "^p^p<CHN>^t,<CH>^p,<A>,^t<B>,^t^t<C>,^t^t^t<D>"
+
+' five levels
+fnd(5) = "<CHN>,<CH>,<A>,<B>,<C>,<D>,<E>"
+rpl(5) = "^p^p<CHN>^t,<CH>^p,<A>,^t<B>,^t^t<C>,^t^t^t<D>,^t^t^t^t<E>"
+
+Do
+  myResponse = InputBox("Level? (B-E):", "Content Lister", myText)
+  myLevel = Asc(UCase(myResponse)) - 64
+Loop Until myLevel > 1 And myLevel < 6
+myColour = wdTurquoise
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+
+Set thisDoc = ActiveDocument
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.Text = rng.Text
+Selection.EndKey unit:=wdStory
+myF = Split(fnd(myLevel), ",")
+myR = Split(rpl(myLevel), ",")
+For i = 0 To UBound(myF)
+  myFind = Replace(myF(i), "<", "\<")
+  myFind = Replace(myFind, ">", "\>")
+  If Right(myR(i), 1) = "#" Then
+    myCR = "^t"
+    myR(i) = Replace(myR(i), "#", "")
+  Else
+    myCR = "^p"
+  End If
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myFind & "(*)^13"
+    .Wrap = wdFindContinue
+    .Replacement.Text = myR(i) & "\1" & myCR
+    .Replacement.Highlight = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  DoEvents
+  StatusBar = "                         " & myR(i)
+Next i
+
+StatusBar = "                         Editing the list. Please wait..."
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "*"
+  .Highlight = False
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+If removeTags = True Then
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\<*\>"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+' Pull chapter titles to chapter numbers
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^t^p"
+  .Replacement.Text = "^t"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Set rng = ActiveDocument.Content
+rng.HighlightColorIndex = wdNoHighlight
+Selection.HomeKey unit:=wdStory
+Options.DefaultHighlightColorIndex = oldColour
+
+If bringMainToFront = True Then thisDoc.Activate
+
+Beep
+End Sub
+

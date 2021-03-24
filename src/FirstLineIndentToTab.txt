@@ -1,0 +1,35 @@
+Sub FirstLineIndentToTab()
+' Paul Beverley - Version 07.09.20
+' Changes all first-line indents to a tab
+
+tabSize = 0.25
+useInches = True
+
+' For cm, use, e.g.:
+' tabSize = 0.8
+' useInches = False
+
+For Each myPara In ActiveDocument.Paragraphs
+  If myPara.Range.ParagraphFormat.FirstLineIndent > 0 And _
+       myPara.Range.Characters.Count > 1 Then
+    With myPara.Range
+      .Select
+      .InsertBefore Text:=vbTab
+      .ParagraphFormat.FirstLineIndent = 0
+      If useInches Then
+        ' In inches
+        .ParagraphFormat.TabStops.Add Position:=InchesToPoints(tabSize) _
+             , Alignment:=wdAlignTabLeft
+        .ParagraphFormat.TabStops(InchesToPoints(0.1)).Clear
+      Else
+        ' In cm
+        .ParagraphFormat.TabStops.Add Position:=CentimetersToPoints(tabSize) _
+             , Alignment:=wdAlignTabLeft
+        .ParagraphFormat.TabStops(CentimetersToPoints(0.3)).Clear
+      End If
+    End With
+  End If
+Next
+Beep
+End Sub
+

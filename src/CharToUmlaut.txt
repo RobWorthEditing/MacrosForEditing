@@ -1,0 +1,15 @@
+Sub CharToUmlaut()
+' Paul Beverley - Version 01.02.21
+' Adds various accents
+
+myChars = "aeiouAEIOU"
+myAccents = ChrW(228) & ChrW(235) & ChrW(239) & ChrW(246) _
+     & ChrW(252) & ChrW(196) & ChrW(203) & ChrW(207) _
+     & ChrW(214) & ChrW(220)
+
+Selection.MoveUntil cset:=myChars, Count:=wdForward
+Selection.MoveEnd , 1
+charPos = InStr(myChars, Selection)
+Selection.TypeText Mid(myAccents, charPos, 1)
+End Sub
+

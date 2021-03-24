@@ -1,0 +1,115 @@
+Sub MultiFileCopier()
+' Paul Beverley - Version 13.12.17
+' Save a folder full of files as PDFs
+
+toFolderName = "aaMainText"
+' toFolderName = "WorkingText"
+myPostFix = "_PB_01"
+' myPostFix = ""
+
+Dim allMyFiles(200) As String
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  myResponse = MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "Multifile Text Collection")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.Count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+
+  myResponse = MsgBox("Copy ALL the files in this folder:" & dirName _
+       & " ?", vbQuestion + vbYesNoCancel, "Multifile Copier")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  myResponse = MsgBox("Copy just the files listed here?", _
+       vbQuestion + vbYesNoCancel, "Multifile Copier")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+' Check if new folder is ready
+baseFolder = myFolder
+Do
+  baseFolder = Left(baseFolder, Len(baseFolder) - 1)
+Loop Until Right(baseFolder, 1) = myDelimiter
+
+Set fs = CreateObject("Scripting.FileSystemObject")
+If fs.FolderExists(baseFolder & toFolderName) = False Then
+  MsgBox "Please create folder: " & toFolderName
+  Exit Sub
+End If
+
+' Load files and save copies
+For i = 1 To numFiles
+  thisName = allMyFiles(i)
+  newName = toFolderName & myDelimiter & Replace(thisName, _
+       ".", myPostFix & ".")
+  thisFile = myFolder & myDelimiter & thisName
+  Set myDoc = Application.Documents.Open(FileName:=thisFile)
+  StatusBar = allMyFiles(i)
+  DoEvents
+  myNewFile = baseFolder & newName
+  ActiveDocument.SaveAs FileName:=myNewFile
+  myDoc.Close SaveChanges:=wdDoNotSaveChanges
+Next
+Selection.HomeKey Unit:=wdStory
+
+' Dummy copy to clear clipboard
+Set rng = ActiveDocument.Content
+rng.End = rng.Start + 1
+rng.Copy
+Beep
+End Sub
+

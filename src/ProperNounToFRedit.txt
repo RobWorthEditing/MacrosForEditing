@@ -1,0 +1,62 @@
+Sub ProperNounToFRedit()
+' Paul Beverley - Version 16.01.21
+' Picks up alternative spellings in a PN query list for a FRedit list
+
+Set thisDoc = ActiveDocument
+Selection.Expand wdWord
+Do While InStr(" ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Set rng = Selection.Range.Duplicate
+rep = Selection.Text
+
+myInit = Left(Selection, 1)
+myFandRs = ""
+Selection.Collapse wdCollapseStart
+For i = 1 To 15
+  Selection.MoveLeft wdWord, 1
+  If Left(Selection, 1) = myInit Then
+    Selection.Expand wdWord
+    Do While InStr(" ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+    myFandRs = Selection & "|" & rep & vbCr
+    Exit For
+  End If
+Next i
+rng.Select
+Selection.Collapse wdCollapseEnd
+For i = 1 To 15
+  Selection.MoveRight wdWord, 1
+  If Left(Selection, 1) = myInit Then
+    Selection.Expand wdWord
+    Selection.MoveEndWhile cset:=" ", Count:=wdBackward
+    myFandRs = myFandRs & Selection & "|" & rep & vbCr
+    Exit For
+  End If
+Next i
+Selection.Collapse wdCollapseEnd
+
+gottaFReditList = False
+Set thisDoc = ActiveDocument
+For Each myWnd In Application.Windows
+  myWnd.Document.Activate
+  Set rng = ActiveDocument.Content
+  rng.End = rng.Start + 250
+  If InStr(rng.Text, "|") > 0 Then
+    gottaFReditList = True
+    Exit For
+  End If
+Next myWnd
+If gottaFReditList = False Then
+  thisDoc.Activate
+  MsgBox "Can't find a FRedit list file"
+  Exit Sub
+End If
+
+Selection.TypeText Text:=myFandRs
+thisDoc.Activate
+End Sub
+

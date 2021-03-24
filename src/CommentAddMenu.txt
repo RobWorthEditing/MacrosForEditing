@@ -1,0 +1,272 @@
+Sub CommentAddMenu()
+' Paul Beverley - Version 06.02.21
+' Adds a comment off a menu
+
+myPrefix = "PB: "
+myPrefix = ""
+
+addPageNum = False
+addLineNum = False
+keepPaneOpen = False
+
+copyAsPureText = False
+keepTextFont = True
+
+listName = "zzSwitchList"
+
+' On Windows, it will need to be something like:
+myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff"
+
+' On a Mac, it will need to be something like:
+myFolder = "/Users/Paul/My Documents/Macro stuff"
+
+defaultList = myFolder & listName
+Set textDoc = ActiveDocument
+If Selection.Start = Selection.End Then
+  Selection.Expand wdSentence
+  If Right(Selection, 4) = "al. " Or Right(Selection, 5) = "al., " Then
+    Selection.MoveRight Unit:=wdSentence, Count:=1, Extend:=wdExtend
+  End If
+  Do While InStr(" " & vbCr, Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+End If
+
+On Error Resume Next
+Set thisDoc = ActiveDocument.ActiveWindow
+dirName = ActiveDocument.Path
+' Go and look for the list file
+gottaList = False
+For i = 1 To Application.Windows.Count
+  If InStr(Application.Windows(i).Document.Name, _
+       listName) > 0 Then
+    Set listDoc = Application.Windows(i).Document
+    gottaList = True
+  End If
+Next i
+If gottaList = False Then
+  Documents.Open dirName & "\" & listName
+  If Err.Number = 5174 Then
+    Err.Clear
+    Documents.Open defaultList
+    If Err.Number = 5174 Then
+      Err.Clear
+      Documents.Open defaultList & ".docx"
+    End If
+    If Err.Number > 0 And Err.Number <> 438 Then GoTo ReportIt
+  End If
+Else
+  listDoc.Activate
+End If
+On Error GoTo 0
+
+' Find first comment line
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p["
+  .Wrap = wdFindContinue
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+Selection.Collapse wdCollapseEnd
+Selection.Expand wdParagraph
+Set startRange = Selection.Range
+Selection.Collapse wdCollapseEnd
+
+' Construct myFullPrompt
+myFullPrompt = ""
+allCodes = ""
+Set rng = startRange.Duplicate
+myLine = startRange.Text
+Do
+  sqPos = InStr(myLine, "] ")
+  If sqPos = 0 Then
+    rng.Select
+    MsgBox "Missing ]<sp> !"
+    Beep
+    Exit Sub
+  End If
+  curlyPos1 = InStr(myLine, "{")
+  curlyPos2 = InStr(myLine, "}")
+  If curlyPos1 * curlyPos2 = 0 Then
+    rng.Select
+    MsgBox "Missing {} prompt!"
+    Beep
+    Exit Sub
+  End If
+  myCode = Mid(myLine, 2, sqPos - 2)
+  myPrompt = Mid(myLine, curlyPos1 + 1, curlyPos2 - curlyPos1 - 1)
+  If InStr(allCodes, "[" & myCode & "]") = 0 Then
+    myFullPrompt = myFullPrompt & myCode & " = " & myPrompt & vbCr
+  End If
+  allCodes = allCodes & Left(myLine, sqPos)
+  rng.Collapse wdCollapseEnd
+  rng.Expand wdParagraph
+  myLine = rng.Text
+  DoEvents
+Loop Until Len(myLine) < 2 Or rng.End = ActiveDocument.Content.End
+myFullPrompt = Left(myFullPrompt, Len(myFullPrompt) - 1)
+myResponse = InputBox(myFullPrompt, "Comment Add Menu")
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[" & myResponse & "]"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+If Selection.Find.Found = False Then
+  Beep
+  Exit Sub
+End If
+
+' Select required comment
+Selection.Expand wdParagraph
+' Highlight/colour/underline selected text
+Set testChar = Selection.Range.Characters(1)
+isUL = testChar.Font.Underline
+fontColour = testChar.Font.Color
+highlightColour = testChar.HighlightColorIndex
+
+myLine = Selection.Text
+sqPos = InStr(myLine, "] ")
+curlyPos1 = InStr(myLine, "{")
+Selection.End = Selection.Start + curlyPos1 - 1
+  Do While InStr(" ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Selection.MoveStart , sqPos + 1
+'               cursorPos = InStr(Selection, "][")
+lenCopy = Len(Selection)
+If lenCopy > 1 Then Selection.Copy
+
+
+' Add comment bubble + comment
+textDoc.Activate
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+myStart = Selection.Start
+wasEnd = Selection.End
+Set rng = Selection.Range.Duplicate
+rng.End = myStart + 1
+pageNum = rng.Information(wdActiveEndAdjustedPageNumber)
+lineNum = rng.Information(wdFirstCharacterLineNumber)
+
+Set rng = Selection.Range.Duplicate
+If highlightColour > 0 Or fontColour > 0 Or isUL Then
+  Selection.Collapse wdCollapseStart
+  Selection.MoveEnd , 1
+End If
+' Now create the comment
+Set cmt = Selection.Comments.Add(Range:=Selection.Range)
+cmt.Edit
+myPLtext = ""
+If addPageNum = True Then myPLtext = myPLtext & "(p. " & _
+     pageNum
+If addLineNum = True Then
+  myPLtext = myPLtext & ", line " & lineNum & ") "
+Else
+  myPLtext = myPLtext & ") "
+End If
+If Len(myPLtext) > 4 Then myPrefix = myPrefix & myPLtext
+If Len(myPrefix) > 0 Then Selection.TypeText myPrefix
+If lenCopy > 1 Then Selection.Paste
+
+For i = 1 To 20
+  DoEvents
+Next
+
+'k = Timer
+'Do
+'  DoEvents
+'Loop Until Timer > k + 0.5
+
+
+' Replace the <> with the quote
+cmt.Range.Select
+quotePos = InStr(Selection, "<>")
+Do While quotePos > 0
+  Selection.MoveStart , quotePos
+  Selection.End = Selection.Start + 1
+  anglePos = Selection.Start - 1
+  Selection.Delete
+  Selection.Range.Text = rng.Text
+  Selection.MoveEnd , (Len(rng))
+  ' now apply any missing super/subscripts
+  If copyAsPureText = False Then
+    For i = 1 To Len(rng)
+      If keepTextFont = True Then
+        Selection.Characters(i).Font.Name = _
+             rng.Characters(i).Font.Name
+      End If
+      Set ch = rng.Characters(i)
+      Set ch2 = Selection.Characters(i)
+      If ch.Font.Superscript Then ch2.Font.Superscript = True
+      If ch.Font.Subscript Then ch2.Font.Subscript = True
+      If ch.Font.Bold Then ch2.Font.Bold = True
+      If ch.Font.Italic Then ch2.Font.Italic = True
+    Next i
+  End If
+  Selection.Start = anglePos
+  Selection.End = Selection.Start + 1
+  Selection.Delete
+  cmt.Range.Select
+  quotePos = InStr(Selection, "<>")
+Loop
+Application.ScreenUpdating = True
+
+' Now the originaly selected text is either highlighted ...
+If highlightColour > 0 Then
+  rng.HighlightColorIndex = highlightColour
+End If
+' and/or changed the text colour
+If fontColour > 0 Then
+  rng.Font.Color = fontColour
+End If
+' and/or underlined
+If isUL Then
+  rng.Font.Underline = True
+End If
+
+ActiveDocument.TrackRevisions = myTrack
+cmt.Range.Select
+cursorPos = InStr(Selection, "][")
+If cursorPos > 0 Then
+  myLen = cmt.Range.Characters.Count
+  Selection.MoveStart , cursorPos - 1
+  Selection.End = Selection.Start + 2
+  Selection.Delete
+End If
+If keepPaneOpen = False Then ActiveWindow.ActivePane.Close
+If cursorPos > 0 Then
+  cmt.Edit
+  Selection.MoveLeft , (myLen - cursorPos - 1)
+Else
+  If lenCopy > 0 Then cmt.Edit
+  Selection.TypeText " "
+End If
+Exit Sub
+
+ReportIt:
+If Err.Number = 5174 Then
+  MsgBox ("Couldn't find file: " & listName)
+Else
+  On Error GoTo 0
+End If
+End Sub
+

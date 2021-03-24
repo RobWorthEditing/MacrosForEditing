@@ -1,0 +1,32 @@
+Sub PunctuationToThinSpace()
+' Paul Beverley - Version 06.04.13
+' Changes the next punctuation item to a thin space
+
+trackIt = False
+makeItGrey = True
+makeNotSubSuper = True
+
+myChar = ChrW(8201)
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+
+searchChars = " " & ChrW(160) & ChrW(8211) & ChrW(8212) & ChrW(8722) & Chr(30)
+Selection.End = Selection.Start
+While InStr(searchChars, Selection) = 0
+  Selection.MoveRight , 1
+Wend
+Selection.MoveEnd wdCharacter, 1
+Selection.Delete
+Selection.TypeText Text:=myChar
+
+Selection.MoveStart wdCharacter, -1
+If makeItGrey = True Then Selection.Range.HighlightColorIndex = wdGray25
+If makeNotSubSuper = True Then
+  If Selection.Font.Subscript = True Then Selection.Font.Subscript = False
+  If Selection.Font.Superscript = True Then Selection.Font.Superscript = False
+End If
+Selection.Collapse wdCollapseEnd
+ActiveDocument.TrackRevisions = myTrack
+
+End Sub
+

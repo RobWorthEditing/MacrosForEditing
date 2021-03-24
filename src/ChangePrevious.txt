@@ -1,0 +1,15 @@
+Sub ChangePrevious()
+' Paul Beverley - Version 23.10.13
+' Finds next change (not! comment)
+
+On Error GoTo theEnd
+Do
+  Application.Run MacroName:="PreviousChangeOrComment"
+Loop While Selection.Information(wdInCommentPane)
+Exit Sub
+
+theEnd:
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

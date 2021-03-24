@@ -1,0 +1,53 @@
+Sub ReferenceDateShift()
+' Paul Beverley - Version 14.10.16
+' Move date from end of reference to after author(s)
+
+myHLcolour = wdYellow
+' myHLcolour = 0
+myColour = wdColorBlue
+' myColour = 0
+
+allPrefs = " van der de den da le la vahl dos "
+ignoreWords = " de den der di dos du la le ten van von and et al "
+
+Do
+  Selection.Expand wdParagraph
+  If Len(Selection) < 10 Then
+    Beep
+    Exit Sub
+  End If
+  endPara = Selection.End
+  Selection.MoveEnd , -2
+  Selection.Start = Selection.End - 4
+  myDate = Val(Selection)
+  If myDate > 999 Then
+    Selection.MoveStart , -2
+    Selection.Delete
+    Selection.Expand wdParagraph
+    myRef = Selection
+    i = 0
+    Do
+      i = i + 1
+      myWd = Trim(Selection.range.Words(i).Text)
+      isLC = (LCase(myWd) = myWd) And (UCase(myWd) <> myWd)
+      If InStr(ignoreWords, " " & myWd & " ") Then isLC = False
+      Debug.Print Selection.range.Words(i).Text & "|"
+    Loop Until isLC = True
+    Selection.range.Words(i - 1).Select
+    
+    Do While Asc(Selection) < 65 Or Asc(Selection) > 90
+      Selection.MoveLeft wdWord, 1
+    Loop
+    Selection.Collapse wdCollapseStart
+    Selection.TypeText Text:="(" & Trim(Str(myDate)) & ") "
+    Selection.Expand wdParagraph
+  Else
+    Selection.Expand wdParagraph
+    If myColour > 0 Then Selection.range.Font.Color = myColour
+    If myHLcolour > 0 Then Selection.range.HighlightColorIndex = myHLcolour
+  End If
+  Selection.Collapse wdCollapseEnd
+Loop Until endPara = ActiveDocument.range.End
+Selection.Start = Selection.End
+End Sub
+

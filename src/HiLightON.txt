@@ -1,0 +1,7 @@
+Sub HiLightON()
+' Paul Beverley - Version 01.01.10
+' Adds highlight in currently selected colour
+   Selection.Range.HighlightColorIndex = Options.DefaultHighlightColorIndex
+   Selection.Start = Selection.End
+End Sub
+

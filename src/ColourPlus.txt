@@ -1,0 +1,63 @@
+Sub ColourPlus()
+' Paul Beverley - Version 30.07.10
+' Adds font colour in a choice of colours
+
+myCol(0) = wdColorBlack
+myCol(1) = wdColorBlue
+myCol(2) = wdColorRed
+myCol(3) = wdColorPink
+myCol(4) = wdColorBrightGreen
+myCol(5) = wdColorGray25
+myColTotal = 5
+
+' OldColour = Options.DefaultHighlightColorIndex
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Dim v As Variable, nowColour As Long
+varsExist = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "selStart" Then varsExist = True: Exit For
+Next v
+
+If varsExist = False Then
+  ActiveDocument.Variables.Add "selStart", 0
+  ActiveDocument.Variables.Add "selEnd", 0
+  ActiveDocument.Variables.Add "colNum", 0
+End If
+
+wasStart = ActiveDocument.Variables("selStart")
+wasEnd = ActiveDocument.Variables("selEnd")
+wasCol = ActiveDocument.Variables("colNum")
+
+' If no text is selected ...
+If Selection.Start = Selection.End Then
+  ' If the cursor is outside the area, give up
+  If Selection.Start < wasStart Or Selection.End > wasEnd Then GoTo theEnd
+  ' Otherwise check the font colour
+  Selection.Start = wasStart
+  Selection.End = wasStart + 1
+  nowColour = Selection.Font.Color
+  If nowColour <> myCol(wasCol) Then
+    ' colour has changed, so go back to first colour
+    nowCol = 1
+  Else
+    ' go to next colour
+    nowCol = wasCol + 1
+    If nowCol > myColTotal Then nowCol = 0
+  End If
+  Selection.End = wasEnd
+Else:  ' if some text is selected ...
+  ' Record current selection range
+  ActiveDocument.Variables("selStart") = Selection.Start
+  ActiveDocument.Variables("selEnd") = Selection.End
+  nowCol = 1
+End If
+ActiveDocument.Variables("colNum") = nowCol
+Selection.Font.Color = myCol(nowCol)
+Selection.End = Selection.Start
+
+theEnd:
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

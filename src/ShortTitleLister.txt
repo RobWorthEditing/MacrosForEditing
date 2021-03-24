@@ -1,0 +1,189 @@
+Sub ShortTitleLister()
+' Paul Beverley - Version 19.05.13
+' Create a list of the named references in the notes
+
+' myPattern1 = "<[A-Z][a-zA-Z]{1,} van [A-Z.]{1,}[ ,]"
+' myPattern2 = "<[A-Z][a-zA-Z]{1,} [A-Z.]{1,}[ ,]"
+
+' Smith J P[ ,] or Smith J. P.[ ,]
+' myPattern = "<[A-Z][a-zA-Z]{1,}[ ,]{1,2}[A-Z. ]{1,}[ ,]"
+
+' J P Smith[ ,] or J. P. Smith[ ,]
+' myPattern = "<[A-Z. ]{1,} [A-Z][a-zA-Z]{1,}[ ,]"
+
+' Smith, JP=[ ,] or Smith, J.P.[ ,]
+' myPattern = "<[A-Z][a-zA-Z]{1,}[ ,]{1,2}[A-Z.]{1,}[ ,]"
+
+' JP Smith[ ,] or J.P. Smith[ ,]
+myPattern = "<[A-Z.]{1,} [A-Z][a-zA-Z]{1,}[ ,]"
+
+myInitials = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+refLength = 40
+
+myResponse = MsgBox("Test run first?", vbQuestion _
+        + vbYesNoCancel, "Short Reference Lister")
+If myResponse = vbCancel Then Exit Sub
+doTest = (myResponse = vbYes)
+If ActiveDocument.Footnotes.Count > 0 Then
+  ActiveDocument.StoryRanges(wdFootnotesStory).Copy
+Else
+  If ActiveDocument.Endnotes.Count = 0 Then
+    Beep
+    myResponse = MsgBox("Can't find any notes. Is this the correct file?", _
+        vbQuestion + vbYesNoCancel, "Short Reference Lister")
+    Exit Sub
+  Else
+    ActiveDocument.StoryRanges(wdEndnotesStory).Copy
+  End If
+End If
+Documents.Add
+Selection.Paste
+
+myPattern1 = Replace(myPattern, "[A-Z][a-zA-Z]", "[derVDivan ]{2,8}[A-Z][a-zA-Z]")
+
+' Highlight pattern1 for van/de/di etc
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myPattern1
+  .Highlight = False
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+myCount = 0
+Do While rng.Find.Found = True
+  rng.MoveStartWhile cset:=myInitials & " .", Count:=wdBackward
+  rng.MoveStart , 1
+  If Asc(rng.Text) = Asc(".") Then rng.MoveStart , 1
+  If Asc(rng.Text) = Asc(" ") Then rng.MoveStart , 1
+  rng.End = rng.End + refLength
+    dhfjk = rng.Font.Color
+    rng.Select
+  If rng.Font.Color = wdColorAutomatic Then
+    rng.HighlightColorIndex = wdGray25
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+' Main highlight pattern
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myPattern
+  .Highlight = False
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+myCount = 0
+Do While rng.Find.Found = True
+  rng.MoveStartWhile cset:=myInitials & " .", Count:=wdBackward
+  rng.MoveStart , 1
+  If Asc(rng.Text) = Asc(".") Then rng.MoveStart , 1
+  If Asc(rng.Text) = Asc(" ") Then rng.MoveStart , 1
+  rng.End = rng.End + refLength
+  crPos = InStr(rng.Text, vbCr)
+  If crPos > 0 Then rng.End = rng.Start + crPos - 1
+  If rng.Font.Color = wdColorAutomatic Then
+    rng.HighlightColorIndex = wdGray25
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+If doTest = True Then Exit Sub
+
+' Split file at the beginning of each highlight
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Wrap = wdFindContinue
+  .Text = ""
+  .Highlight = True
+  .Replacement.Text = "^p^&"
+  .Replacement.Highlight = False
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Text = Chr(2) & " "
+  .Replacement.Text = "zzzz"
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="zzzz!!!!" & vbCr
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending
+Selection.HomeKey Unit:=wdStory
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Text = "zzzz" & "^p"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Text = "zzzz"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+ln = "~~~~~~~~~~~~~~~~~~~~"
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Text = "!!!!"
+  .Replacement.Text = "^p" & ln & ln & ln
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceOne
+End With
+
+With rng.ParagraphFormat
+  .LeftIndent = CentimetersToPoints(4)
+  .SpaceBeforeAuto = False
+  .SpaceAfterAuto = False
+  .SpaceBeforeAuto = False
+  .SpaceAfterAuto = False
+  .FirstLineIndent = CentimetersToPoints(-4)
+End With
+Selection.HomeKey Unit:=wdStory
+Do While Selection = Chr(13)
+  Selection.MoveEnd , 1
+  Selection.Delete
+Loop
+Selection.HomeKey Unit:=wdStory
+End Sub
+

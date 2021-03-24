@@ -1,0 +1,149 @@
+Sub CommentAdder()
+' Paul Beverley - Version 16.01.21
+' Adds a comment off a menu
+
+' myDefaultSelect = "sentence"
+myDefaultSelect = "word"
+
+' useDoubleQuotes = False
+useDoubleQuotes = True
+
+addJustPageNum = True
+addPageAndLineNum = False
+
+cm = "Start\"
+cm = cm & ",Dummy\"
+cm = cm & "l,'[]' is not in the references-list.\"
+cm = cm & "L,'[]' is not in the references list. (But '[]|', is.)\"
+cm = cm & "c,'[]' - Not cited in the text.\"
+cm = cm & "h,'[]' - Have I caught the intended meaning?\"
+cm = cm & "r,'[]' - Will the readers know what this means? If so, fine.\"
+cm = cm & "R,'[]' - Will readers know what '|' refers to? If so, that's fine.\"
+cm = cm & "s,'[]' - Sorry, but I can't work out the intended meaning here. Is it something like []?\"
+
+maxLenPrompt = 50
+
+If Selection.Start = Selection.End Then
+  If InStr(myDefaultSelect, "nten") > 0 Then
+    Selection.Expand wdSentence
+  Else
+    Selection.Expand wdWord
+  End If
+End If
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+pageNum = Selection.Information(wdActiveEndAdjustedPageNumber)
+lineNum = Selection.Information(wdFirstCharacterLineNumber)
+
+cm = Replace(cm, " - ", " " & ChrW(8211) & " ")
+If useDoubleQuotes = True Then
+  cm = Replace(cm, " '", " " & ChrW(8220))
+  cm = Replace(cm, ",'", "," & ChrW(8220))
+  cm = Replace(cm, "' ", ChrW(8221) & " ")
+  cm = Replace(cm, "'", ChrW(8221))
+  cm = Replace(cm, ChrW(8221) & "t", ChrW(8217) & "t")
+  cm = Replace(cm, ChrW(8221) & "s", ChrW(8217) & "s")
+Else
+  cm = Replace(cm, " '", " " & ChrW(8216))
+  cm = Replace(cm, ",'", "," & ChrW(8216))
+  cm = Replace(cm, "'", ChrW(8217))
+End If
+cmt = Split(cm, "\")
+indx = ""
+ns = UBound(cmt) - 1
+For i = 1 To ns
+  If InStr(cmt(i), "Dummy") = 0 Then
+    indx = indx & Left(cmt(i), 1)
+    myBit = cmt(i)
+    If Len(myBit) > maxLenPrompt Then
+      myBit = Left(myBit, maxLenPrompt)
+      Do
+        myBit = Left(myBit, Len(myBit) - 1)
+      Loop Until Right(myBit, 1) = " "
+      myBit = myBit & ChrW(8230)
+    End If
+    myPrompt = myPrompt & myBit & vbCr
+    cmt(i) = Mid(cmt(i), 3)
+    DoEvents
+  Else
+    indx = indx & "_"
+  End If
+Next i
+indx = indx
+
+myPrompt = Replace(myPrompt, "[]", "") _
+     & vbCr & "Comment?"
+
+Do
+  myCode = InputBox(myPrompt, "CommentAdder")
+  n = InStr(indx, myCode)
+  If n = 0 Then Beep
+Loop Until n > 0
+If myCode = "" Then Exit Sub
+
+If Selection.Start = Selection.End Then Selection.MoveEnd , 1
+Selection.Copy
+Application.ScreenUpdating = False
+Set myComment = Selection.Comments.Add(Range:=Selection.Range)
+myComment.Edit
+myStart = Selection.Start
+myPLtext = ""
+If addPageAndLineNum = True Then
+  myPLtext = "(p. " & pageNum & ", line " & lineNum & ") "
+Else
+  If addJustPageNum = True Then myPLtext = myPLtext & "(p. " & _
+     pageNum & ") "
+End If
+Selection.TypeText Text:=cmt(n)
+txtPos = InStr(cmt(n), "[]")
+txtPos2 = 0
+If txtPos > 0 Then txtPos2 = InStr(Mid(cmt(n), txtPos + 2), "[]")
+If txtPos2 > 0 Then
+  txtPos2 = txtPos2 + txtPos + 1
+  Selection.Start = myStart + txtPos2 - 1
+  Selection.End = myStart + txtPos2 + 1
+  Selection.Paste
+End If
+If txtPos > 0 Then
+  Selection.Start = myStart + txtPos - 1
+  Selection.End = myStart + txtPos + 1
+  Selection.Paste
+End If
+ActiveWindow.ActivePane.Close
+Application.ScreenUpdating = True
+
+
+Set rng = Selection.Range.Duplicate
+If highlightColour > 0 Or fontColour > 0 Or isUL Then
+  Selection.Collapse wdCollapseStart
+  Selection.MoveEnd , 1
+End If
+
+myComment.Edit
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Selection.TypeText Text:=myPLtext
+Selection.Expand wdParagraph
+cursorPos = InStr(Selection, "|")
+If cursorPos > 0 Then
+  Selection.Collapse wdCollapseEnd
+  i = 0
+  Do
+    Selection.MoveLeft , 1
+    i = i + 1
+    DoEvents
+  Loop Until Selection = "|" Or i > 100
+  If i > 100 Then
+    MsgBox ("Error in placing cursor. Please inform Paul.")
+    Exit Sub
+  End If
+  Selection.MoveEnd , 1
+  Selection.Delete
+Else
+Selection.MoveEnd , -1
+ Selection.Collapse wdCollapseEnd
+End If
+End Sub
+

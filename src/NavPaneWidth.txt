@@ -1,0 +1,9 @@
+Sub NavPaneWidth()
+' Paul Beverley - Version 12.01.21
+' Widens the navigation pane
+
+myWidth = 400
+
+Application.CommandBars("Navigation").Width = myWidth
+End Sub
+

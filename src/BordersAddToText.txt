@@ -1,0 +1,105 @@
+Sub BordersAddToText()
+' Paul Beverley - Version 26.05.18
+' Changes underlined+highlighted text to coloured borders
+
+For i = 1 To 3
+  Select Case i
+    Case 1
+      gotRange = (ActiveDocument.Footnotes.Count > 0)
+      If gotRange Then Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    Case 2:    Set rng = ActiveDocument.Content
+      gotRange = (ActiveDocument.Endnotes.Count > 0)
+      If gotRange Then Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    Case 3:  Set rng = ActiveDocument.Content:  gotRange = True
+  End Select
+  If gotRange Then
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ""
+      .Font.Underline = True
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .Forward = True
+      .Execute
+    End With
+    
+    Do While rng.Find.Found = True
+      Select Case rng.HighlightColorIndex
+    
+        Case wdBrightGreen:
+          With Options
+            .DefaultBorderLineStyle = wdLineStyleSingle
+            .DefaultBorderLineWidth = wdLineWidth150pt
+            .DefaultBorderColor = wdColorBrightGreen
+          End With
+    
+        Case wdRed:
+          With Options
+            .DefaultBorderLineStyle = wdLineStyleSingle
+            .DefaultBorderLineWidth = wdLineWidth150pt
+            .DefaultBorderColor = wdColorRed
+          End With
+    
+        Case wdTurquoise:
+          With Options
+            .DefaultBorderLineStyle = wdLineStyleSingle
+            .DefaultBorderLineWidth = wdLineWidth150pt
+            .DefaultBorderColor = wdColorBlue
+          End With
+    
+        Case wdPink:
+          With Options
+            .DefaultBorderLineStyle = wdLineStyleSingle
+            .DefaultBorderLineWidth = wdLineWidth300pt
+            .DefaultBorderColor = wdColorPink
+          End With
+    
+        Case wdYellow:
+          With Options
+            .DefaultBorderLineStyle = wdLineStyleSingleWavy
+            ' Sorry, you can't make the line thicker, I don't think
+            .DefaultBorderColor = wdColorBlack
+          End With
+    
+        Case wdGreen:
+          With Options
+            .DefaultBorderLineStyle = wdLineStyleDouble
+            .DefaultBorderLineWidth = wdLineWidth150pt
+            .DefaultBorderColor = wdColorTurquoise
+          End With
+    
+        Case wdGray25:
+          With Options
+            .DefaultBorderLineStyle = wdLineStyleDot
+            .DefaultBorderLineWidth = wdLineWidth225pt
+            .DefaultBorderColor = wdColorRed
+          End With
+    
+        Case wdGray50:
+          With Options
+            .DefaultBorderLineStyle = wdLineStyleEmboss3D
+            .DefaultBorderColor = wdColorTurquoise
+          End With
+    
+        Case Else
+          With Options
+            .DefaultBorderLineStyle = wdLineStyleSingle
+            .DefaultBorderLineWidth = wdLineWidth150pt
+            .DefaultBorderColor = wdColorBlack
+          End With
+      End Select
+      With rng.Font.Borders(1)
+        .LineStyle = Options.DefaultBorderLineStyle
+        .LineWidth = Options.DefaultBorderLineWidth
+        .Color = Options.DefaultBorderColor
+      End With
+      rng.Underline = False
+      rng.HighlightColorIndex = wdNoHighlight
+      rng.Collapse wdCollapseEnd
+      rng.Find.Execute
+    Loop
+  End If
+Next i
+End Sub
+

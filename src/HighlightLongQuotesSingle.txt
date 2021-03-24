@@ -1,0 +1,139 @@
+Sub HighlightLongQuotesSingle()
+' Paul Beverley - Version 11.08.11
+' Highlight all long quotes (single)
+myColour = wdPink
+wordLimit = 60
+
+Set rng = ActiveDocument.Content
+Do
+  stopNow = False
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ChrW(8216)
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+
+  If rng.Find.Found = True Then
+    quoteStart = rng.Start
+    rng.Start = rng.End
+    Do
+      stopNow = False
+      gotOne = False
+      With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = ChrW(8217)
+        .Wrap = False
+        .Replacement.Text = ""
+        .Forward = True
+        .MatchWildcards = False
+        .Execute
+      End With
+
+      If rng.Find.Found = True Then
+      ' You've found a close quote/apostrophe
+        rng.Start = rng.Start - 1
+        rng.End = rng.Start + 1
+        ch1 = rng
+        rng.Start = rng.Start + 2
+        rng.End = rng.Start + 1
+        ch2 = rng
+        rng.Start = rng.End
+
+        gotOne = True
+        If LCase(ch2) <> UCase(ch2) Then gotOne = False
+        ' i.e. there's a letter after the apostrophe
+        If gotOne = True And ch1 = "s" Then
+          ' This could be an s-apostrophe, so test it
+          hereNow = rng.Start
+          With rng.Find
+            .Text = ChrW(8216)
+            .Wrap = False
+            .Forward = True
+            .MatchWildcards = False
+            .Execute
+          End With
+          nextOpen = rng.Start
+          rng.Start = hereNow
+          rng.End = hereNow
+          With rng.Find
+            .Text = ChrW(8217) & "[!a-z]"
+            .Wrap = False
+            .Forward = True
+            .MatchWildcards = True
+            .Execute
+          End With
+          nextClosed = rng.Start
+          rng.Start = hereNow
+          rng.End = hereNow
+          If nextOpen > nextClosed Then gotOne = False
+        End If
+        If gotOne = True Then
+        ' Highlight it
+          rng.Start = quoteStart
+          rng.End = rng.End - 1
+          myText = rng
+          myText = Replace(myText, "  ", " ")
+          myText = Replace(myText, ChrW(8211) & " ", "")
+          myText = Replace(myText, " -", "")
+          myText = Replace(myText, ChrW(8212), " ")
+          myLen = Len(myText) - Len(Replace(myText, " ", "")) + 1
+          If myLen >= wordLimit Then
+            rng.HighlightColorIndex = myColour
+          End If
+        End If
+      Else
+        stopNow = True
+      End If
+    Loop Until stopNow = True Or gotOne = True
+  Else
+    stopNow = True
+  End If
+  rng.Start = rng.End
+Loop Until stopNow = True
+
+Set rng = ActiveDocument.Content
+Do
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = "s" & ChrW(8217) & "^?"
+   .Highlight = True
+   .Wrap = False
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = False
+   .Execute
+  End With
+  gotOne = rng.Find.Found
+  foundColour = rng.HighlightColorIndex
+  If foundColour = myColour Then rng.HighlightColorIndex = 0
+  rng.Start = rng.End
+Loop Until gotOne = False
+Set rng = ActiveDocument.Content
+
+Do
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = "^?" & ChrW(8216) & "^?"
+   .Highlight = True
+   .Wrap = False
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = False
+   .Execute
+  End With
+  gotOne = rng.Find.Found
+  foundColour = rng.HighlightColorIndex
+  If foundColour = myColour Then rng.HighlightColorIndex = 0
+  rng.Start = rng.End
+Loop Until gotOne = False
+Beep
+End Sub
+

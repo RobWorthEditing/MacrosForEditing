@@ -1,0 +1,28 @@
+Sub FindClipTop()
+' Paul Beverley - Version 12.01.21
+' Jumps to the top, and finds whatever is in the clipboard
+
+Application.ScreenUpdating = False
+Selection.HomeKey Unit:=wdStory
+Selection.Paste
+Selection.Start = 0
+strClip = Trim(Selection)
+WordBasic.EditUndo
+Application.ScreenUpdating = True
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindStop
+  .Forward = True
+  .Text = strClip
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+If Selection.Start = hereNow And _
+     Selection.Find.Found = False Then Beep
+Selection.Find.Wrap = wdFindContinue
+End Sub
+

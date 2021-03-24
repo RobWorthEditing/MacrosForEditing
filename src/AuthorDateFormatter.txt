@@ -1,0 +1,677 @@
+Sub AuthorDateFormatter()
+' Paul Beverley - Version 03.01.17
+' Checks/corrects author/date formatting of reference list
+
+' Is the list double-spaced?
+listIsDoubleSpaced = True
+listIsDoubleSpaced = False
+
+' Is the date with the names? (i.e. for Vancouver date near end use False)
+dateWithNames = True
+addVancouverDate = False
+
+' Create a separate list of all the changes?
+createChangesList = True
+
+' Highlight colour on query
+myColour = wdTurquoise
+
+' List of words likely to occur in multi-word surnames
+okPrefix = "de De den Den der Der di Di dos du Du El " & _
+     "la La le Le St ten Ten van Van von Von "
+okPostfix = "jr Jr II III IV et al "
+
+' Highlight references with more than so many authors
+manyAuthorHighlight = True
+manyAuthorColour = wdGray25
+maxAuthorNumber = 8
+
+
+' Choose your set of options
+optionSet = 1
+
+Select Case optionSet
+   
+Case 1 ' First set of options
+
+    ' Spaced initials?
+    spaceInits = True
+    
+    ' Add a full point after each initial?
+    fullPtInits = True
+    
+    ' Comma after surname?
+    commaAfterSurname = True
+
+    ' Use parentheses on the date?
+    parensOnDate = True
+    
+    ' Punctuation after the date?
+     punctuationAfterDate = ""
+    ' punctuationAfterDate = "."
+    ' punctuationAfterDate = ","
+    
+    ' Punctuation before the date?
+    punctuationB4Date = ""
+    ' punctuationB4Date = "."
+    ' punctuationB4Date = ","
+
+    ' Initials before or after name on second and succeeding names?
+    initsBeforeName = False
+
+    ' Use serial comma?
+    serialcomma = True
+
+    ' Use 'and' with two authors? If so, which format?
+    ' myFirstAnd = " and "
+    myFirstAnd = " & "
+    ' myFirstAnd = " "
+
+    ' Use 'and' with three or more authors? If so, which format?
+    ' myFinalAnd = " and "
+    myFinalAnd = " & "
+    ' myFinalAnd = " "
+
+    ' Format for saying "Editors"
+    edText = "(ed.)"
+    edsText = "(eds)"
+
+    ' If needed, et al.
+    etalText = ", et al. "
+    
+    ' Do you want et al in italic?
+    etalItalic = False
+
+Case 2 ' Second set of options
+
+    ' Spaced initials?
+    spaceInits = True
+    ' Add a full point after each initial?
+    fullPtInits = True
+
+    ' Comma after surname?
+    commaAfterSurname = True
+
+    ' Use parentheses on the date?
+    parensOnDate = True
+    
+    ' Any punctuation after the date?
+    ' punctuationAfterDate = ""
+    ' punctuationAfterDate = "."
+    punctuationAfterDate = ","
+    
+    ' Any punctuation before the date?
+    punctuationB4Date = ""
+    'punctuationB4Date = "."
+    ' punctuationB4Date = ","
+
+    ' Initials before or after name on second and succeeding names?
+    initsBeforeName = True
+
+    ' Use serial comma?
+    serialcomma = False
+
+    ' Allow for the list to be double-spaced
+    listIsDoubleSpaced = False
+
+    ' Use 'and' with two authors? If so, which format?
+    myFirstAnd = " and "
+    ' myFirstAnd = " & "
+    ' myFirstAnd = " "
+
+    ' Use 'and' with three or more authors? If so, which format?
+    myFinalAnd = " and "
+    ' myFinalAnd = " & "
+    ' myFinalAnd = " "
+
+    ' Format for saying "Editors"
+    edText = "(ed.)"
+    edsText = "(eds)"
+
+    ' If needed, et al.
+    etalText = ", et al. "
+
+    ' Do you want et al in italic?
+    etalItalic = True
+
+End Select
+
+
+' Start of main program
+CR = vbCr: CR2 = CR & CR
+For i = 1 To 30
+  spcs = "    " & spcs
+Next i
+If serialcomma = True And myFinalAnd > " " Then
+  myFinalAnd = "," & myFinalAnd
+End If
+
+If createChangesList = True Then
+  gottaList = False
+  Set mainList = ActiveDocument
+  For Each myWnd In Application.Windows
+    Set myDoc = myWnd.Document
+    myDoc.Activate
+      Set rng = ActiveDocument.Content
+    rng.End = rng.Start + 15
+    If InStr(rng.Text, "Changes list") > 0 Then
+      gottaList = True
+      Exit For
+    End If
+  Next myWnd
+  If gottaList = False Then
+    Documents.Add
+    Selection.TypeText Text:="Changes list" & CR2
+  End If
+  Selection.TypeText Text:="------------------------------" & CR
+  Set changeList = ActiveDocument
+  mainList.Activate
+End If
+
+initsDelim = "": If fullPtInits = True Then initsDelim = "."
+initsSpace = "": If spaceInits = True Then initsSpace = " "
+
+maxAuNums = 30
+Selection.Collapse wdCollapseStart
+Selection.Expand wdParagraph
+lenPara = Len(Selection)
+hereNow = Selection.Start
+Selection.EndKey Unit:=wdStory
+Selection.MoveStart , -1
+If Asc(Selection) <> 13 Then
+  Selection.Collapse wdCollapseEnd
+  Selection.TypeParagraph
+End If
+
+Selection.Start = hereNow
+Selection.Collapse wdCollapseStart
+
+Do While lenPara > 5
+  ReDim myWd(maxAuNums * 2) As String
+  ReDim extraWord(maxAuNums * 2) As String
+  ReDim auName(maxAuNums) As String
+  ReDim auInits(maxAuNums) As String
+  badData0 = False
+  badData1 = False
+  badData2 = False
+  badData3 = False
+  badData4 = False
+  badData5 = False
+  badData = False
+  theFinalAnd = myFinalAnd
+  gotEtAl = False
+  paraStart = Selection.Start
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "[\(\)0-9]{4,}"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  If Selection.Find.Found = False Then
+    Selection.MoveLeft 1
+    Selection.Expand wdParagraph
+    myResponse = MsgBox("No date." & CR2 & "Click 'Yes' to continue; " & _
+         "'No' to highlight; 'Cancel' to exit.", _
+         vbQuestion + vbYesNoCancel, "AuthorDateFormatter")
+    If myResponse = vbYes Then GoTo nextItem
+    If myResponse = vbNo Then
+      Selection.Expand wdParagraph
+      Selection.range.HighlightColorIndex = myColour
+      GoTo nextItem
+    End If
+    If myResponse = vbCancel Then GoTo cleanEnd
+  End If
+
+  'Put date into correct format
+  Selection.MoveEndWhile cset:=",.) abcdefg", Count:=wdForward
+  If Right(Selection, 1) = " " Then
+    Selection.MoveEnd , -1
+  Else
+    Set rng = ActiveDocument.Content
+    rng.End = Selection.End
+    rng.InsertAfter " "
+  End If
+  myOldDate = Selection
+
+  myDate = Replace(Trim(myOldDate), "(", "")
+  myDate = Replace(myDate, ")", "")
+  myDate = Replace(myDate, ",", "")
+  myDate = Replace(myDate, ".", "")
+  If parensOnDate = True Then myDate = "(" & myDate & ")"
+  myDate = " " & punctuationB4Date & myDate & punctuationAfterDate
+  
+  ' If no date
+  Selection.Start = paraStart
+  If InStr(Selection, Chr(13)) > 0 Then
+    Selection.Collapse wdCollapseStart
+    With Selection.Find
+      .Text = "\(*\)"
+      .Execute
+    End With
+  
+  ' Put date into correct format
+    myDate = Selection
+
+    If InStr(Selection, Chr(13)) > 0 Then
+      Selection.Collapse wdCollapseStart
+      GoTo stopIT
+    End If
+  End If
+
+  Selection.Collapse wdCollapseEnd
+  Do While Asc(Selection) <> 32
+   Selection.MoveRight , 1
+  Loop
+  Selection.Start = paraStart
+
+  If dateWithNames = False Then
+    loopStop = False
+    Do
+      Selection.MoveStart wdWord, 1
+      myTestWd = Trim(Selection.Words(2))
+      If myTestWd = "-" Then myTestWd = Trim(Selection.Words(3))
+      If (LCase(myTestWd) = myTestWd) And (UCase(myTestWd) <> myTestWd) Then
+      loopStop = True
+      End If
+      If InStr(okPrefix, myTestWd) > 0 Then loopStop = False
+    Loop Until loopStop = True
+    Selection.Collapse wdCollapseStart
+    Selection.Start = paraStart
+  End If
+
+
+  ' Move past the initial number (for Vancouver)
+  Do While Asc(Selection) < 65 Or Asc(Selection) = 91 Or Asc(Selection) = 93
+    Selection.MoveStart , 1
+  Loop
+  paraStart = Selection.Start
+  
+  myText = Selection
+  originalText = myText
+  If InStr(myText, "et al") > 0 Then
+    theEtAlText = etalText
+    myText = Replace(myText, "et al. ", "")
+    myText = Replace(myText, "et al ", "")
+    theFinalAnd = ", "
+  Else
+    theEtAlText = ""
+    theFinalAnd = myFinalAnd
+  End If
+  
+  ' mask off of okPrefixes and okPostfixes
+  preWords = Split(okPrefix)
+
+  For i = 0 To UBound(preWords)
+    ' check le/la/van/etc as the first name
+    If Trim(Selection.range.Words(1)) = preWords(i) Then
+      spPos = Len(preWords(i))
+      myText = Left(myText, spPos) & ChrW(124) & Mid(myText, spPos + 2)
+    End If
+    ' check le/la/van/etc in succeeding names
+    myText = Replace(myText, " " & preWords(i) & " ", " " & preWords(i) & ChrW(124))
+  Next i
+  StatusBar = spcs & myText
+  DoEvents
+  postWords = Split(okPostfix)
+  For i = 0 To UBound(postWords)
+    myText = Replace(myText, " " & postWords(i) & " ", ChrW(124) & postWords(i) & " ")
+    myText = Replace(myText, " " & postWords(i) & ",", ChrW(124) & postWords(i) & ",")
+  Next i
+
+  ' Check for "(editors)" etc
+  justNames = Replace(myText, myOldDate, "")
+  parenPosn = InStr(justNames, "(")
+  If parenPosn > 0 Then
+    parenText = Trim(Mid(justNames, parenPosn))
+    justNames = Replace(justNames, parenText, "")
+    If InStr(LCase(parenText), "ed") > 0 Then
+      If InStr(LCase(parenText), "s") > 0 Then
+        parenText = " " & edsText
+      Else
+        parenText = " " & edText
+      End If
+    End If
+    myDate = parenText & myDate
+  End If
+
+' remove "and"
+  myText = Replace(justNames, " and ", ", ")
+  myText = Replace(myText, " & ", ", ")
+  
+' Sort out and switch the first surname and initials
+  i = 1
+  noSpace = False
+  Do
+    i = i + 1
+    x = Mid(myText, i, 1)
+    gotOne = (x = " ")
+    ' check if you've fallen off the end
+    noSpace = (i > Len(myText))
+  Loop Until gotOne Or noSpace = True
+  
+  If noSpace = True Then GoTo badDataHere
+
+  name1 = Trim(Left(myText, i - 1)) & " "
+  myText = Mid(myText, i + 1)
+
+  ' Is this a name or initials
+  If UCase(name1) = name1 Then
+  ' Initials before name
+    inits1 = name1
+    myText = Trim(myText) & " "
+    i = 1
+    Do
+      i = i + 1
+      x = Mid(myText, i, 1)
+      ' Check for final lowercase
+    Loop Until UCase(x) = x
+    name1 = Trim(Left(myText, i)) & " "
+  Else
+  ' Name first, then initials
+    i = 1
+    endInits = False
+    Do
+      i = i + 1
+      x = Mid(myText, i, 1)
+      ' Check for a lowercase char in the inits
+      If LCase(x) = x And UCase(x) <> x Then badData5 = True
+      ' Check for a comma or an and or
+      If x = "&" Or x = "," Or Mid(myText, i, 4) = " and" Then
+        endInits = True
+      Else
+        xy = Mid(myText, i, 3)
+        If UCase(xy) <> xy And LCase(xy) <> xy Then endInits = True
+      End If
+    Loop Until endInits = True Or i >= Len(myText)
+    inits1 = Trim(Left(myText, i)) & " "
+  End If
+  myText = inits1 & name1 & Trim(Mid(myText, i)) & " "
+
+
+  ' count the number of spaces = number of "words"
+  myText = Replace(myText, ".-", "-")
+  myText = Replace(myText, ",", " ")
+  myText = Replace(myText, ".", " ")
+  myText = Replace(myText, "  ", " ")
+  myText = Replace(myText, "  ", " ")
+  myText = Replace(myText, "  ", " ")
+  numWds = Len(myText) - Len(Replace(myText, " ", ""))
+  spPos = 0
+  isInst = True
+  j = 1
+  For i = 1 To numWds
+    myText = Mid(myText, spPos + 1)
+    spPos = InStr(myText, " ")
+    aBit = Left(myText, spPos - 1)
+    lenBit = Len(aBit)
+    If UCase(aBit) = aBit Then
+      isInst = False ' We've got at least one initial
+      For q = 1 To lenBit
+        myWd(j) = Mid(aBit, q, 1)
+        j = j + 1
+      Next q
+    Else
+      myWd(j) = aBit
+      j = j + 1
+    End If
+  Next i
+  numWds = j - 1
+  doCheckData = True
+  If isInst = True Then
+    myResponse = MsgBox("i can't work this one out, sorry" & CR2 _
+         & "Click 'Yes' to continue; " & _
+         "'No' to highlight; 'Cancel' to exit.", _
+         vbQuestion + vbYesNoCancel, "AuthorDateFormatter")
+    Selection.Expand wdParagraph
+    If myResponse = vbNo Then
+      Selection.range.HighlightColorIndex = myColour
+      Selection.Collapse wdCollapseEnd
+      GoTo nextItem
+    End If
+    If myResponse = vbCancel Then GoTo cleanEnd
+    If myResponse = vbYes Then GoTo nextItem
+  End If
+
+' Divide data into sets of initials or names
+  i = 1
+  j = 1
+  setOfInits = ""
+
+  Do While i <= numWds
+    If Len(myWd(i)) = 1 Then
+      setOfInits = setOfInits & myWd(i)
+      If myWd(i) <> "-" Then setOfInits = setOfInits & _
+           initsDelim & initsSpace
+    Else
+      If setOfInits > "" Then
+        extraWord(j) = Replace(setOfInits, " -", "-")
+        j = j + 1
+        extraWord(j) = myWd(i)
+        j = j + 1
+        setOfInits = ""
+      Else
+        extraWord(j) = myWd(i)
+        j = j + 1
+      End If
+    End If
+    i = i + 1
+  Loop
+  If setOfInits > "" Then
+    extraWord(j) = Replace(setOfInits, " -", "-")
+    j = j + 1
+  End If
+
+' Check for non-paired items
+  numWds = j - 1
+  If numWds / 2 > Int(numWds / 2) Then badData1 = True
+
+' Check for "editors" without parens
+  If badData1 = True Then
+    If Left(LCase(extraWord(numWds)), 2) = "ed" Then
+      If InStr(extraWord(numWds), "s") Then
+        myDate = " " & edsText & myDate
+      Else
+        myDate = " " & edText & myDate
+      End If
+      badData1 = False
+      numWds = numWds - 1
+    End If
+  End If
+
+' Put the names in one array and the initials in another
+  auInits(1) = Trim(extraWord(1))
+  auName(1) = extraWord(2)
+  auNum = 2
+  i = 3
+  mismatchedData = False
+  Do While i <= numWds
+    wordOne = extraWord(i)
+    wordTwo = extraWord(i + 1)
+    i = i + 2
+    initsOne = (UCase(wordOne) = wordOne)
+    initsTwo = (UCase(wordTwo) = wordTwo)
+    If ((initsOne = True And initsTwo = True) Or (initsOne = False _
+          And initsTwo = False)) Then mismatchedData = True
+    If initsOne = True Then
+      auInits(auNum) = wordOne
+      auName(auNum) = wordTwo
+    Else
+      auInits(auNum) = wordTwo
+      auName(auNum) = wordOne
+    End If
+    auNum = auNum + 1
+  Loop
+  If mismatchedData = True Then badData3 = True
+
+' Check for the word "ed(itors)" NOT in parentheses
+  totAuNum = auNum - 1
+  If badData3 = True Then
+    If Left(LCase(auName(auNum)), 2) = "ed" Then
+      totAuNum = auNum - 1
+      If InStr(auName(auNum), "s") > 0 Then
+        myDate = " " & edsText & myDate
+      Else
+        myDate = " " & edText & myDate
+      End If
+      badData3 = False
+    End If
+  End If
+
+' Make up the new data as a string of names/inits
+  surnameSpacer = " "
+  If commaAfterSurname = True Then surnameSpacer = ", "
+
+
+  If UCase(auName(1)) = auName(1) Then
+    initsOne = auName(1)
+    auName(1) = auInits(1)
+    auInits(1) = initsOne
+  End If
+  newText = auName(1) & surnameSpacer & auInits(1)
+  auNum = 2
+  Do While auNum < totAuNum
+    If initsBeforeName = True Then
+      newText = newText & ", " & Trim(auInits(auNum)) & " " _
+           & auName(auNum)
+    Else
+      newText = newText & ", " & auName(auNum) & surnameSpacer _
+           & Trim(auInits(auNum))
+    End If
+    auNum = auNum + 1
+  Loop
+
+' Add the second or final name and initials
+  Select Case totAuNum
+    Case 1 ' do nothing
+    Case 2:
+    If initsBeforeName = True Then
+      newText = newText & myFirstAnd & Trim(auInits(2)) & " " & auName(2)
+    Else
+      newText = newText & myFirstAnd & auName(2) & surnameSpacer & Trim(auInits(2))
+    End If
+  Case Else
+    ' add final author at end of string
+    If initsBeforeName = True Then
+      newText = newText & theFinalAnd & Trim(auInits(totAuNum)) _
+           & " " & auName(totAuNum)
+    Else
+      newText = newText & theFinalAnd & auName(totAuNum) & surnameSpacer _
+           & Trim(auInits(totAuNum))
+    End If
+  End Select
+  If auInits(totAuNum) = "" Then badData4 = True
+  
+  If dateWithNames = False And addVancouverDate = False Then myDate = " "
+  
+' Tidy up and add date
+  newText = Replace(newText, "  ", " ") & theEtAlText & myDate
+  newText = Replace(newText, "  ", " ")
+  newText = Replace(newText, " ,", ",")
+  newText = Replace(newText, "..", ".")
+  newText = Replace(newText, ChrW(124), " ")
+  
+badDataHere:
+  badData = noSpace Or badData0 Or badData1 Or badData2 Or _
+       badData3 Or badData4 Or badData5
+       StatusBar = spcs & newText & "|" & spcs & originalText & "|"
+       DoEvents
+       
+  If newText <> Trim(originalText) Then
+    If badData = False Then
+      Selection.TypeText Text:=newText
+      If createChangesList = True Then
+        changeList.Activate
+        start1 = Selection.Start
+        Selection.TypeText Text:=originalText & CR
+        end1 = Selection.Start
+        start2 = Selection.Start
+        Selection.TypeText Text:=newText & CR
+        end2 = Selection.Start
+        len1 = Len(originalText)
+        len2 = Len(newText)
+        maxCheck = len1
+        If len1 > len2 Then maxCheck = len2
+
+        For i = 1 To maxCheck
+          If Mid(originalText, i, 1) <> Mid(newText, i, 1) _
+               Then Exit For
+        Next i
+        firstDiff = i
+        For i = 0 To maxCheck - 1
+          If Mid(originalText, len1 - i, 1) <> Mid(newText, len2 - i, 1) _
+               Then Exit For
+        Next i
+        lastDiff = i
+        Selection.Start = start1 + firstDiff - 1
+        Selection.End = start2 - lastDiff - 1
+        Selection.range.HighlightColorIndex = myColour
+        Selection.Start = start2 + firstDiff - 1
+        Selection.End = end2 - lastDiff - 1
+        Selection.range.HighlightColorIndex = myColour
+        Selection.Start = end2
+        Selection.TypeParagraph
+        mainList.Activate
+      End If
+    End If
+  End If
+  If badData = True Then
+    Selection.Start = paraStart
+    myResponse = MsgBox("i can't work this one out, sorry." & CR2 _
+         & "Click 'Yes' to continue; " & _
+         "'No' to highlight; 'Cancel' to exit.", vbQuestion _
+         + vbYesNoCancel, "AuthorDateFormatter")
+    If myResponse = vbCancel Then GoTo cleanEnd
+    If myResponse = vbNo Then
+      Selection.Expand wdParagraph
+      Selection.range.HighlightColorIndex = myColour
+    End If
+  End If
+  
+  Selection.Start = Selection.End - 15
+  etAlPos = InStr(Selection, "et al")
+  If etAlPos > 0 Then
+    Selection.MoveStart , etAlPos - 1
+    Selection.End = Selection.Start + 5
+    If etalItalic = True Then Selection.Font.Italic = True
+    etAlPos = 0
+  End If
+  Selection.Expand wdParagraph
+  If manyAuthorHighlight = True And totAuNum > maxAuthorNumber Then _
+       Selection.range.HighlightColorIndex = manyAuthorColour
+nextItem:
+  Selection.Collapse wdCollapseEnd
+  Selection.Expand wdParagraph
+  lenPara = Len(Selection)
+  If listIsDoubleSpaced = True Then
+    If lenPara > 5 Then GoTo stopIT
+    Selection.Collapse wdCollapseEnd
+    Selection.Expand wdParagraph
+    lenPara = Len(Selection)
+  End If
+Loop
+
+Beep
+cleanEnd:
+Selection.Collapse wdCollapseEnd
+Exit Sub
+
+stopIT:
+If listIsDoubleSpaced = True Then
+  myResponse = MsgBox("i was expecting double-spaced references" _
+       & CR2 & "Set listIsDoubleSpaced = False for single-spaced" _
+       , , "AuthorDateFormatter")
+Else
+  Beep
+End If
+myTime = Timer
+Do
+Loop Until Timer > myTime + 0.2
+Beep
+Selection.Collapse wdCollapseStart
+End Sub
+

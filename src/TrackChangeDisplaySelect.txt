@@ -1,0 +1,17 @@
+Sub TrackChangeDisplaySelect()
+' Paul Beverley - Version 11.12.19
+' Cycles through track change display levels
+' N.B. Only works on Word 2016 and later
+
+stateNow = ActiveWindow.View.RevisionsFilter.Markup
+Select Case stateNow
+  Case wdRevisionsMarkupSimple: stateNext = wdRevisionsMarkupAll
+  Case wdRevisionsMarkupAll: stateNext = wdRevisionsMarkupNone
+  Case wdRevisionsMarkupNone: stateNext = wdRevisionsMarkupSimple
+End Select
+With ActiveWindow.View.RevisionsFilter
+  .Markup = stateNext
+  .View = wdRevisionsViewFinal
+End With
+End Sub
+

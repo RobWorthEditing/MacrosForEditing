@@ -1,0 +1,44 @@
+Sub AuthorInitialCapitalReferences()
+' Paul Beverley - Version 16.01.21
+' Changes author surnames in all capitals to initial capital
+
+LCnames = "AL,EL"
+stopToCheck = True
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+
+For Each myPara In rng.Paragraphs
+  For i = 1 To myPara.Range.Words.Count
+    Set wd = myPara.Range.Words(i).Duplicate
+    DoEvents
+    Do While InStr(" ", Right(wd.Text, 1)) > 0
+      wd.MoveEnd , -1
+      DoEvents
+    Loop
+    
+    If Val(wd) > 1000 Then Exit For
+    If Len(wd) > 2 And wd <> "and" Then
+      wd.Text = Left(wd.Text, 1) & LCase(Mid(wd.Text, 2))
+    Else
+      If Len(wd) = 2 And InStr(LCnames, wd) > 0 Then
+        changeThisOne = True
+        If stopToCheck = True Then
+          wd.Select
+          myResponse = MsgBox("Change?", _
+               vbQuestion + vbYesNoCancel, "AuthorInitialCapitalReferences")
+          If myResponse = vbCancel Then Exit Sub
+          If myResponse = vbNo Then changeThisOne = False
+        End If
+        If changeThisOne = True Then
+          wd.Text = Left(wd.Text, 1) & LCase(Mid(wd.Text, 2))
+        End If
+      End If
+    End If
+    Debug.Print i & "|", wd & "|"
+  Next i
+  myPara.Range.Select
+Next myPara
+End Sub
+

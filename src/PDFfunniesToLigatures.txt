@@ -1,0 +1,119 @@
+Sub PDFfunniesToLigatures()
+' Paul Beverley - Version 18.04.13
+' Restore ligatures that have been converted to odd characters
+
+fi_Code = "W"
+fl_Code = "U"
+ffi_Code = "Z"
+ff_Code = "V"
+
+' Colour if a suitable word found
+okColour = wdGray25
+
+' Colour if no suitable word found
+nogoColour = wdYellow
+nogoColour = wdNoHighlight
+
+Selection.HomeKey Unit:=wdStory
+langText = Languages(Selection.LanguageID).NameLocal
+
+oldColour = Options.DefaultHighlightColorIndex
+okCount = 0
+nogoCount = 0
+okChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+For i = 1 To 4
+  Select Case i
+    Case 1: lig = "fi": myCode = fi_Code
+    Case 2: lig = "ff": myCode = ff_Code
+    Case 3: lig = "fl": myCode = fl_Code
+    Case 4: lig = "ffi": myCode = ffi_Code
+  End Select
+  If myCode > "" Then
+  ' Go and find the first code character
+    Set rng = ActiveDocument.Content
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = myCode
+      .Font.Color = wdColorAutomatic
+      .Wrap = False
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchCase = True
+      .MatchWildcards = False
+      .MatchWholeWord = False
+      .MatchSoundsLike = False
+      .Execute
+    End With
+    Do While rng.Find.Found = True
+    ' find the whole word
+      rng.MoveStartWhile cset:=okChars, Count:=wdBackward
+      rng.MoveEndWhile cset:=okChars, Count:=wdForward
+      foundWord = rng
+      newWord = ""
+    ' Try each of the four ligatures in turn (most likely first)
+      tryWord = Replace(foundWord, myCode, lig)
+      If Application.CheckSpelling(tryWord, MainDictionary:=langText) _
+               = True Then newWord = tryWord
+      If newWord > "" And Len(newWord) > 2 Then
+    ' If we've found a new word, replace them all.
+        Options.DefaultHighlightColorIndex = okColour
+        Set rng = ActiveDocument.Content
+        With rng.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .Text = "([!a-zA-Z])" & foundWord & "([!a-zA-Z])"
+          .MatchCase = True
+          .Wrap = wdFindContinue
+          .MatchWildcards = True
+          .Replacement.Text = "\1" & newWord & "\2"
+          .Replacement.Highlight = True
+          .Replacement.Font.Color = wdColorBlue
+          .Execute Replace:=wdReplaceAll
+        End With
+        Set rng = ActiveDocument.Content
+        okCount = okCount + 1
+        StatusBar = newWord & "  - OK"
+      Else
+      ' If not, colour them all
+        Options.DefaultHighlightColorIndex = nogoColour
+        Set rng = ActiveDocument.Content
+        With rng.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .Text = "[!a-zA-Z]" & foundWord & "[!a-zA-Z]"
+          .MatchCase = True
+          .Wrap = wdFindContinue
+          .Replacement.Text = ""
+          .Replacement.Font.Color = wdColorRed
+          .MatchWildcards = True
+          .Replacement.Highlight = True
+          .Execute Replace:=wdReplaceAll
+        End With
+        StatusBar = foundWord & "  - Can't find it"
+        nogoCount = nogoCount + 1
+      End If
+     
+      Set rng = ActiveDocument.Content
+      With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = myCode
+        .Font.Color = wdColorAutomatic
+        .Wrap = False
+        .Replacement.Text = ""
+        .Forward = True
+        .MatchWildcards = False
+        .MatchCase = True
+        .Execute
+      End With
+    Loop
+  End If
+Next i
+Set rng = ActiveDocument.Content
+rng.Font.Color = wdColorAutomatic
+Options.DefaultHighlightColorIndex = oldColour
+MsgBox "Successfully changed words: " & okCount & vbCrLf & vbCrLf _
+     & "Words not to be changed: " & nogoCount
+End Sub
+

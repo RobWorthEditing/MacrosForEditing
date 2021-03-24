@@ -1,0 +1,22 @@
+Sub NumberToTextMultiSwitch()
+' Paul Beverley - Version 18.01.20
+' Finds a number, then calls MultiSwitch to change it
+
+maxDigits = 2
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[0-9]{1," & Trim(Str(maxDigits)) & "}>"
+  .Wrap = wdFindStop
+  .MatchWildcards = True
+  .Execute
+End With
+
+If Selection.Find.Found = True Then
+  Application.Run macroName:="MultiSwitch"
+Else
+  Beep
+End If
+End Sub
+

@@ -1,0 +1,8 @@
+Sub RulersShow()
+' Paul Beverley - Version 10.02.20
+' Switches Word's ruler on and off
+
+ActiveWindow.ActivePane.DisplayRulers = Not _
+     ActiveWindow.ActivePane.DisplayRulers
+End Sub
+

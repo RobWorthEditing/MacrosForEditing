@@ -1,0 +1,16 @@
+Sub BoldKill()
+' Paul Beverley - Version 11.08.11
+' Remove bold from selected text or current line
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+If Selection.End = Selection.Start Then
+  Selection.HomeKey Unit:=wdLine
+  Selection.MoveDown Unit:=wdLine, Count:=1, Extend:=wdExtend
+End If
+Selection.Font.Bold = False
+Selection.Start = Selection.End
+
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

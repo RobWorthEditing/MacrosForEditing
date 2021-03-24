@@ -1,0 +1,20 @@
+Sub TypeThat()
+' Paul Beverley - Version 07.11.19
+' Types 'that' between two words.
+
+Selection.MoveStart wdCharacter, -1
+Selection.MoveEnd wdCharacter, 3
+crPos = InStr(Selection, vbCr)
+If crPos = 0 Then
+  spPos = InStr(Selection, " ")
+  Selection.MoveStart wdCharacter, spPos
+  Selection.Collapse wdCollapseStart
+  Selection.TypeText Text:="that "
+Else
+  Selection.MoveStart wdCharacter, crPos
+  Selection.Collapse wdCollapseStart
+  Selection.MoveLeft , 1
+  Selection.TypeText Text:=" that"
+End If
+End Sub
+

@@ -1,0 +1,309 @@
+Sub FindSamePlace()
+' Paul Beverley - Version 11.02.21
+' Finds the same place in another file
+
+selectCurrentWord = False
+' selectCurrentWord = True
+
+notThisFile = "zzSwitchList"
+
+' alphaOrderUp = False
+alphaOrderUp = True
+
+preserveOriginalFind = False
+
+myStep = 10
+minLength = 15
+myWidth = 1000
+myHeight = 500
+
+nowFind = Selection.Find.Text
+If Selection.Start = Selection.End Then
+  If selectCurrentWord = True Then
+    Selection.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+  Else
+    hereNow = Selection.Start
+    Selection.HomeKey Unit:=wdLine
+    cursorPos = hereNow - Selection.Start
+    Selection.MoveDown Unit:=wdLine, Count:=1, _
+         Extend:=wdExtend
+    repeatedSearch = (Len(Selection) > 2 * myStep)
+  End If
+End If
+
+dotsPos = InStr(Selection, " . . . ")
+If dotsPos > 0 Then
+    Selection.Collapse wdCollapseStart
+    Selection.MoveRight , dotsPos - 2
+    Selection.Expand wdWord
+    Do While InStr(" ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+End If
+dotsPos = InStr(Selection, " . . ")
+If dotsPos > 0 Then
+  Selection.Collapse wdCollapseStart
+  Selection.MoveEndUntil cset:=".", Count:=wdForward
+  Selection.MoveEnd , -1
+End If
+
+mySearch = Trim(Replace(Selection, Chr(13), ""))
+
+Set thisDoc = ActiveDocument
+Set rng = ActiveDocument.Content
+rng.End = Selection.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[[[[[ "
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = False
+  .MatchWildcards = False
+  .Execute
+End With
+
+If rng.Find.Found Then
+  rng.Expand wdParagraph
+  rng.End = rng.End - 1
+  tryThisName = rng
+  tryThisName = Replace(tryThisName, " ]]]]]", "")
+  tryThisName = Replace(tryThisName, "[[[[[ ", "")
+Else
+  tryThisName = ""
+End If
+
+totWnds = Application.Windows.Count
+
+For i = 1 To totWnds
+  Set myDoc = Application.Windows(i).Document
+  If myDoc.FullName = thisDoc.FullName Then
+    thisFileNum = i
+    myDocNum = i
+    Exit For
+  End If
+Next i
+
+If alphaOrderUp = True Then
+  s = 1
+Else
+  s = -1
+End If
+
+myPtr = totWnds + myDocNum - 1
+For i = 1 To totWnds - 1
+  myPtr = myPtr + s
+  n = myPtr Mod totWnds + 1
+  Set myWnd = Application.Windows(n)
+  winState = myWnd.WindowState
+  Set myDoc = Application.Windows(n).Document
+  If myDoc.FullName <> thisDoc.FullName And _
+      InStr(myDoc.Name, notThisFile & ".doc") = 0 Then
+    thisName = myDoc.Name
+    If thisName = tryThisName Then tryThisName = ""
+    myDoc.Activate
+    Set wasSelected = Selection.Range.Duplicate
+    Selection.HomeKey Unit:=wdStory
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .MatchCase = False
+      .MatchWildcards = False
+      If selectCurrentWord = True Then
+        .MatchWholeWord = True
+      Else
+        .MatchWholeWord = False
+      End If
+      .Text = mySearch
+      .Forward = True
+      .Execute
+    End With
+    If Selection.Find.Found = True Then
+      If myWnd.WindowState = 2 Then _
+           myWnd.WindowState = wdWindowStateNormal
+      Set wasSelected = Selection.Range.Duplicate
+      Selection.Collapse wdCollapseStart
+      Selection.MoveLeft , 1
+      wasSelected.Select
+      If tryThisName > "" Then
+        GoTo LoadFile
+      Else
+        GoTo myEnd
+      End If
+    Else
+      numFoots = myDoc.Footnotes.Count
+      numEnds = myDoc.Endnotes.Count
+      If numFoots + numEnds > 0 Then
+        If numFoots > 0 Then Set rng = _
+             ActiveDocument.StoryRanges(wdFootnotesStory)
+        If numEnds > 0 Then Set rng = _
+             ActiveDocument.StoryRanges(wdEndnotesStory)
+        With rng.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .MatchCase = False
+          .MatchWildcards = False
+          If selectCurrentWord = True Then
+            .MatchWholeWord = True
+          Else
+            .MatchWholeWord = False
+          End If
+          .Text = mySearch
+          .Forward = True
+          .Execute
+        End With
+        If rng.Find.Found = True Then
+          rng.Select
+          If myWnd.WindowState = 2 Then _
+               myWnd.WindowState = wdWindowStateNormal
+          Set wasSelected = Selection.Range.Duplicate
+          Selection.Collapse wdCollapseStart
+          Selection.MoveLeft , 1
+          wasSelected.Select
+          GoTo myEnd
+        End If
+      End If
+    End If
+    Application.ScreenUpdating = False
+    Selection.EndKey Unit:=wdStory
+    wasSelected.Select
+    Application.ScreenUpdating = True
+    ActiveDocument.ActiveWindow.SmallScroll down:=1
+  End If
+  myWnd.WindowState = winState
+Next i
+
+LoadFile:
+' Now try to find the search text in the "[[[[[" file
+On Error Resume Next
+If tryThisName > "" Then
+  Documents.Open tryThisName
+  If Err.Number = 5174 Then
+    MsgBox ("Can't find file: " & tryThisName)
+    Err.Clear
+  Else
+    Application.Resize Width:=myWidth, Height:=myHeight
+    On Error GoTo 0
+    Set wasSelected = Selection.Range.Duplicate
+    Selection.HomeKey Unit:=wdStory
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .MatchCase = False
+      .MatchWildcards = False
+      If selectCurrentWord = True Then
+        .MatchWholeWord = True
+      Else
+        .MatchWholeWord = False
+      End If
+      .Text = mySearch
+      .Forward = True
+      .Execute
+    End With
+    If Selection.Find.Found = True Then
+      If myWnd.WindowState = 2 Then _
+           myWnd.WindowState = wdWindowStateNormal
+      Set wasSelected = Selection.Range.Duplicate
+      Selection.Collapse wdCollapseStart
+      Selection.MoveLeft , 1
+      wasSelected.Select
+      GoTo myEnd
+    Else
+      numFoots = myDoc.Footnotes.Count
+      numEnds = myDoc.Endnotes.Count
+      If numFoots + numEnds > 0 Then
+        If numFoots > 0 Then Set rng = _
+            ActiveDocument.StoryRanges(wdFootnotesStory)
+        If numEnds > 0 Then Set rng = _
+            ActiveDocument.StoryRanges(wdEndnotesStory)
+        With rng.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .MatchCase = False
+          .MatchWildcards = False
+          If selectCurrentWord = True Then
+            .MatchWholeWord = True
+          Else
+            .MatchWholeWord = False
+          End If
+          .Text = mySearch
+          .Forward = True
+          .Execute
+        End With
+        If rng.Find.Found = True Then
+          rng.Select
+          If myWnd.WindowState = 2 Then _
+               myWnd.WindowState = wdWindowStateNormal
+          Set wasSelected = Selection.Range.Duplicate
+          Selection.Collapse wdCollapseStart
+          Selection.MoveLeft , 1
+          wasSelected.Select
+          GoTo myEnd
+        End If
+      End If
+    End If
+  End If
+End If
+
+' Now try looking for a subset of the search text
+If repeatedSearch = True Then
+  Do
+    If Len(mySearch) > 2 * cursorPos Then
+      mySearch = Left(mySearch, Len(mySearch) - myStep)
+    Else
+      mySearch = Right(mySearch, Len(mySearch) - myStep)
+      cursorPos = cursorPos - myStep
+    End If
+    myPtr = totWnds + myDocNum - 1
+    For i = 1 To totWnds - 1
+      myPtr = myPtr + s
+      n = myPtr Mod totWnds + 1
+      Set myWnd = Application.Windows(n)
+      Set myDoc = Application.Windows(n).Document
+      If myDoc.FullName <> thisDoc.FullName And _
+          InStr(myDoc.Name, notThisFile & ".doc") = 0 Then
+        If thisName = tryThisName Then tryThisName = ""
+        myDoc.Activate
+        Set wasSelected = Selection.Range.Duplicate
+        Selection.HomeKey Unit:=wdStory
+        With Selection.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .MatchCase = False
+          .MatchWildcards = False
+          .MatchWholeWord = False
+          .Text = mySearch
+          .Forward = True
+          .Execute
+        End With
+        If Selection.Find.Found = True Then
+          If myWnd.WindowState = 2 Then _
+               myWnd.WindowState = wdWindowStateNormal
+          Set wasSelected = Selection.Range.Duplicate
+          Selection.Collapse wdCollapseStart
+          Selection.MoveLeft , 1
+          wasSelected.Select
+          GoTo myEnd
+        End If
+        Application.ScreenUpdating = False
+        Selection.EndKey Unit:=wdStory
+        wasSelected.Select
+        Application.ScreenUpdating = True
+        ActiveDocument.ActiveWindow.SmallScroll down:=1
+      End If
+    Next i
+  Loop Until Len(mySearch) < minLength
+End If
+Beep
+thisDoc.Activate
+
+myEnd:
+If preserveOriginalFind = True Then _
+     Selection.Find.Text = nowFind
+End Sub
+

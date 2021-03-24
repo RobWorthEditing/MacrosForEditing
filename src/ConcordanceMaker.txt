@@ -1,0 +1,76 @@
+Sub ConcordanceMaker()
+' Paul Beverley - Version 17.04.20
+' Creates a concordance list
+
+sortByLength = True
+minLength = 4
+lengthAscending = False
+
+CR = vbCr
+myList = CR
+maxLen = 1
+For Each myPara In ActiveDocument.Paragraphs
+  For Each wd In myPara.Range.Words
+    w = Trim(wd)
+    w = Replace(w, "'", "")
+    w = Replace(w, ChrW(8217), "")
+    Debug.Print w
+    If Len(w) > minLength - 1 Then
+      wCap = Trim(UCase(wd))
+      w = LCase(w)
+      If InStr(myList, CR & w & CR) = 0 And w <> wCap Then
+        myList = myList & w & CR
+        wLen = Len(w)
+        If wLen > maxLen Then maxLen = wLen
+      End If
+    End If
+    DoEvents
+    myPara.Range.Select
+  Next wd
+Next myPara
+
+Documents.Add
+Selection.TypeText Text:=myList
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending
+Selection.HomeKey Unit:=wdStory
+
+ReDim p(maxLen) As String
+If lengthAscending = True Then
+  For i = maxLen To 1 Step -1
+    pees = pees & "+"
+    p(i) = pees
+  Next i
+Else
+  For i = 1 To maxLen
+    pees = pees & "+"
+    p(i) = pees
+  Next i
+End If
+
+If sortByLength = True Then
+  Documents.Add
+  Selection.Text = rng.Text
+  For Each pa In ActiveDocument.Content.Paragraphs
+    wLen = Len(pa.Range.Words(1))
+    pa.Range.InsertBefore Text:=p(wLen)
+  Next pa
+End If
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending
+Selection.HomeKey Unit:=wdStory
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[+]{1,}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Beep
+End Sub
+

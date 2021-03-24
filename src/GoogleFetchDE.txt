@@ -1,0 +1,15 @@
+Sub GoogleFetchDE()
+' Paul Beverley - Version 08.08.20
+' Launches selected text on Google
+
+mySite = "http://www.google.de/search?q="
+
+If Len(Selection) = 1 Then Selection.Expand wdWord
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubject, ChrW(8217), "'")
+ActiveDocument.FollowHyperlink Address:=mySite & mySubject
+Selection.Collapse wdCollapseEnd
+End Sub
+

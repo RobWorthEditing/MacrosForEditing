@@ -1,0 +1,39 @@
+Sub LanguageSetUS()
+' Paul Beverley - Version 20.05.20
+' Set language as US English
+
+' If you want all the styles to be language-set as well,
+' make it true:
+setStyleLanguage = False
+' setStyleLanguage = True
+
+myLanguage = wdEnglishUS
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+ActiveDocument.Content.LanguageID = myLanguage
+For Each aStory In ActiveDocument.StoryRanges
+  aStory.LanguageID = myLanguage
+Next aStory
+If setStyleLanguage = True Then
+  For i = 1 To ActiveDocument.Styles.Count
+    Set sty = ActiveDocument.Styles(i)
+    If sty.Type = wdStyleTypeParagraph Then _
+      sty.LanguageID = myLanguage
+  Next i
+End If
+If ActiveDocument.Shapes.Count > 0 Then
+  For Each shp In ActiveDocument.Shapes
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.hasText Then
+        shp.TextFrame.TextRange.LanguageID = myLanguage
+      End If
+    End If
+  Next
+End If
+ActiveDocument.Styles(wdStyleNormal).LanguageID = myLanguage
+ActiveDocument.Styles(wdStyleCommentText).LanguageID = myLanguage
+ActiveDocument.SpellingChecked = False
+ActiveDocument.GrammarChecked = False
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

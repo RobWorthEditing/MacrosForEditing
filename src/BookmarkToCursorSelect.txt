@@ -1,0 +1,30 @@
+Sub BookmarkToCursorSelect()
+' Paul Beverley - Version 12.01.16
+' Select from temporary marker to cursor
+
+cursorPosn = Selection.Start
+findMark = "myTempMark"
+
+If ActiveDocument.Bookmarks.Exists(findMark) Then
+  ActiveDocument.Bookmarks(findMark).Select
+Else
+  Selection.Collapse wdCollapseEnd
+  MsgBox "Temporary bookmarks not found"
+  Exit Sub
+End If
+
+bkmkPosn = Selection.Start
+Selection.Start = cursorPosn
+Selection.End = cursorPosn
+Selection.MoveRight , 1
+Selection.MoveLeft , 1
+
+If cursorPosn < bkmkPosn Then
+  Selection.Start = cursorPosn
+  Selection.End = bkmkPosn
+Else
+  Selection.End = cursorPosn
+  Selection.Start = bkmkPosn
+End If
+End Sub
+

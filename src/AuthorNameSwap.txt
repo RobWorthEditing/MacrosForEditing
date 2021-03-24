@@ -1,0 +1,99 @@
+Sub AuthorNameSwap()
+' Paul Beverley - Version 01.10.14
+' Change author surname and initials/given name
+
+avoidWords = "the "
+
+
+' create list of avoidWords
+avoidWords = LCase(Trim(avoidWords)) & " "
+numNoWds = Len(avoidWords) - Len(Replace(avoidWords, " ", ""))
+ReDim notWords(numNoWds) As String
+For i = 1 To numNoWds
+  spPos = InStr(avoidWords, " ")
+  notWords(i) = Left(avoidWords, spPos - 1) & " "
+  avoidWords = Mid(avoidWords, spPos + 1)
+Next i
+maxAuNums = 4
+
+Selection.Collapse wdCollapseStart
+Selection.Expand wdParagraph
+lenPara = Len(Selection)
+
+Do Until 0
+  If lenPara < 2 Then
+    Selection.Collapse wdCollapseEnd
+    Selection.Expand wdParagraph
+    lenPara = Len(Selection)
+    If lenPara < 2 Then
+      Selection.Collapse wdCollapseEnd
+      Beep
+      Exit Sub
+    End If
+  End If
+  ReDim myWd(maxAuNums * 2) As String
+  ReDim extraWord(maxAuNums * 2) As String
+  ReDim auName(maxAuNums) As String
+  ReDim auInits(maxAuNums) As String
+  paraStart = Selection.Start
+  With Selection.Find
+    .Text = "[.,\(]"
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  Selection.Collapse wdCollapseStart
+  Selection.Start = paraStart
+  
+  tryThisOne = True
+  allNames = Selection.Text
+  If Selection.Font.Italic = True Then tryThisOne = False
+  If InStr(allNames, Chr(34)) > 0 Then tryThisOne = False
+  If InStr(allNames, "HYPERLINK") > 0 Then tryThisOne = False
+  
+  If tryThisOne = True Then
+    maxWds = Selection.Words.Count
+    longWds = 0
+    For i = 1 To maxWds
+      myWd(i) = Selection.Words(i)
+      If Len(myWd(i)) > 2 Then longWds = longWds + 1
+    Next i
+    If maxWds < 5 And InStr(allNames, ",") > 0 Then
+      forename = myWd(maxWds)
+      surname = myWd(maxWds - 2)
+      Selection.Words(maxWds) = surname
+      Selection.Words(maxWds - 2) = forename
+      Selection.Words(maxWds - 1) = " "
+    End If
+  End If
+
+
+nextItem:
+  Selection.Expand wdParagraph
+  Selection.Collapse wdCollapseEnd
+  Selection.Expand wdParagraph
+  lenPara = Len(Selection)
+Loop
+
+Beep
+cleanEnd:
+Selection.Collapse wdCollapseEnd
+Exit Sub
+
+stopIT:
+If listIsDoubleSpaced = True Then
+  myResponse = MsgBox("I was expecting double-spaced references" _
+       & CR2 & "Set listIsDoubleSpaced = False for single-spaced" _
+       , , "AuthorDateFormatter")
+Else
+  Beep
+End If
+myTime = Timer
+Do
+Loop Until Timer > myTime + 0.2
+Beep
+Selection.Collapse wdCollapseStart
+End Sub
+

@@ -1,0 +1,25 @@
+Sub InitialNext()
+' Paul Beverley - Version 29.05.10
+' Find run of caps
+' Alt-I
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+Selection.MoveStart wdWord, 1
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[A-Z][A-Z][A-Z][A-Z]"
+  .MatchWildcards = True
+  .Execute
+End With
+
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchWildcards = False
+End With
+End Sub
+

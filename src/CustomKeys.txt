@@ -1,0 +1,9 @@
+Sub CustomKeys()
+' Paul Beverley - Version 03.02.10
+' Open the Customize Keyboard dialogue box
+   With Dialogs(wdDialogToolsCustomizeKeyboard)
+     .Category = 2
+     .Show
+   End With
+End Sub
+

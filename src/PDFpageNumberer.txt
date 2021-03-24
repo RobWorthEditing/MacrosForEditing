@@ -1,0 +1,184 @@
+Sub PDFpageNumberer()
+' Paul Beverley - Version 30.09.20
+' Adds page numbers to each line of a PDF text
+
+numbersInHeader = False
+numbersInHeader = True
+
+' allNumbersAtRight = True
+allNumbersAtRight = False
+
+' evenNumbersAreOnLeft = True
+evenNumbersAreOnLeft = True
+
+' myFontSize = 9
+myFontSize = ActiveDocument.Styles(wdStyleNormal).Font.Size - 1
+
+' How many lines to go on checking if the next page number is missing
+searchLines = 100
+
+ActiveDocument.TrackRevisions = False
+Selection.Expand wdWord
+myGuess = Val(Selection)
+If myGuess > 0 Then
+  myDefault = Trim(Selection)
+Else
+  myDefault = "1"
+End If
+
+If evenNumbersAreOnLeft = True Then
+  myOdd = 1
+Else
+  myOdd = 0
+End If
+
+If numbersInHeader = True Then
+  addThis = 0
+  myPmpt = "HEADERS"
+Else
+  addThis = 1
+  myPmpt = "FOOTERS"
+End If
+
+myNum = InputBox("Start number (in " & _
+     myPmpt & ")?", "PDFpageNumberer", myDefault)
+pNoNow = Val(myNum)
+If pNoNow = 0 Then
+  Beep
+  Exit Sub
+End If
+
+myPause = MsgBox("Continue without stopping at each page?", _
+        vbQuestion + vbYesNoCancel, "PDFpageNumberer")
+If myPause = vbCancel Then Exit Sub
+
+paraNum = ActiveDocument.Range(0, _
+     Selection.Paragraphs(1).Range.End).Paragraphs.Count
+pMax = ActiveDocument.Paragraphs.Count - 3
+
+Set rng = ActiveDocument.Content
+If InStr(rng.Text, ChrW(160) & ChrW(160) & vbTab) = 0 Then
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^p"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "^p^s^s^t"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[ ]{1,}^13"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+pNoNext = pNoNow + 1 - addThis
+q = ""
+pTextNow = q & Trim(Str(pNoNow))
+pTextNext = Trim(Str(pNoNext))
+lnNo = 0
+lnNoLimit = searchLines
+i = paraNum
+iWas = i
+Do
+  Do
+    lnNo = lnNo + 1
+    ' Check paragraph for a new page number
+    Set pa = ActiveDocument.Paragraphs(i).Range.Duplicate
+    tabPos = InStr(pa.Text, vbTab)
+    rng.Start = pa.Start + tabPos
+    rng.End = pa.End - 1
+    If Len(rng.Text) > 0 Then
+      aa = Trim(rng.Words(1))
+      rWds = rng.Words.Count
+      zz = rng.Words(rWds)
+    Else
+      aa = ""
+      zz = ""
+    End If
+    If allNumbersAtRight = True Then
+      If zz = pTextNext Then
+        pNoNow = pNoNext + addThis
+        pTextNow = q & Trim(Str(pNoNow))
+        lnNo = 1
+      End If
+    Else
+      If pNoNext Mod 2 = myOdd Then
+        If zz = pTextNext Then
+          pNoNow = pNoNext + addThis
+          pTextNow = q & Trim(Str(pNoNow))
+          lnNo = 1
+        End If
+      Else
+        If aa = pTextNext Then
+          pNoNow = pNoNext + addThis
+          pTextNow = q & Trim(Str(pNoNow))
+          lnNo = 1
+        End If
+      End If
+    End If
+    myLine = pTextNow & " " & Trim(Str(lnNo - addThis))
+    If lnNo > addThis Then
+      With pa.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = "*^t"
+        .Wrap = wdFindStop
+        .Replacement.Text = myLine & "^t"
+        .Replacement.Font.Size = myFontSize
+        .MatchWildcards = True
+        .Execute Replace:=wdReplaceOne
+        DoEvents
+      End With
+    End If
+    i = i + 1
+  Loop Until lnNo > lnNoLimit Or _
+       pNoNow = pNoNext + addThis Or i > pMax
+  
+  If myPause = vbNo Then
+    pa.Select
+    Selection.Collapse wdCollapseEnd
+    myResponse = MsgBox("Continue?", _
+            vbQuestion + vbYesNoCancel, "PDFpageNumberer")
+    If myResponse <> vbYes Then Exit Sub
+  End If
+  If i > pMax Then
+    Beep
+    pa.Select
+    Selection.Collapse wdCollapseEnd
+    Exit Sub
+  End If
+  If lnNo > lnNoLimit Then
+    i = iWas
+    q = "??" & q
+    lnNoLimit = lnNoLimit + searchLines
+    If Len(q) > 4 Then
+      Beep
+      Exit Sub
+    End If
+  Else
+    iWas = i
+    q = ""
+    lnNoLimit = searchLines
+  End If
+  lnNo = 1
+  pNoNext = pNoNext + 1
+  pTextNext = Trim(Str(pNoNext))
+  pTextNow = q & Trim(Str(pNoNow))
+  DoEvents
+  pa.Select
+  Selection.Collapse wdCollapseStart
+Loop Until i > pMax
+pa.Select
+Selection.Collapse wdCollapseEnd
+Beep
+End Sub
+

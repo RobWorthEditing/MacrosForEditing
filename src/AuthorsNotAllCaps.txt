@@ -1,0 +1,50 @@
+Sub AuthorsNotAllCaps()
+' Paul Beverley - Version 30.10.17
+' Changes author surnames to initial cap only
+
+' For numeric keypad
+lowercaseKey = "."
+nextParaKey = "+"
+stopKey = "0"
+
+' If no numeric keypad, how about these?
+' lowercaseKey = "#"
+' nextParaKey = "'"
+' stopKey = "]"
+
+Set rng = Selection.range.Duplicate
+myPosn = rng.Start
+rng.Expand wdParagraph
+For i = 1 To rng.Words.Count
+  Set wd = rng.Words(i)
+  If wd.Start > myPosn Then Exit For
+Next i
+iStart = i - 1
+Do
+' for each reference
+  numWords = rng.Words.Count
+  For i = iStart To numWords
+    Set wd = rng.Words(i)
+    If (LCase(wd) <> UCase(wd)) And (UCase(wd) = wd) And _
+         (LCase(wd) <> UCase(wd)) And Len(Trim(wd)) > 1 Then
+      wd.Select
+      myInit = wd.Characters(1)
+      nowWhat = InputBox("Lowercase?", "Authors Not All Caps")
+      If nowWhat = lowercaseKey Then wd.Text = myInit _
+           & LCase(Mid(wd.Text, 2))
+      If nowWhat = nextParaKey Then Exit For
+      If nowWhat = stopKey Then Exit Sub
+    End If
+  Next i
+  rng.Expand wdParagraph
+  rng.Collapse wdCollapseEnd
+  rng.Expand wdParagraph
+  iStart = 1
+  sfsdf = rng.End
+  dfgdfg = ActiveDocument.Content.End
+  xfvgdf = 0
+Loop Until rng.End = ActiveDocument.Content.End
+rng.Select
+Beep
+End Sub
+

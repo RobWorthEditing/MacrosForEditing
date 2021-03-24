@@ -1,0 +1,54 @@
+Sub ShowFormattingMenu()
+' Paul Beverley - Version 01.02.18
+' Displays (or not) various formatting markers, and the highlighting
+
+myFavouriteOption_1 = 7
+myFavouriteKey_1 = "/"
+myFavouriteOption_2 = 1
+myFavouriteKey_2 = "#"
+
+Do
+  menu = menu & "1 = show paragraphs|"
+  menu = menu & "2 = show spaces|"
+  menu = menu & "4 = show tabs|"
+  menu = menu & "8 = hide the highlighting|"
+  menu = menu & "16 = show hyphens|"
+  menu = menu & "32 = show bookmarks|"
+  menu = Replace(menu, "|", vbCr)
+  myResponse = InputBox(menu, "ShowFormattingMenu")
+  Select Case myResponse
+  Case myFavouriteKey_1:
+      myCode = myFavouriteOption_1
+      gotValid = True
+  Case myFavouriteKey_2:
+      myCode = myFavouriteOption_2
+      gotValid = True
+  Case Else:
+      myCode = Val(myResponse)
+      gotValid = (myCode > -1 And myCode < 64)
+      If Not gotValid Then
+        menu = "Type a number between 0 and 63:||"
+      End If
+  End Select
+Loop Until gotValid
+
+i = myCode
+If i > 63 Then i = 63
+sp = i Mod 2
+i = Int(i / 2)
+ss = i Mod 2
+i = Int(i / 2)
+st = i Mod 2
+i = Int(i / 2)
+noh = i Mod 2
+i = Int(i / 2)
+shy = i Mod 2
+sb = Int(i / 2)
+ActiveWindow.View.ShowSpaces = (ss = 1)
+ActiveWindow.View.ShowHighlight = (noh = 0)
+ActiveWindow.View.ShowHyphens = (shy = 1)
+ActiveWindow.View.ShowTabs = (st = 1)
+ActiveWindow.View.ShowParagraphs = (sp = 1)
+ActiveWindow.View.ShowBookmarks = (sb = 1)
+End Sub
+

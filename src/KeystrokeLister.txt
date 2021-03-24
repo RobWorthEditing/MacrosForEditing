@@ -1,0 +1,50 @@
+Sub KeystrokeLister()
+' Paul Beverley - Version 03.02.10
+' Create a list of custom key allocations
+Dim myKeys As String
+Dim KeyCat As String
+Dim Cmnd As String
+Dim kb As KeyBinding
+
+myKeys = "KeyString" & vbTab & "Category" _
+   & vbTab & "Command" & vbTab & _
+   "CommandParameter" & vbCrLf
+Documents.Add
+Selection.InsertAfter myKeys
+Selection.Collapse wdCollapseEnd
+
+For Each kb In Keybindings
+  Select Case kb.KeyCategory
+     Case 0: KeyCat = "Disable"
+     Case 1: KeyCat = "Command"
+     Case 2: KeyCat = "Macro"
+     Case 3: KeyCat = "Font"
+     Case 4: KeyCat = "AutoText"
+     Case 5: KeyCat = "Style"
+     Case 6: KeyCat = "Symbol"
+     Case 7: KeyCat = "Prefix"
+  End Select
+  Cmnd = Replace(kb.Command, "Normal.NewMacros.", "Nml.")
+  myKeys = kb.KeyString & vbTab & KeyCat _
+    & vbTab & Cmnd & vbTab _
+    & kb.CommandParameter & vbCrLf
+  Selection.InsertAfter myKeys
+  Selection.Collapse wdCollapseEnd
+Next kb
+ 
+ActiveDocument.Paragraphs(1).Range.Font.Bold = True
+ActiveDocument.Select
+ 
+Set tbl = Selection.ConvertToTable(Separator:=wdSeparateByTabs)
+tbl.Columns.AutoFit
+
+' Now create a second copy of the list, but sorted by command
+Selection.Copy
+Selection.Sort ExcludeHeader:=True, FieldNumber:="Column 3"
+
+Selection.Collapse wdCollapseStart
+Selection.InsertBreak Type:=wdPageBreak
+Selection.HomeKey Unit:=wdStory
+Selection.Paste
+End Sub
+

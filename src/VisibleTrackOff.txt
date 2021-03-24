@@ -1,0 +1,12 @@
+Sub VisibleTrackOff()
+' Paul Beverley - Version 01.01.10
+' Visible reminder that track changes is off
+If ActiveDocument.TrackRevisions = True Then
+  ActiveDocument.TrackRevisions = False
+  ActiveDocument.Range.Font.Emboss = True
+Else
+  ActiveDocument.Range.Font.Emboss = False
+  ActiveDocument.TrackRevisions = True
+End If
+End Sub
+

@@ -1,0 +1,19 @@
+Sub JoinTwoWords()
+' Paul Beverley - Version 13.01.21
+' Joins two words
+
+trackit = True
+
+searchChars = "- " & ChrW(8211) & ChrW(8212) & ChrW(8201) & Chr(30)
+myTrack = ActiveDocument.TrackRevisions
+If trackit = False Then ActiveDocument.TrackRevisions = False
+Do While InStr(searchChars, Left(Selection.Text, 1)) = 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Selection.Collapse wdCollapseEnd
+Selection.End = Selection.End + 1
+Selection.Delete
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

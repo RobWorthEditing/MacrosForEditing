@@ -1,0 +1,272 @@
+Sub ListOfFound()
+' Paul Beverley - Version 27.10.17
+' Lists all occurrences of selected text
+
+charsBefore = 50
+charsAfter = 50
+
+doBold = False
+doHighlight = True
+myColour = wdYellow
+
+allowCaseSensitive = True
+allowStartOfLine = True
+
+crSymbol = "|"
+tabSymbol = "~"
+pgSymbol = ""
+
+Set myDoc = ActiveDocument
+myDocName = ActiveDocument.Name
+dotPosn = InStr(myDocName, ".")
+If dotPosn > 0 Then
+  myDocName = Left(myDocName, InStr(myDocName, ".") - 1)
+End If
+
+caseMatch = False
+alignList = False
+startOfLine = False
+
+Dim v As Variable
+varExists = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "v_docName" Then varExists = True
+Next v
+
+If varExists Then GoTo jumpBack
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Selection.MoveEndWhile cset:=ChrW(8217) & " '", Count:=wdBackward
+End If
+
+' In the main text, find the search word(s) then create the list
+findString = InputBox(myType, "Search for?", Trim(Selection))
+If findString = "" Then Exit Sub
+If startOfLine Then findString = "^13" & findString
+
+If allowCaseSensitive Then
+  myResponse = MsgBox("Allow any case?", vbQuestion _
+          + vbYesNoCancel, "List Of Found")
+  If myResponse = vbCancel Then Exit Sub
+  If myResponse = vbNo Then caseMatch = True
+End If
+If allowStartOfLine = True Then
+  myResponse = MsgBox("Text anywhere in paragraph?", vbQuestion _
+          + vbYesNoCancel, "List Of Found")
+  If myResponse = vbCancel Then Exit Sub
+  If myResponse = vbNo Then startOfLine = True
+End If
+' Now find the list if there is one
+For Each myWnd In Application.Windows
+  myWnd.Document.Activate
+  gotList = (ActiveDocument.Words(1) = "ListOfFound")
+  If gotList = True Then Exit For
+Next myWnd
+
+' No list found, so create it and add document's name as a variable
+If gotList = False Then
+  Documents.Add
+  ActiveDocument.Variables.Add "v_docName", myDocName
+Else
+  Selection.WholeStory
+  Selection.Delete
+  ActiveDocument.Variables("v_docName") = myDocName
+End If
+
+' Prepare list document
+Selection.TypeText Text:="ListOfFound: " & findString & vbCr & vbCr
+ActiveDocument.Paragraphs(1).range.Font.Bold = True
+ActiveDocument.Words(1).Font.Bold = False
+ActiveDocument.Words(2).Font.Bold = False
+
+Set listDoc = ActiveDocument
+myDoc.Activate
+Selection.MoveLeft , 1
+Selection.MoveRight , 1
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  If startOfLine = True Then
+    .Text = "^13" & findString
+  Else
+    .Text = findString
+  End If
+  .Wrap = wdFindStop
+  .Forward = True
+  .MatchCase = caseMatch
+  .MatchWildcards = False
+  .Execute
+End With
+If startOfLine = True Then
+  rng.Start = rng.Start + 1
+  charsAfter = 50 + charsBefore
+  charsBefore = 0
+End If
+inAtable = rng.Information(wdWithInTable)
+listDoc.Activate
+Selection.EndKey Unit:=wdStory
+myCount = 0
+myResults = ""
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  rng.Start = rng.Start - charsBefore
+  rng.End = rng.End + charsAfter
+  rng.MoveStartUntil cset:=ChrW(8216) & ChrW(8220) & " '(""" & Chr(13), Count:=wdBackward
+  rng.MoveEndUntil cset:=ChrW(8217) & ChrW(8221) & " '""" & Chr(13), Count:=wdForward
+  myText = rng.Text
+  If startOfLine = True Then
+    crPosn = InStr(myText, vbCr)
+    If crPosn > 0 Then myText = Left(myText, crPosn)
+  End If
+
+  rng.Collapse wdCollapseStart
+  rng.Start = rng.Start + 10
+  myText = Replace(myText, vbCr, crSymbol)
+  myText = Replace(myText, Chr(12), pgSymbol)
+  myText = Replace(myText, vbTab, tabSymbol)
+  If inAtable Then myText = "iziz" & myText & "zizi"
+' Find search word(s)and embolden it
+  myOffset = InStr(LCase(myText), LCase(findString))
+  myResults = myResults & Left(myText, myOffset - 1)
+  myResults = myResults & "uhuh"
+  myResults = myResults & Mid(myText, myOffset, Len(findString))
+  myResults = myResults & "huhu"
+  myResults = myResults & Mid(myText, myOffset + Len(findString)) & vbCr
+  rng.Find.Execute
+  If startOfLine = True Then rng.Start = rng.Start + 1
+  inAtable = rng.Information(wdWithInTable)
+Loop
+Selection.TypeText Text:=myResults
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "iziz(*)zizi"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "\1"
+  .Replacement.Font.Italic = True
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "uhuh(*)huhu"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "\1"
+  If doHighlight = True Then .Replacement.Highlight = True
+  If doBold = True Then .Replacement.Font.Bold = True
+  .Replacement.Font.Underline = True
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+Options.DefaultHighlightColorIndex = oldColour
+
+Selection.HomeKey Unit:=wdStory
+Selection.MoveDown , 1
+Selection.TypeText Text:=vbCr & "Found: " & Str(myCount) & vbCr
+Selection.MoveLeft , 2
+Selection.Expand wdWord
+Selection.Font.Bold = True
+Selection.HomeKey Unit:=wdStory
+Beep
+Exit Sub
+
+jumpBack:
+' Collect the line of text from the list
+findWhole = Selection.Start = Selection.End
+If findWhole Then
+  Selection.Expand wdParagraph
+  Selection.MoveEnd , -1
+  myText = Selection
+  isSomeHighlight = Selection.range.HighlightColorIndex
+  If isSomeHighlight > 0 Then
+    Selection.Collapse wdCollapseStart
+    Selection.MoveEnd , 1
+    myOffset = 1
+    Do
+      myOffset = myOffset + 1
+      Selection.MoveStart , 1
+      Selection.MoveEnd , 1
+    Loop Until Selection.range.Font.Underline = 1
+     myLen = 0
+    Do
+      myLen = myLen + 1
+      Selection.MoveStart , 1
+      Selection.MoveEnd , 1
+    Loop Until Selection.range.Font.Underline = 0
+    myOffset = myOffset - 1
+  Else
+    myOffset = 0
+    myLen = Len(myText)
+  End If
+Else
+  myText = Selection
+  Selection.Expand wdParagraph
+  myOffset = 0
+  myLen = Len(myText)
+End If
+
+myText = Replace(myText, "^", "^^")
+myText = Replace(myText, crSymbol, "^p")
+myText = Replace(myText, tabSymbol, "^t")
+myText = Replace(myText, pgSymbol, "^m")
+' Find the original document
+myDocName = ActiveDocument.Variables("v_docName")
+For Each myWnd In Application.Windows
+  myTitle = myWnd.Document.Name
+  If InStr(myTitle, myDocName) Then
+    myWnd.Document.Activate
+    Exit For
+  End If
+Next myWnd
+
+' Find that text
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myText
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute
+End With
+Selection.Collapse wdCollapseStart
+
+Set wasSelected = Selection.range
+Application.ScreenUpdating = False
+
+Selection.EndKey Unit:=wdStory
+wasSelected.Select
+Application.ScreenUpdating = True
+
+ActiveDocument.ActiveWindow.SmallScroll down:=1
+Selection.MoveRight , 1
+
+If Not (Selection.Find.Found) Then
+  Beep
+  Selection.EndKey Unit:=wdStory
+Else
+  Selection.MoveStart , -1
+  Selection.MoveStart , myOffset
+  Selection.MoveEnd , myLen
+End If
+End Sub
+

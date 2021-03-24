@@ -1,0 +1,42 @@
+Sub PunctuationToDoublePrime()
+' Paul Beverley - Version 03.05.17
+' Changes next quote mark to prime
+
+trackIt = True
+
+searchChars = Chr(34) & Chr(39) & ChrW(8216) & ChrW(8217) _
+       & ChrW(8220) & ChrW(8221) & ChrW(8249) & ChrW(8250) _
+       & ChrW(8222) & ChrW(8218) & ChrW(171) & ChrW(187) & ChrW(96) _
+       & ChrW(8242) & ChrW(8243)
+
+newChar = ChrW(8243)
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+Selection.End = Selection.Start
+startHere = Selection.Start
+Set rng = ActiveDocument.Content
+theEnd = rng.End
+gotOne = False
+Do While gotOne = False
+  If InStr(searchChars, Selection) > 0 Then
+    Set rng = ActiveDocument.Content
+    rng.Start = Selection.Start - 1
+    rng.End = Selection.Start + 2
+    charBefore = Left(rng.Text, 1)
+    Exit Do
+  End If
+  Selection.MoveRight , 1
+  If Selection.Start > startHere + 1000 Or _
+       Selection.Start > theEnd - 2 Then
+    Beep
+    ActiveDocument.TrackRevisions = myTrack
+    Exit Sub
+  End If
+Loop
+
+Selection.MoveEnd wdCharacter, 1
+Selection.TypeBackspace
+Selection.TypeText Text:=newChar
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

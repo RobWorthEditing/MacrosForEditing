@@ -1,0 +1,43 @@
+Sub CaseNextPara()
+' Paul Beverley - Version 12.08.10
+' Change case of initial letter of the paragraph
+
+trackIt = True
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+Selection.HomeKey Unit:=wdLine
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[a-zA-Z]"
+  .Replacement.Text = ""
+  .Wrap = wdFindContinue
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+If trackIt = False Then
+  Selection.Range.Case = wdToggleCase
+Else
+  myChar = Selection
+  If Asc(myChar) > 96 Then
+    myChar = UCase(myChar)
+  Else
+    myChar = LCase(myChar)
+  End If
+  Selection.Delete
+  Selection.TypeText Text:=myChar
+End If
+Selection.MoveDown Unit:=wdParagraph, Count:=1
+
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchWildcards = False
+End With
+End Sub
+

@@ -1,0 +1,199 @@
+Sub HighlightCertainCharacters()
+' Paul Beverley - Version 21.09.18
+' Highlights certain characters with attributes
+
+superscriptZeros = wdBrightGreen
+italicCommas = wdBrightGreen
+boldColons = wdPink
+notBoldColons = 0
+subSuperscriptSpace = wdGray50
+
+' Just super and subscript numbers in italic
+subSuperscriptNumberItalic = wdYellow
+
+' All numbers in italic
+allNumberItalic = wdGray25
+
+' Various symbols - your choice
+variousSymbols1 = wdPink
+mySymbols1 = "[áÁàÀâÂäÄÃãÅåçÇéÉèÈêÊëËíÍìÌîÎñÑóÓòÒôÔöÖõÕøØßúÚùÙûÛüÜýÝÿŸ/-]"
+
+variousSymbols2 = wdYellow
+mySymbols2 = "[=\*\>\<+" & ChrW(8722) & "]"
+
+' Various symbols in italic - your choice
+' (e.g. parentheses, exclamation mark and 1/2 symbol = 189)
+specificSymbolsInItalic = wdTurquoise
+mySymbols3 = "[\(\)\!" & ChrW(189) & "]"
+
+
+oldColour = Options.DefaultHighlightColorIndex
+If superscriptZeros > 0 Then
+  Options.DefaultHighlightColorIndex = superscriptZeros
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "0"
+    .Font.Superscript = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+If italicCommas > 0 Then
+  Options.DefaultHighlightColorIndex = italicCommas
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ","
+    .Font.Italic = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+If boldColons > 0 Then
+  Options.DefaultHighlightColorIndex = boldColons
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ":"
+    .Font.Bold = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+If notBoldColons > 0 Then
+  Options.DefaultHighlightColorIndex = notBoldColons
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ":"
+    .Font.Bold = False
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+If subSuperscriptSpace > 0 Then
+  Options.DefaultHighlightColorIndex = subSuperscriptSpace
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = " "
+    .Font.Superscript = True
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    .ClearFormatting
+    .Font.Subscript = True
+    .Text = " "
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+' Super and subscript numbers that are italic
+If subSuperscriptNumberItalic > 0 Then
+  Options.DefaultHighlightColorIndex = subSuperscriptNumberItalic
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "[0-9]"
+    .Font.Superscript = True
+    .Font.Italic = True
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    .ClearFormatting
+    .Font.Subscript = True
+    .Font.Italic = True
+    .Text = "[0-9]"
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+' All numbers that are italic
+If allNumberItalic > 0 Then
+  Options.DefaultHighlightColorIndex = allNumberItalic
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "[0-9]"
+    .Font.Italic = True
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+If variousSymbols1 > 0 Then
+  Options.DefaultHighlightColorIndex = variousSymbols1
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = mySymbols1
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+   End With
+End If
+
+If variousSymbols2 > 0 Then
+  Options.DefaultHighlightColorIndex = variousSymbols2
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = mySymbols2
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+   End With
+End If
+
+If specificSymbolsInItalic > 0 Then
+  Options.DefaultHighlightColorIndex = specificSymbolsInItalic
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = mySymbols3
+    .Font.Italic = True
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+   End With
+End If
+
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

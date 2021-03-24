@@ -1,0 +1,14 @@
+Sub TableSpaceBeforeHeading()
+' Paul Beverley - Version 04.11.17
+' Adds a blank line where a numbered heading follows a table
+
+For Each myTable In ActiveDocument.Tables
+  Set rng = myTable.range.Duplicate
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd , 1
+  If Val(rng.Text) > 0 Then rng.InsertBefore Text:=vbCr
+  rng.Select
+Next myTable
+Selection.HomeKey Unit:=wdStory
+End Sub
+

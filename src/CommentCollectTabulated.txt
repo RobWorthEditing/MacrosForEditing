@@ -1,0 +1,221 @@
+Sub CommentCollectTabulated()
+' Paul Beverley - Version 23.03.21
+' Collects comments into a table
+
+sortOnColumn = 0
+splitComment = True
+doLandscape = True
+maxHeading = "Heading 1"
+
+s = ChrW(160)
+s = s & s & s & s & s
+myspaces = s & s & s & s & s & s & s & s
+
+totCmnts = ActiveDocument.Comments.Count
+Selection.HomeKey Unit:=wdStory
+Selection.EndKey Unit:=wdStory
+If totCmnts = 0 Then
+  MsgBox "There are no comments in this file!"
+  Exit Sub
+End If
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+ReDim pageNo(totCmnts) As String
+ReDim lineNo(totCmnts) As String
+For i = 1 To totCmnts
+  Selection.GoTo what:=wdGoToComment, Count:=i
+  pageNo(i) = Trim(Str(Selection.Range.Information(wdActiveEndAdjustedPageNumber)))
+  lineNo(i) = Trim(Str(Selection.Range.Information(wdFirstCharacterLineNumber)))
+  DoEvents
+  Debug.Print "Counting: ", pageNo(i)
+Next i
+
+Selection.HomeKey Unit:=wdStory
+Set rng = ActiveDocument.Content
+rng.Copy
+Documents.Add
+Selection.Paste
+totCmnts = ActiveDocument.Comments.Count
+
+Dim cmnt As Word.Comment
+ReDim lineNum(totCmnts) As Integer
+ReDim pageNum(totCmnts) As Integer
+maxHeadNo = Val(Right(maxHeading, 1))
+hdStart = Left(maxHeading, InStr(maxHeading, " ") - 1)
+
+For i = 1 To totCmnts
+  Selection.GoTo what:=wdGoToComment, Count:=i
+  pn = pageNo(i)
+  ln = lineNo(i)
+  Set cmnt = ActiveDocument.Comments(i)
+  inits = cmnt.Initial
+  scp = cmnt.Scope
+  itemNo = Trim(Str(i))
+  If splitComment = True And InStr(cmnt.Range, "|") = False Then
+    cmnt.Range.InsertBefore Text:="|"
+  End If
+
+'  Selection.GoTo what:=wdGoToComment, Count:=i
+  Set rng = ActiveDocument.Range(0, Selection.End)
+  paraNum = rng.Paragraphs.Count
+  For j = paraNum - 1 To 1 Step -1
+    myStyle = ActiveDocument.Paragraphs(j).Range.Style
+    If InStr(myStyle, hdStart) > 0 Then
+      hdLevel = Val(Right(myStyle, 1))
+      If hdLevel < maxHeadNo + 1 Then
+        hd = ActiveDocument.Paragraphs(j).Range.Text
+        Exit For
+      End If
+    End If
+    DoEvents
+    Debug.Print "Reading: ", pageNo(i)
+  Next j
+
+
+' BEFORE TEXT HERE <<<<<<<<<<<<<<<<<<<<<<<<
+' Full version
+' cmnt.Range.InsertBefore Text:=inits & itemNo & "|" & "p." & pn & _
+     " l." & ln & "|" & scp & "|"
+
+' Paul's own short version
+cmnt.Range.InsertBefore Text:="yNLyp." & pn & "|" & scp
+' cmnt.range.InsertBefore Text:="yNLyp." & pn & "|" & scp
+
+
+' AFTER TEXT HERE <<<<<<<<<<<<<<<<<<<<<<<<<
+  cmnt.Range.InsertAfter Text:=""
+Next i
+ActiveDocument.StoryRanges(wdCommentsStory).Copy
+
+' Replace whole text with just the (augmented) comments
+Selection.WholeStory
+Selection.Paste
+Selection.WholeStory
+' Remove hidden page references
+Selection.Fields.Unlink
+If doLandscape = True Then Selection.PageSetup.Orientation = wdOrientLandscape
+Selection.HomeKey Unit:=wdStory
+Set rng = ActiveDocument.Content
+
+With rng.Find
+  .Text = "^p"
+  .Replacement.Text = "zCRz"
+  .Wrap = wdFindContinue
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+For i = 1 To 2
+  Set rng = ActiveDocument.Content
+  Set rng2 = ActiveDocument.Content
+  ' Go and find the first occurrence
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "zCRz"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    rng2.Start = rng.End
+    rng2.End = rng.End + 5
+    If rng2 = "yNLy" Then rng.Delete
+    rng.Collapse wdCollapseEnd
+  
+  ' Go and find the next occurrence (if there is one)
+    rng.Find.Execute
+  Loop
+Next i
+' Remove the very first new line marker
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "yNLy"
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceOne
+End With
+
+' Change other new line markers into new lines
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "yNLy"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .Replacement.Highlight = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+Selection.EndKey Unit:=wdStory
+Selection.MoveStart , -4
+If Selection = "zCRz" Then Selection.Delete
+Selection.EndKey Unit:=wdStory
+Selection.MoveStart , -4
+If Selection = "zCRz" Then Selection.Delete
+
+Selection.HomeKey Unit:=wdStory
+' HEADING LINE HERE<<<<<<<<<<<<<<<<<<<<<<<<
+Selection.TypeText Text:="|Context|Comment/query|Author" & ChrW(160) & _
+     "response" & myspaces & vbCr
+
+ActiveDocument.Paragraphs(1).Range.Bold = True
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "|"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^t"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Author queries " & ChrW(8211) & _
+     " Chapter " & vbCr & vbCr
+ActiveDocument.Paragraphs(1).Range.Style = wdStyleHeading2
+
+ActiveDocument.Paragraphs(3).Range.Select
+Selection.Collapse wdCollapseEnd
+Selection.End = ActiveDocument.Range.End
+
+If sortOnColumn > 0 Then Selection.Sort ExcludeHeader:=False, _
+     FieldNumber:="Column " & Trim(Str(sortOnColumn)), _
+     SortFieldType:=wdSortFieldAlphanumeric, _
+     SortOrder:=wdSortOrderAscending, _
+     Separator:=wdSortSeparateByTabs, SortColumn:=False, _
+     CaseSensitive:=True
+ActiveDocument.Paragraphs(2).Range.Select
+Selection.Collapse wdCollapseEnd
+Selection.End = ActiveDocument.Range.End
+
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+Selection.Tables(1).Style = "Table Grid"
+Selection.Tables(1).AutoFitBehavior (wdAutoFitContent)
+
+' Restore the new lines that are inside the comments
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zCRz"
+  .Replacement.Text = "^p"
+  .Wrap = wdFindContinue
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+Selection.HomeKey Unit:=wdStory
+Beep
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

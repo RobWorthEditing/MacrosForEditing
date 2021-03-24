@@ -1,0 +1,101 @@
+Sub SerialNotCommaHighlight()
+' Paul Beverley - Version 18.05.19
+' Highlights or underlines text that appears not to have a serial comma
+
+maxWords = 7
+doUnderline = False
+doHighlight = False
+doColour = True
+
+myColour = wdYellow
+myFontColour = wdColorBlue
+
+For i = 1 To 3
+  Select Case i
+    Case 1:
+      num = ActiveDocument.Footnotes.Count
+      If num > 0 Then Set rng0 = _
+           ActiveDocument.StoryRanges(wdFootnotesStory)
+    Case 2:
+      num = ActiveDocument.Endnotes.Count
+      If num > 0 Then Set rng0 = _
+           ActiveDocument.StoryRanges(wdEndnotesStory)
+    Case 3:
+      Set rng0 = ActiveDocument.Content
+      num = 1
+  End Select
+  
+  If num > 0 Then
+    Set rng = rng0.Duplicate
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "[a-zA-Z\-]@, [a-zA-Z\- ]@ and "
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .MatchWildcards = True
+      .MatchWholeWord = False
+      .MatchSoundsLike = False
+      .Execute
+    End With
+    
+    While rng.Find.Found
+      If rng.Words.Count < maxWords Then
+        If doUnderline = True Then rng.Font.Underline = True
+        If doHighlight = True Then rng.HighlightColorIndex = myColour
+        If doColour = True Then rng.Font.Color = myFontColour
+      End If
+      rng.Collapse wdCollapseEnd
+      rng.Find.Execute
+      DoEvents
+      If rng.End < rng.Start Then
+        rng.End = rng.Start + 2
+        rng.Start = rng.End
+      End If
+    Wend
+    
+    Set rng = rng0.Duplicate
+    With rng.Find
+      .Text = "[a-zA-Z\-]@, [a-zA-Z\- ]@ or "
+      .MatchWildcards = True
+      .Replacement.Text = ""
+      .Wrap = wdFindStop
+      .Execute
+    End With
+    
+    While rng.Find.Found
+      If rng.Words.Count < maxWords Then
+        If doUnderline = True Then rng.Font.Underline = True
+        If doHighlight = True Then rng.HighlightColorIndex = myColour
+        If doColour = True Then rng.Font.Color = myFontColour
+      End If
+      rng.Collapse wdCollapseEnd
+      rng.Find.Execute
+      DoEvents
+      If rng.End < rng.Start Then
+        rng.End = rng.Start + 2
+        rng.Start = rng.End
+      End If
+    Wend
+  End If
+Next i
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Execute
+End With
+
+If Selection.Find.Found = False Then
+  With Selection.Find
+    .ClearFormatting
+    .Text = ""
+    .Highlight = True
+    .Execute
+  End With
+End If
+Beep
+End Sub
+

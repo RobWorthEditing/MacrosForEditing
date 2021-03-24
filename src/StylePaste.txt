@@ -1,0 +1,7 @@
+Sub StylePaste()
+' Paul Beverley - Version 04.01.11
+' Paste style
+
+Selection.PasteFormat
+End Sub
+

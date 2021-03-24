@@ -1,0 +1,23 @@
+Sub DIYFindAshortMacro()
+' Paul Beverley - Version 24.11.20
+' Finds a macro shorter than a certain length
+
+myLen = 20
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13Sub*\(\)"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.MoveEnd Unit:=wdParagraph, Count:=myLen
+  If InStr(rng.Text, "End Sub"

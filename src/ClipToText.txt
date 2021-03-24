@@ -1,0 +1,15 @@
+Sub ClipToText()
+' Paul Beverley - Version 04.01.10
+' Get pure text from pdfs and websites
+Documents.Add
+Selection.Paste
+Selection.WholeStory
+Selection.Cut
+' Selection.PasteAndFormat (wdFormatPlainText)
+Selection.PasteSpecial DataType:=wdPasteText
+Selection.WholeStory
+Selection.Copy
+ActiveDocument.Close SaveChanges:=False
+Selection.Paste
+End Sub
+

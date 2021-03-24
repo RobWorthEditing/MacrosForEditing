@@ -1,0 +1,17 @@
+Sub BackgroundColourAllOff()
+' Paul Beverley - Version 11.04.20
+' Removes all background colours
+
+Set rng = ActiveDocument.Content
+
+rng.Shading.BackgroundPatternColor = wdColorAutomatic
+With rng.Font.Shading
+  .Texture = wdTextureNone
+  .ForegroundPatternColor = wdColorAutomatic
+  .BackgroundPatternColor = wdColorAutomatic
+End With
+
+rng.Shading.BackgroundPatternColor = wdColorAutomatic
+ActiveDocument.Background.Fill.Visible = msoFalse
+End Sub
+

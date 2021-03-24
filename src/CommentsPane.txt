@@ -1,0 +1,12 @@
+Sub CommentsPane()
+' Paul Beverley - Version 08.11.17
+' Opens the comments pane
+
+If (ActiveDocument.Comments.Count > 0) Then
+  ActiveDocument.ActiveWindow.View.SplitSpecial = wdPaneComments
+Else
+  Beep
+  MsgBox "No comments in this file."
+End If
+End Sub
+

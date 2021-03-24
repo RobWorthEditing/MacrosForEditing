@@ -1,0 +1,21 @@
+Sub CommentPicker()
+' Paul Beverley - Version 09.11.13
+' Copy a comment out of a list of comments
+
+myCode = InputBox("WhichComment number?", "CommentPicker")
+
+For Each pa In ActiveDocument.Paragraphs
+  myText = pa.Range.Text
+
+  If Len(myText) < 4 And Asc(myText) = Asc(myCode) Then
+    pa.Range.Select
+    Selection.Collapse wdCollapseEnd
+    Selection.Paragraphs(1).Range.Select
+    Selection.MoveEnd , -1
+    Selection.Copy
+    Exit Sub
+  End If
+Next
+MsgBox ("Can't find comment >> " & myCode & " <<")
+End Sub
+

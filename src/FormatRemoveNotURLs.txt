@@ -1,0 +1,14 @@
+Sub FormatRemoveNotURLs()
+' Paul Beverley - Version 01.09.16
+' Removes all styles and formatting except URLs
+
+Set rng = ActiveDocument.Content
+rng.Style = ActiveDocument.Styles(wdStyleNormal)
+rng.Font.Reset
+
+For Each myURL In ActiveDocument.Hyperlinks
+  myURL.range.Font.Underline = True
+  myURL.range.Font.Color = wdColorBlue
+Next myURL
+End Sub
+

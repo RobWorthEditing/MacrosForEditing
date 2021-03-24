@@ -1,0 +1,39 @@
+Sub NoteDeleteDblSpace()
+' Paul Beverley - Version 01.06.10
+' Deletes double spaces from endnotes
+
+For i = 1 To ActiveDocument.Endnotes.Count
+  Set rng = ActiveDocument.Endnotes(i).Range
+  rng.Start = rng.Start - 1
+  rng.End = rng.Start + 1
+  mychar = rng
+  myASC = 0
+  ' Check the very first character of the endnote
+  If Len(mychar) > 0 And i > 1 Then myASC = Asc(mychar)
+  ' If it's a newline or a paragraph mark, delete it
+  If myASC = 13 Or myASC = 11 Then rng.Delete
+
+  ' Then do the same right through the endnotes
+  ' i.e. delete any newlines, paras or spaces that
+  ' occur at the beginning of an endnote, before
+  ' the actual text of the note starts
+  Set rng = ActiveDocument.Endnotes(i).Range
+  rng.Start = rng.End - 1
+  KeepGoing = True
+  Do
+    mychar = rng
+    If Len(mychar) > 0 Then
+      myASC = Asc(mychar)
+    Else
+      myASC = 0
+    End If
+    If myASC = 13 Or myASC = 11 Or myASC = 32 Then
+      rng.Delete
+      rng.Start = rng.Start - 1
+    Else
+      KeepGoing = False
+    End If
+  Loop Until KeepGoing = False
+Next
+End Sub
+

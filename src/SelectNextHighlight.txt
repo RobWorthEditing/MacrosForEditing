@@ -1,0 +1,20 @@
+Sub SelectNextHighlight()
+' Paul Beverley - Version 13.09.19
+' Selects the next piece of highlighted text
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = ""
+  .Forward = True
+  .Highlight = True
+  .MatchWildcards = False
+  .Execute
+End With
+If Selection.Find.Found = False Then
+  Selection.Collapse wdCollapseEnd
+  Beep
+End If
+End Sub
+

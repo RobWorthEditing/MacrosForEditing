@@ -1,0 +1,184 @@
+Sub HighlightOddPunctuationFormat()
+' Paul Beverley - Version 13.12.16
+' Highlights oddly formatted punctuation marks
+
+checkColons = True
+myColour0 = wdBrightGreen
+
+wantColonBold = False
+wantColonItalic = False
+
+checkCommas = True
+myColour1 = wdBrightGreen
+
+checkFontSize = True
+myColour2 = wdYellow
+
+checkFontName = True
+myColour3 = wdTurquoise
+
+highlightItalicCommasAnyway = True
+myColour4 = wdGray25
+
+Dim b(4) As Boolean
+Dim i(4) As Boolean
+Dim n(4) As String
+Dim char(4) As String
+myJump = 5
+
+If checkColons = True Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ":"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+
+  myCount = 0
+  Do While rng.Find.Found = True
+    myStart = rng.Start - 1
+    For j = 1 To 4
+      rng.Start = myStart + j - 1
+      rng.End = myStart + j
+      i(j) = rng.Italic
+      b(j) = rng.Bold
+      n(j) = rng.Font.Name
+      char(j) = rng.Text
+    Next j
+    
+    rng.Start = myStart
+    rng.End = myStart + 4
+    If checkFontSize = True And rng.Font.Size > 999 Then
+      rng.HighlightColorIndex = myColour2
+    End If
+
+    If checkFontName = True Then
+      If n(1) <> n(2) Or n(2) <> n(4) Then _
+      rng.HighlightColorIndex = myColour3
+    End If
+    
+    'number of characters to be highlighted
+    m = 0
+    If wantColonBold Then
+      If b(1) And Not (b(2)) Then m = m + 1
+    ' If the space is bold
+      If b(1) And b(2) And b(3) And Not (b(4)) _
+           And char(3) <> vbCr Then
+        m = m + 1
+        If b(1) Then myStart = myStart + 1
+      End If
+    Else
+    ' Want a roman colon, i.e. b(2) should be False
+      If b(1) And b(2) And (Not (b(3)) Or Not (b(4))) Then m = m + 1
+    End If
+    
+    If wantColonItalic Then
+      If i(1) And Not (i(2)) Then m = m + 1
+    Else
+    ' Want an italic colon, i.e. i(2) should be False
+      If i(1) And i(2) And (Not (i(3)) Or Not (i(4))) Then m = m + 1
+    End If
+
+    If m > 0 Then
+      rng.Start = myStart + 1
+      rng.End = myStart + m + 1
+      rng.HighlightColorIndex = myColour0
+      myCount = myCount + 1
+      If myCount Mod myJump = 1 Then rng.Select
+    End If
+
+    ' Find the next one
+    rng.Start = myStart + 2
+    rng.End = myStart + 2
+    rng.Find.Execute
+  Loop
+End If
+
+If checkCommas = True Then
+  If highlightItalicCommasAnyway = True Then
+    Set rng = ActiveDocument.Content
+    oldColour = Options.DefaultHighlightColorIndex
+    Options.DefaultHighlightColorIndex = myColour4
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ","
+      .Font.Italic = True
+      .Wrap = wdFindContinue
+      .Replacement.Text = ""
+      .Replacement.Highlight = True
+      .Execute Replace:=wdReplaceAll
+    End With
+    Options.DefaultHighlightColorIndex = oldColour
+  End If
+
+' Now check commas individually
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ","
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  
+  myCount = 0
+  Do While rng.Find.Found = True
+    myStart = rng.Start - 1
+    For j = 1 To 4
+      rng.Start = myStart + j - 1
+      rng.End = myStart + j
+      i(j) = rng.Italic
+      b(j) = rng.Bold
+      n(j) = rng.Font.Name
+    Next j
+    rng.Start = myStart - 10
+    rng.End = myStart + 10
+    localItalic = rng.Font.Italic
+    
+    rng.Start = myStart
+    rng.End = myStart + 4
+    If checkFontSize = True And rng.Font.Size > 999 Then
+      rng.HighlightColorIndex = myColour2
+    End If
+
+    If checkFontName = True Then
+      If n(1) <> n(2) Or n(2) <> n(4) Then _
+      rng.HighlightColorIndex = myColour3
+    End If
+    
+    ' number of characters to be highlighted
+    m = 0
+    If i(1) And i(2) And Not (i(3)) Then m = m + 1
+    If i(1) And i(2) And Not (i(4)) Then m = m + 1
+    If i(2) And localItalic > 99 Then m = m + 1
+    
+    If b(1) And b(2) And Not (b(3)) Then m = m + 1
+    If b(1) And b(2) And Not (b(4)) Then m = m + 1
+    
+    If m > 0 Then
+      rng.Start = myStart + 1
+      rng.End = myStart + m + 1
+      rng.HighlightColorIndex = myColour0
+      myCount = myCount + 1
+      If myCount Mod myJump = 1 Then rng.Select
+    End If
+
+    ' Find the next one
+    rng.Start = myStart + 2
+    rng.End = myStart + 2
+    rng.Find.Execute
+  Loop
+End If
+Beep
+Selection.HomeKey Unit:=wdStory
+End Sub
+

@@ -1,0 +1,26 @@
+Sub ListItemNumberFormatter()
+' Paul Beverley - Version 24.10.16
+' Format the numbering of current list item
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+If Selection = " " Then Selection.Delete
+If Selection = "(" Then
+  Selection.Delete
+End If
+Selection.MoveEnd , 4
+parenPos = InStr(Selection, ")")
+Selection.Collapse wdCollapseStart
+If parenPos > 0 Then
+  Selection.MoveStartUntil cset:=")"
+  Selection.MoveEnd , 1
+  Selection.TypeText Text:="."
+End If
+
+Selection.Expand wdParagraph
+ActiveDocument.TrackRevisions = myTrack
+Selection.Collapse wdCollapseEnd
+End Sub
+

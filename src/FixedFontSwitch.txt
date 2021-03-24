@@ -1,0 +1,14 @@
+Sub FixedFontSwitch()
+' Paul Beverley - Version 13.05.20
+' Switches font colour red -> blue -> black ->
+
+Set rng = Selection.Range.Duplicate
+rng.End = rng.Start + 1
+Select Case rng.Font.Color
+  Case &H111111: Selection.Font.Color = &H1111FF
+  Case &H1111FF: Selection.Font.Color = &HFF1111
+  Case &HFF1111: Selection.Font.Color = &H111111
+  Case Else: Selection.Font.Color = &H1111FF
+End Select
+End Sub
+

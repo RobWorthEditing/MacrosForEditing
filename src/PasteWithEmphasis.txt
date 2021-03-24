@@ -1,0 +1,7 @@
+Sub PasteWithEmphasis()
+' Paul Beverley - Version 30.12.10
+' Paste with emphasis
+
+Selection.PasteAndFormat (wdFormatSurroundingFormattingWithEmphasis)
+End Sub
+

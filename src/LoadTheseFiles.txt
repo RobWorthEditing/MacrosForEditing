@@ -1,0 +1,20 @@
+Sub LoadTheseFiles()
+' Paul Beverley - Version 13.05.20
+' Loads all the files listed in a file list
+
+myFileList = "myFileList.docx"
+Documents.Open FileName:=myFileList
+Set myList = ActiveDocument
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myLine = Replace(myPara.Range.Text, vbCr, "")
+  If Len(myLine) > 2 Then
+    If InStr(myLine, "\") > 0 Then myFolder = myLine
+    If Len(myFolder) > 1 And InStr(myLine, ".doc") > 0 Then
+      Documents.Open FileName:=myFolder & "\" & myLine
+    End If
+  End If
+Next myPara
+myList.Close SaveChanges:=False
+End Sub
+

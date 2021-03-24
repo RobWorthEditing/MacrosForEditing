@@ -1,0 +1,25 @@
+Sub ItalicisePhrase()
+' Paul Beverley - Version 04.10.18
+' Selects text up to next punctuation mark and makes it italic
+
+andThePunctuation = False
+includeParens = True
+
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+OKchars = "A-Za-z '0-9\-" & ChrW(8217)
+If includeParens = True Then OKchars = OKchars & "\(\)"
+
+' The 8217 is the unicode for a curly apostrophe
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[" & OKchars & "]{1,}"
+  .MatchWildcards = True
+  .Execute
+End With
+If andThePunctuation = True Then Selection.MoveEnd , 1
+Selection.Font.Italic = True
+Selection.Collapse wdCollapseEnd
+End Sub
+

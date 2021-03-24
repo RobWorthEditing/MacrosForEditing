@@ -1,0 +1,133 @@
+Sub WikiToText()
+' Paul Beverley - Version 01.01.10
+' Convert from text to Wiki format
+Dim Eq2, Eq3, Tk2, Tk3, pr, npr As String
+Eq2 = "=" & "=": Eq3 = Eq2 + "="
+Tk2 = "'" & "'": Tk3 = Tk2 + "'"
+pr = "pre": npr = "</" & pr & ">"
+pr = "<" & pr & ">"
+
+' Convert Heading 2 to <=><=><=>Title<=><=><=>
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = "(*)^13"
+  .Style = "Heading 2"
+  .Replacement.Text = Eq3 & "\1" & Eq3 & "^p"
+  .Replacement.Style = wdStyleNormal
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Convert Heading 1 to <=><=>Title<=><=>
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = "(*)^13"
+  .Format = True
+  .Style = "Heading 1"
+  .Replacement.Text = Eq2 & "\1" & Eq2 & "^p"
+  .Replacement.Style = wdStyleNormal
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Convert Bold to <'><'><'>word<'><'><'>
+more = True
+Do
+  Set rng = ActiveDocument.Range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Bold = True
+    .Execute
+  End With
+  more = rng.Find.Found
+  If more = True Then
+    rng.Font.Bold = False
+    rng.InsertBefore Tk3
+    rng.InsertAfter Tk3
+  End If
+Loop Until more = False
+
+' Convert Italic to <'><'>word<'><'>
+more = True
+Do
+  Set rng = ActiveDocument.Range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Italic = True
+    .Execute
+  End With
+  more = rng.Find.Found
+  If more = True Then
+    rng.Font.Italic = False
+    rng.InsertBefore Tk2
+    rng.InsertAfter Tk2
+  End If
+Loop Until more = False
+
+' Convert HTML sample to [pre]word[/pre]
+gogo = True
+Do
+  Set rng = ActiveDocument.Range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Style = "HTML Sample"
+    .Execute
+  End With
+  myStart = rng.Start
+  myEnd = rng.End
+  gogo = rng.Find.Found
+
+  If gogo = True Then
+  Set rng = ActiveDocument.Range
+  rng.Start = myEnd
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Style = "Default Paragraph Font"
+    .Execute
+  End With
+  myEnd = rng.Start
+
+  rng.Start = myStart
+  rng.End = myEnd
+  rng.Style = "Default Paragraph Font"
+
+  rng.InsertBefore pr & vbCrLf
+  rng.InsertAfter npr & vbCrLf
+  End If
+
+Loop Until gogo = False
+
+' Remove blank lines above an npr
+Set rng = ActiveDocument.Range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .MatchWildcards = False
+    .Text = "^p^p" & npr
+    .Replacement.Text = "^p" & npr & "^p"
+    .Execute Replace:=wdReplaceAll
+  End With
+
+
+' Add second blank lines after an npr before a heading
+Set rng = ActiveDocument.Range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .MatchWildcards = False
+    .Text = npr & "^p^p"
+    .Replacement.Text = npr & "^p^p^p=="
+    .Execute Replace:=wdReplaceAll
+  End With
+End Sub
+

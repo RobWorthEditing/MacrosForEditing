@@ -1,0 +1,437 @@
+Sub CloneWordFile()
+' Paul Beverley - Version 01.09.16
+' Create a clean new copy of a document
+
+
+chkParaStyles = False
+chkParaStyles = True
+
+chkFontName = False
+chkFontName = True
+
+chkFontSize = False
+chkFontSize = True
+
+chkFontColour = False
+chkFontColour = True
+
+chkHighlight = False
+chkHighlight = True
+
+chkBold = False
+chkBold = True
+
+chkItalic = False
+chkItalic = True
+
+chkSubscript = False
+chkSubscript = True
+
+chkSuperscript = False
+chkSuperscript = True
+
+chkSmallCaps = False
+chkSmallCaps = True
+
+chkUnderline = False
+chkUnderline = True
+
+timeStart = Timer
+showTime = True
+
+
+' The character style feature is verrry slow,
+' so it's currently disabled. Ask if you're interested.
+charStyle_1 = ""
+charStyle_1 = "HTML Sample"
+
+chkCharStyles = True
+chkCharStyles = False
+
+
+myStep = 10
+
+Set sceFile = ActiveDocument
+'sceFile.range.Revisions.AcceptAll
+sceFile.range.Copy
+
+' Convert character style to shadow
+If charStyle_1 > "" Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Style = ActiveDocument.Styles(charStyle_1)
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Font.Shadow = True
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+For Each thisDoc In Application.Documents
+  thisName = thisDoc.Name
+  If Left(thisName, 3) = "Doc" Then
+    gottaDoc = True
+    Exit For
+  End If
+Next thisDoc
+
+If gottaDoc = False Then
+  Documents.Add
+Else
+  thisDoc.Activate
+  Selection.WholeStory
+  Selection.Delete
+End If
+
+Set tgtFile = ActiveDocument
+tgtFile.range.Paste
+tgtFile.range.Style = ActiveDocument.Styles(wdStyleNormal)
+tgtFile.range.Font.Reset
+tgtFile.range.Font.Color = wdColorAutomatic
+tgtFile.range.HighlightColorIndex = wdNoHighlight
+
+For i = 1 To 30
+  spcs = " " & spcs
+Next i
+totParas = sceFile.range.Paragraphs.Count
+totChars = sceFile.range.Characters.Count
+
+If chkParaStyles = True Then
+  For i = 1 To totParas - 1
+    Set tgt = tgtFile.Paragraphs(i)
+    Set sce = sceFile.Paragraphs(i)
+   ' sceFile.Paragraphs(i).range.Select
+    myDots = " "
+    myStyle = sce.range.Style
+    If sce.range.Style <> ActiveDocument.Styles(wdStyleNormal) Then
+      If ActiveDocument.Styles(myStyle).Type = wdStyleTypeParagraph Then
+        tgt.Style = sce.range.Style
+      End If
+    End If
+    DoEvents
+    StatusBar = spcs & "Checking paragraph styles " & totParas - i
+  Next i
+  DoEvents
+End If
+
+If charStyle_1 > "" Then
+  pmpt = spcs & "Checking character styles "
+  Debug.Print pmpt
+  For i = 1 To totParas - 1
+    If sceFile.Paragraphs(i).range.Font.Shadow > 999 Then
+      Set tgt = tgtFile.Paragraphs(i)
+      Set sce = sceFile.Paragraphs(i)
+      myDots = " "
+      For j = 1 To tgt.range.Characters.Count
+        Set c = sce.range.Characters(j)
+        tgt.range.Characters(j).Font.Shadow = c.Font.Shadow
+        If j Mod myStep = 0 Then
+          myDots = myDots & "."
+          StatusBar = pmpt & totParas - i & myDots
+        End If
+        DoEvents
+      Next j
+    Else
+      If sceFile.Paragraphs(i).range.Font.Shadow = True _
+           Then tgtFile.Paragraphs(i).range.Font.Shadow = _
+           True
+    End If
+    StatusBar = pmpt & totParas - i
+    DoEvents
+  Next i
+
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Shadow = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Style = ActiveDocument.Styles(charStyle_1)
+    .Replacement.Font.Shadow = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+If chkCharStyles = True Then
+  For i = 1 To totChars - 1
+    If sceFile.Characters(i).Style.Type = 2 Then
+      tgtFile.range.Characters(i).Style = sceFile.Characters(i).Style
+      DoEvents
+    End If
+    chrsLeft = totChars - i
+    If chrsLeft Mod 10 = 0 Then StatusBar = spcs & "Character styles  " & Str(chrsLeft)
+  Next i
+End If
+
+If chkFontName = True And sceFile.Content.Font.Name = "" Then
+  pmpt = spcs & "Checking font names "
+  Debug.Print pmpt
+  For i = 1 To totParas - 1
+    If sceFile.Paragraphs(i).range.Font.Name = "" Then
+      Set tgt = tgtFile.Paragraphs(i)
+      Set sce = sceFile.Paragraphs(i)
+      myDots = " "
+      For j = 1 To tgt.range.Characters.Count
+        Set c = sce.range.Characters(j)
+        tgt.range.Characters(j).Font.Name = c.Font.Name
+        If j Mod myStep = 0 Then
+          myDots = myDots & "."
+          StatusBar = pmpt & totParas - i & myDots
+        End If
+        DoEvents
+      Next j
+    Else
+      If sceFile.Paragraphs(i).range.Font.Name <> _
+           sceFile.Styles(wdStyleNormal).Font.Name Then _
+           tgtFile.Paragraphs(i).range.Font.Name = _
+           sceFile.Paragraphs(i).range.Font.Name
+    End If
+    StatusBar = pmpt & totParas - i
+  Next i
+End If
+
+If chkFontSize = True And sceFile.Content.Font.Size > 999 Then
+  pmpt = spcs & "Checking font size "
+  Debug.Print pmpt
+  For i = 1 To totParas - 1
+    If sceFile.Paragraphs(i).range.Font.Size > 999 Then
+      Set tgt = tgtFile.Paragraphs(i)
+      Set sce = sceFile.Paragraphs(i)
+      myDots = " "
+      For j = 1 To tgt.range.Characters.Count
+        Set c = sce.range.Characters(j)
+        tgt.range.Characters(j).Font.Size = c.Font.Size
+        If j Mod myStep = 0 Then
+          myDots = myDots & "."
+          StatusBar = pmpt & totParas - i & myDots
+        End If
+        DoEvents
+      Next j
+    Else
+      If sceFile.Paragraphs(i).range.Font.Size <> _
+           sceFile.Styles(wdStyleNormal).Font.Size Then _
+           tgtFile.Paragraphs(i).range.Font.Size = _
+           sceFile.Paragraphs(i).range.Font.Size
+    End If
+    StatusBar = pmpt & totParas - i
+  Next i
+End If
+
+If chkBold = True And sceFile.Content.Font.Bold > 999 Then
+  pmpt = spcs & "Checking bold  "
+  Debug.Print pmpt
+  For i = 1 To totParas - 1
+    Set tgt = tgtFile.Paragraphs(i)
+    Set sce = sceFile.Paragraphs(i)
+    If sce.range.Font.Bold = True Then _
+         tgt.range.Font.Bold = True
+    If sce.range.Font.Bold > 999 Then
+      myDots = " "
+      For j = 1 To tgt.range.Characters.Count
+        tgt.range.Characters(j).Font.Bold = _
+            sce.range.Characters(j).Font.Bold
+        If j Mod myStep = 0 Then
+          myDots = myDots & "."
+          StatusBar = pmpt & totParas - i & myDots
+        End If
+        DoEvents
+      Next j
+    End If
+    StatusBar = pmpt & totParas - i
+  Next i
+End If
+
+If chkItalic = True And sceFile.Content.Font.Italic > 999 Then
+  pmpt = spcs & "Checking italic  "
+  Debug.Print pmpt
+  For i = 1 To totParas - 1
+    Set tgt = tgtFile.Paragraphs(i)
+    Set sce = sceFile.Paragraphs(i)
+    If sce.range.Font.Italic = True Then _
+         tgt.range.Font.Italic = True
+    If sce.range.Font.Italic > 999 Then
+      myDots = " "
+      For j = 1 To tgt.range.Characters.Count
+        tgt.range.Characters(j).Font.Italic = _
+            sce.range.Characters(j).Font.Italic
+        If j Mod myStep = 0 Then
+          myDots = myDots & "."
+          StatusBar = pmpt & totParas - i & myDots
+        End If
+        DoEvents
+      Next j
+    End If
+    StatusBar = pmpt & totParas - i
+  Next i
+End If
+
+If chkFontColour = True And sceFile.Content.Font.Color > 999 Then
+  pmpt = spcs & "Checking font colour "
+  Debug.Print pmpt
+  For i = 1 To totParas - 1
+    If sceFile.Paragraphs(i).range.Font.Color > 999 Then
+      Set tgt = tgtFile.Paragraphs(i)
+      Set sce = sceFile.Paragraphs(i)
+      myDots = " "
+      For j = 1 To tgt.range.Characters.Count
+        Set c = sce.range.Characters(j)
+        tgt.range.Characters(j).Font.Color = c.Font.Color
+        If j Mod myStep = 0 Then
+          myDots = myDots & "."
+          StatusBar = pmpt & totParas - i & myDots
+        End If
+        DoEvents
+      Next j
+    Else
+      If sceFile.Paragraphs(i).range.Font.Color <> wdColorAutomatic _
+           Then tgtFile.Paragraphs(i).range.Font.Color = _
+           sceFile.Paragraphs(i).range.Font.Color
+    End If
+    StatusBar = pmpt & totParas - i
+  Next i
+End If
+
+If chkHighlight = True And sceFile.Content.HighlightColorIndex > 999 Then
+  pmpt = spcs & "Checking highlighting "
+  Debug.Print pmpt
+  For i = 1 To totParas - 1
+    If sceFile.Paragraphs(i).range.HighlightColorIndex > 999 Then
+      Set tgt = tgtFile.Paragraphs(i)
+      Set sce = sceFile.Paragraphs(i)
+      myDots = " "
+      For j = 1 To tgt.range.Characters.Count
+        Set c = sce.range.Characters(j)
+        tgt.range.Characters(j).HighlightColorIndex = c.HighlightColorIndex
+        If j Mod myStep = 0 Then
+          myDots = myDots & "."
+          StatusBar = pmpt & totParas - i & myDots
+        End If
+        DoEvents
+      Next j
+    Else
+      If sceFile.Paragraphs(i).range.HighlightColorIndex <> wdNoHighlight _
+           Then tgtFile.Paragraphs(i).range.HighlightColorIndex = _
+           sceFile.Paragraphs(i).range.HighlightColorIndex
+    End If
+    StatusBar = pmpt & totParas - i
+  Next i
+End If
+
+If chkSuperscript = True And sceFile.Content.Font.Superscript > 999 Then
+  pmpt = spcs & "Checking superscript "
+  Debug.Print pmpt
+  For i = 1 To totParas - 1
+    If sceFile.Paragraphs(i).range.Font.Superscript > 999 Then
+      Set tgt = tgtFile.Paragraphs(i)
+      Set sce = sceFile.Paragraphs(i)
+      myDots = " "
+      For j = 1 To tgt.range.Characters.Count
+        Set c = sce.range.Characters(j)
+        tgt.range.Characters(j).Font.Superscript = c.Font.Superscript
+        If j Mod myStep = 0 Then
+          myDots = myDots & "."
+          StatusBar = pmpt & totParas - i & myDots
+        End If
+        DoEvents
+      Next j
+    Else
+      If sceFile.Paragraphs(i).range.Font.Superscript = True _
+           Then tgtFile.Paragraphs(i).range.Font.Superscript = _
+           True
+    End If
+    StatusBar = pmpt & totParas - i
+  Next i
+End If
+
+If chkSubscript = True And sceFile.Content.Font.Subscript > 999 Then
+  pmpt = spcs & "Checking subscript "
+  Debug.Print pmpt
+  For i = 1 To totParas - 1
+    If sceFile.Paragraphs(i).range.Font.Subscript > 999 Then
+      Set tgt = tgtFile.Paragraphs(i)
+      Set sce = sceFile.Paragraphs(i)
+      myDots = " "
+      For j = 1 To tgt.range.Characters.Count
+        Set c = sce.range.Characters(j)
+        tgt.range.Characters(j).Font.Subscript = c.Font.Subscript
+        If j Mod myStep = 0 Then
+          myDots = myDots & "."
+          StatusBar = pmpt & totParas - i & myDots
+        End If
+        DoEvents
+      Next j
+    Else
+      If sceFile.Paragraphs(i).range.Font.Subscript = True _
+           Then tgtFile.Paragraphs(i).range.Font.Subscript = _
+           True
+    End If
+    StatusBar = pmpt & totParas - i
+  Next i
+End If
+
+If chkSmallCaps = True And sceFile.Content.Font.SmallCaps > 999 Then
+  pmpt = spcs & "Checking small caps "
+  Debug.Print pmpt
+  For i = 1 To totParas - 1
+    If sceFile.Paragraphs(i).range.Font.SmallCaps > 999 Then
+      Set tgt = tgtFile.Paragraphs(i)
+      Set sce = sceFile.Paragraphs(i)
+      myDots = " "
+      For j = 1 To tgt.range.Characters.Count
+        Set c = sce.range.Characters(j)
+        tgt.range.Characters(j).Font.SmallCaps = c.Font.SmallCaps
+        If j Mod myStep = 0 Then
+          myDots = myDots & "."
+          StatusBar = pmpt & totParas - i & myDots
+        End If
+        DoEvents
+      Next j
+    Else
+      If sceFile.Paragraphs(i).range.Font.SmallCaps = True _
+           Then tgtFile.Paragraphs(i).range.Font.SmallCaps = _
+           True
+    End If
+    StatusBar = pmpt & totParas - i
+  Next i
+End If
+
+If chkUnderline = True And sceFile.Content.Font.Underline > 999 Then
+  pmpt = spcs & "Checking underline "
+  Debug.Print pmpt
+  For i = 1 To totParas - 1
+    If sceFile.Paragraphs(i).range.Font.Underline > 999 Then
+      Set tgt = tgtFile.Paragraphs(i)
+      Set sce = sceFile.Paragraphs(i)
+      myDots = " "
+      For j = 1 To tgt.range.Characters.Count
+        Set c = sce.range.Characters(j)
+        tgt.range.Characters(j).Font.Underline = c.Font.Underline
+        If j Mod myStep = 0 Then
+          myDots = myDots & "."
+          StatusBar = pmpt & totParas - i & myDots
+        End If
+        DoEvents
+      Next j
+    Else
+      If sceFile.Paragraphs(i).range.Font.Underline = True _
+           Then tgtFile.Paragraphs(i).range.Font.Underline = _
+           True
+    End If
+    StatusBar = pmpt & totParas - i
+  Next i
+End If
+
+totTime = Timer - timeStart
+If showTime = True And totTime > 10 Then
+  MsgBox ((Int(10 * totTime / 60) / 10) & _
+       "  minutes")
+End If
+StatusBar = spcs & "Finished!!!!!!!"
+Beep
+End Sub
+

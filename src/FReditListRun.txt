@@ -1,0 +1,17 @@
+Sub FReditListRun()
+' Paul Beverley - Version 31.03.11
+' Load, run and close a specific FRedit list
+
+listFile = "C:\Documents and Settings\Paul\My Documents\myList.doc"
+
+Set thisFile = ActiveDocument
+Documents.Open listFile
+Set FRlist = ActiveDocument
+thisFile.Activate
+Call FRedit
+FRlist.Activate
+ActiveDocument.Close SaveChanges:=False
+' Beep to let you know it has finished
+Beep
+End Sub
+

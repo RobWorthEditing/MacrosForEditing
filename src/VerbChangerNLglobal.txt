@@ -1,0 +1,55 @@
+Sub VerbChangerNLglobal()
+' Paul Beverley - Version 13.09.19
+' Changes Dutch verbs through the whole file
+
+For i = 1 To ActiveDocument.Sentences.Count
+  Set sn = ActiveDocument.Sentences(i)
+  txt = sn.Text
+  st = sn.Start
+  zalPosn = InStr(txt, "zal")
+  zullenPosn = InStr(txt, "zullen")
+  wordenPosn = InStr(txt, "worden")
+  zijnPosn = InStr(txt, "zijn")
+  Set rng = ActiveDocument.Content
+  If zalPosn * wordenPosn > 0 Then
+      rng.Start = st + wordenPosn
+      rng.End = st + wordenPosn
+      rng.Expand wdWord
+      rng.Delete
+      rng.Start = st + zalPosn - 1
+      rng.End = st + zalPosn + 2
+      rng.Text = "wordt"
+  End If
+  
+  If zullenPosn * wordenPosn > 0 Then
+      rng.Start = st + wordenPosn
+      rng.End = st + wordenPosn
+      rng.Expand wdWord
+      rng.Delete
+      rng.Start = st + zullenPosn - 1
+      rng.End = st + zullenPosn + 5
+      rng.Text = "worden"
+  End If
+  
+  If zalPosn * zijnPosn > 0 Then
+      rng.Start = st + zijnPosn
+      rng.End = st + zijnPosn
+      rng.Expand wdWord
+      rng.Delete
+      rng.Start = st + zalPosn - 1
+      rng.End = st + zalPosn + 2
+      rng.Text = "is"
+  End If
+  
+  If zullenPosn * zijnPosn > 0 Then
+      rng.Start = st + zijnPosn
+      rng.End = st + zijnPosn
+      rng.Expand wdWord
+      rng.Delete
+      rng.Start = st + zullenPosn - 1
+      rng.End = st + zullenPosn + 5
+      rng.Text = "zijn"
+  End If
+Next i
+End Sub
+

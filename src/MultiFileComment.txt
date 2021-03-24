@@ -1,0 +1,170 @@
+Sub MultiFileComment()
+' Paul Beverley - Version 13.12.17
+' List all comments in a set of files
+
+addAnswers = True
+myFileTitleSize = 14
+
+CR = vbCr
+CR2 = CR & CR
+Dim cmnt As word.Comment
+
+Dim allMyFiles(200) As String
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  myResponse = MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "Multifile Text Collection")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.Count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+
+  myResponse = MsgBox("Collect comments from ALL the files in" & _
+       " directory:" & dirName & " ?", vbQuestion + vbYesNoCancel, _
+       "Multifile Comment Collection")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  myResponse = MsgBox("Collect comments from the files listed here?", _
+  vbQuestion + vbYesNoCancel, "Multifile Comment Collection")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+Documents.Add
+Set myList = ActiveDocument
+For j = 1 To numFiles
+  thisFile = myFolder & myDelimiter & allMyFiles(j)
+  Set myDoc = Application.Documents.Open(FileName:=thisFile)
+  myDocName = myDoc.Name
+  myFileType = Mid(myDocName, InStr(myDocName, "."))
+  myDocName = Replace(myDocName, myFileType, "")
+
+' Collect all the comments
+  totCmnts = ActiveDocument.Comments.Count
+  If totCmnts > 0 Then
+    ReDim cmText(totCmnts) As String
+    For i = 1 To totCmnts
+      Set cmnt = ActiveDocument.Comments(i)
+      inits = cmnt.Initial
+      cmText(i) = cmnt.range
+      If Left(cmText(i), Len(inits)) <> inits Then _
+           cmText(i) = inits & ": " & cmText(i)
+      If addAnswers = True Then cmText(i) = cmText(i) & CR2 _
+           & "Answer: " & CR
+      cmText(i) = cmText(i) & CR
+    Next i
+    cmText(i - 1) = cmText(i - 1) & CR
+  Else
+    totCmnts = 1
+    ReDim cmText(totCmnts) As String
+    cmText(1) = "zxzx"
+  End If
+' Type the comments into the list
+  myList.Activate
+' First type the filename as a heading
+  Selection.TypeText Text:=myDocName & vbCr
+  Selection.MoveUp Unit:=wdLine, Count:=1, Extend:=wdExtend
+  Selection.Font.Bold = True
+  Selection.Font.Size = myFileTitleSize
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText CR
+' Then type each of the comments
+  For i = 1 To totCmnts
+    startHere = Selection.Start
+    Selection.TypeText Text:="[" & cmText(i) & CR
+    endHere = Selection.Start
+    nowLen = Selection.Start - startHere
+    Selection.End = startHere + InStr(cmText(i), ":")
+    extraBit = Trim(Str(i)) & "]"
+    Selection.TypeText Text:=extraBit
+    Selection.Start = endHere + Len(extraBit)
+    Selection.End = Selection.Start
+  Next i
+  myDoc.Close SaveChanges:=wdDoNotSaveChanges
+Next j
+
+' Colour the Answer lines
+myList.Activate
+If addAnswers = True Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "Answer: ^p"
+    .Replacement.Text = "^&"
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Replacement.Font.Color = wdColorRed
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "1][zxzx"
+  .Replacement.Text = "No comments^p^p"
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Remove hidden page references
+Set rng = ActiveDocument.Content
+rng.Fields.Unlink
+
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

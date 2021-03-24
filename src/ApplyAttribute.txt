@@ -1,0 +1,34 @@
+Sub ApplyAttribute()
+' Paul Beverley - Version 19.10.13
+' Apply attribute to current cell, row, column, paragraph, sentence, word or selection
+
+' If the cursor is inside a table, select the cell (or column or row)
+If Selection.Information(wdWithInTable) = True Then
+  myCol = Selection.Information(wdStartOfRangeColumnNumber)
+  myRow = Selection.Information(wdStartOfRangeRowNumber)
+' Select current cell
+  Selection.Tables(1).Columns(myCol).Cells(myRow).Range.Select
+' ... or column
+'  Selection.Tables(1).Columns(myCol).Select
+' ... or row
+'  Selection.Tables(1).Rows(myRow).Select
+End If
+
+' If no text is selected, select the paragraph (or sentence or word)
+If Selection.End - Selection.Start = 0 Then
+  Selection.Paragraphs(1).Range.Select
+  ' or Selection.Sentences(1).Select
+  ' or Selection.Words(1).Select
+End If
+
+' Apply attribute
+Selection.Font.Underline = wdUnderlineDouble
+
+' If in a table, replace the cursor where it was
+If Selection.Information(wdWithInTable) = True Then
+  Selection.Tables(1).Columns(myCol).Cells(myRow).Range.Select
+End If
+Selection.Collapse wdCollapseStart
+
+End Sub
+

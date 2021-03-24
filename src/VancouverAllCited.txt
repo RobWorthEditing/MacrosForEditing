@@ -1,0 +1,80 @@
+Sub VancouverAllCited()
+' Paul Beverley - Version 26.05.18
+' Creates a list of all cited Vancouver references
+
+Selection.HomeKey Unit:=wdStory
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\[[0-9, -" & ChrW(8211) & "]@\]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+allCites = ""
+Do While Selection.Find.Found = True
+  Selection.MoveEnd wdCharacter, -1
+  Selection.MoveStart wdCharacter, 1
+  allCites = allCites & "," & Selection
+  Selection.Collapse wdCollapseEnd
+
+' Go and find the next occurence (if there is one)
+  Selection.Find.Execute
+Loop
+Documents.Add DocumentType:=wdNewBlankDocument
+Selection.TypeText Text:=allCites
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = " "
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+With rng.Find
+  .Text = ","
+  .Replacement.Text = "^p"
+  .Forward = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+' Expand numbers to three digitss
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{1,}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+Do While Selection.Find.Found = True
+  If Len(Selection) = 2 Then Selection.InsertBefore "0"
+  If Len(Selection) = 1 Then Selection.InsertBefore "00"
+  Selection.Collapse wdCollapseEnd
+' Go and find the next occurence (if there is one)
+  Selection.Find.Execute
+Loop
+
+Selection.WholeStory
+Selection.Sort ExcludeHeader:=False, FieldNumber:="Paragraphs", _
+     SortOrder:=wdSortOrderAscending, SortFieldType:=wdSortFieldAlphanumeric
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

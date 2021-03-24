@@ -1,0 +1,72 @@
+Sub PDFspellIgnoreProperNouns()
+' Paul Beverley - Version 16.01.21
+' Underline all spelling errors except proper nouns
+
+' Options.IgnoreMixedDigits = True
+
+' Highlight the result (use zero for no highlight)
+myColour = wdYellow
+myColour = wdNoHighlight
+
+Selection.HomeKey Unit:=wdStory
+langText = Languages(Selection.LanguageID).NameLocal
+wasIgnore = Options.IgnoreMixedDigits
+Options.IgnoreMixedDigits = False
+allAlphas = ""
+For j = 192 To 255
+  If j <> 215 And j <> 247 Then allAlphas = allAlphas & ChrW(j)
+Next j
+For j = 65 To 90
+  allAlphas = allAlphas & ChrW(j)
+Next j
+For j = 97 To 122
+  allAlphas = allAlphas & ChrW(j)
+Next j
+
+j = ActiveDocument.Words.Count
+StatusBar = "Spellchecking. To go: " & Str(j)
+Set rng = ActiveDocument.Content
+
+For Each wd In ActiveDocument.Words
+  Do While InStr(ChrW(8217) & "' ", Right(wd.Text, 1)) > 0
+    wd.MoveEnd , -1
+    DoEvents
+  Loop
+  If Right(wd, 2) = ChrW(8217) & "s" Then wd.MoveEnd , -2
+  If Right(wd, 2) = "'s" Then wd.MoveEnd , -2
+  
+  If wd.Font.StrikeThrough = False Then
+    If Application.CheckSpelling(wd, MainDictionary:=langText) = False Then
+      cap = Left(wd, 1)
+      isApropernoun = (LCase(cap) <> cap)
+    ' but if it contains numbers, it's not a proper noun
+      For k = 1 To Len(wd)
+        If Asc(Mid(wd, k, 1)) < 65 Then isApropernoun = False: Exit For
+      Next k
+    ' Check the previous character
+    
+      rng.Start = wd.Start - 1
+      rng.End = wd.Start
+      If rng > "" Then
+        If Asc(rng) = 13 Or Asc(rng) = 9 Then isApropernoun = False
+        If Left(rng, 1) = "(" Then rng.MoveStart , -1
+        rng.MoveStart , -1
+        If InStr(allAlphas & ";:,", Left(rng, 1)) = 0 Then isApropernoun = False
+      End If
+      If isApropernoun = False Then
+        wd.Font.Underline = True
+        wd.HighlightColorIndex = wdYellow
+      End If
+    End If
+  End If
+  j = j - 1
+  If j Mod 10 = 0 Then
+    StatusBar = "Spellchecking. To go: " & Str(j)
+    DoEvents ' Debug.Print "Spellchecking. To go: " & Str(j)
+  End If
+Next wd
+StatusBar = ""
+doneSpell = True
+Options.IgnoreMixedDigits = wasIgnore
+End Sub
+

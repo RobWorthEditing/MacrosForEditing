@@ -1,0 +1,82 @@
+Sub FindStyle()
+' Paul Beverley - Version 30.12.10
+' Find text in this style
+
+' Turn the selected text into Normal style
+Selection.Style = wdStyleNormal
+' and records its parameters
+nmlSize = Selection.Font.Size
+nmlFont = Selection.Font.Name
+nmlColour = Selection.Font.Color
+' undo the change, i.e. restore the text's original style
+WordBasic.EditUndo
+
+' Check the text's emphasis
+isBold = Selection.Font.Bold
+isItalic = Selection.Font.Italic
+isSuper = Selection.Font.Superscript
+isSub = Selection.Font.Subscript
+isSmalls = Selection.Font.SmallCaps
+thisSize = Selection.Font.Size
+thisFont = Selection.Font.Name
+thisColour = Selection.Font.Color
+' First find all the existing style
+endWas = Selection.End
+Selection.Start = Selection.End
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = ""
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  If isBold = True Then .Font.Bold = True
+  If isItalic = True Then .Font.Italic = True
+  If isSuper = True Then .Font.Superscript = True
+  If isSub = True Then .Font.Subscript = True
+  If isSmalls = True Then .Font.SmallCaps = True
+  If thisSize <> nmlSize Then .Font.Size = thisSize
+  If thisFont <> nmlFont Then .Font.Name = thisFont
+  If thisColour <> nmlColour Then .Font.Color = thisColour
+  .Wrap = wdFindStop
+  .Forward = True
+  .Execute
+End With
+If Selection.Start = endWas Then
+  Selection.Start = Selection.End
+Else
+  Selection.End = Selection.Start
+End If
+' Now go and find the next one
+hereNow = Selection.End
+With Selection.Find
+'  .Forward = False
+  .Execute
+End With
+
+If Selection.Start = hereNow And Selection.End = hereNow Then
+  If Selection.Find.Found = False Then Beep
+Else
+' Move the screen display down a couple of lines
+  hereNow = Selection.Start
+  Selection.MoveUp Unit:=wdLine, Count:=2
+  Selection.MoveDown Unit:=wdLine, Count:=2
+  With Selection.Find
+    .Forward = True
+    .Execute
+  End With
+  If Selection.Start > hereNow Then
+    With Selection.Find
+      .Forward = False
+      .Execute
+    End With
+  End If
+End If
+With Selection.Find
+  .Forward = True
+  .Wrap = wdFindContinue
+End With
+End Sub
+

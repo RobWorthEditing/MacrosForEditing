@@ -1,0 +1,28 @@
+Sub GermanQuotes()
+' Paul Beverley - Version 14.02.13
+' Switch UK quotes to German quotes
+
+Options.AutoFormatAsYouTypeReplaceQuotes = False
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8220)
+  .Wrap = wdFindContinue
+  .Replacement.Text = ChrW(8222)
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8221)
+  .Wrap = wdFindContinue
+  .Replacement.Text = ChrW(8220)
+  .Execute Replace:=wdReplaceAll
+End With
+Options.AutoFormatAsYouTypeReplaceQuotes = True
+End Sub
+

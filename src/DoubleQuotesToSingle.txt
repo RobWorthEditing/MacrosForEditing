@@ -1,0 +1,50 @@
+Sub DoubleQuotesToSingle()
+' Paul Beverley - Version 31.08.16
+' Changes the curly quotes on a given phrase from double to single
+
+thisPhrase = InputBox("Phrase to change?", "DoubleQuotesToSingle")
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start
+
+' Go and find the first occurrence
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = Chr(34) & thisPhrase & Chr(34)
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+' If you want to count them...
+  myCount = myCount + 1
+' Note where the end of the found item is
+  myStart = rng.Start
+  myEnd = rng.End
+  rng.Collapse wdCollapseEnd
+  rng.MoveStart , -1
+  ' Fiddle factor for Gordon Hooper's 'problem'
+  If rng.Text <> Chr(34) Then
+    Selection.MoveStart , 1
+    Selection.MoveEnd , 1
+  End If
+  rng.Delete
+  rng.InsertAfter Text:=ChrW(8217)
+  rng.Start = myStart
+  rng.End = myStart + 1
+  rng.Delete
+  rng.InsertAfter Text:=ChrW(8216)
+  rng.Start = myStart + 2
+  rng.End = myStart + 2
+  rng.Find.Execute
+Loop
+MsgBox "Changed: " & myCount
+End Sub
+

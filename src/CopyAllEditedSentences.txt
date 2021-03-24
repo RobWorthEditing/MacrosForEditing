@@ -1,0 +1,45 @@
+Sub CopyAllEditedSentences()
+' Paul Beverley - Version 30.06.20
+' Copies all sentences that have tracked edits in them
+
+ActiveDocument.TrackRevisions = False
+Set rngSource = ActiveDocument.Content
+Documents.Add
+Selection.FormattedText = rngSource.FormattedText
+Selection.EndKey Unit:=wdStory
+
+enCount = ActiveDocument.Endnotes.Count
+If enCount > 0 Then
+  ActiveDocument.StoryRanges(wdEndnotesStory).Copy
+  Selection.Paste
+  For i = enCount To 1 Step -1
+    ActiveDocument.Endnotes(i).Delete
+  Next i
+End If
+
+fnCount = ActiveDocument.Footnotes.Count
+If fnCount > 0 Then
+  ActiveDocument.StoryRanges(wdFootnotesStory).Copy
+  Selection.Paste
+  For i = fnCount To 1 Step -1
+    ActiveDocument.Footnotes(i).Delete
+  Next i
+End If
+
+snCount = ActiveDocument.Sentences.Count
+For i = snCount To 1 Step -1
+  Set sn = ActiveDocument.Sentences(i)
+    sn.Select
+  snWas = sn.Text
+  sn.Revisions.RejectAll
+  If sn.Text = snWas Then
+    sn.Delete
+  Else
+  dcvsd = 0
+    WordBasic.EditUndo
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=vbCr
+  End If
+Next i
+End Sub
+

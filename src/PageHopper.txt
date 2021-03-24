@@ -1,0 +1,8 @@
+Sub PageHopper()
+' Paul Beverley - Version 08.12.10
+' Go to page x
+' Alt-G
+myPage = InputBox("Go to page?", "Page Hopper")
+Selection.GoTo What:=wdGoToPage, Count:=myPage
+End Sub
+

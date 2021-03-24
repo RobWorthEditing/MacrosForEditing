@@ -1,0 +1,146 @@
+Sub FrequencyWordLength()
+' Paul Beverley - Version 15.04.20
+' Creates a histogram of word lengths
+
+maxBlocks = 60
+longWord = 12
+doFrequency = True
+
+CR = vbCr: CR2 = CR & CR
+If doFrequency = True Then
+  myResponse = MsgBox("Include frequency of long words?" _
+       & CR2 & "(A slow process on big files)", vbQuestion _
+       + vbYesNoCancel, "Frequency Word Length")
+  If myResponse = vbCancel Then Exit Sub
+  If myResponse = vbNo Then doFrequency = False
+End If
+
+maxLen = 80
+ReDim h(maxLen) As Integer
+Set rng = ActiveDocument.Content
+n = InStr(ActiveDocument.Content, vbCr & "The end" & vbCr)
+If n > 0 Then
+  rng.Start = n + 7
+  rng.Delete
+Else
+  Set rng = ActiveDocument.Content
+  Documents.Add
+  Selection.Text = rng.Text
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ChrW(8217) & "s"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    
+    .Text = "[/\-]"
+    .Replacement.Text = " "
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    
+    .Text = "([a-zA-Z0-9]).([a-zA-Z0-9])"
+    .Replacement.Text = "\1 \2"
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    
+    .Text = "[!a-zA-Z0-9 ^13]"
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  Selection.InsertAfter Text:=vbCr & "The end" & vbCr
+End If
+
+maxCount = 0
+sps = "                       "
+loadsSpaces = sps & sps & sps & sps & sps
+allLong = ""
+Set rng = ActiveDocument.Content
+For Each myPara In ActiveDocument.Paragraphs
+  If myPara.Range.Text = "The end" & vbCr Then Exit For
+  For Each wd In myPara.Range.Words
+    w = Trim(wd)
+    cat = Len(w)
+    h(cat) = h(cat) + 1
+    If cat > longWord - 1 And doFrequency = True Then
+      wPlus = vbTab & LCase(w) & vbCr
+      If InStr(allLong, wPlus) = 0 Then
+        allLong = allLong & Trim(Str(100 + cat)) & wPlus
+      End If
+    End If
+    DoEvents
+    rng.Start = myPara.Range.End
+    toGo = rng.Paragraphs.Count
+  Next wd
+  StatusBar = loadsSpaces & "Paragraphs to go: " & Str(Int(toGo))
+Next myPara
+
+gotLast = False
+For i = maxLen To 1 Step -1
+  If gotLast = False And h(i) > 0 Then
+    lastItem = i
+    gotLast = True
+  End If
+  If h(i) > maxCount Then maxCount = h(i)
+Next i
+
+oneBlock = maxCount / maxBlocks
+Selection.EndKey Unit:=wdStory
+Selection.TypeText Text:=vbCr & vbCr
+myResult = ""
+For i = 1 To lastItem
+  myResult = myResult & Trim(Str(i)) & vbTab
+  For j = 1 To Int(h(i) / oneBlock)
+    myResult = myResult & ChrW(9632)
+  Next j
+  myResult = myResult & "    " & Trim(Str(h(i))) & vbCr
+Next i
+Selection.TypeText Text:=myResult & CR2
+Beep
+If doFrequency = True Then
+  Set rng = ActiveDocument.Range(Selection.End, ActiveDocument.Content.End)
+  rng.InsertAfter Text:=allLong
+  rng.Sort SortOrder:=wdSortOrderAscending
+  ss = rng.Start
+  wds = Split(rng, vbCr)
+  totWds = UBound(wds)
+  myResult = ""
+  nowWordLen = 0
+  For i = 1 To totWds - 1
+    myText = wds(i)
+    wd = Mid(wds(i), 5)
+    ln = Val(Left(wds(i), 3)) - 100
+    Set rng = ActiveDocument.Content
+    lenWas = rng.End
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = wd
+      .Wrap = wdFindContinue
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWholeWord = True
+      .MatchWildcards = False
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    End With
+    lenNow = rng.End
+    WordBasic.EditUndo
+    freq = (lenWas - lenNow) / ln - 1
+    If ln > nowWordLen Then
+       myResult = myResult & CR & "(" & Trim(Str(ln)) & ")" & CR
+       nowWordLen = ln
+    End If
+    myResult = myResult & wd & vbTab & Trim(Str(freq)) & CR
+    StatusBar = loadsSpaces & "Words to go: " & _
+         Str(Int(totWds - i))
+  Next i
+  Selection.Start = ss
+  Selection.TypeText Text:=myResult
+  Beep
+End If
+End Sub
+

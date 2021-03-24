@@ -1,0 +1,98 @@
+Sub URLlauncher()
+' Paul Beverley - Version 14.01.21
+' Launches successive URLs from the text
+
+numberOfURLs = 10
+
+highlightURL = True
+myHighlight = wdGray25
+
+acceptableChars = "/a-zA-Z0-9.,;:=&#\?\(\)\[\]_+\-%" _
+     & ChrW(8211) & ChrW(8212)
+If Selection.Start = Selection.End Then
+  numberOfURLs = 1
+  Selection.Expand wdWord
+  Selection.Collapse wdCollapseStart
+Else
+  myInput = InputBox("How many?", "URL launcher", _
+       Trim(Str(numberOfURLs)))
+  numberOfURLs = Val(myInput)
+  If numberOfURLs = 0 Then Exit Sub
+  Selection.Collapse wdCollapseEnd
+End If
+
+hereNow = Selection.End
+linksTotal = ActiveDocument.Hyperlinks.Count
+If linksTotal > 0 Then
+  Set rng = ActiveDocument.Content
+  Documents.Add
+  Selection.FormattedText = rng.FormattedText
+  Selection.End = hereNow
+  Selection.Start = 0
+  Selection.Delete
+  linksTotal = ActiveDocument.Hyperlinks.Count
+  If linksTotal > 0 Then
+    For i = 1 To linksTotal
+      Set hy = ActiveDocument.Hyperlinks(i)
+      myURL = ActiveDocument.Hyperlinks(i).Address
+      hy.Range.Select
+      Selection.Font.Superscript = False
+      URLtext = Selection.Text
+      Selection.Collapse wdCollapseEnd
+      If myURL <> URLtext Then
+        Selection.TypeText "  " & myURL & "  "
+      End If
+    Next i
+  End If
+  ActiveDocument.Fields.Unlink
+  Selection.HomeKey Unit:=wdStory
+  Beep
+End If
+
+nowColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myHighlight
+On Error GoTo ReportIt
+
+myFind = "[hpstw]{3,5}:[" & acceptableChars & "]{1,}"
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Wrap = False
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+Selection.Collapse wdCollapseStart
+i = 0
+Do While i < numberOfURLs And Selection.Find.Found
+  i = i + 1
+  Selection.Find.Execute
+  Do While InStr(".,", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  myURL = Selection
+  If Left(myURL, 4) = "www." Then
+    myURL = "http://" & myURL
+  End If
+  ActiveDocument.FollowHyperlink Address:=myURL
+  Selection.Collapse wdCollapseEnd
+  If highlightURL Then
+    Selection.Range.HighlightColorIndex = myHighlight
+  End If
+  Selection.Collapse wdCollapseEnd
+Loop
+Options.DefaultHighlightColorIndex = nowColour
+If numberOfURLs > 2 Then Beep
+Exit Sub
+
+ReportIt:
+If Err.Number = 4198 Then
+  MsgBox ("URL not found: " & vbCr & vbCr & myURL)
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+

@@ -1,0 +1,36 @@
+Sub PunctuationSwitcher()
+' Paul Beverley - Version 04.10.12
+' Change order of next two punctuation marks
+
+myChars = ""
+myChars = myChars + ";:.,\!\?"
+' Curly quotes
+myChars = myChars + ChrW(8216) & ChrW(8217) & ChrW(8220) & ChrW(8221)
+' Straight quotes
+myChars = myChars + "'" & Chr(34)
+' Brackets
+myChars = myChars + "\(\)\[\]\{\}"
+
+oldFind = Selection.Find.Text
+
+Selection.End = Selection.Start
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[" & myChars & "]{2}"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myPair = Selection
+pair = Right(myPair, 1) & Left(myPair, 1)
+Selection.TypeText Text:=pair
+
+With Selection.Find
+  .Text = oldFind
+  .MatchWildcards = False
+End With
+End Sub
+

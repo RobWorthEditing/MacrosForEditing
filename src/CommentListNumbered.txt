@@ -1,0 +1,138 @@
+Sub CommentListNumbered()
+' Paul Beverley - Version 16.01.21
+' List all comments in file with index numbers
+
+addAnswerLine = True
+
+deleteTScomments = True
+TScode = "T/S:"
+
+If ActiveDocument.Comments.Count = 0 Then
+  MsgBox "No comments in this file."
+  Exit Sub
+End If
+
+
+Dim cmnt As Word.Comment
+totCmnts = ActiveDocument.Comments.Count
+ReDim cmText(totCmnts) As String
+ReDim cmInits(totCmnts) As String
+CR = vbCr: CR2 = CR & CR
+
+' Collect comments, including formatting
+If ActiveDocument.Comments.Count >= 1 Then
+  ActiveDocument.StoryRanges(wdCommentsStory).Copy
+End If
+
+' Collect initials and text of comments
+For i = 1 To totCmnts
+  Set cmnt = ActiveDocument.Comments(i)
+  cmInits(i) = cmnt.Initial
+  cmText(i) = cmnt.Range
+Next i
+
+Documents.Add
+Selection.Paste
+Set rng = ActiveDocument.Content
+
+For i = 1 To totCmnts
+  lenCmnt = Len(cmText(i))
+  If lenCmnt > 10 Then
+    thisText = Left(cmText(i), 10)
+  Else
+    thisText = cmText(i)
+  End If
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = thisText
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  rng.MoveEndUntil cset:=Chr(13), Count:=wdForward
+
+  If i = 1 Then
+    rng.InsertBefore Text:="[" & cmInits(i) & Trim(Str(i)) & "]: "
+  Else
+    rng.InsertBefore Text:=CR & "[" & cmInits(i) & Trim(Str(i)) & "]: "
+  End If
+  rng.Collapse wdCollapseEnd
+Next i
+Selection.EndKey Unit:=wdStory
+Selection.TypeText CR & "["
+
+If addAnswerLine = True Then
+  Set rng = ActiveDocument.Content
+  rng.Font.Color = wdColorBlue
+
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^p["
+    .Replacement.Text = "^pAnswer: ^p^p["
+    .Replacement.Font.Color = wdColorBlack
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13[*T/S*^13"
+  .Replacement.Text = "^pAnswer: ^p^p["
+  .Replacement.Font.Color = wdColorBlack
+  .Execute Replace:=wdReplaceAll
+End With
+
+If deleteTScomments = True Then
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = TScode
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  
+  myCount = 0
+  Do While Selection.Find.Found = True
+    With Selection
+      .Expand wdParagraph
+      If addAnswerLine = True Then
+        .MoveDown Unit:=wdLine, Count:=3, Extend:=wdExtend
+      Else
+        .MoveDown Unit:=wdLine, Count:=1, Extend:=wdExtend
+      End If
+      .Delete
+      .Find.Execute
+    End With
+  Loop
+End If
+
+Set rng = ActiveDocument.Content
+rng.Font.Size = ActiveDocument.Styles(wdStyleNormal).Font.Size
+
+Selection.EndKey Unit:=wdStory
+Selection.MoveStart , -1
+Selection.Delete
+
+' Delete all page number fields
+For Each fld In ActiveDocument.Fields
+  If fld.Type = 33 Then fld.Delete
+Next fld
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText "Author queries " & ChrW(8211) & " Chapter " & vbCr & vbCr
+ActiveDocument.Paragraphs(1).Range.Style = wdStyleHeading2
+ActiveDocument.Paragraphs(1).Range.Font.ColorIndex = wdColorBlack
+Selection.MoveLeft , 2
+End Sub
+

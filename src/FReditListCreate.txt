@@ -1,0 +1,66 @@
+Sub FReditListCreate()
+' Paul Beverley - Version 20.09.18
+' Adds text to list items and applies formatting
+
+txtBefore = "~<"
+txtafter = ">|^&"
+
+' e.g. for the word followed by a comma, colon or apostrophe,
+' you could use this one:
+' txtafter = "[,':]|^&"
+
+doItalic = False
+doBold = False
+
+addColour = wdColorBlack
+' addColour = wdColorBlue
+
+' addHighlight = wdNoHighlight
+addHighlight = wdYellow
+
+
+txtBefore = Replace(txtBefore, "^", "^^")
+txtafter = Replace(txtafter, "^", "^^")
+
+Set rng = ActiveDocument.Content
+rng.InsertAfter Text:=vbCr
+rng.InsertBefore Text:=vbCr
+
+curlyNOw = Options.AutoFormatAsYouTypeReplaceQuotes
+Options.AutoFormatAsYouTypeReplaceQuotes = False
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .MatchWildcards = False
+  
+  .Text = "^p"
+  .Replacement.Text = "zxzx^pabab"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "ababzxzx"
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "zxzx"
+  .Replacement.Text = txtafter
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "abab"
+  .Replacement.Text = txtBefore
+  .Execute Replace:=wdReplaceAll
+End With
+Options.AutoFormatAsYouTypeReplaceQuotes = curlyNOw
+
+' Add features
+Set rng = ActiveDocument.Content
+If doItalic = True Then rng.Font.Italic = True
+If doBold = True Then rng.Font.Bold = True
+If addColour <> 0 Then rng.Font.Color = addColour
+rng.HighlightColorIndex = addHighlight
+ActiveDocument.Paragraphs(1).range.Delete
+numParas = ActiveDocument.Paragraphs.Count
+ActiveDocument.Paragraphs(numParas).range.Delete
+End Sub
+

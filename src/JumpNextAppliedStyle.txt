@@ -1,0 +1,17 @@
+Sub JumpNextAppliedStyle()
+' Paul Beverley - Version 11.08.20
+' Jumps to the next applied style
+
+Set rng = Selection.Range.Duplicate
+Do
+ rng.Start = rng.Start + 1
+ rng.Expand wdParagraph
+ myStyle = rng.Style
+ rng.Collapse wdCollapseEnd
+ DoEvents
+Loop Until (myStyle <> "Normal") Or rng.End > ActiveDocument.Content.End - 2
+rng.Select
+Selection.Collapse wdCollapseStart
+Beep
+End Sub
+

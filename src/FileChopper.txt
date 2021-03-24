@@ -1,0 +1,102 @@
+Sub FileChopper()
+' Paul Beverley - Version 29.08.15
+' Chop text into a number of smaller file using page breaks
+
+firstChapterNumber = 1
+
+' If you want prelims as chapter zero, use
+' firstChapterNumber = 0
+
+myPostfix = ""
+' For Macs only, use
+' myPostfix = ".docx"
+
+' To use ONLY section breaks
+' myBreak = "^b"
+
+' To use ONLY page breaks:
+' myBreak = "^m"
+
+' To use EITHER page breaks or section breaks:
+myBreak = "^m^b"
+
+myPrefix = InputBox("Filename prefix?", "File Chopper", "Chapter")
+
+If InStr(myBreak, "^m") > 0 Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^m"
+    .Wrap = False
+    .Replacement.Text = "^&zczczc"
+    .Forward = True
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+If InStr(myBreak, "^b") > 0 Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^b"
+    .Wrap = False
+    .Replacement.Text = "^&zczczc"
+    .Forward = True
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+' Go and find the first break
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zczczc"
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+rng.Collapse wdCollapseStart
+startChapter = 0
+myCount = firstChapterNumber
+
+' Split at each subsequent break
+Do
+  rng.Find.Execute
+  If rng.Find.Found = False Then
+    rng.Start = endChapter + 7
+    rng.End = ActiveDocument.range.End
+  Else
+    endChapter = rng.End - 7
+    rng.Start = startChapter
+    rng.End = endChapter
+  End If
+  rng.Copy
+  Documents.Add
+  Selection.Paste
+  myFile = Trim(Str(myCount))
+  If Len(myFile) = 1 Then myFile = "0" & myFile
+  myFile = myPrefix & myFile & myPostfix
+  ActiveDocument.SaveAs FileName:=myFile
+  ActiveDocument.Close
+  rng.End = endChapter + 7
+  rng.Collapse wdCollapseEnd
+  startChapter = rng.Start
+  rng.Select
+  myCount = myCount + 1
+Loop Until rng.Find.Found = False
+WordBasic.editundo
+MsgBox "Final chapter number: " & myCount - 1
+End Sub
+

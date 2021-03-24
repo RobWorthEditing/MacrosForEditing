@@ -1,0 +1,79 @@
+Sub FReditListChecker()
+' Paul Beverley - Version 18.02.21
+' Checks for possible anomalies in a FRedit list
+
+CR = vbCr
+nmlStyle = ActiveDocument.Styles(wdStyleNormal)
+nmlFont = ActiveDocument.Styles(wdStyleNormal).Font.Name
+nmlSize = ActiveDocument.Styles(wdStyleNormal).Font.Size
+Set rng = ActiveDocument.Range(0, Selection.End)
+parNow = rng.Paragraphs.Count
+
+For i = parNow To ActiveDocument.Paragraphs.Count
+  foundError = False
+  Set rng = ActiveDocument.Paragraphs(i).Range.Duplicate
+  Set rng2 = rng.Duplicate
+  myCmnt = ""
+  If rng.Style <> nmlStyle Then
+    myCmnt = myCmnt & CR & "Style: " & rng.Style
+  Else
+    fntName = rng.Font.Name
+    If fntName <> nmlFont Then
+      For j = 1 To rng.Characters.Count
+        funnyFont = rng.Characters(j).Font.Name
+        If funnyFont <> nmlFont Then
+          rng2.Start = rng.Start + j - 1
+          rng2.End = rng.End
+          Exit For
+        End If
+      Next j
+      myCmnt = myCmnt & CR & "Font name? (" & funnyFont & "))"
+    End If
+    fntSize = rng.Font.Size
+    If fntSize <> nmlSize Then
+      myCmnt = myCmnt & CR & "Font size? (" & fntSize & ")"
+    End If
+  End If
+  myLine = rng.Text
+  
+  If Len(myLine) > 1 And InStr(myLine, "|") = 0 And _
+       Left(myLine, 1) <> "#" Then
+    myCmnt = myCmnt & CR & "Missing pad character?"
+  End If
+  
+  ' Check if find & replace are different colour of highlight
+  If Len(myLine) > 3 And InStr(myLine, "|") > 0 Then
+    colourLeft = rng.Characters(2).HighlightColorIndex
+    colourRight = rng.Characters(Len(myLine) - 2).HighlightColorIndex
+    If colourLeft <> colourRight Then
+      myCmnt = myCmnt & CR & _
+           "Did you really mean the CHANGE highlight colour?"
+    End If
+  End If
+  
+  If myCmnt > "" Then
+    If Len(myCmnt) - Len(Replace(myCmnt, CR, "")) = 1 Then
+      myCmnt = Mid(myCmnt, 2)
+    End If
+    rng2.Select
+    ActiveDocument.ActiveWindow.LargeScroll down:=2
+    rng2.Select
+    foundError = True
+    Beep
+    myResponse = MsgBox(myCmnt & CR & CR & "Continue?", vbQuestion _
+        + vbYesNoCancel, "FReditListChecker")
+    If myResponse <> vbYes Then Exit Sub
+  End If
+Next i
+Selection.EndKey Unit:=wdStory
+Beep
+If foundError = False Then
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+  myResponse = MsgBox("No more problems", _
+       , "FReditListChecker")
+End If
+End Sub
+

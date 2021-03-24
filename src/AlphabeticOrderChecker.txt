@@ -1,0 +1,43 @@
+Sub AlphabeticOrderChecker()
+' Paul Beverley - Version 22.10.16
+' Find any suspicious non-alphabetism
+
+Selection.Collapse wdCollapseEnd
+Selection.Expand wdParagraph
+firstWordOne = Selection.Words(1)
+Do
+  Selection.MoveEnd Unit:=wdParagraph, Count:=1
+' Stop if the second line is blank
+  If Len(Selection.range.Paragraphs(2).range.Text) < 2 Then
+    Beep
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveRight , 1
+    Exit Sub
+  End If
+  firstWordTwo = Selection.range.Paragraphs(2).range.Words(1)
+
+  myLine1 = LCase(Selection.range.Paragraphs(1).range.Text)
+  myLine2 = LCase(Selection.range.Paragraphs(2).range.Text)
+  myLine1 = Replace(myLine1, "-", " ")
+  myLine1 = Replace(myLine1, ChrW(8216), "")
+  myLine1 = Replace(myLine1, "'", "")
+  myLine1 = Replace(myLine1, ",", "")
+  myLine2 = Replace(myLine2, "-", " ")
+  myLine2 = Replace(myLine2, ChrW(8216), "")
+  myLine2 = Replace(myLine2, "'", "")
+  myLine2 = Replace(myLine2, ",", "")
+' Check the alphabetism
+  If myLine1 > myLine2 And firstWordTwo <> firstWordOne Then
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveDown Unit:=wdParagraph, Count:=1
+    Selection.MoveUp Unit:=wdParagraph, Count:=1
+    Selection.MoveStart Unit:=wdParagraph, Count:=-2
+    Exit Sub
+  End If
+  Selection.MoveStart Unit:=wdParagraph, Count:=1
+  firstWordOne = Selection.Words(1)
+Loop Until Selection.End = ActiveDocument.Content.End
+Selection.MoveLeft , 1
+Beep
+End Sub
+

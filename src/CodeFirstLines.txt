@@ -1,0 +1,48 @@
+Sub CodeFirstLines()
+' Paul Beverley - Version 05.12.12
+' Prepare the file by adding codes, etc.
+
+code1 = "<CN>"
+code2 = "<CH>"
+code3 = "<CA>"
+code4 = "<A>"
+
+myLine = 1
+For Each myPara In ActiveDocument.Paragraphs
+  If Len(myPara.Range) > 1 Then
+    If myLine = 4 Then
+      myPara.Range.InsertBefore Text:=code4
+      Exit For
+    End If
+    If myLine = 3 Then
+      myPara.Range.InsertBefore Text:=code3
+      myLine = 4
+    End If
+    If myLine = 2 Then
+      myPara.Range.InsertBefore Text:=code2
+      myLine = 3
+    End If
+    If myLine = 1 Then
+      myPara.Range.InsertBefore Text:=code1
+      myLine = 2
+    End If
+  End If
+Next myPara
+
+
+' Set 1.15 spacing
+Set rng = ActiveDocument.Content
+rng.ParagraphFormat.LineSpacing = ActiveDocument.Styles(wdStyleNormal).Font.Size * 1.15
+
+' Set language UK
+
+ActiveDocument.TrackRevisions = False
+Set rng = ActiveDocument.Content
+rng.LanguageID = wdEnglishUK
+rng.NoProofing = False
+ActiveDocument.Styles(wdStyleNormal).LanguageID = wdEnglishUK
+
+' Switch on track changes
+ActiveDocument.TrackRevisions = True
+End Sub
+

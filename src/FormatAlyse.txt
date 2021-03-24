@@ -1,0 +1,328 @@
+Sub FormatAlyse()
+' Paul Beverley - Version 07.09.19
+' Highlights various formatting features
+
+' Highlighting colour
+strongHighlight = wdYellow
+' strongHighlight = 0
+boldHighlight = wdTurquoise
+' boldHighlight = 0
+italicHighlight = wdYellow
+' italicHighlight = 0
+BIHighlight = wdBrightGreen
+' BIHighlight = 0
+thinSpaceHighlight = wdGray50
+
+
+' Font colouring
+' strongColour = wdColorBlue
+strongColour = 0
+' boldColour = wdColorPink
+boldColour = 0
+' italicColour = wdColorRed
+italicColour = 0
+' BIColour = wdColorBrightGreen
+BIColour = 0
+
+myMarker = "||"
+
+' Other characters NOT to highlight on Option 8
+notThese = "\[\]\*\@" & "_+=&%"
+
+nmlStyle = ActiveDocument.Styles(wdStyleNormal)
+normalSize = ActiveDocument.Styles(nmlStyle).Font.Size
+normalFont = ActiveDocument.Styles(nmlStyle).Font.Name
+oldHighlight = Options.DefaultHighlightColorIndex
+CR = vbCr
+CR2 = CR & CR
+menuText = "1 - Font size" & CR2 & _
+           "2 - Font name" & CR2 & _
+           "3 - Style" & CR2 & _
+           "4 - Bold/italic" & CR2 & _
+           "5 - Bold/italic " & ChrW(8211) & " not in a style" & CR2 & _
+           "6 - Super/subscript" & CR2 & _
+           "7 - Diacritics" & CR2 & _
+           "8 - Various non-alpha characters (slow)" & CR2 & _
+           "9 - Funny spaces" & CR2 & _
+           "10 - Funny Symbol fonts" & CR
+
+Do
+  myJob = Val(InputBox(menuText, "Format Highlighter"))
+Loop Until myJob <= 10
+If myJob = 0 Then Exit Sub
+
+ActiveDocument.TrackRevisions = False
+
+' Clear highlighting or colouration
+Set rng = ActiveDocument.Content
+If strongHighlight > 0 Then rng.HighlightColorIndex = wdNoHighlight
+If strongColour > 0 Then rng.Font.Color = wdColorAutomatic
+
+' Clear markers
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myMarker
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Font size
+If myJob = 1 Then
+  Set rng = ActiveDocument.Content
+  If strongHighlight > 0 Then rng.HighlightColorIndex = strongHighlight
+  If strongColour > 0 Then rng.Font.Color = strongColour
+  With rng.Find
+    .Text = ""
+    .Font.Size = normalSize
+    .Replacement.Highlight = False
+    .Replacement.Font.Color = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+' Font name
+If myJob = 2 Then
+  Set rng = ActiveDocument.Content
+  If strongHighlight > 0 Then rng.HighlightColorIndex = strongHighlight
+  If strongColour > 0 Then rng.Font.Color = strongColour
+  With rng.Find
+    .Text = ""
+    .Font.Name = normalFont
+    .Replacement.Highlight = False
+    .Replacement.Font.Color = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+' Style
+If myJob = 3 Then
+  Set rng = ActiveDocument.Content
+  If strongHighlight > 0 Then rng.HighlightColorIndex = strongHighlight
+  If strongColour > 0 Then rng.Font.Color = strongColour
+  With rng.Find
+    .Text = ""
+    .Style = nmlStyle
+    .Replacement.Highlight = False
+    .Replacement.Font.Color = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+' bold/italic
+If myJob = 4 Or myJob = 5 Then
+  Options.DefaultHighlightColorIndex = boldHighlight
+  With rng.Find
+    .Text = ""
+    .Font.Bold = True
+    If boldHighlight > 0 Then .Replacement.Highlight = True
+    If boldColour > 0 Then .Replacement.Font.Color = boldColour
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  Options.DefaultHighlightColorIndex = italicHighlight
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    If italicHighlight > 0 Then .Replacement.Highlight = True
+    If italicColour > 0 Then .Replacement.Font.Color = italicColour
+    .Font.Italic = True
+    .Replacement.Highlight = True
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  Options.DefaultHighlightColorIndex = BIHighlight
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Italic = True
+    .Font.Bold = True
+    If BIColour > 0 Then .Replacement.Font.Color = BIColour
+    If BIHighlight > 0 Then .Replacement.Highlight = True
+    .Execute Replace:=wdReplaceAll
+  End With
+
+' bold/italic - not in a style
+  If myJob = 5 Then
+    Set rng = ActiveDocument.Content
+    rng.Font.Shadow = True
+ 
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ""
+      .Style = nmlStyle
+      .Replacement.Font.Shadow = False
+      .Execute Replace:=wdReplaceAll
+    End With
+  
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ""
+      .Font.Shadow = True
+      .Replacement.Font.Shadow = False
+      If boldHighlight > 0 Then .Replacement.Highlight = False
+      If boldColour > 0 Then .Replacement.Font.Color = wdColorAutomatic
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+End If
+
+' Super/Subscript
+If myJob = 6 Then
+  Options.DefaultHighlightColorIndex = strongHighlight
+  With rng.Find
+    .Text = ""
+    .Font.Superscript = True
+    If strongHighlight > 0 Then .Replacement.Highlight = True
+    .Replacement.Font.Color = strongColour
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  With rng.Find
+    .ClearFormatting
+    .Text = ""
+    .Font.Subscript = True
+    If strongHighlight > 0 Then .Replacement.Highlight = True
+    .Replacement.Font.Color = strongColour
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+' Diacritics
+If myJob = 7 Then
+  Options.DefaultHighlightColorIndex = strongHighlight
+  With rng.Find
+    .Text = "[a-zA-Z ,.0-9\-/\(\);:]{1,}"
+    If strongHighlight > 0 Then .Replacement.Highlight = True
+    .Replacement.Font.Color = strongColour
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  With rng.Find
+    .Text = "[abcdefghijklmnopqrstuvwxyz ,.0-9" & _
+         "\-/\(\);:ABCDEFGHIJKLMNOPQRSTUVWXYZ]{1,}"
+    .Replacement.Highlight = False
+    .Replacement.Font.Color = wdColorAutomatic
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+' Various non-alpha characters
+If myJob = 8 Then
+  Set rng = ActiveDocument.Content
+  If strongHighlight > 0 Then rng.HighlightColorIndex = strongHighlight
+  Options.DefaultHighlightColorIndex = strongHighlight
+
+  With rng.Find
+    .Text = "[a-zA-Z ,.0-9^13^t" & ChrW(8211) & ChrW(8216) _
+         & ChrW(8217) & ChrW(8220) & notThese _
+         & ChrW(8221) & ChrW(8226) _
+         & Chr(39) & "\-/\(\);:\!\?"" ]{1,}"
+    .Replacement.Highlight = False
+    .Replacement.Font.Color = wdColorAutomatic
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .Text = "^13{1,}"
+    .Replacement.Highlight = False
+    .Replacement.Font.Color = wdColorAutomatic
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+
+' A funny space on the end of the line is invisible, so add markers
+  With rng.Find
+    .Text = "([" & ChrW(8192) & "-" & ChrW(8201) & "])" & "^13"
+    .Replacement.Text = myMarker & "\1" & myMarker & "^p"
+    .MatchWildcards = True
+    If strongHighlight > 0 Then .Replacement.Highlight = True
+    If strongColour > 0 Then .Replacement.Font.Color = strongColour
+    .Execute Replace:=wdReplaceAll
+  End With
+    
+' Give thin spaces a better Highlight
+  Options.DefaultHighlightColorIndex = thinSpaceHighlight
+  With rng.Find
+    .Text = ChrW(8201)
+    If strongHighlight > 0 Then .Replacement.Highlight = True
+    If strongColour > 0 Then .Replacement.Font.Color = strongColour
+    .Replacement.Text = "^&"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  Beep
+End If
+
+' Special spaces
+If myJob = 9 Then
+  Options.DefaultHighlightColorIndex = strongHighlight
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .Text = "[" & ChrW(8192) & "-" & ChrW(8201) & "]"
+    If strongHighlight > 0 Then .Replacement.Highlight = True
+    If strongColour > 0 Then .Replacement.Font.Color = strongColour
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+
+' A funny space on the end of the line is invisible, so add markers
+  With rng.Find
+    .Text = "([" & ChrW(8192) & "-" & ChrW(8201) & "])" & "^13"
+    If strongHighlight > 0 Then .Replacement.Highlight = True
+    If strongColour > 0 Then .Replacement.Font.Color = strongColour
+    .Replacement.Text = myMarker & "\1" & myMarker & "^p"
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+    
+' Give thin spaces a better Highlight
+  Options.DefaultHighlightColorIndex = thinSpaceHighlight
+  With rng.Find
+    .Text = ChrW(8201)
+    If strongHighlight > 0 Then .Replacement.Highlight = True
+    If strongColour > 0 Then .Replacement.Font.Color = strongColour
+    .Replacement.Text = "^&"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+
+' Give non-breaking spaces a highlight
+  Options.DefaultHighlightColorIndex = italicHighlight
+  With rng.Find
+    .Text = ChrW(160)
+    If strongHighlight > 0 Then .Replacement.Highlight = True
+    If strongColour > 0 Then .Replacement.Font.Color = strongColour
+    .Replacement.Text = "^&"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+' Symbol fonts
+If myJob = 10 Then
+  Options.DefaultHighlightColorIndex = strongHighlight
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .Text = "[" & ChrW(-4096) & "-" & ChrW(-3000) & "]"
+    If strongHighlight > 0 Then .Replacement.Highlight = True
+    If strongColour > 0 Then .Replacement.Font.Color = strongColour
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+
+End If
+Options.DefaultHighlightColorIndex = oldHighlight
+End Sub
+

@@ -1,0 +1,44 @@
+Sub CitationListTrimmer()
+' Paul Beverley - Version 16.01.21
+' Tidies up 'funny' items in a citation list.
+
+Do
+  Selection.Expand wdParagraph
+  myText = Selection
+  paraLen = Len(myText)
+  myText = Replace(myText, " ", "X")
+  myText = Replace(myText, "-", "X")
+  myText2 = ""
+  For i = 1 To Len(myText) - 1
+    ch = Asc(Mid(myText, i, 1))
+    If ch > 64 Then myText2 = myText2 & Chr(ch)
+  Next i
+  ' compare
+  gotManyDates = (Len(myText) - Len(myText2) > 5)
+  
+  ' check if there's an 'and' in the middle and, if so,
+  ' if there's a date either side.
+  If gotManyDates = True Then
+    Selection.Expand wdParagraph
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveLeft , 1
+    Do While InStr(" ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+    endBit = Selection.Start
+    
+    Selection.Expand wdParagraph
+    Selection.Collapse wdCollapseStart
+    Selection.MoveStartUntil cset:="123456789", Count:=wdForward
+    
+    Selection.End = endBit
+    Selection.Delete
+    
+    Selection.Expand wdParagraph
+    paraLen = Len(Selection)
+  End If
+  Selection.Collapse wdCollapseEnd
+Loop Until paraLen < 3
+End Sub
+

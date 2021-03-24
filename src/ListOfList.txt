@@ -1,0 +1,36 @@
+Sub ListOfList()
+' Paul Beverley - Version 16.01.21
+' Lists all items in a list that contain a particular text
+
+CaseSensitive = True
+addBlankLine = False
+
+Set doc = ActiveDocument
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(" ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+End If
+myWord = Selection
+Selection.Collapse wdCollapseStart
+myText = InputBox("Find?", "ListOfList", myWord)
+If myText = "" Then Exit Sub
+Documents.Add
+For Each myPara In doc.Paragraphs
+  DoEvents
+  myParaText = myPara.Range.Text
+  If CaseSensitive = False Then
+    myParaText = LCase(myParaText)
+    myText = LCase(myText)
+  End If
+  If InStr(myParaText, myText) > 0 Then
+    Selection.Range.FormattedText = myPara.Range.FormattedText
+    Selection.EndKey Unit:=wdStory
+    If addBlankLine = True Then Selection.TypeText vbCr
+  End If
+Next myPara
+Beep
+End Sub
+

@@ -1,0 +1,19 @@
+Sub FootnoteFiddle()
+' Paul Beverley - Version 01.06.10
+' Makes changes to all footnotes
+For i = 1 To ActiveDocument.Footnotes.Count
+  Set rng = ActiveDocument.Footnotes(i).Range
+  rng.Start = rng.End - 1
+  myChar = rng
+  ' If the final character is a space, delete it
+
+  If myChar = " " Then
+    rng.Delete
+    rng.Start = rng.End - 1
+    myChar = rng
+  End If
+  ' If the final character is now NOT a full point, add one
+  If myChar <> "." Then rng.InsertAfter "."
+Next
+End Sub
+

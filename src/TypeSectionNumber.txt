@@ -1,0 +1,121 @@
+Sub TypeSectionNumber()
+' Paul Beverley - Version 29.03.17
+' Adds a section number to the current heading
+
+doSentenceCase = False
+doTitleCase = True
+
+chopThese = ".,: "
+chapNum = "1"
+
+varExists = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "secNumber" Then varExists = True: Exit For
+Next v
+
+If varExists = False Then ActiveDocument.Variables.Add "secNumber", chapNum & ".0"
+secNumText = ActiveDocument.Variables("secNumber")
+
+Selection.Expand wdParagraph
+tabPos = InStr(Selection, vbTab)
+If tabPos > 0 Then
+  secNumText = Left(Selection, tabPos - 1)
+  ActiveDocument.Variables("secNumber") = secNumText
+  Beep
+  Selection.Collapse wdCollapseEnd
+  Exit Sub
+End If
+
+prevNumText = secNumText
+myIndex = Right(secNumText, 2)
+myRoot = Left(secNumText, Len(secNumText) - 2)
+If Left(myIndex, 1) = " " Then
+  myIndex = Right(secNumText, 1)
+  myRoot = Left(secNumText, Len(secNumText) - 1)
+End If
+If Left(myIndex, 1) = "." Then
+  myIndex = Right(secNumText, 1)
+  myRoot = Left(secNumText, Len(secNumText) - 1)
+End If
+secNumText = myRoot & Trim(Str(Val(myIndex) + 1))
+Selection.Expand wdParagraph
+Selection.MoveEnd , -1
+Selection.Start = Selection.End - 1
+If InStr(chopThese, Selection) > 0 Then Selection.Delete
+Selection.Expand wdParagraph
+Selection.MoveEnd , -1
+Selection.Start = Selection.End - 1
+If InStr(chopThese, Selection) > 0 Then Selection.Delete
+Selection.Expand wdParagraph
+Selection.MoveEnd , -1
+Selection.Start = Selection.End - 1
+If InStr(chopThese, Selection) > 0 Then Selection.Delete
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+myText = InputBox("Number?", "TypeSectionNumber", secNumText)
+If myText = "" Then Exit Sub
+
+If myText = "-" Then
+  myText = prevNumText & ".1"
+End If
+
+If myText = "+" Then
+  n = Split(secNumText, ".")
+  Debug.Print secNumText
+  myLevel = UBound(n)
+  myText = Trim(Str(n(0)))
+  If myLevel = 1 Then
+    MsgBox "Use ""-"" to go to a lower level heading."
+    Exit Sub
+  End If
+  For i = 1 To myLevel - 1
+    If i = myLevel - 1 Then
+      myText = myText & "." & Trim(Str(n(i) + 1))
+    Else
+      myText = myText & "." & Trim(Str(n(i)))
+    End If
+  Next i
+End If
+
+If myText = "++" Then
+  n = Split(secNumText, ".")
+  Debug.Print secNumText
+  myLevel = UBound(n)
+  myText = Trim(Str(n(0)))
+  If myLevel = 1 Then
+    MsgBox "Use ""-"" to go to a lower level heading."
+    Exit Sub
+  End If
+  For i = 1 To myLevel - 2
+    If i = myLevel - 2 Then
+      myText = myText & "." & Trim(Str(n(i) + 1))
+    Else
+      myText = myText & "." & Trim(Str(n(i)))
+    End If
+  Next i
+End If
+
+If myText = "+++" Then
+  n = Split(secNumText, ".")
+  Debug.Print secNumText
+  myLevel = UBound(n)
+  myText = Trim(Str(n(0)))
+  If myLevel = 1 Then
+    MsgBox "Use ""-"" to go to a lower level heading."
+    Exit Sub
+  End If
+  For i = 1 To myLevel - 3
+    If i = myLevel - 3 Then
+      myText = myText & "." & Trim(Str(n(i) + 1))
+    Else
+      myText = myText & "." & Trim(Str(n(i)))
+    End If
+  Next i
+End If
+Selection.TypeText Text:=myText & vbTab
+ActiveDocument.Variables("secNumber") = myText
+
+If doTitleCase = True Then Call TitleHeadingCapper
+If doSentenceCase = True Then Call HeadingSentenceCase
+End Sub
+

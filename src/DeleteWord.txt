@@ -1,0 +1,31 @@
+Sub DeleteWord()
+' Paul Beverley - Version 13.01.21
+' Deletes current word, but no punctuation
+
+' This first one is aimed at use with Dictate
+If Asc(Selection) = 13 Then
+  Selection.MoveLeft wdWord, 1, Extend:=wdExtend
+  Selection.Delete
+  Exit Sub
+End If
+
+' Now just as normal
+If InStr(" ,.!;:", Selection) > 0 Then Selection.MoveLeft , 1
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Set rng = Selection.Range
+rng.Collapse wdCollapseEnd
+rng.MoveEnd , 1
+nextchar = rng.Text
+Set rng = Selection.Range
+rng.Collapse wdCollapseStart
+rng.MoveStart , -1
+prevChar = rng.Text
+If nextchar = " " Then Selection.MoveEnd , 1
+If prevChar = " " And nextchar <> " " Then Selection.MoveStart , -1
+Selection.Delete
+End Sub
+

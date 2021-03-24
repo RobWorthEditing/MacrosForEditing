@@ -1,0 +1,53 @@
+Sub DuplicatedWordsHighlight()
+' Paul Beverley - Version 03.02.16
+' Add a highlight to any duplicate words in a text, e.g. "the the"
+
+myColour1 = wdGray25
+myColour2 = wdBrightGreen
+myColour3 = wdYellow
+
+doThreeWords = True
+
+find1 = "(<[a-zA-Z]{1,})[ .,\!\?:;]{1,}\1[ .,\!\?:;]"
+find2 = "(<[a-zA-Z]{1,}^32[a-zA-Z]{1,})[ .,\!\?:;]{1,}\1[ .,\!\?:;]"
+find3 = "(<[a-zA-Z]{1,}^32[a-zA-Z]{1,}^32[a-zA-Z]{1,})" _
+      & "[ .,\!\?:;]{1,}\1[ .,\!\?:;]"
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour1
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = find1
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .Forward = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+Options.DefaultHighlightColorIndex = myColour2
+With rng.Find
+  .Text = find2
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+If doThreeWords = True Then
+  Options.DefaultHighlightColorIndex = myColour3
+  With rng.Find
+    .Text = find3
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

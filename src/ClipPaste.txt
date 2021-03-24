@@ -1,0 +1,105 @@
+Sub ClipPaste()
+' Paul Beverley - Version 15.04.20
+' Collects and pastes an item from a clip list
+
+myLabel = "#"
+
+useDedicatedFile = True
+myClipFile = "zClipboard.docx"
+
+' On Windows, it will need to be something like:
+myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff"
+
+' On a Mac, it will need to be something like:
+myFolder = "/Users/Paul/My Documents/Macro stuff"
+
+textOnly = False
+
+Set myDoc = ActiveDocument
+
+' Go and look for the clip file
+If useDedicatedFile = False Then myClipFile = "Document"
+On Error GoTo ReportIt
+gottaList = False
+For i = 1 To Application.Windows.Count
+  Set thisFile = Application.Windows(i).Document
+  If InStr(thisFile.Name, myClipFile) > 0 _
+       And myDoc.Name <> thisFile.Name _
+       And thisFile.Content.Characters(1) = myLabel Then
+    Set listDoc = Application.Windows(i).Document
+    gottaList = True
+    Exit For
+  End If
+Next i
+If gottaList = False Then
+  If useDedicatedFile = True Then
+    Documents.Open myFolder & myClipFile
+    Set listDoc = ActiveDocument
+    myDoc.Activate
+  Else
+    Beep
+    myResponse = MsgBox("Can't find a clipboard file", _
+         vbOKOnly, "ClipStore")
+    Exit Sub
+  End If
+End If
+Set rng = listDoc.Content
+
+txt = rng.Text
+labelPos = InStr(txt, myLabel)
+maxClips = 0
+Do
+  txt = Mid(txt, labelPos + 1)
+  myNum = Val(txt)
+  labelPos = InStr(txt, myLabel)
+  If myNum > maxClips Then maxClips = myNum
+Loop Until labelPos = 0
+
+Do
+  thisNumber = InputBox("Clip number?", "ClipPaste")
+  myNumber = Val(thisNumber)
+  If thisNumber = "0" Then
+    Set rng = listDoc.Content
+    rng.Collapse wdCollapseEnd
+    rng.MoveStartUntil cset:="#", Count:=wdBackward
+    myNumber = Val(rng.Text)
+    asdgfas = 0
+  End If
+  If myNumber > maxClips Then Beep
+  If myNumber = 0 Then
+    Beep
+    Exit Sub
+  End If
+Loop Until myNumber <= maxClips
+
+Set rng = listDoc.Content
+myStart = InStr(rng.Text, myLabel & Trim(Str(myNumber)) _
+     & vbCr) + 1 + Len(myNumber)
+rng.Start = myStart
+endClip = InStr(rng.Text, myLabel)
+If endClip > 0 Then
+  rng.End = myStart + endClip - 2
+Else
+  rng.End = listDoc.Content.End - 2
+End If
+rng.Copy
+If textOnly = True Then
+  Selection.PasteSpecial DataType:=wdPasteText
+Else
+  Selection.Paste
+End If
+Exit Sub
+
+ReportIt:
+If Err.Number = 5174 Then
+  Err.Clear
+  Beep
+  myClipFile = Replace(myClipFile, ".docx", "")
+  myResponse = MsgBox("Can't find your clipboard file: """ _
+       & myClipFile & """", vbOKOnly, "ClipStore")
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+

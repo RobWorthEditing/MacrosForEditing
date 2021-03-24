@@ -1,0 +1,59 @@
+Sub ReferenceNameFinder()
+' Paul Beverley - Version 08.04.11
+' Get date from reference and add after author citation
+
+myHLcolour = wdYellow
+' myHLcolour = 0
+' myColour = wdColorRed
+myColour = 0
+
+Do
+  Selection.Paragraphs(1).Range.Select
+  endPara = Selection.End
+  startPara = Selection.Start
+  myRef = Selection
+  myDatePos = InStr(myRef, "(")
+  myNamePos = InStr(myRef, ",") - 1
+  If myDatePos > 0 And myNamePos > -1 Then
+    Selection.End = startPara + myNamePos
+    myName = Selection
+    Selection.Start = startPara + myDatePos
+    Selection.End = Selection.Start + 4
+    myDate = Selection
+    Selection.HomeKey Unit:=wdStory
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .MatchWildcards = True
+      .Text = "<" & myName & ">"
+      .Replacement.Text = ""
+      .Execute
+    End With
+    If Selection.Find.Found And Selection.Start < startPara Then
+      startName = Selection.Start
+      endName = Selection.End
+      Selection.End = Selection.Start
+      Selection.MoveStart wdCharacter, -25
+      myBit = Selection
+      Selection.Start = endName
+      Selection.End = endName + 2
+      valNext = Val(Selection)
+      Selection.End = Selection.Start
+      If InStr(myBit, "(") > 0 Then
+         If valNext > 0 Then myDate = myDate & ":"
+      Else
+        myDate = "(" & myDate & ")"
+      End If
+      Selection.InsertAfter Text:=" " & myDate
+      Selection.Start = startName
+      If myColour > 0 Then Selection.Range.Font.Color = myColour
+      If myHLcolour > 0 Then Selection.Range.HighlightColorIndex = myHLcolour
+    End If
+  Else
+    Selection.Start = endPara
+  End If
+  Selection.Start = endPara + Len(myDate) + 1
+Loop Until endPara = ActiveDocument.Range.End
+Selection.Start = Selection.End
+End Sub
+

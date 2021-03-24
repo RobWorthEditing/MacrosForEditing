@@ -1,0 +1,92 @@
+Sub PDFHyphenChecker()
+' Paul Beverley - Version 25.10.19
+' Checks the line-end hyphenation of a converted PDF
+
+minLength = 4
+Set rng = ActiveDocument.range(0, 1)
+myLanguage = rng.LanguageID
+
+CR = vbCr: CR2 = CR & CR
+Set rng = ActiveDocument.Content
+OKposn = InStr(rng.Text, "OKwords")
+If OKposn = 0 Then
+  rng.InsertAfter Text:=CR2 & "OKwords" & CR2
+Else
+  OKwords = Mid(rng.Text, OKposn)
+End If
+
+stopNow = False
+Set rng = ActiveDocument.range(0, Selection.End)
+paraNum = rng.Paragraphs.Count
+
+For pn = paraNum To ActiveDocument.Paragraphs.Count
+  Set rng = ActiveDocument.Paragraphs(pn).range
+  numWds = rng.Words.Count
+  If numWds > 2 And UCase(rng) <> LCase(rng) Then
+    w = numWds
+    Do
+      w = w - 1
+      wd = Trim(rng.Words(w))
+    Loop Until LCase(wd) <> UCase(wd)
+    DoEvents
+    Set rngOK = ActiveDocument.Content
+    OKstart = InStr(rngOK.Text, "OKwords")
+    If OKstart = 0 Then
+      MsgBox "OKwordslist corrupted or missing?"
+      Selection.EndKey Unit:=wdStory
+      Exit Sub
+    Else
+      rngOK.Start = OKstart + 6
+      spOK = (InStr(rngOK.Text, CR & wd & CR) > 0)
+    End If
+    If Not (spOK Or Application.CheckSpelling(wd, _
+           MainDictionary:=Languages(myLanguage).NameLocal) _
+                Or Len(wd) < minLength - 1) Then
+      For i = 2 To Len(wd) - 2
+        wd1 = Left(wd, i)
+        wd2 = Mid(wd, i + 1)
+        ok1 = Application.CheckSpelling(wd1, _
+           MainDictionary:=Languages(myLanguage).NameLocal)
+        ok2 = Application.CheckSpelling(wd2, _
+           MainDictionary:=Languages(myLanguage).NameLocal)
+        gotPair = ok1 And ok2
+        If gotPair Then Exit For
+      Next i
+      rng.Words(w).Select
+      If gotPair Then
+        newWord = wd1 & "-" & wd2
+        Selection.Text = newWord
+        Selection.Collapse wdCollapseStart
+        Beep
+        myTime = Timer
+        Do
+        Loop Until Timer > myTime + 0.3
+        Beep
+        myResponse = MsgBox("Is it OK to change:  " & newWord, vbQuestion _
+              + vbYesNoCancel, "PDFHyphenChecker")
+        If myResponse <> vbYes Then
+          WordBasic.EditUndo
+          If myResponse = vbCancel Then
+            ActiveDocument.Paragraphs(pn + 1).range.Select
+            Selection.Collapse wdCollapseEnd
+            Exit Sub
+          Else
+            rngOK.InsertAfter Text:=wd & CR
+          End If
+        End If
+      Else
+        Selection.Collapse wdCollapseEnd
+        myResponse = MsgBox("Is  " & wd & "  an OK word?", vbQuestion _
+              + vbYesNoCancel, "PDFHyphenChecker")
+        If myResponse = vbCancel Then
+          Exit Sub
+        Else
+          Debug.Print rngOK.Start, rngOK.End
+          rngOK.InsertAfter Text:=wd & CR
+        End If
+      End If
+    End If
+  End If
+Next pn
+End Sub
+

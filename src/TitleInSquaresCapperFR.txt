@@ -1,0 +1,88 @@
+Sub TitleInSquaresCapperFR()
+' Paul Beverley - Version 22.01.20
+' Uppercase initial letter of all major words (title case)
+
+' Do you want an initial cap after a colon?
+colonCap = True
+' Do you want an initial cap after a hyphen?
+hyphenCap = False
+
+forText = "["
+afterText = "]"
+
+' List of lowercase words, each surrounded by spaces
+
+'lclist = " a an and at by for from in into is it of "
+'lclist = lclist & " on or that the their they to "
+'lclist = lclist & " we with "
+
+lcList = " de le la les des du au et dans sur "
+lcList = lcList & " un une en à pour chez ou"
+
+myBits = " d' l' d" & ChrW(8216) & " l" & ChrW(8216)
+
+Set rng = Selection.range.Duplicate
+rng.End = rng.Start + 1000
+myStart = InStr(rng, forText)
+myEnd = InStr(rng, afterText) - 1
+rng.End = rng.Start + myEnd
+rng.Start = rng.Start + myStart
+If LCase(Left(rng, 1)) = UCase(Left(rng, 1)) Then
+  rng.Start = rng.Start + 1
+End If
+If LCase(Right(rng, 1)) = UCase(Right(rng, 1)) Then
+  rng.End = rng.End - 1
+End If
+
+isColon = False
+isHyphen = False
+
+For Each wd In rng.Words
+  wasColon = isColon
+  wasHyphen = isHyphen
+  tst = wd.Text
+  tst = LCase(Trim(tst))
+  isWord = LCase(tst) <> UCase(tst)
+  isColon = (Left(tst, 1) = ":")
+  isHyphen = (Left(tst, 1) = "-")
+  isTitle = (InStr(lcList, " " & tst & " ") = 0)
+  If isWord Then
+    Set rng2 = wd.Duplicate
+    If LCase(Left(rng2, 1)) = UCase(Left(rng2, 1)) Then
+      rng2.Start = rng2.Start + 1
+    End If
+    isApostrophe = (InStr(myBits, " " & Left(LCase(rng2.Text), 2) & " ") > 0)
+    Debug.Print rng2, isTitle; isApostrophe
+    If isTitle Then
+      If isApostrophe Then
+        If rng2.Characters(3) <> UCase(rng2.Characters(3)) Then
+          rng2.Characters(3) = UCase(rng2.Characters(3))
+        End If
+        If rng2.Characters(1) <> LCase(rng2.Characters(1)) Then
+          rng2.Characters(1) = LCase(rng2.Characters(1))
+        End If
+      Else
+        If rng2.Characters(1) <> UCase(rng2.Characters(1)) Then
+          rng2.Characters(1) = UCase(rng2.Characters(1))
+        End If
+      End If
+    End If
+    If (wasColon And colonCap) Or (wasHyphen And hyphenCap) = True Then
+      If rng2.Characters(1) <> UCase(rng2.Characters(1)) Then
+        rng2.Characters(1) = UCase(rng2.Characters(1))
+      End If
+    End If
+    If Not isTitle Then
+      If (wasColon And Not colonCap) Or (wasHyphen And Not hyphenCap) Then
+        If rng2.Characters(1) <> LCase(rng2.Characters(1)) Then
+          rng2.Characters(1) = LCase(rng2.Characters(1))
+        End If
+      End If
+    End If
+  End If
+Next wd
+rng2.Select
+Selection.Collapse wdCollapseEnd
+Selection.MoveRight wdWord, 1
+End Sub
+

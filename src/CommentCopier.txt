@@ -1,0 +1,89 @@
+Sub CommentCopier()
+' Paul Beverley - Version 15.06.19
+' Creates an author query list
+
+auInits = ""
+auInits = "PT"
+myInits = "PB"
+
+createContextFile = True
+showTrackChanges = True
+multiSpace = 4
+
+addPageNum = False
+addLineNum = False
+
+
+CR2 = vbCr & vbCr
+Set chapterText = ActiveDocument
+numComments = ActiveDocument.Comments.Count
+If numComments > 0 Then
+  Set rngCmnts = ActiveDocument.StoryRanges(wdCommentsStory)
+End If
+Documents.Add
+Set queriesFile = ActiveDocument
+
+Set rng = ActiveDocument.Content
+For i = 1 To numComments
+  rng.Text = chapterText.Comments(i).Initial & Trim(Str(i))
+  rng.Font.Bold = True
+  rng.InsertAfter Text:=" "
+  rng.Collapse wdCollapseEnd
+  rng.FormattedText = chapterText.Comments(i).range.FormattedText
+  rng.Collapse wdCollapseEnd
+  rng.Text = CR2 & "Answer [" & auInits & Trim(Str(i)) & _
+       "]: " & CR2 & CR2
+  rng.Font.Color = wdColorRed
+  rng.Collapse wdCollapseEnd
+Next i
+
+Selection.WholeStory
+Selection.Style = wdStyleNormal
+' Remove hidden page references
+Selection.Fields.Unlink
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Author queries Chapter " & vbCr & vbCr
+ActiveDocument.Paragraphs(1).range.Style = wdStyleHeading2
+Selection.MoveLeft , 2
+
+' Now create the context file
+sp = ""
+If createContextFile = True Then
+  Documents.Add
+  Set contextFile = ActiveDocument
+  For i = 1 To multiSpace
+    sp = sp & vbCr
+  Next i
+  chapterText.Activate
+  Set rng = ActiveDocument.Content
+  
+  contextFile.Activate
+  Set rngDummy = ActiveDocument.GoTo(what:=wdGoToBookmark, Name:="\EndOfDoc")
+  For Each myPara In rng.Paragraphs
+    If myPara.range.Comments.Count > 0 Then
+      Set testChar = myPara.range.Characters(1)
+      pageNum = testChar.Information(wdActiveEndAdjustedPageNumber)
+      lineNum = testChar.Information(wdFirstCharacterLineNumber)
+      myPara.range.Copy
+      myPLtext = ""
+      If addPageNum = True Then myPLtext = "(p. " & pageNum
+      If addLineNum = True Then
+        myPLtext = myPLtext & ", line " & lineNum & ")"
+      Else
+        myPLtext = myPLtext & ") "
+      End If
+      If Len(myPLtext) > 4 Then Selection.TypeText Text:=myPLtext & vbCr
+      Selection.Paste
+      Selection.Collapse wdCollapseEnd
+      Selection.TypeText Text:=sp
+    End If
+  Next myPara
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText Text:="Author queries CONTEXT Chapter " & vbCr & vbCr
+  ActiveDocument.Paragraphs(1).range.Style = wdStyleHeading2
+  Selection.MoveLeft , 2
+End If
+'  chapterText.Activate
+queriesFile.Activate
+End Sub
+

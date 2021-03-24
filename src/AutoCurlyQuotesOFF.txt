@@ -1,0 +1,7 @@
+Sub AutoCurlyQuotesOFF()
+' Paul Beverley - Version 14.02.13
+' Switch off auto curly quotes
+
+Options.AutoFormatAsYouTypeReplaceQuotes = False
+End Sub
+

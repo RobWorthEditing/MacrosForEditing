@@ -1,0 +1,15 @@
+Sub WikiFetchNL()
+' Paul Beverley - Version 08.08.20
+' Launches selected text on WikipediaNL
+
+mySite = "http://nl.wikipedia.org/wiki/Special:Search?search="
+
+If Len(Selection) = 1 Then Selection.Expand wdWord
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubject, ChrW(8217), "'")
+ActiveDocument.FollowHyperlink Address:=mySite & mySubject
+Selection.Collapse wdCollapseEnd
+End Sub
+

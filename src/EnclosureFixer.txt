@@ -1,0 +1,126 @@
+Sub EnclosureFixer()
+' Paul Beverley - Version 09.02.16
+' Checks and corrects the order of enclosures - brackets etc.
+
+'myOrder = "{([])}"
+'myOrder = "([{}])"
+myOrder = "{([])}"
+
+addHighlight = True
+hiColour = wdBrightGreen
+errorColour = wdTurquoise
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[\[\]\{\}\(\)]"
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Font.StrikeThrough = False
+  .Execute
+End With
+Dim o(3) As String
+Dim c(3) As String
+Dim myPos(1000) As Long
+o(1) = Left(myOrder, 1)
+o(2) = Mid(myOrder, 2, 1)
+o(3) = Mid(myOrder, 3, 1)
+c(3) = Mid(myOrder, 4, 1)
+c(2) = Mid(myOrder, 5, 1)
+c(1) = Right(myOrder, 1)
+
+myTrack = ActiveDocument.TrackRevisions
+myLevel = 0
+myMaxLevel = 0
+encloseNum = 0
+Do While rng.Find.Found = True
+  ' Number characters until end of set
+  encloseNum = encloseNum + 1
+  ' Record position of each character in the set
+  myPos(encloseNum) = rng.Start
+  myCharNumber = InStr(myOrder, rng)
+  If myCharNumber < 4 Then
+  ' It's an open enclosure
+    myLevel = myLevel + 1
+    If myLevel > myMaxLevel Then myMaxLevel = myLevel
+    If myMaxLevel = 4 Then
+      Beep
+      rng.Select
+      rng.Start = myPos(1)
+      rng.HighlightColorIndex = errorColour
+      MsgBox "Too many opens! This is level four."
+      Exit Sub
+    End If
+  Else
+  ' It's a close enclosure
+    myLevel = myLevel - 1
+    If myLevel = -1 Then
+      Beep
+      rng.Select
+      rng.Start = myPosOld
+      rng.HighlightColorIndex = errorColour
+      MsgBox "Too many closes!"
+      Exit Sub
+    End If
+  End If
+  ' Debug.Print encloseNum, myLevel, myMaxLevel
+  If myLevel = 0 Then
+  ' We've found the final enclosure item
+  ' So check all the characters in the set are right
+    Select Case myMaxLevel
+      Case 1: myCharsOpen = o(3): myCharsClose = c(3)
+      Case 2: myCharsOpen = o(2) & o(3): myCharsClose = c(2) & c(3)
+      Case 3: myCharsOpen = o(1) & o(2) & o(3)
+              myCharsClose = c(1) & c(2) & c(3)
+    End Select
+    
+    actualLevel = 0
+    TCcorrection = 0
+    For i = 1 To encloseNum
+      rng.Start = myPos(i) + TCcorrection
+      rng.End = rng.Start + 1
+      nowChar = rng.Text
+      myCharNumber = InStr(myOrder, nowChar)
+      If myCharNumber < 4 Then
+        actualLevel = actualLevel + 1
+        thisChar = Mid(myCharsOpen, actualLevel, 1)
+      Else
+        thisChar = Mid(myCharsClose, actualLevel, 1)
+        actualLevel = actualLevel - 1
+      End If
+      If rng.Text <> thisChar Then
+        If myTrack = True Then
+          TCcorrection = TCcorrection + 1
+          ActiveDocument.TrackRevisions = True
+        End If
+        rng.Delete
+        rng.InsertAfter thisChar
+        ActiveDocument.TrackRevisions = False
+        rng.Start = rng.Start - 1
+        rng.HighlightColorIndex = hiColour
+        rng.Collapse wdCollapseEnd
+      End If
+    Next i
+  ' Then reset the counters
+    myMaxLevel = 0
+    encloseNum = 0
+  End If
+  rng.Select
+  rng.Start = rng.End
+  rng.Find.Execute
+  myPosOld = myPos(1)
+Loop
+Beep
+rng.Select
+If myLevel > 0 Then
+  rng.Start = myPos(1)
+  rng.HighlightColorIndex = errorColour
+  MsgBox "Final group not closed."
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

@@ -1,0 +1,64 @@
+Sub HideShowText()
+' Paul Beverley - Version 07.09.17
+' Makes body text invisible
+
+If Selection.Start = Selection.End Then
+  doAll = True
+  Set rng = ActiveDocument.Content
+Else
+  doAll = False
+  Set rng = Selection.range.Duplicate
+End If
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Application.ScreenUpdating = False
+
+For Each ch In rng.Characters
+  myCol = ch.Font.Color
+  If myCol = wdColorWhite Then
+    myColour = wdColorAutomatic
+    Exit For
+  End If
+  If myCol = 0 Or myCol = wdColorAutomatic _
+       Or myCol = wdBlack Then
+    myColour = wdColorWhite
+    Exit For
+  End If
+Next ch
+
+mixedColour = 9999999
+If doAll = True Then
+  For Each myPara In rng.Paragraphs
+    If myPara.range.Font.Color <> mixedColour Then
+      myPara.range.Font.Color = myColour
+    Else
+      For Each wd In myPara.range.Words
+        myCol = wd.Font.Color
+        If myCol <> mixedColour Then
+          If myCol = 0 Or myCol = wdColorAutomatic Or _
+               myCol = wdColorWhite Or myCol = wdBlack _
+               Then wd.Font.Color = myColour
+        Else
+          For Each ch In wd.Characters
+            myCol = ch.Font.Color
+            If myCol = 0 Or myCol = wdColorAutomatic Or _
+                 myCol = wdColorWhite Or myCol = wdBlack _
+                 Then ch.Font.Color = myColour
+          Next ch
+        End If
+      Next wd
+    End If
+  Next myPara
+Else
+  For Each ch In rng.Characters
+    myCol = ch.Font.Color
+    If myCol = 0 Or myCol = wdColorAutomatic Or _
+         myCol = wdColorWhite Or myCol = wdBlack _
+         Then ch.Font.Color = myColour
+  Next ch
+End If
+ActiveDocument.TrackRevisions = myTrack
+Application.ScreenUpdating = True
+Beep
+End Sub
+

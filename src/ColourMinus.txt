@@ -1,0 +1,82 @@
+Sub ColourMinus()
+' Paul Beverley - Version 23.07.18
+' Remove or add font colour in a choice of colours
+
+removeUnderline = True
+
+Dim myCol(10)
+myCol(0) = wdColorBlack
+myCol(1) = wdColorBlue
+myCol(2) = wdColorRed
+myCol(3) = wdColorPink
+myCol(4) = wdColorBrightGreen
+myCol(5) = wdColorGray50
+myCol(6) = wdColorGray25
+
+myColTotal = 6
+
+' OldColour = Options.DefaultHighlightColorIndex
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+If removeUnderline Then Selection.Font.Underline = False
+
+Dim v As Variable, nowColour As Long
+varsExist = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "selStart" Then varsExist = True: Exit For
+Next v
+
+If varsExist = False Then
+  ActiveDocument.Variables.Add "selStart", 0
+  ActiveDocument.Variables.Add "selEnd", 0
+  ActiveDocument.Variables.Add "colNum", 0
+End If
+
+wasStart = ActiveDocument.Variables("selStart")
+wasEnd = ActiveDocument.Variables("selEnd")
+wasCol = ActiveDocument.Variables("colNum")
+
+' If no text is selected ...
+If Selection.Start = Selection.End Then
+  ' If the cursor is outside the area, give up
+  If Selection.Start < wasStart Or Selection.End > wasEnd Then GoTo LineClear
+  ' Otherwise check the font colour
+  Selection.Start = wasStart
+  Selection.End = wasStart + 1
+  nowColour = Selection.Font.Color
+  If nowColour <> myCol(wasCol) Then
+    ' colour changed, so go to last colour on list
+    nowCol = 0
+  Else
+    ' go to next colour
+    nowCol = wasCol - 1
+    If nowCol < 0 Then nowCol = myColTotal
+  End If
+  Selection.End = wasEnd
+Else:  ' if some text is selected ...
+  ' Record current selection range
+  ActiveDocument.Variables("selStart") = Selection.Start
+  ActiveDocument.Variables("selEnd") = Selection.End
+  If Selection.Start = 0 Then ActiveDocument.Variables("selStart") _
+       = Selection.End
+  ' go to last colour on list
+  nowCol = 0
+End If
+ActiveDocument.Variables("colNum") = nowCol
+Selection.Font.Color = myCol(nowCol)
+Selection.End = Selection.Start
+ActiveDocument.TrackRevisions = myTrack
+Exit Sub
+
+LineClear:
+Selection.HomeKey Unit:=wdLine
+clearStart = Selection.Start
+Selection.MoveDown Unit:=wdLine, Count:=1
+Set rng = Selection.Range
+rng.Start = clearStart
+rng.Font.Color = wdColorAutomatic
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

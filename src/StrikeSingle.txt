@@ -1,0 +1,42 @@
+Sub StrikeSingle()
+' Paul Beverley - Version 15.08.17
+' Adds or removes strike-through
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Dim v As Variable
+varsExist = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "colNum" Then varsExist = True: Exit For
+Next v
+
+If varsExist = True And Selection.Start = Selection.End Then
+  wasStart = ActiveDocument.Variables("selStart")
+  wasEnd = ActiveDocument.Variables("selEnd")
+  ' If the cursor is inside the area, strike it
+  If Selection.Start >= wasStart Or Selection.End _
+       <= wasEnd - 1 Then
+    Selection.Start = wasStart
+    Selection.End = wasEnd
+    Selection.range.Font.StrikeThrough = True
+  End If
+Else
+  ' If all selected, remove strikethrough
+  If Selection = ActiveDocument.Content Then
+    Selection.Font.StrikeThrough = False
+  Else
+    If Selection.Start = Selection.End Then Selection.Expand wdParagraph
+    stateNow = Selection.Characters(1).Font.StrikeThrough
+    Set rng = ActiveDocument.Content
+    If Selection.Start = 0 And Selection.End = rng.End Then
+      Selection.Font.StrikeThrough = False
+    Else
+      Selection.Font.StrikeThrough = Not (stateNow)
+    End If
+      Selection.Collapse wdCollapseEnd
+  End If
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

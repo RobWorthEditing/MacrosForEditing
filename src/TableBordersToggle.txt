@@ -1,0 +1,47 @@
+Sub TableBordersToggle()
+' Paul Beverley - Version 14.08.19
+' Switches table borders and rules on and off
+  
+If Selection.Borders(wdBorderTop).LineStyle = wdLineStyleNone Then
+  With Selection.Borders(wdBorderTop)
+    .LineStyle = Options.DefaultBorderLineStyle
+    .LineWidth = Options.DefaultBorderLineWidth
+    .Color = Options.DefaultBorderColor
+  End With
+  With Selection.Borders(wdBorderLeft)
+    .LineStyle = Options.DefaultBorderLineStyle
+    .LineWidth = Options.DefaultBorderLineWidth
+    .Color = Options.DefaultBorderColor
+  End With
+  With Selection.Borders(wdBorderBottom)
+    .LineStyle = Options.DefaultBorderLineStyle
+    .LineWidth = Options.DefaultBorderLineWidth
+    .Color = Options.DefaultBorderColor
+  End With
+  With Selection.Borders(wdBorderRight)
+    .LineStyle = Options.DefaultBorderLineStyle
+    .LineWidth = Options.DefaultBorderLineWidth
+    .Color = Options.DefaultBorderColor
+  End With
+  With Selection.Borders(wdBorderHorizontal)
+    .LineStyle = Options.DefaultBorderLineStyle
+    .LineWidth = Options.DefaultBorderLineWidth
+    .Color = Options.DefaultBorderColor
+  End With
+  With Selection.Borders(wdBorderVertical)
+    .LineStyle = Options.DefaultBorderLineStyle
+    .LineWidth = Options.DefaultBorderLineWidth
+    .Color = Options.DefaultBorderColor
+  End With
+Else
+  Selection.Borders(wdBorderTop).LineStyle = wdLineStyleNone
+  Selection.Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+  Selection.Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+  Selection.Borders(wdBorderRight).LineStyle = wdLineStyleNone
+  Selection.Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+  Selection.Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+  Selection.Borders(wdBorderDiagonalDown).LineStyle = wdLineStyleNone
+  Selection.Borders(wdBorderDiagonalUp).LineStyle = wdLineStyleNone
+End If
+End Sub
+

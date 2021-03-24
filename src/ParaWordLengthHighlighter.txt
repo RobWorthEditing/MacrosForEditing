@@ -1,0 +1,31 @@
+Sub ParaWordLengthHighlighter()
+' Paul Beverley - Version 08.05.18
+' Highlights all paragraphs of a range of word lengths
+
+myMinWords = 50
+myMaxWords = 20000
+
+myColour = wdBrightGreen
+showAsYouGo = True
+
+For Each myPara In ActiveDocument.Paragraphs
+  If Len(myPara.range) > 3 Then
+    paraText = Trim(myPara.range.Text)
+    paraText = Replace(paraText, "  ", " ")
+    paraText = Replace(paraText, ChrW(8211) & " ", "")
+    If Asc(paraText) = Asc(vbTab) Then paraText = Mid(paraText, 2)
+    totChars = Len(paraText)
+    paraText = Replace(paraText, " ", "")
+    paraText = Replace(paraText, vbCr, "")
+    paraText = Replace(paraText, vbTab, "")
+    paraWords = totChars - Len(paraText)
+    
+    If paraWords < myMaxWords + 1 And paraWords > myMinWords Then
+      If showAsYouGo = True Then myPara.range.Select
+      myPara.range.HighlightColorIndex = myColour
+    End If
+  End If
+Next
+Beep
+End Sub
+

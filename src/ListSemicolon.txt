@@ -1,0 +1,62 @@
+Sub ListSemicolon()
+' Paul Beverley - Version 15.02.11
+' Add semicolons to bulleted list
+
+addAnd = True
+checkLength = 10
+
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Selection.Paragraphs(1).Range.Select
+startStyle = Selection.Style
+i = 0
+Do
+  Selection.End = Selection.End - 1
+  Selection.Start = Selection.End
+  notThese = ";,. "
+  Do
+    gotOne = False
+    Selection.MoveStart , -1
+    If InStr(notThese, Selection) > 0 Then
+      Selection.Delete
+      gotOne = True
+    End If
+  Loop Until gotOne = False
+  Selection.InsertAfter ";"
+' Now select the next item/para
+  Selection.MoveStart , 3
+  Selection.Paragraphs(1).Range.Select
+  nowStyle = Selection.Style
+  i = i + 1
+  If i = checkLength Then
+    myResponse = MsgBox("Continue?", vbQuestion + vbYesNo)
+    If myResponse = vbNo Then Exit Sub
+    i = 0
+  End If
+Loop Until nowStyle <> startStyle
+Selection.End = Selection.Start - 1
+Selection.Start = Selection.End - 1
+If Selection = ";" Then Selection.Delete
+Selection.MoveStart wdCharacter, -1
+If Selection <> "." Then Selection.InsertAfter "."
+If addAnd = True Then
+  ' Go back to penultimate
+  Selection.Paragraphs(1).Range.Select
+  Selection.Start = Selection.Start - 1
+  Selection.End = Selection.Start
+  Selection.TypeText Text:=" and"
+  Selection.MoveStart wdCharacter, -10
+  If Selection = "; and; and" Then
+    Selection.MoveStart wdCharacter, 5
+    Selection.Delete
+  End If
+  Selection.MoveStart , 1
+  If Selection = " and; and" Then
+    Selection.MoveEnd , -5
+    Selection.Delete
+  End If
+End If
+Selection.Start = Selection.End
+ActiveDocument.TrackRevisions = nowTrack
+End Sub
+

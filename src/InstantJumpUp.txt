@@ -1,0 +1,47 @@
+Sub InstantJumpUp()
+' Paul Beverley - Version 13.01.21
+' Find selected text upwards
+
+addBookmark = False
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  apoPos = InStr(Selection, ChrW(8217))
+  If apoPos > 0 Then Selection.End = Selection.Start + apoPos - 1
+End If
+thisBit = Selection
+wordEnd = Selection.End
+Selection.Collapse wdCollapseStart
+If addBookmark = True Then ActiveDocument.Bookmarks.Add Name:="myTempMark2"
+
+If Asc(thisBit) <> 32 Then thisBit = Trim(thisBit)
+thisBit = Replace(thisBit, "^", "^^")
+
+Selection.End = Selection.Start
+hereNow = Selection.Start
+
+oldFind = Selection.Find.Text
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindStop
+  .Forward = False
+  .Text = thisBit
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute
+End With
+' Leave F&R dialogue in a sensible state
+Selection.Find.Forward = True
+Selection.Find.Wrap = wdFindContinue
+
+If Selection.Start = hereNow And _
+     Selection.Find.Found = False Then Beep
+Selection.Find.Text = oldFind
+End Sub
+

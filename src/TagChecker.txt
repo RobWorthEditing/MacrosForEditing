@@ -1,0 +1,82 @@
+Sub TagChecker()
+' Paul Beverley - Version 09.06.17
+' Checks the continuity of a paired tag, e.g. <em>, </em>
+
+offSymbol = "/"
+
+Selection.Collapse wdCollapseStart
+Set rng = Selection.range.Duplicate
+
+Selection.Expand wdWord
+Selection.MoveStart wdWord, -2
+Selection.MoveEnd wdWord, 2
+If InStr(Selection, "<") = 0 Or InStr(Selection, ">") = 0 Then
+  myResponse = MsgBox("Place the cursor inside the tag to be checked" _
+       , , "TagChecker")
+  Exit Sub
+End If
+
+rng.Select
+Selection.MoveEndUntil cset:=">", Count:=wdForward
+Selection.MoveStartUntil cset:="<", Count:=wdBackward
+Selection.MoveEnd , 1
+
+isOff = ((InStr(Selection, offSymbol)) > 0)
+
+
+If isOff Then Selection.MoveStart , 1
+myFind = Selection
+myStart = Selection.Start
+wasStart = myStart
+Set rng = Selection.range.Duplicate
+rng.Collapse wdCollapseEnd
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.Select
+  rng.Start = rng.Start - 1
+  myStart = rng.Start
+  If isOff = True Then
+    If (Asc(rng) = Asc(offSymbol)) Then
+      rng.Start = wasStart
+      rng.Select
+      Beep
+      Exit Sub
+    Else
+      isOff = False
+    End If
+  Else
+    If (Asc(rng) <> Asc(offSymbol)) Then
+      rng.Start = wasStart
+      rng.Select
+      Beep
+      
+      Exit Sub
+    Else
+      isOff = True
+    End If
+  End If
+  
+  rng.Collapse wdCollapseEnd
+  wasStart = myStart
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+Loop
+
+Selection.EndKey Unit:=wdStory
+Beep
+Selection.Find.Text = myFind
+End Sub
+

@@ -1,0 +1,40 @@
+Sub CommentNumbering()
+' Paul Beverley - Version 20.05.19
+' Add or remove fixed comment numbers
+
+myInits = "AM"
+
+myTest = ActiveDocument.Comments(1).range
+' If the first comment has a [ ] in it...
+Set rng = ActiveDocument.StoryRanges(wdCommentsStory)
+If InStr(myTest, "[" & myInits) > 0 Then
+  ' Delete a [ ] item from each comment
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[" & myInits & "[0-9]@\]: "
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Wrap = wdFindContinue
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute Replace:=wdReplaceAll
+    
+    .Text = myInits & "[0-9]@\[: "
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  Beep
+Else
+' Add initials + index number to each comment
+  For i = 1 To ActiveDocument.Comments.Count
+    myInits = "[" & ActiveDocument.Comments(i).Initial & Trim(Str(i)) & "]: "
+    ActiveDocument.Comments(i).range.InsertBefore myInits
+  Next i
+End If
+End Sub
+

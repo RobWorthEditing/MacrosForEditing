@@ -1,0 +1,68 @@
+Sub WordSectionCounter()
+' Paul Beverley - Version 16.11.20
+' Counts words in sections of text between headings
+
+myStyle1 = "Heading 1"
+' myStyle2 = "Heading 2"
+myStyle2 = "xxx"
+
+doBold = False
+
+Dim myTitle(200) As String
+Dim myStart(200) As Long
+
+i = 0
+For Each myPara In ActiveDocument.Paragraphs
+  If myPara.Range.Style = myStyle1 Or myPara.Range.Style = myStyle2 Then
+    i = i + 1
+    myTitle(i) = Replace(myPara.Range.Text, vbCr, "")
+    If doBold = True And myPara.Range.Style = myStyle1 Then
+      myTitle(i) = "XXX" & myTitle(i)
+    End If
+    myStart(i) = myPara.Range.Start
+  End If
+Next myPara
+iMax = i
+i = i + 1
+myTitle(0) = "Before first heading"
+myStart(i) = ActiveDocument.Content.End
+myStart(0) = 1
+iMax = i
+Set rng = ActiveDocument.Content
+
+Documents.Add
+For i = 0 To iMax - 1
+  rng.Start = myStart(i)
+  rng.End = myStart(i + 1)
+  myStatWords = rng.ComputeStatistics(wdStatisticWords)
+  myText = Trim(myTitle(i)) & vbTab & Trim(Str(myStatWords)) & vbCr
+  Selection.TypeText Text:=myText
+Next i
+If doBold = True Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "XXX(*)^13"
+    .Wrap = wdFindContinue
+    .Forward = True
+    .Replacement.Text = "\1^p"
+    .Replacement.Font.Bold = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+Set rng = ActiveDocument.Content
+rng.ConvertToTable Separator:=wdSeparateByTabs
+Set tb = ActiveDocument.Tables(1)
+tb.Style = "Table Grid"
+tb.AutoFitBehavior (wdAutoFitContent)
+tb.Borders(wdBorderTop).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderRight).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+End Sub
+

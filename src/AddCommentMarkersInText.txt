@@ -1,0 +1,12 @@
+Sub AddCommentMarkersInText()
+' Paul Beverley - Version 30.12.11
+' Add comment initials and numbers to text
+For k = 1 To ActiveDocument.Comments.Count
+  myInits = "[" & ActiveDocument.Comments(k).Initial & Trim(Str(k)) & "]"
+  ActiveDocument.Comments(k).Reference.InsertAfter myInits
+  Set rng = ActiveDocument.Comments(k).Reference
+  rng.End = rng.End + Len(myInits)
+  rng.HighlightColorIndex = wdBrightGreen
+Next k
+End Sub
+

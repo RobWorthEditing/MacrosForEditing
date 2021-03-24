@@ -1,0 +1,45 @@
+Sub FindPreviousNumber()
+' Paul Beverley - Version 08.01.13
+' Jump back to the previous number
+
+varExists = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "whereIwas" Then varExists = True: Exit For
+Next v
+If varExists = False Then
+  ActiveDocument.Variables.Add "whereIwas", 0
+Else
+  Selection.Start = ActiveDocument.Variables("whereIwas")
+  Selection.Collapse wdCollapseStart
+End If
+
+' Use jumpScroll to set cursor to top of page
+startHere = Selection.Start
+Application.ScreenUpdating = False
+Selection.EndKey Unit:=wdLine
+lineEnd = Selection.Start
+
+If Selection.Information(wdInEndnote) = True _
+     Then inEndNotes = True
+
+Selection.MoveDown Unit:=wdScreen, Count:=2
+
+' Make sure that you've not dropped into a footnote ...
+Do While Selection.Information(wdInFootnote) = True
+  Selection.MoveDown Unit:=wdLine, Count:=2
+Loop
+If inEndNotes = False Then
+' Make sure that you've not dropped into an endnote ...
+  Do While Selection.Information(wdInEndnote) = True
+    Selection.MoveUp Unit:=wdLine, Count:=2
+  Loop
+End If
+Selection.End = lineEnd
+Selection.MoveRight , 1
+Selection.MoveUp , 1
+Selection.End = startHere
+Selection.Start = startHere
+If lineEnd = startHere Then Selection.MoveLeft , 1
+Application.ScreenUpdating = True
+End Sub
+

@@ -1,0 +1,34 @@
+Sub UnlinkCitationsAndRefs()
+' Paul Beverley - Version 29.06.20
+' Unlinks reference citations (ignoring equations)
+
+makeCitationItalic = True
+
+endNoteCitation = 81
+
+' Sort the citations
+For Each fld In ActiveDocument.Fields
+  myType = fld.Type
+  If myType = wdFieldCitation Or myType = endNoteCitation Then
+    fld.Select
+    myStart = Selection.Start
+    Selection.Collapse wdCollapseEnd
+    fld.Unlink
+    Selection.Start = myStart
+    If makeCitationItalic = True Then Selection.Font.Italic = True
+  End If
+Next fld
+
+' Now the bibliography (reference list)
+For Each fld In ActiveDocument.Fields
+  myType = fld.Type
+  If myType = wdFieldBibliography Then
+    fld.Select
+    fld.Unlink
+    Selection.Collapse wdCollapseStart
+    Selection.MoveLeft , 1
+    Exit Sub
+  End If
+Next fld
+End Sub
+

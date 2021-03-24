@@ -1,0 +1,355 @@
+Sub MultiFileTextForMac()
+' Paul Beverley - Version 17.02.20
+' Collects text plus simple formatting from multiple files
+
+remindAboutOpening = True
+listOff = True
+acceptTCs = True
+addFilename = True
+convertMathsItems = True
+
+On Error GoTo ReportIt
+CR2 = vbCr & vbCr
+Dim allMyFiles(200) As String
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then navigate to the required folder
+  If remindAboutOpening = True Then myResponse = _
+       MsgBox("Open the first file", , "Multifile Text Collection")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  dirPath = Replace(ActiveDocument.FullName, _
+       ActiveDocument.Name, "")
+
+  If Documents.Count > docCount Then ActiveDocument.Close
+' Read the names of all the files in this directory
+  myFile = Dir(dirPath)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+
+  myResponse = MsgBox("Collect unformatted text from ALL the files in" & _
+       " directory:" & dirName & " ?", vbQuestion + vbYesNoCancel, _
+       "Multifile Text Collection")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  myResponse = MsgBox("Collect unformatted text from the files listed here?", _
+       vbQuestion + vbYesNoCancel, "Multifile Text Collection")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+Selection.HomeKey Unit:=wdStory
+
+Set alltextDoc = Documents.Add
+Set alltextRng = ActiveDocument.Content
+Selection.TypeText "Loading first file" & vbCr & vbCr
+Selection.HomeKey Unit:=wdStory
+ActiveDocument.Paragraphs(1).range.Bold = True
+ActiveDocument.Paragraphs(1).range.Font.Size = 40
+gotLanguage = False
+
+For i = 1 To numFiles
+  alltextDoc.Paragraphs(1).range = allMyFiles(i) & vbCr
+' Get the folder name, and then the text for the files in the list
+  thisFile = myFolder & myDelimiter & allMyFiles(i)
+  Set myDoc = Application.Documents.Open(FileName:=thisFile)
+  If gotLanguage = False Then
+    Selection.MoveEnd , 1
+    myLanguage = Selection.range.LanguageID
+    gotLanguage = True
+  End If
+  StatusBar = allMyFiles(i)
+  
+  DoEvents
+  If acceptTCs = True Then myDoc.Revisions.AcceptAll
+  myDoc.TrackRevisions = False
+  If listOff = True Then myDoc.ConvertNumbersToText
+  If ActiveDocument.Endnotes.Count > 0 Then
+    Set thisDocRange = myDoc.Content
+    thisDocRange.Collapse wdCollapseEnd
+    thisDocRange.FormattedText = _
+         myDoc.StoryRanges(wdEndnotesStory).FormattedText
+  End If
+  If ActiveDocument.Footnotes.Count > 0 Then
+    Set thisDocRange = myDoc.Content
+    thisDocRange.Collapse wdCollapseEnd
+    thisDocRange.FormattedText = _
+         myDoc.StoryRanges(wdFootnotesStory).FormattedText
+  End If
+
+  ' copy all the textboxes to the end of the text
+  shCount = myDoc.Shapes.Count
+  If shCount > 0 Then
+    Selection.EndKey Unit:=wdStory
+    Selection.TypeText vbCr & vbCr
+    For j = 1 To shCount
+      Set shp = ActiveDocument.Shapes(j)
+      If shp.Type <> 24 And shp.Type <> 3 Then
+        If shp.TextFrame.hasText Then
+          Set rng = shp.TextFrame.TextRange
+          Selection.FormattedText = rng.FormattedText
+          Selection.EndKey Unit:=wdStory
+        End If
+      End If
+    Next
+  End If
+
+  Selection.HomeKey Unit:=wdStory
+  If addFilename = True Then Selection.TypeText CR2 & "[[[[ " & _
+       allMyFiles(i) & " ]]]]]" & CR2
+  If convertMathsItems = True Then
+    Application.Visible = False
+    numMaths = ActiveDocument.OMaths.Count
+    If numMaths > 0 Then
+      For Each myMath In ActiveDocument.OMaths
+        myMath.range.Select
+        eqText = Replace(Selection.Text, vbCr, " ")
+        Selection.MoveStart , -1
+        Selection.Delete
+        startHere = Selection.Start
+        Selection.TypeText eqText
+        Selection.Start = startHere
+      Next myMath
+    End If
+    Application.Visible = True
+  End If
+  
+  myDoc.Fields.Unlink
+  ' Accept all track changes
+  myDoc.range.Revisions.AcceptAll
+  myDoc.TrackRevisions = False
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Italic = True
+    .Wrap = wdFindContinue
+    .MatchWildcards = False
+    .MatchCase = True
+    .Replacement.Text = "zccz^&pqqp"
+    .Execute Replace:=wdReplaceAll
+    
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Bold = True
+    .Replacement.Text = "bqqb^&zwvf"
+    .Execute Replace:=wdReplaceAll
+    
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Superscript = True
+    .Replacement.Text = "yxzu^&qiwv"
+    .Execute Replace:=wdReplaceAll
+    
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Subscript = True
+    .Replacement.Text = "xhwc^&yvxz"
+    .Execute Replace:=wdReplaceAll
+  End With
+
+' Hide the screen to avoid mouse movement
+  Application.Visible = False
+  Set rng = ActiveDocument.Content
+  alltextRng.End = alltextDoc.range.End
+  alltextRng.Start = alltextDoc.range.End
+  alltextRng.Text = rng.Text
+  myDoc.Close SaveChanges:=wdDoNotSaveChanges
+
+' Show the screen again
+  Application.Visible = True
+Next i
+
+alltextDoc.Paragraphs(1).range.Select
+Selection.Delete
+alltextDoc.Paragraphs(2).range.Delete
+
+Set rng = alltextDoc.Content
+rng.LanguageID = myLanguage
+rng.NoProofing = False
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "yxzu(*)qiwv"
+  .MatchWildcards = True
+  .MatchCase = False
+  .Replacement.Text = "^&"
+  .Replacement.Font.Superscript = True
+  .Execute Replace:=wdReplaceAll
+  
+    .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "xhwc(*)yvxz"
+  .Replacement.Text = "^&"
+  .Replacement.Font.Subscript = True
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "bqqb(*)zwvf"
+  .Replacement.Text = "^&"
+  .Replacement.Font.Bold = True
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zccz(*)pqqp"
+  .Replacement.Text = "^&"
+  .Replacement.Font.Italic = True
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zccz"
+  .MatchWildcards = False
+  .MatchCase = False
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "yxzu"
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "bqqb"
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zwvf"
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "qiwv"
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "pqqp"
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "xhwc"
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "yvxz"
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+
+' Remove optional hyphens
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = Chr(172)
+  .MatchWildcards = False
+  .MatchCase = True
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+End With
+
+Set rng = ActiveDocument.Content
+totChars = rng.End
+' Add one '[' for each file, to check they are all there
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[[[[ "
+  .Wrap = wdFindContinue
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Replacement.Text = "[[[[[ "
+  .Execute Replace:=wdReplaceAll
+End With
+ActiveDocument.Paragraphs(3).range.Bold = True
+Set rng = ActiveDocument.Content
+totCharsNow = rng.End
+Beep
+MsgBox "Use FindFwd to check that all files have been included."
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[[[[["
+  .Wrap = wdFindContinue
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Replacement.Text = ""
+  .Execute
+End With
+If totCharsNow - totChars <> numFiles Then
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+  MsgBox "Warning: All files might not have been included."
+End If
+Exit Sub
+
+ReportIt:
+Application.Visible = True
+On Error GoTo 0
+Resume
+End Sub
+

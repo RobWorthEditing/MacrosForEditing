@@ -1,0 +1,41 @@
+Sub CompareTextsOLD()
+' Paul Beverley - Version 07.12.13
+' Select non-identical text (was called IdenticalTextCheck)
+
+myColour = wdGray25
+myText = Selection
+Selection.Range.HighlightColorIndex = wdNoHighlight
+
+myStart = Selection.Start
+myEnd = Selection.End
+Selection.End = Selection.Start
+Selection.Paste
+Selection.Start = myStart
+myOtherText = Selection
+WordBasic.editunDo
+
+If myText = myOtherText Then
+  Beep
+Else
+  For myCount = 1 To Len(myText)
+    If Left(myText, myCount) <> Left(myOtherText, myCount) Then Exit For
+  Next myCount
+  myChangedStart = myCount - 1
+ 
+  For myCount = 1 To Len(myText)
+    If Right(myText, myCount) <> Right(myOtherText, myCount) Then Exit For
+  Next myCount
+  myChangedEnd = myCount - 1
+ 
+  Selection.Start = myEnd - myChangedEnd
+  Selection.End = myEnd
+  Selection.Range.HighlightColorIndex = myColour
+ 
+  Selection.Start = myStart
+  Selection.End = myStart + myChangedStart
+  Selection.Range.HighlightColorIndex = myColour
+
+  Selection.Collapse wdCollapseEnd
+End If
+End Sub
+

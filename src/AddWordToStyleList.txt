@@ -1,0 +1,46 @@
+Sub AddWordToStyleList()
+' Paul Beverley - Version 26.05.12
+' Adds the selected text to the style list file
+
+listName = "StyleSheet"
+listName2 = "WordList"
+
+withFormatting = True
+
+myFont = "Calibri"
+
+If Selection.Start = Selection.End Then
+  Selection.Words(1).Select
+End If
+
+myText = Selection
+If withFormatting = True Then Selection.Copy
+
+Set mainDoc = ActiveDocument
+' Look for the list file
+gotList = False
+For i = 1 To Application.Windows.Count
+  If InStr(Application.Windows(i).Document.Name, listName) > 0 Or _
+       InStr(Application.Windows(i).Document.Name, listName2) > 0 Then
+    Set listDoc = Application.Windows(i).Document
+    gotList = True
+  End If
+Next
+
+' Go to list and type word(s)
+If gotList = True Then
+  listDoc.Activate
+  If withFormatting = True Then
+    Selection.Paste
+  Else
+    Selection.TypeText Text:=myText
+    Selection.Font.Name = myFont
+  End If
+  Selection.TypeText Text:=vbCrLf
+  mainDoc.Activate
+Else
+  MsgBox "Sorry, can't find the style list."
+  Exit Sub
+End If
+End Sub
+

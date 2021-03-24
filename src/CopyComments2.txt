@@ -1,0 +1,15 @@
+Sub CopyComments2()
+' Paul Beverley - Version 01.06.10
+' Create a list of all the comments
+DocName = ActiveDocument.FullName
+NewDocName = Replace(DocName, ".doc", "_Cmnts.doc")
+
+If ActiveDocument.Comments.Count >= 1 Then
+  ActiveDocument.StoryRanges(wdCommentsStory).Copy
+End If
+
+Documents.Add
+Selection.Paste
+ActiveDocument.SaveAs FileName:=NewDocName
+End Sub
+

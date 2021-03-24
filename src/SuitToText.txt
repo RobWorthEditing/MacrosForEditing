@@ -1,0 +1,20 @@
+Sub SuitToText()
+' Paul Beverley - Version 21.07.11
+' Convert playing card suit symbolks to text
+
+For Each fld In ActiveDocument.Fields
+  myText = fld.Code.Text
+  codePos = InStr(myText, "SYMBOL ") + 7
+  myCode = Mid(myText, codePos, 3)
+  Select Case Val(myCode)
+    Case 167: mySuit = "cx"
+    Case 168: mySuit = "dx"
+    Case 169: mySuit = "hx"
+    Case 170: mySuit = "sx"
+    Case Else: mySuit = "??????"
+  End Select
+  fld.Select
+  Selection.TypeText Text:=mySuit
+Next
+End Sub
+

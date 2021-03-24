@@ -1,0 +1,123 @@
+Sub StyleEffectDetector()
+' Paul Beverley - Version 10.09.19
+' Reports the style and effects applied to the text
+
+CR2 = vbCr & vbCr
+Do
+  If Selection.Start = Selection.End Then Selection.MoveEnd , 1
+  myRes = ""
+  mixed = 9999999
+  noPattern = -16777216
+  
+  Set sel = Selection.range
+  myTest = sel.Text
+  crPos = InStr(myTest, vbCr)
+  If crPos < Len(myTest) And crPos <> 0 Then
+    MsgBox "Please select some text WITHIN a paragraph and rerun the macro."
+    Exit Sub
+  End If
+  sty = sel.Style
+  If sty <> "Normal" Then _
+    myRes = myRes & "Style: " & sel.Style & CR2
+  styBold = sel.Style.Font.Bold
+  styItalic = sel.Style.Font.Italic
+  stySize = sel.Style.Font.Size
+  styColour = sel.Style.Font.ColorIndex
+  
+  col = sel.Font.ColorIndex
+  hicol = sel.HighlightColorIndex
+  
+  If col = mixed Then
+    myRes = myRes & "Mixed font colours" & CR2
+  Else
+    If col > 0 Then
+      If col = styColour Then
+        myRes = myRes & "Font colour: " & col & _
+             "  (style)" & CR2
+      Else
+        myRes = myRes & "Font colour: " _
+             & col & "  (added)" & CR2
+      End If
+    End If
+  End If
+  
+  If hicol = mixed Then
+    myRes = myRes & "Mixed highlight colours" & CR2
+  Else
+    If hicol > 0 Then myRes = myRes & "Highlight colour: " _
+         & hicol & CR2
+  End If
+  
+  If sel.Shading.Texture <> wdTextureNone Then
+    myRes = myRes & "Shading.Texture: " & sel.Shading.Texture & CR2
+  End If
+  
+  fore = sel.Shading.ForegroundPatternColor
+  If fore <> noPattern Then
+    myRes = myRes & "Shading.ForegroundPatternColor: " & _
+         Hex(fore) & CR2
+  End If
+  
+  bck = sel.Shading.BackgroundPatternColor
+  If bck <> noPattern Then
+    myRes = myRes & "Shading.backgroundPatternColor: " & _
+         Hex(bck) & CR2
+  End If
+  
+  If sel.Bold = mixed Then myRes = myRes & "Mixed bold " & CR2
+  If sel.Bold = True Then
+    If styBold = True Then
+      myRes = myRes & "Bold  (style)" & CR2
+    Else
+      myRes = myRes & "Bold  (added)" & CR2
+    End If
+  Else
+    If sel.Bold = False And styBold Then
+      myRes = myRes & "Bold removed" & CR2
+    End If
+  
+  End If
+  If sel.Italic = mixed Then myRes = myRes & _
+       "Mixed italic " & CR2
+  If sel.Italic = True Then
+    If styItalic = True Then
+      myRes = myRes & "Italic  (style)" & CR2
+    Else
+      myRes = myRes & "Italic  (added)" & CR2
+    End If
+  Else
+    If sel.Italic = False And styItalic Then
+      myRes = myRes & "Italic removed" & CR2
+    End If
+  
+  End If
+  If sel.Font.Size = mixed Then
+    myRes = myRes & "Mixed size " & CR2
+  Else
+    If sel.Font.Size <> sel.Style.Font.Size Then _
+         myRes = myRes & "Size: " & sel.Font.Size & _
+         "  (changed from style size)" & CR2
+  End If
+  
+  If sel.Font.Superscript = True Then myRes = myRes & _
+       "Superscript " & CR2
+  If sel.Font.Superscript = mixed Then myRes = myRes & _
+       "Mixed superscript " & CR2
+  If sel.Font.Subscript = True Then myRes = myRes & _
+       "Subscript " & CR2
+  If sel.Font.Subscript = mixed Then myRes = myRes & _
+       "Mixed subscript " & CR2
+  
+  If myRes = "" Then myRes = "Pure Normal" & CR2
+  
+  myResponse = MsgBox(myRes & vbCr & "Continue?", vbQuestion _
+          + vbYesNoCancel, "StyleEffectDetector")
+  If myResponse = vbCancel Then Exit Sub
+  If myResponse = vbNo Then
+    Selection.MoveLeft , 2
+  Else
+    Selection.MoveRight , 1
+  End If
+Loop Until 0
+End Sub
+

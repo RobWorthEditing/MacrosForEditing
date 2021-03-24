@@ -1,0 +1,43 @@
+Sub CommentsAddIndexOnInitials()
+' Paul Beverley - Version 17.10.19
+' Adds (and removes) serial numbers to initials in comments
+
+myInit = "AQ" ' Use "AQ:" in each comment
+
+Set rng = ActiveDocument.StoryRanges(wdCommentsStory)
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myInit & "([0-9]{1,})\:"
+  .Wrap = wdFindContinue
+  .Replacement.Text = myInit & ":"
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+If rng.Find.Found = True Then
+  rng.Find.Execute Replace:=wdReplaceAll
+Else
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myInit & ":"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+
+  myCount = 0
+  Do While rng.Find.Found = True
+    myCount = myCount + 1
+    rng.Text = myInit & Trim(Str(myCount)) & ":"
+    rng.Start = EndNow + 4
+    rng.End = rng.Start
+    rng.Find.Execute
+  Loop
+End If
+End Sub
+

@@ -1,0 +1,55 @@
+Sub ChronoColourOff()
+' Paul Beverley - Version 25.09.18
+' Removes one specific colour of highlighting
+
+myColour = wdBrightGreen
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+mixedColour = 9999999
+Set rng = ActiveDocument.Content
+For Each myPara In rng.Paragraphs
+  col = myPara.range.HighlightColorIndex
+  If col <> mixedColour Then
+    If col = myColour Then myPara.range.HighlightColorIndex = _
+         wdNoHighlight
+  Else
+    For Each wd In myPara.range.Words
+      col = wd.HighlightColorIndex
+      If col <> mixedColour Then
+        If col = myColour Then
+          wd.HighlightColorIndex = wdNoHighlight
+          doShow = True
+        End If
+      Else
+        For Each ch In wd.Characters
+          col = ch.HighlightColorIndex
+          If col <> mixedColour Then
+            If col = myColour Then
+              ch.HighlightColorIndex = wdNoHighlight
+              doShow = True
+            End If
+          End If
+          DoEvents
+        Next ch
+      End If
+      DoEvents
+    Next wd
+  End If
+  DoEvents
+  j = j + 1
+  If j Mod 10 = 1 Or doShow Then
+    myPara.range.Select
+    Selection.Collapse wdCollapseEnd
+    ActiveDocument.ActiveWindow.SmallScroll up:=4
+    ActiveWindow.ScrollIntoView Selection.range
+    doShow = False
+  End If
+Next myPara
+ActiveDocument.TrackRevisions = myTrack
+ActiveDocument.Paragraphs.Last.range.Select
+Selection.Collapse wdCollapseEnd
+Beep
+End Sub
+

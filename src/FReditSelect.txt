@@ -1,0 +1,11 @@
+Sub FReditSelect()
+' Paul Beverley - Version 21.10.20
+' Runs FRedit, but only on multiply selected text
+
+Set rng = ActiveDocument.Content
+rng.Font.StrikeThrough = True
+Selection.Font.StrikeThrough = False
+Call FRedit
+rng.Font.StrikeThrough = False
+End Sub
+

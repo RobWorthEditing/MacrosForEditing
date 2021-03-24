@@ -1,0 +1,9 @@
+Sub ShowHideTracksOnly()
+' Paul Beverley - Version 01.01.10
+' Toggle showing just track changes on and off
+ActiveWindow.View.ShowInsertionsAndDeletions = Not _
+     ActiveWindow.View.ShowInsertionsAndDeletions
+ActiveWindow.View.ShowFormatChanges = Not _
+     ActiveWindow.View.ShowFormatChanges
+End Sub
+

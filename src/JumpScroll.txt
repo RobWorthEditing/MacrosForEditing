@@ -1,0 +1,10 @@
+Sub JumpScroll()
+' Paul Beverley - Version 08.10.18
+' Scrolls current line to the top of the page
+
+Set rng = Selection.range.Duplicate
+ActiveDocument.ActiveWindow.LargeScroll down:=2
+rng.Select
+ActiveDocument.ActiveWindow.SmallScroll down:=1
+End Sub
+

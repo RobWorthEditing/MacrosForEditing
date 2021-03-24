@@ -1,0 +1,16 @@
+Sub SelectiveUnColourUnHighlight()
+' Paul Beverley - Version 04.11.17
+' Removes highlighting + removes coloration, but only on non-program text
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Set rng = ActiveDocument.Content
+rng.HighlightColorIndex = wdNoHighlight
+
+For Each myPara In ActiveDocument.Paragraphs
+  If myPara.range.Characters(1).Font.Name <> "Courier New" Then _
+       myPara.range.Font.Color = wdColorAutomatic
+Next myPara
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

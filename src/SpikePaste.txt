@@ -1,0 +1,16 @@
+Sub SpikePaste()
+' Paul Beverley - Version 26.02.11
+' Paste the whole contents of the spike
+
+gotOne = False
+For Each myEntry In NormalTemplate.AutoTextEntries
+    If myEntry.Name = "Spike" Then gotOne = True
+Next myEntry
+If gotOne = True Then
+  With NormalTemplate.AutoTextEntries("Spike")
+    .Insert Where:=Selection.Range, RichText:=True
+    .Delete
+  End With
+End If
+End Sub
+

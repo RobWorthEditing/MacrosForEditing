@@ -1,0 +1,114 @@
+Sub FigCallouts()
+' Paul Beverley - Version 12.03.13
+' Figure callout inserter
+
+thisChapter = InputBox("Chapter number?", "Figure callouts")
+' chapNumsExist = MsgBox("Existing chapter numbers?", vbQuestion + vbYesNo)
+' addChapNums = MsgBox("Add chapter numbers?", vbQuestion + vbYesNo)
+
+chapNumsExist = vbNo
+addChapNums = vbNo
+
+Callout = "<Figure " & thisChapter & ".XXXX about here>"
+findThis = "Fig. "
+orThis = "Figure "
+orMaybeThis = "Figures "
+orEvenThis = "Figs "
+orHowAbout = "Table "
+
+chapNum = ""
+If chapNumsExist = vbYes Then chapNum = thisChapter & "."
+
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+i = 0
+Selection.HomeKey Unit:=wdStory
+Do
+  i = i + 1
+  figNum = Trim(Str(i))
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = findThis & chapNum & figNum & "[!0-9]"
+    .Forward = True
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  gotOne = Selection.Find.Found
+  If gotOne = False Then
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = orThis & chapNum & figNum & "[!0-9]"
+      .Forward = True
+      .MatchWildcards = True
+      .Execute
+    End With
+    gotOne = Selection.Find.Found
+  End If
+  If gotOne = False Then
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = orMaybeThis & chapNum & figNum & "[!0-9]"
+      .Forward = True
+      .MatchWildcards = True
+      .Execute
+    End With
+    gotOne = Selection.Find.Found
+  End If
+  If gotOne = False Then
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = orEvenThis & chapNum & figNum & "[!0-9]"
+      .Forward = True
+      .MatchWildcards = True
+      .Execute
+    End With
+    gotOne = Selection.Find.Found
+  End If
+  If gotOne = False Then
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = orHowAbout & chapNum & figNum & "[!0-9]"
+      .Forward = True
+      .MatchWildcards = True
+      .Execute
+    End With
+    gotOne = Selection.Find.Found
+  End If
+  If gotOne = False Then
+    myResponse = MsgBox(findThis & figNum & " missing!" _
+         & vbCr & vbCr & "Continue?", vbQuestion + vbYesNo)
+    If myResponse = vbNo Then Exit Sub
+  Else
+    If addChapNums = vbYes Then
+      With Selection.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = " "
+        .Forward = True
+        .MatchWildcards = False
+        .Execute
+      End With
+      Selection.TypeText " " & thisChapter & "."
+    End If
+' Or make the following line Selection.MoveDown
+' if you prefer the callout AFTER the paragraph
+    Selection.MoveUp Unit:=wdParagraph, Count:=1
+    myTypeThis = Replace(Callout, "XXXX", figNum)
+    Selection.TypeText myTypeThis & vbCr
+    Selection.MoveUp Unit:=wdParagraph, Count:=1, Extend:=wdExtend
+    Selection.Style = ActiveDocument.Styles(wdStyleNormal)
+'    Selection.Range.HighlightColorIndex = wdYellow
+    Selection.MoveRight Unit:=wdCharacter, Count:=1
+  End If
+Loop Until 0
+ActiveDocument.TrackRevisions = nowTrack
+Selection.Find.MatchWildcards = False
+End Sub
+

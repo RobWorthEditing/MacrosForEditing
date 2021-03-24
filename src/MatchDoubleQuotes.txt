@@ -1,0 +1,38 @@
+Sub MatchDoubleQuotes()
+' Paul Beverley - Version 07.12.12
+' Check whether double quotes match up
+
+For Each myPara In ActiveDocument.Paragraphs
+  myText = myPara.Range.Text
+  L = Len(myText)
+  L1 = Len(Replace(myText, Chr(34), ""))
+  Lopen = Len(Replace(myText, ChrW(8220), ""))
+  Lclose = Len(Replace(myText, ChrW(8221), ""))
+ 
+  If (L - L1) Mod 2 <> 0 Or Lopen <> Lclose Then
+    myPara.Range.Font.Underline = True
+    myCount = myCount + 1
+    StatusBar = "Found: " & myCount
+  End If
+Next
+StatusBar = ""
+If myCount = 0 Then
+  MsgBox ("All clear!")
+Else
+  MsgBox ("Number of suspect paragraphs: " & Trim(myCount))
+End If
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+End Sub
+

@@ -1,0 +1,46 @@
+Sub ListRenumber()
+' Paul Beverley - Version 30.11.19
+' Makes all following numbered items in a list consecutive
+
+myPrompt = "Max paragraphs between items?" & vbCr & vbCr _
+     & "(0 = single paragraphs only)"
+myInput = InputBox(myPrompt, "ListRenumber")
+If myInput = "" Then
+  Beep
+  Exit Sub
+End If
+maxBlank = Val(myInput)
+
+Selection.Expand wdParagraph
+myNum = Val(Selection)
+Do
+  myNum = myNum + 1
+  cntDown = maxBlank + 2
+  Do
+    cntDown = cntDown - 1
+    Selection.Collapse wdCollapseEnd
+    Selection.Expand wdParagraph
+    If Len(Selection) < 2 Then
+      Selection.Collapse wdCollapseEnd
+      Selection.Expand wdParagraph
+    End If
+    newNum = Val(Selection)
+    If cntDown < 1 Then
+      Beep
+      Exit Sub
+    End If
+  Loop Until newNum > 0
+  If newNum <> myNum Then
+    myLen = 1
+    If newNum > 9 Then myLen = 2
+    If newNum > 99 Then myLen = 3
+    Set rng = Selection.range.Duplicate
+    rng.End = rng.Start + myLen
+    rng.Text = Trim(Str(myNum))
+  End If
+  Selection.Collapse wdCollapseEnd
+  Selection.Expand wdParagraph
+  DoEvents
+Loop Until 0 Or Selection.End = ActiveDocument.Content.End
+End Sub
+

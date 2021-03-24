@@ -1,0 +1,39 @@
+Sub TitlesShow()
+' Paul Beverley - Version 03.09.20
+' Switches all the light grey font colour text to full colour
+
+preBlue = &HF6F6F6
+preRed = &HF4F4F4
+preBlack = &HF5F5F5
+
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Color = preBlue
+  .Wrap = wdFindContinue
+  .MatchWildcards = False
+  .Replacement.Text = ""
+  .Replacement.Font.Color = wdColorBlue
+  .Execute Replace:=wdReplaceAll
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Font.Color = preRed
+  .Replacement.Text = ""
+  .Replacement.Font.Color = wdColorRed
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Font.Color = preBlack
+  .Replacement.Text = ""
+  .Replacement.Font.Color = wdColorBlack
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+End With
+End Sub
+

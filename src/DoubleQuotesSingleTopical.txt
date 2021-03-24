@@ -1,0 +1,24 @@
+Sub DoubleQuotesSingleTopical()
+' Paul Beverley - Version 14.10.19
+' Changes double quotes around current text to singles
+
+myRange = 60
+
+Selection.MoveStartUntil cset:=ChrW(8220) & """", Count:=wdBackward
+If Len(Selection) > myRange Then
+  Beep
+  Exit Sub
+End If
+Selection.Collapse wdCollapseStart
+Selection.MoveStart , -1
+Selection.TypeText Text:=ChrW(8216)
+Selection.MoveEndUntil cset:=ChrW(8221) & """", Count:=wdForward
+If Len(Selection) > myRange Then
+  Beep
+  Exit Sub
+End If
+Selection.Collapse wdCollapseEnd
+Selection.MoveEnd , 1
+Selection.TypeText Text:=ChrW(8217)
+End Sub
+

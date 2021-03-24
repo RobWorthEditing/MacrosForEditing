@@ -1,0 +1,67 @@
+Sub AddTextRoundText()
+' Paul Beverley - Version 14.01.21
+' Adds text at either end of a word or phrase (can delete punctuation)
+
+deleteExistingMarks = True
+doTrack = False
+
+' singles
+myOpen = ChrW(8216)
+myClose = ChrW(8217)
+
+' doubles
+myOpen = ChrW(8220)
+myClose = ChrW(8221)
+
+' parentheses
+myOpen = "("
+myClose = ")"
+
+' tags
+myOpen = "<it>"
+myClose = "</it>"
+
+deleteThese = "()[].,"
+' And the various quotation marks
+deleteThese = deleteThese & """'" & ChrW(8220) & ChrW(8221) & ChrW(8216) & ChrW(8217)
+
+myTrack = ActiveDocument.TrackRevisions
+If doTrack = False Then ActiveDocument.TrackRevisions = False
+
+myStart = Selection.Start
+Selection.Collapse wdCollapseEnd
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Selection.Collapse wdCollapseEnd
+myEnd = Selection.End
+Selection.End = myStart
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+myStart = Selection.End
+
+myLength = myEnd - myStart
+
+' Select first word
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+Selection.MoveStart , -1
+If deleteExistingMarks = True And InStr(deleteThese, Selection) > 0 Then
+  Selection.Delete
+Else
+  Selection.Collapse wdCollapseEnd
+End If
+Selection.TypeText myOpen
+
+Selection.Start = Selection.Start + myLength
+Selection.End = Selection.Start + 1
+If deleteExistingMarks = True And InStr(deleteThese, Selection) > 0 _
+     Then Selection.Delete
+Selection.Collapse wdCollapseStart
+Selection.TypeText myClose
+ActiveDocument.TrackRevisions = myTrack
+
+End Sub
+

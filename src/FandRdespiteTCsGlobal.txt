@@ -1,0 +1,41 @@
+Sub FandRdespiteTCsGlobal()
+' Paul Beverley - Version 19.09.18
+' Does current F&R despite track changes (global)
+
+doGlobal = True
+
+With Selection.Find
+  myBold = .Replacement.Font.Bold
+  myItalic = .Replacement.Font.Italic
+  myReplace = .Replacement.Text
+  myHighlight = .Replacement.Highlight
+  If doGlobal = False Then
+    .Wrap = wdFindStop
+  Else
+    .Wrap = wdFindContinue
+  End If
+  .Execute
+End With
+Do While Selection.Find.Found = True
+  myResponse = vbYes
+  If doGlobal = False Then
+    myResponse = MsgBox("Continue?", vbQuestion _
+          + vbYesNoCancel, "F&R despite TCs")
+    If myResponse = vbCancel Then Exit Sub
+  End If
+  With Selection
+  If myResponse = vbYes Then
+    startNow = .Start
+    .TypeText Text:=myReplace
+    .Start = startNow
+    If myBold = True Then .Font.Bold = True
+    If myItalic = True Then .Font.Italic = True
+    If myHighlight = True Then .range.HighlightColorIndex = _
+         Options.DefaultHighlightColorIndex
+  End If
+  .Collapse wdCollapseEnd
+  .Find.Execute
+  End With
+Loop
+End Sub
+

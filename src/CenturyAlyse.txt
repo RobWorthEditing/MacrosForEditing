@@ -1,0 +1,242 @@
+Sub CenturyAlyse()
+' Paul Beverley - Version 25.11.20
+' Analyses how centuries are formatted in a document
+
+
+Set FUT = ActiveDocument
+doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
+
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.FormattedText = rng.FormattedText
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "-"
+  .Replacement.Text = " "
+  .Wrap = wdFindContinue
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[sth]{2}"
+  .Font.Superscript = True
+  .Replacement.Text = "zcthzc"
+  .Wrap = wdFindContinue
+  .MatchCase = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totWas = ActiveDocument.Content.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "C[0-9]{2}>"
+  .Replacement.Text = "11"
+  .Replacement.Highlight = True
+  .Wrap = wdFindContinue
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n01 = totWas - totNow
+
+totWas = totNow
+With rng.Find
+  .Text = "C[0-9]{2}[ths]{2}>"
+  .Replacement.Text = "2222"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n02 = totWas - totNow
+
+totWas = totNow
+With rng.Find
+  .Text = "C[0-9]{2}zc[ths]{2}zc>"
+  .Replacement.Text = "33333333"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n03 = totWas - totNow
+
+totWas = totNow
+With rng.Find
+  .Text = "[0-9]{2}zc[ths]{2}zc Ce"
+  .Replacement.Text = "6666666666"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n06 = totWas - totNow
+
+totWas = totNow
+With rng.Find
+  .Text = "[0-9]{2}zc[ths]{2}zc ce"
+  .Replacement.Text = "7777777777"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n07 = totWas - totNow
+
+totWas = totNow
+With rng.Find
+  .Text = "[XIV]{2}zc[ths]{2}zc Ce"
+  .Replacement.Text = "8888888888"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n08 = totWas - totNow
+
+totWas = totNow
+With rng.Find
+  .Text = "[XIV]{2}zc[ths]{2}zc ce"
+  .Replacement.Text = "9999999999"
+  .Wrap = wdFindContinue
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n09 = totWas - totNow
+
+totWas = totNow
+With rng.Find
+  .Text = "[XIV]{2}[ths]{2} Ce"
+  .Replacement.Text = "AAAAAA"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n10 = totWas - totNow
+
+totWas = totNow
+With rng.Find
+  .Text = "[XIV]{2}[ths]{2} ce"
+  .Replacement.Text = "BBBBBB"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n11 = totWas - totNow
+
+totWas = totNow
+With rng.Find
+  .Text = "[ienrlf]{2}[sth]{2} Ce"
+  .Replacement.Text = "CCCCCC"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n12 = totWas - totNow
+
+totWas = totNow
+With rng.Find
+  .Text = "[ienrlf]{2}[sth]{2} ce"
+  .Replacement.Text = "DDDDDD"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n13 = totWas - totNow
+
+totWas = totNow
+With rng.Find
+  .Text = "[ths]{2} Ce"
+  .Replacement.Text = "4444"
+  .Wrap = wdFindContinue
+  .MatchCase = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n04 = totWas - totNow
+
+totWas = totNow
+With rng.Find
+  .Text = "[ths]{2} ce"
+  .Replacement.Text = "5555"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+totNow = ActiveDocument.Content.End
+n05 = totWas - totNow
+
+myReport = "C19YYn01QQC19thYYn02QQC19^thYYn03QQNineteenth " & _
+     "CenturyYYn12QQnineteenth centuryYYn13QQ19th CenturyYY" & _
+     "n04QQ19th centuryYYn05QQ19^th CenturyYYn06QQ19^th " & _
+     "centuryYYn07QQXIXth CenturyYYn10QQXIXth centuryYYn11QQ" & _
+     "XIX^th CenturyYYn08QQXIX^th centuryYYn09"
+
+myReport = Replace(myReport, "YY", vbTab)
+myReport = Replace(myReport, "QQ", vbCr)
+myReport = Replace(myReport, "n01", Str(n01))
+myReport = Replace(myReport, "n02", Str(n02))
+myReport = Replace(myReport, "n03", Str(n03))
+myReport = Replace(myReport, "n04", Str(n04))
+myReport = Replace(myReport, "n05", Str(n05))
+myReport = Replace(myReport, "n06", Str(n06))
+myReport = Replace(myReport, "n07", Str(n07))
+myReport = Replace(myReport, "n08", Str(n08))
+myReport = Replace(myReport, "n09", Str(n09))
+myReport = Replace(myReport, "n10", Str(n10))
+myReport = Replace(myReport, "n11", Str(n11))
+myReport = Replace(myReport, "n12", Str(n12))
+myReport = Replace(myReport, "n13", Str(n13))
+
+Selection.WholeStory
+Selection.Range.Style = ActiveDocument.Styles(wdStyleNormal)
+Selection.Font.Reset
+Selection.TypeText myReport
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^^th"
+  .Replacement.Text = "th"
+  .Replacement.Font.Superscript = True
+  .Wrap = wdFindContinue
+  .MatchCase = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+Selection.WholeStory
+Selection.MoveEnd , -1
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+Selection.Tables(1).Style = "Table Grid"
+Selection.Tables(1).AutoFitBehavior (wdAutoFitContent)
+Selection.Tables(1).Borders(wdBorderTop).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderRight).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+Selection.Collapse wdCollapseStart
+If doingSeveralMacros = False Then
+  Beep
+Else
+  FUT.Activate
+End If
+End Sub
+

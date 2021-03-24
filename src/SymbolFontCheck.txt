@@ -1,0 +1,43 @@
+Sub SymbolFontCheck()
+' Paul Beverley - Version 23.02.10
+' Greek symbol font checker
+startNumber = &HF000
+endNumber = &HF0FF
+For i = startNumber To endNumber
+  Set rng = ActiveDocument.Range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ChrW(i)
+    .MatchCase = True
+    .Execute
+  End With
+  myFont = rng.Font.Name
+  If rng.Find.Found = True Then
+    If myFont = "Symbol" Then rng.HighlightColorIndex = wdYellow
+    If Left(myFont, 4) = "Wing" Then rng.HighlightColorIndex = wdRed
+    rng.Start = rng.End
+    rng.Select
+    Selection.TypeText Text:="<&H" & Hex(i) & ">|"
+    Selection.Start = rng.End
+    Selection.Font.Reset
+    Selection.Range.Style = ActiveDocument.Styles(wdStyleNormal)
+  End If
+  StatusBar = "            checking: " & Str(endNumber - i)
+Next i
+StatusBar = "Finished"
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<&H^?^?^?^?^?^?"
+  .Forward = True
+  .Wrap = wdFindContinue
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .Execute
+End With
+End Sub
+

@@ -1,0 +1,56 @@
+Sub SuperSubConvert()
+' Paul Beverley - Version 20.11.17
+' Change weird super/subscript format to proper ones
+
+myColour = wdYellow
+myUline = wdPink
+myColour2 = wdRed
+
+maxRaise = 7
+minRaise = 3
+
+maxLower = -7
+minLower = -2
+
+doSelection = (Len(Selection) > 1)
+
+If doSelection Then
+  Set rng = Selection.range.Duplicate
+Else
+  Set rng = ActiveDocument.Content
+End If
+
+For Each myPara In rng.Paragraphs
+  If myPara.range.Font.Position > 9999 Then
+    For Each wd In myPara.range.Words
+      If myPara.range.Font.Position > 9999 Then
+        For Each ch In wd.Characters
+          myPos = ch.Font.Position
+          If ch.Font.Underline = 1 Then
+            ch.Font.Underline = False
+            ch.HighlightColorIndex = myUline
+            If doSelection = False Then ch.Select
+          End If
+        ' Raise text to superscript
+          If myPos >= minRaise And myPos <= maxRaise Then
+            ch.Font.Position = 0
+            ch.Font.Superscript = True
+            ch.HighlightColorIndex = myColour
+            If doSelection = False Then ch.Select
+          End If
+        ' Lowered text to subscript
+          If myPos <= minLower And myPos >= maxLower Then
+            ch.Font.Position = 0
+            ch.Font.Subscript = True
+            ch.HighlightColorIndex = myColour2
+            If doSelection = False Then ch.Select
+          End If
+        Next ch
+      End If
+      DoEvents
+    Next wd
+  End If
+Next myPara
+Beep
+End Sub
+

@@ -1,0 +1,119 @@
+Sub TextProbe()
+' Paul Beverley - Version 05.05.17
+' Find funny character codes
+
+showEverything = False
+
+showUnicode = True
+showReturn = False ' code = 13
+showDashes = False
+showCurlyQuotes = False
+showThinSpaces = False
+showTab = False ' code = 9
+showTableCellMarker = True ' code = 7
+showPictureMarker = True ' code = 1
+showNewPage = False ' code = 12
+showNoteMarker = True ' code = 2
+showSoftReturn = True ' code = 11
+showFieldBraces = True ' code = 21
+
+
+If showEverything = True Then
+  showUnicode = True
+  showReturn = True ' code = 13
+  showDashes = True
+  showThinSpaces = True
+  showCurlyQuotes = True
+  showTab = True ' code = 9
+  showTableCellMarker = True ' code = 7
+  showPictureMarker = True ' code = 1
+  showNewPage = True ' code = 12
+  showNoteMarker = True ' code = 2
+  showSoftReturn = True ' code = 11
+  showFieldBraces = True ' code = 21
+End If
+
+Set rng = ActiveDocument.range
+theEnd = rng.End
+Selection.MoveEnd wdWord, -1
+rng.Start = Selection.Start
+rng.End = Selection.Start
+Do
+  rng.MoveEnd wdWord, 1
+  ' Check if any character < 31 or any unicode
+  myWord = rng
+  showIt = False
+  For myChar = 1 To Len(myWord)
+    i = Asc(Mid(myWord, myChar, 1))
+    If showCurlyQuotes = False Then
+       If i = 145 Or i = 146 Or i = 148 Or i = 149 Then showCode = False
+    End If
+    If i < 32 Then
+      showCode = True
+      If showReturn = False And i = 13 Then showCode = False
+      If showTab = False And i = 9 Then showCode = False
+      If showNewPage = False And i = 12 Then showCode = False
+      If showNoteMarker = False And i = 2 Then showCode = False
+      If showSoftReturn = False And i = 11 Then showCode = False
+      If showTableCellMarker = False And i = 7 Then showCode = False
+      If showPictureMarker = False And i = 1 Then showCode = False
+      If showFieldBraces = False And i = 21 Then showCode = False
+      If showCode = True Then showIt = True
+    End If
+    If showUnicode = True Then
+      i = AscW(Mid(myWord, myChar, 1))
+      Select Case i
+        Case 8216: If showCurlyQuotes = True Then showIt = True
+        Case 8217: If showCurlyQuotes = True Then showIt = True
+        Case 8220: If showCurlyQuotes = True Then showIt = True
+        Case 8221: If showCurlyQuotes = True Then showIt = True
+        Case 8211: If showDashes = True Then showIt = True
+        Case 8212: If showDashes = True Then showIt = True
+        Case 8201: If showThinSpaces = True Then showIt = True
+        Case Else: If i > 255 Then showIt = True
+      End Select
+    End If
+  Next myChar
+  
+  If showIt = True Then
+    ' Now make up string of text + codes
+    rng.Select
+    foundThis = ""
+    For i = 1 To Len(myWord)
+      myChar = Mid(myWord, i, 1)
+      If Asc(myChar) > 31 Then
+        Uni = AscW(myChar)
+        If showUnicode = True And Uni > 255 Then
+          foundThis = foundThis & "{" & myChar & " = " & Trim(Str(Uni)) & "}"
+        Else
+          foundThis = foundThis & myChar
+        End If
+      Else
+        Select Case Asc(myChar)
+          Case 1: nameCode = " (Picture marker) "
+          Case 2: nameCode = " (Note marker) "
+          Case 7: nameCode = " (Table cell marker) "
+          Case 9: nameCode = " (Tab) "
+          Case 11: nameCode = " (Soft return) "
+          Case 12: nameCode = " (New page) "
+          Case 13: nameCode = " (CR) "
+          Case 21: nameCode = " (Field braces) "
+          Case 30: nameCode = " (Non-breaking hyphen) "
+          Case 31: nameCode = " (Optional hyphen) "
+          Case Else: nameCode = ""
+        End Select
+        
+        foundThis = foundThis & "[" & Trim(Str(Asc(myChar))) & "]" & nameCode
+      End If
+    Next i
+    myResponse = MsgBox(foundThis & vbCr & vbCr _
+         & "Continue?", vbQuestion + vbYesNo)
+    If myResponse = vbNo Then Exit Sub
+  End If
+  rng.MoveStart wdWord, 1
+Loop Until rng.End = theEnd
+rng.Select
+Selection.Start = Selection.End
+Beep
+End Sub
+

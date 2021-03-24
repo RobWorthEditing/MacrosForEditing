@@ -1,0 +1,7 @@
+Sub Yesterdate()
+' Paul Beverley - Version 09.01.12
+' Type yesterday's date into the text
+
+Selection.TypeText Text:=Format(Date - 1, "d mmmm yyyy")
+End Sub
+

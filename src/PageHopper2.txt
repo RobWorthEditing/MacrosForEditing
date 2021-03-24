@@ -1,0 +1,16 @@
+Sub PageHopper2()
+' Paul Beverley - Version 18.12.10
+' Go to page x
+' Alt-G
+myPage = InputBox("Go to page?", "Page Hopper")
+Selection.GoTo What:=wdGoToPage, Count:=myPage
+startHere = Selection.Start - 1
+Selection.MoveDown Unit:=wdScreen, Count:=1
+' Make sure that you've not dropped into a footnote ...
+Do
+  Selection.MoveDown Unit:=wdScreen, Count:=1
+Loop Until Selection.Start > startHere
+Selection.End = startHere
+Selection.MoveRight Unit:=wdCharacter, Count:=1
+End Sub
+

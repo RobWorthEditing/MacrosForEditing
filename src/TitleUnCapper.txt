@@ -1,0 +1,99 @@
+Sub TitleUnCapper()
+' Paul Beverley - Version 27.10.15
+' Uppercase initial letter only on first word
+' Alt-F6
+
+moveOnAfter = False
+
+' If false, it assumes the title is in italic
+wholeSentence = True
+
+nextFind = "\<[ABC]\>"
+' Do you want an initial cap after a colon?
+colonCap = True
+
+Selection.MoveRight Unit:=wdCharacter, Count:=1
+If LCase(Selection) = UCase(Selection) Then _
+     Selection.MoveRight Unit:=wdWord, Count:=1
+' Move to start of current word
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+quoteStart = Selection.Start
+Selection.MoveStart wdCharacter, -1
+
+
+' check the character before the first word
+myChar = Selection
+openChars = ChrW(8216) & ChrW(8220) & "("
+If InStr(openChars & "(", myChar) > 0 Then
+  allSentence = False
+  quoteStart = Selection.Start + 1
+Else
+  allSentence = True
+End If
+
+If allSentence = True Then
+  If wholeSentence = True Then
+    Selection.Sentences(1).Select
+    myText = Selection
+    firstChar = Chr(Asc(myText))
+    If InStr(openChars, firstChar) > 0 Then Selection.MoveStart Count:=1
+    If firstChar = "<" Then Selection.MoveStart Count:=InStr(myText, ">")
+  Else
+    Selection.Start = quoteStart + 1
+    Do
+      Selection.MoveRight , 1
+    Loop Until Selection.Font.Italic = False
+    Selection.Start = quoteStart
+  End If
+Else
+  Selection.Sentences(1).Select
+  myText = Selection
+  i = Asc(myChar)
+  ' Find the position of the corresponding close character
+  lenTitle = InStr(myText, Chr(i + 1))
+  Selection.End = Selection.Start + lenTitle
+End If
+endNow = Selection.End
+
+' Just check the initial letter is uppercase
+Selection.End = Selection.Start
+Do
+' select more until you meet an alpha character
+  Selection.MoveEnd , 1
+  firstBit = Selection
+Loop Until UCase(firstBit) <> LCase(firstBit)
+Selection.range.Case = wdUpperCase
+Selection.Start = Selection.End
+Selection.End = endNow
+
+' Lowercase the rest
+Selection.range.Case = wdLowerCase
+If colonCap = True Then
+' Capitalise after a colon if option set
+  myText = Selection
+  colonPos = InStr(myText, ": ")
+  If colonPos > 0 Then
+    Selection.Start = Selection.Start + colonPos + 1
+    Selection.End = Selection.Start + 1
+    Selection.range.Case = wdUpperCase
+  End If
+End If
+Selection.Start = endNow
+If moveOnAfter = True Then
+nextFind = "\<[ABC]\>"
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = nextFind
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+End If
+End Sub
+

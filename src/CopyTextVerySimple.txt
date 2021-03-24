@@ -1,0 +1,68 @@
+Sub CopyTextVerySimple()
+' Paul Beverley - Version 28.10.20
+' Creates a text-only copy, with no features preserved
+
+Set rngOld = ActiveDocument.Content
+myLanguage = rngOld.LanguageID
+Set oldDoc = ActiveDocument
+Documents.Add
+Set rng = ActiveDocument.Content
+rng.LanguageID = myLanguage
+rng.Text = rngOld.Text
+
+numNotes = oldDoc.Endnotes.Count
+If numNotes > 0 Then
+  Set rng = ActiveDocument.Content
+  rng.Collapse wdCollapseEnd
+  rng.InsertAfter Text:=vbCr & "Endnotes:" & vbCr & vbCr
+  rng.Collapse wdCollapseEnd
+  rng.Text = _
+       oldDoc.StoryRanges(wdEndnotesStory).FormattedText
+End If
+
+numNotes = oldDoc.Footnotes.Count
+If numNotes > 0 Then
+  Set rng = ActiveDocument.Content
+  rng.Collapse wdCollapseEnd
+  rng.InsertAfter Text:=vbCr & "Footnotes:" & vbCr & vbCr
+  rng.Collapse wdCollapseEnd
+  rng.Text = _
+       oldDoc.StoryRanges(wdFootnotesStory).FormattedText
+End If
+
+' copy all the textboxes to the end of the text
+shCount = oldDoc.Shapes.Count
+If shCount > 0 Then
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText vbCr & "Textboxes:" & vbCr & vbCr
+  For j = 1 To shCount
+    Set shp = oldDoc.Shapes(j)
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.HasText Then
+        Set rng = shp.TextFrame.TextRange
+        If Len(rng.Text) > 1 Then
+          Selection.Text = rng.Text
+          Selection.EndKey Unit:=wdStory
+        End If
+      End If
+    End If
+  Next
+End If
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^2"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Add a newline for safety
+Selection.TypeText vbCr
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

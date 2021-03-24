@@ -1,0 +1,53 @@
+Sub VerbChangerNL()
+' Paul Beverley - Version 13.09.19
+' Changes Dutch verbs in current sentence
+
+Selection.Expand wdSentence
+st = Selection.Start
+txt = Selection
+zalPosn = InStr(txt, "zal")
+zullenPosn = InStr(txt, "zullen")
+wordenPosn = InStr(txt, "worden")
+zijnPosn = InStr(txt, "zijn")
+
+If zalPosn * wordenPosn > 0 Then
+    Selection.Start = st + wordenPosn
+    Selection.End = st + wordenPosn
+    Selection.Expand wdWord
+    Selection.Delete
+    Selection.Start = st + zalPosn - 1
+    Selection.End = st + zalPosn + 2
+    Selection.Text = "wordt"
+End If
+
+If zullenPosn * wordenPosn > 0 Then
+    Selection.Start = st + wordenPosn
+    Selection.End = st + wordenPosn
+    Selection.Expand wdWord
+    Selection.Delete
+    Selection.Start = st + zullenPosn - 1
+    Selection.End = st + zullenPosn + 5
+    Selection.Text = "worden"
+End If
+
+If zalPosn * zijnPosn > 0 Then
+    Selection.Start = st + zijnPosn
+    Selection.End = st + zijnPosn
+    Selection.Expand wdWord
+    Selection.Delete
+    Selection.Start = st + zalPosn - 1
+    Selection.End = st + zalPosn + 2
+    Selection.Text = "is"
+End If
+
+If zullenPosn * zijnPosn > 0 Then
+    Selection.Start = st + zijnPosn
+    Selection.End = st + zijnPosn
+    Selection.Expand wdWord
+    Selection.Delete
+    Selection.Start = st + zullenPosn - 1
+    Selection.End = st + zullenPosn + 5
+    Selection.Text = "zijn"
+End If
+End Sub
+

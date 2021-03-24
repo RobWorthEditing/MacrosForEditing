@@ -1,0 +1,24 @@
+Sub SearchTheseWords()
+' Paul Beverley - Version 13.09.19
+' Finds the next occurrence of any of a list of words
+
+myWords = ":and:or:but:so:yet:if:"
+
+Set rng = Selection.range.Duplicate
+' If only a tiny selection...
+If rng.Words.Count < 3 Then rng.Collapse wdCollapseEnd
+' or nothing selected, search from cursor to the end of the file
+If rng.Start = rng.End Then
+  rng.End = ActiveDocument.Content.End
+End If
+
+myWords = ":" & myWords & ":"
+For Each wd In rng.Words
+  myTest = ":" & LCase(Trim(wd)) & ":"
+  If InStr(myWords, myTest) > 0 Then
+    wd.Select
+    Exit For
+  End If
+Next wd
+End Sub
+

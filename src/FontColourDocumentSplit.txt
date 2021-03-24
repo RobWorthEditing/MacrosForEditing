@@ -1,0 +1,81 @@
+Sub FontColourDocumentSplit()
+' Paul Beverley - Version 25.06.20
+' Splits a document into coloured and not coloured
+
+removeColour = True
+
+' Create a first copy of the document
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.FormattedText = rng.FormattedText
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = wdYellow
+
+Set rng = ActiveDocument.Content
+rng.HighlightColorIndex = 0
+rng.Shading.BackgroundPatternColor = wdColorAutomatic
+
+' Highlight any text in black
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.ColorIndex = 0
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+ 
+ ' Including the other 'black'
+  .Font.ColorIndex = 1
+  .Replacement.Text = "^&"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' Make a second copy
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.FormattedText = rng.FormattedText
+
+' In the first copy, remove unhighlighted = coloured text
+' i.e. leave English behind
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' Clear the highlighting
+rng.HighlightColorIndex = 0
+
+' In the second copy, unhighlight the CRs
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p"
+  .Replacement.Text = ""
+  .Replacement.Highlight = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+' then remove the highlighted text = black
+Set rng = ActiveDocument.Content
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+End With
+If removeColour = True Then rng.Font.ColorIndex = 0
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

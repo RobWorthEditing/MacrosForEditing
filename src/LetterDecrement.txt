@@ -1,0 +1,18 @@
+Sub LetterDecrement()
+' Paul Beverley - Version 26.04.16
+' Find next alpha character and increment it alphabetically
+
+doTrack = False
+
+myTrack = ActiveDocument.TrackRevisions
+If doTrack = False Then ActiveDocument.TrackRevisions = False
+Selection.Collapse wdCollapseStart
+Do While UCase(ChrW(AscW(Selection))) = LCase(ChrW(AscW(Selection)))
+  Selection.MoveRight , 1
+Loop
+Selection.End = Selection.Start + 1
+Selection.TypeText Text:=ChrW(AscW(Selection) - 1)
+Selection.MoveLeft , 1
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

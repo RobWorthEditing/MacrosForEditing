@@ -1,0 +1,9 @@
+Sub MacroIndent()
+' Paul Beverley - Version 01.01.10
+' Automatically indent a macro listing
+
+' Indent step size:
+sizeStep = 2
+' For indenting the wrapped-over long lines:
+bigStep = 5
+' Do you want the whole Sub to End Sub 

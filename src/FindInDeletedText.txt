@@ -1,0 +1,22 @@
+Sub FindInDeletedText()
+' Paul Beverley - Version 07.09.17
+' Searches only the deleted (track changed) text
+
+myText = InputBox("Find?", "Revision finder", Selection.Find.Text)
+Selection.Find.Text = myText
+Set rng = ActiveDocument.range(0, Selection.End)
+thisRV = rng.Revisions.Count
+If thisRV = 0 Then thisRV = 1
+For j = thisRV To ActiveDocument.Revisions.Count
+  Set rv = ActiveDocument.Revisions(j)
+  If rv.Type = wdRevisionDelete Then
+    If InStr(LCase(rv.range.Text), LCase(myText)) > 0 Then
+      rv.range.Select
+      Exit Sub
+    End If
+  End If
+  DoEvents
+Next j
+Beep
+End Sub
+

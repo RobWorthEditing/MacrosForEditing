@@ -1,0 +1,74 @@
+Sub EquationsHighlightAll()
+' Paul Beverley - Version 10.10.20
+' Highlights all maths items
+
+doMathTypeOnes = True
+myColour1 = wdWhite
+myColour1 = wdTurquoise
+myColour2 = wdYellow
+myColour2 = wdGray25
+
+doEqEditorOnes = True
+myColour3 = wdGray25
+myColour3 = wdBrightGreen
+
+doSymbolFont = True
+myColour4 = wdPink
+
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+numInlineShapes = ActiveDocument.InlineShapes.Count
+numMaths1 = 0
+numMaths2 = 0
+If numInlineShapes > 0 And doMathTypeOnes = True Then
+  For Each myMath In ActiveDocument.InlineShapes
+    Select Case myMath.Type
+      Case 1
+            myMath.Range.HighlightColorIndex = myColour1
+            numMaths1 = numMaths1 + 1
+      Case 3
+            myMath.Range.HighlightColorIndex = myColour2
+            numMaths2 = numMaths2 + 1
+      Case Else
+            myMath.Range.HighlightColorIndex = myColour4
+    End Select
+    DoEvents
+  Next myMath
+  MsgBox "Possible MathType items found" & vbCr & "Editable:  " _
+       & numMaths1 & vbCr & "Non-editable:  " & numMaths2
+End If
+
+numMaths = ActiveDocument.OMaths.Count
+If numMaths > 0 And doEqEditorOnes = True Then
+  For Each myMath In ActiveDocument.OMaths
+    myMath.Range.HighlightColorIndex = myColour3
+    DoEvents
+  Next myMath
+  MsgBox "Equation Editor items found: " & numMaths
+End If
+
+If doSymbolFont = True Then
+  oldColour = Options.DefaultHighlightColorIndex
+  Options.DefaultHighlightColorIndex = myColour4
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Name = "Symbol"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .Forward = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  Options.DefaultHighlightColorIndex = oldColour
+End If
+Beep
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

@@ -1,0 +1,75 @@
+Sub AutoListOff()
+' Paul Beverley - Version 22.11.16
+' Changes auto-bulleted listing to real bullets
+
+changeBullets = True
+
+newBlackBullet = ChrW(8226)
+' newBlackBullet = "*": ' asterisk
+
+newWhiteBullet = ChrW(9702)
+
+newSquareBullet = ChrW(9642)
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+ActiveDocument.ConvertNumbersToText
+
+If changeBullets = True Then
+  normalFont = ActiveDocument.Styles(wdStyleNormal).Font.Name
+
+' One common type of bullet uses Symbol font
+  Set rng = ActiveDocument.range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Text = ChrW(&HF0B7) & "^t"
+    .Forward = True
+    .Replacement.Text = newBlackBullet & "^t"
+    .Replacement.Font.Name = normalFont
+    .Wrap = wdFindContinue
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  ' Another uses Wingding font
+  Set rng = ActiveDocument.range
+  With rng.Find
+    .Text = ChrW(&HF0FC) & "^t"
+    .Font.Name = "Wingdings"
+    .Replacement.Text = newBlackBullet & "^t"
+    .Replacement.Font.Name = normalFont
+    .Execute Replace:=wdReplaceAll
+  End With
+
+' Sub-bullet points sometimes use lowercase o
+  Set rng = ActiveDocument.range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Text = "^po^t"
+    .Forward = True
+    .Replacement.Text = "^p" & newWhiteBullet & "^t"
+    .Replacement.Font.Name = normalFont
+    .Wrap = wdFindContinue
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  ' Sub-sub-bullet points are square bullets
+  Set rng = ActiveDocument.range
+  With rng.Find
+    .Text = ChrW(&HF0A7) & "^t"
+    .Replacement.Text = newSquareBullet & "^t"
+    .Replacement.Font.Name = normalFont
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

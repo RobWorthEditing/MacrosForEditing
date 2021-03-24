@@ -1,0 +1,32 @@
+Sub ContentsListChecker()
+' Paul Beverley - Version 09.02.12
+' Confirm the page numbers in the contents list
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Text = "[[["
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceOne
+End With
+
+If rng.Find.Found = False Then
+' We are in the contents list, so get the page number
+  Selection.EndKey Unit:=wdLine
+  Selection.MoveStartWhile cset:="0123456789", Count:=wdBackward
+  findPage = Val(Selection)
+  Selection.Collapse wdCollapseEnd
+  Selection.InsertAfter Text:="[[["
+  Selection.GoTo What:=wdGoToPage, Count:=findPage
+Else
+' We must now be back in the contents list
+  rng.Select
+  startHere = Selection.End + 1
+  Selection.MoveDown Unit:=wdScreen, Count:=2
+  Selection.End = startHere
+  Selection.EndKey Unit:=wdLine
+End If
+End Sub
+

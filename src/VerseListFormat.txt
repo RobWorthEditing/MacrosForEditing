@@ -1,0 +1,65 @@
+Sub VerseListFormat()
+' Paul Beverley - Version 09.11.18
+' Formats list(s) or poem verse(s) with manual linebreaks
+
+doOneVerse = (Selection.Start = Selection.End)
+If doOneVerse Then
+  keepGoing = True
+  Set rng = Selection.range.Duplicate
+  Do While keepGoing = True
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "^p"
+      .Wrap = False
+      .Replacement.Text = "^11"
+      .Forward = True
+      .MatchWildcards = False
+      .Execute
+    End With
+    rng.Select
+    Selection.MoveRight , 1
+    If Asc(Selection) = 13 Then
+      keepGoing = False
+    Else
+      rng.Text = Chr(11)
+      rng.Start = rng.End + 1
+    End If
+    DoEvents
+  Loop
+  Selection.MoveEnd , 1
+  Selection.Delete
+Else
+  Set rng = Selection.range.Duplicate
+  Selection.Collapse wdCollapseEnd
+  Selection.Expand wdParagraph
+  If Len(Selection) > 1 Then
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveRight , 1
+  End If
+  Selection.Collapse wdCollapseEnd
+  rng.End = Selection.End
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^p^p"
+    .Wrap = False
+    .Replacement.Text = "zczc"
+    .Forward = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    
+    .Text = "^p"
+    .Wrap = False
+    .Replacement.Text = "^11"
+    .Execute Replace:=wdReplaceAll
+    
+    .Text = "zczc"
+    .Wrap = False
+    .Replacement.Text = "^p"
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+End Sub
+

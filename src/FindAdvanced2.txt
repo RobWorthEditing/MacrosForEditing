@@ -1,0 +1,7 @@
+Sub FindAdvanced2()
+' Paul Beverley - Version 22.02.11
+' Call up Advanced Find dialog box
+
+Dialogs(wdDialogEditFind).Show
+End Sub
+

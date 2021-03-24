@@ -1,0 +1,32 @@
+Sub AlphaOrderChecker()
+' Paul Beverley - Version 27.10.17
+' Creates an alpha-sorted Paul Beverley - Version of selected text showing changes
+
+myList = Selection
+If Len(myList) < 10 Then
+  myResponse = MsgBox("Check whole file?", vbQuestion _
+          + vbYesNoCancel, "AlphaOrderChecker")
+  If myResponse <> vbYes Then Exit Sub
+  myList = ActiveDocument.Content.Text
+End If
+If Right(myList, 1) = vbCr Then _
+  myList = Left(myList, Len(myList) - 1)
+Documents.Add
+Set firstDoc = ActiveDocument
+Selection.TypeText Text:=Trim(myList)
+
+Documents.Add
+Set secondDoc = ActiveDocument
+Selection.TypeText Text:=Trim(myList)
+Set rng = ActiveDocument.Content
+rng.Sort ExcludeHeader:=False, FieldNumber:="Paragraphs", _
+     SortOrder:=wdSortOrderAscending, SortFieldType:=wdSortFieldAlphanumeric
+' Now compare the sorted and unsorted copies
+Application.CompareDocuments _
+OriginalDocument:=Documents(firstDoc.Name), _
+RevisedDocument:=Documents(secondDoc.Name), _
+Destination:=wdCompareDestinationRevised
+firstDoc.Close SaveChanges:=False
+secondDoc.Activate
+End Sub
+

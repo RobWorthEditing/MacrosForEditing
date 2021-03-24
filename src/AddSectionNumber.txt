@@ -1,0 +1,39 @@
+Sub AddSectionNumber()
+' Paul Beverley - Version 07.02.11
+' Add indexed section number
+
+afterText = Chr(9): ' a tab
+
+Dim v As Variable, i As Integer
+varsExist = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "indexNum" Then varsExist = True: Exit For
+Next v
+
+If varsExist = False Then
+  ActiveDocument.Variables.Add "indexNum", 1
+End If
+
+' If no text is selected ...
+If Selection.Start = Selection.End Then
+' Add an index number
+  i = ActiveDocument.Variables("indexNum")
+  Selection.HomeKey Unit:=wdLine
+  ' Selection.PasteAndFormat (wdFormatPlainText)
+  Selection.PasteSpecial DataType:=wdPasteText
+  Selection.TypeText Text:="." & Trim(Str(i)) + afterText
+  Selection.HomeKey Unit:=wdLine
+  If Selection = Chr(9) Then Selection.Delete Unit:=wdCharacter, Count:=1
+  ActiveDocument.Variables("indexNum") = i + 1
+Else:  ' if some text is selected ...
+  ' set up a new index number
+  i = Val(Selection)
+  If i = 0 Then i = 1
+  myInput = InputBox("Start number?", "Section numberer", Trim(Str(i)))
+  If Len(myInput) = 0 Then Exit Sub
+  i = Val(myInput)
+  ActiveDocument.Variables("indexNum") = i
+End If
+Selection.End = Selection.Start
+End Sub
+

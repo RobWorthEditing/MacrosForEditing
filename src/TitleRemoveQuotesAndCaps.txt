@@ -1,0 +1,14 @@
+Sub TitleRemoveQuotesAndCaps()
+' Paul Beverley - Version 13.12.16
+' Removes quotes from current sentence, then makes it lowercase
+
+Selection.MoveUntil cset:=ChrW(8220) & ChrW(8216) & """'", Count:=wdBackward
+Selection.TypeBackspace
+
+Selection.MoveUntil cset:=ChrW(8221) & ChrW(8217) & """'", Count:=wdForward
+Selection.Delete
+
+Selection.MoveLeft , 2
+Call TitleUnCapper
+End Sub
+

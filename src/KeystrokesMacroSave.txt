@@ -1,0 +1,38 @@
+Sub KeystrokesMacroSave()
+' Paul Beverley - Version 13.07.17
+' Creates a list of all macro keystrokes
+
+Documents.Add
+For Each kb In KeyBindings
+  If kb.KeyCategory = 2 Then  ' It's a Macro
+    cmd = kb.Command
+    If Left(cmd, 6) = "Normal" Then
+      Selection.TypeText Text:=cmd & vbTab & kb.KeyString & vbCr
+    End If
+  End If
+Next kb
+
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending
+Selection.HomeKey Unit:=wdStory
+n = ActiveDocument.Paragraphs.Count
+Beep
+Selection.TypeText Text:="All macro key assignments" & _
+     vbCr & "Saved: " & n - 1 & vbCr
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Normal.NewMacros."
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.Color = wdColorGray25
+  .MatchCase = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+

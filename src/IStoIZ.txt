@@ -1,0 +1,232 @@
+
+Sub IStoIZ()
+' Paul Beverley - Version 06.02.21
+' Corrects text to give -iz-, -yz- spellings
+
+promptForConfirmation = True
+
+doExtraWords = False
+szExceptions = "analys,reanalys,overanalys,catalys,dialys,"
+szExceptions = szExceptions & "electrolys,paralys,hydrolys"
+
+' textColour = wdColorBlue
+textColour = 0
+
+highlightColour = 0
+' highlightColour = wdYellow
+
+bothTCandHighlight = False
+
+nonoStyles = "DisplayQuote,ReferenceList"
+
+closeExceptionsFile = True
+
+' Address where exceptions file is held
+' On Windows, it will need to be something like:
+mySFile = "C:\Documents and Settings\Paul\My Documents\IS_words.docx"
+
+' On a Mac, it will need to be something like:
+' mySFile = "/Users/Paul/My Documents/Macro stuff/IS_words.docx"
+
+ExceptionSFile = "IS_words"
+
+' Start of main program
+nonoStyles = "," & nonoStyles & ","
+Set mainDoc = ActiveDocument
+
+myTrack = ActiveDocument.TrackRevisions
+
+gottadoc = False
+For Each thisDoc In Application.Documents
+  thisName = thisDoc.Name
+  If InStr(thisName, ExceptionSFile) > 0 Then
+    gottadoc = True
+    closeExceptionsFile = False
+    thisDoc.Activate
+    Exit For
+  End If
+Next thisDoc
+
+On Error Resume Next
+If gottadoc = False Then
+  Documents.Open mySFile
+  If Err.Number = 5174 Then
+    MsgBox ("Please open the IS exceptions file")
+    Err.Clear
+    Exit Sub
+  Else
+    On Error GoTo 0
+  End If
+End If
+
+allWords = "!"
+For Each wd In ActiveDocument.Words
+  thisWord = Trim(wd)
+  If Asc(thisWord) > 32 Then allWords = allWords & thisWord & "!"
+Next wd
+
+If closeExceptionsFile = True And gottadoc = False Then
+  ActiveDocument.Close SaveChanges:=False
+End If
+
+mainDoc.Activate
+If promptForConfirmation = True Then
+  myResponse = MsgBox("IS to IZ: Edit the text?", _
+       vbQuestion + vbYesNoCancel)
+Else
+  myResponse = vbYes
+End If
+If myResponse = vbCancel Then Exit Sub
+If myTrack = True And myResponse = vbYes Then
+  If bothTCandHighlight = False Then
+    textColour = 0
+    highlightColour = 0
+  End If
+End If
+If myResponse = vbNo Then ActiveDocument.TrackRevisions = False
+totChanges = 0
+Selection.HomeKey Unit:=wdStory
+
+For hit = 1 To 4
+  goes = 0
+  If hit = 1 Then
+    If ActiveDocument.Endnotes.Count > 0 Then
+      Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+      goes = 1
+    End If
+  End If
+  If hit = 2 Then
+    If ActiveDocument.Footnotes.Count > 0 Then
+      Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+      goes = 1
+    End If
+  End If
+  If hit = 3 Then
+    Set rng = ActiveDocument.Range
+    goes = 1
+  End If
+  If hit = 4 Then
+    goes = ActiveDocument.Shapes.Count
+  End If
+  If goes > 0 Then
+    For myGo = 1 To goes
+      someText = True
+      If hit = 4 Then
+        Do
+          someText = False
+          If ActiveDocument.Shapes(myGo).Type <> 24 And _
+               ActiveDocument.Shapes(myGo).Type <> 3 Then
+            someText = ActiveDocument.Shapes(myGo).TextFrame.HasText
+          End If
+          If someText Then
+            Set rng = ActiveDocument.Shapes(myGo).TextFrame.TextRange
+          Else
+            myGo = myGo + 1
+          End If
+          DoEvents
+        Loop Until someText Or myGo > goes
+      End If
+      theEnd = rng.End
+      If someText = True Then
+        rng.Start = 0
+        rng.End = 0
+        Do
+          With rng.Find
+            .ClearFormatting
+            .Replacement.ClearFormatting
+            .Text = "[iy]s[iea]"
+            .Wrap = wdFindStop
+            .Replacement.Text = ""
+            .Forward = True
+            .MatchWildcards = True
+            .MatchWholeWord = False
+            .MatchSoundsLike = False
+            .Execute
+          End With
+          If rng.Find.Found = True Then
+            fnd = rng
+            opposite = Replace(fnd, "s", "z")
+  
+            Set rng1 = rng.Duplicate
+            rng1.Expand wdWord
+            Do While InStr(ChrW(8217) & "' ", Right(rng1.Text, 1)) > 0
+              rng1.MoveEnd , -1
+              DoEvents
+            Loop
+            startWord = rng1.Start
+            endWord = rng1.End
+  
+            changeIt = True
+          ' But don't make the change if...
+            thisStyle = "," & rng.Style & ","
+            If InStr(nonoStyles, thisStyle) > 0 Then changeIt = False
+            If rng.Font.StrikeThrough = True Then changeIt = False
+
+          ' If -is- is  near the beginning of the word...
+            If rng.Start - rng1.Start < 4 Then
+              ' look for an -is- later in the word
+              rng.Start = rng1.Start + 4
+              rng.End = endWord
+              With rng.Find
+                .ClearFormatting
+                .Replacement.ClearFormatting
+                .Text = "is[iea]"
+                .Wrap = wdFindStop
+                .Replacement.Text = ""
+                .Forward = True
+                .MatchWildcards = True
+                .Execute
+              End With
+              opposite = Replace(rng, "s", "z")
+              If rng.Find.Found = False Or rng.Start > endWord _
+                   Then changeIt = False
+            End If
+          ' Check that it's not in the list of s's
+            If InStr(allWords, "!" & LCase(rng1) & "!") > 0 _
+                 Then changeIt = False
+            If InStr(szExceptions, Left(LCase(rng1), 6)) > 0 And _
+                 rng1.LanguageID = wdEnglishUK Then changeIt = False
+            If changeIt = True Then
+            ' then change it to a z
+              If myResponse = vbYes Then rng.Text = opposite
+              If rng1.End < rng.End Then rng1.End = rng.End
+              If highlightColour > 0 Then
+                rng1.HighlightColorIndex = highlightColour
+              End If
+              If textColour > 0 Then
+                rng1.Font.Color = textColour
+              End If
+              totChanges = totChanges + 1
+            End If
+            stopNow = False
+          Else
+            stopNow = True
+          End If
+          If rng.Text > "" Then
+            Set rng = rng1.Duplicate
+            rng.Collapse wdCollapseEnd
+          End If
+          i = theEnd - rng.End
+          If (i Mod 100) = 0 And hit = 3 Then StatusBar = _
+               "To go: " & Str(i)
+          DoEvents
+        Loop Until stopNow = True
+      End If
+      DoEvents
+      Debug.Print rng.Text
+    Next myGo
+  End If
+  DoEvents
+Next hit
+
+ActiveDocument.TrackRevisions = myTrack
+If promptForConfirmation = True Then
+  If myResponse = vbYes Then
+     MsgBox ("IS words changed:  " & Str(totChanges) & "  ")
+  Else
+     MsgBox ("IS words needing to be changed:  " & Str(totChanges) & "  ")
+  End If
+End If
+End Sub
+
+

@@ -1,0 +1,41 @@
+Sub MatchBrackets()
+' Paul Beverley - Version 07.12.12
+' Check whether brackets match up
+
+For Each myPara In ActiveDocument.Paragraphs
+  myText = myPara.Range.Text
+  L = Len(myText)
+  opens = L - Len(Replace(myText, "(", ""))
+  closes = L - Len(Replace(myText, ")", ""))
+ 
+' Ignore "1)", or "a)" type lists
+  Set rng = myPara.Range
+  rng.End = rng.Start + 2
+  If InStr(rng.Text, ")") > 0 Then closes = closes - 1
+ 
+  If opens <> closes Then
+    myPara.Range.Font.Underline = True
+    myCount = myCount + 1
+    StatusBar = "Found: " & myCount
+  End If
+Next
+StatusBar = ""
+If myCount = 0 Then
+  MsgBox ("All clear!")
+Else
+  MsgBox ("Number of suspect paragraphs: " & Trim(myCount))
+End If
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+End Sub
+

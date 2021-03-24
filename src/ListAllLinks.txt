@@ -1,0 +1,57 @@
+Sub ListAllLinks()
+' Paul Beverley - Version 01.09.16
+' Creates a table of all URLs in the file
+
+Set thisDoc = ActiveDocument
+Documents.Add
+Set listDoc = ActiveDocument
+Set rng = ActiveDocument.Content
+thisDoc.Activate
+
+For Each lnk In ActiveDocument.Fields
+  includeLink = True
+  If lnk.Kind <> 2 Then
+    lnk.Select
+    includeLink = False
+    ' MsgBox "Different link kind"
+  End If
+  
+  If lnk.Type <> 88 Then
+    lnk.Select
+    includeLink = False
+    ' MsgBox "Different link type"
+  End If
+  
+  If includeLink = True Then
+    linkCode = lnk.Code
+    myURL = Replace(linkCode, "HYPERLINK", "")
+    myURL = Trim(Replace(myURL, """", ""))
+    myVisibleText = lnk.Result
+  '  lnk.ShowCodes = True
+    rng.InsertAfter Text:=myVisibleText & vbTab
+    startLink = rng.End
+    rng.InsertAfter Text:=myURL & vbCr
+    rng.End = rng.End - 1
+    rng.Start = startLink - 1
+    rng.Font.Color = wdColorBlue
+    rng.Font.Italic = True
+    rng.Start = rng.End + 1
+  End If
+Next lnk
+
+listDoc.Activate
+Selection.WholeStory
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+Selection.Tables(1).Style = "Table Grid"
+Selection.Tables(1).AutoFitBehavior (wdAutoFitContent)
+If deleteTableBorders = True Then
+  Selection.Tables(1).Borders(wdBorderTop).LineStyle = wdLineStyleNone
+  Selection.Tables(1).Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+  Selection.Tables(1).Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+  Selection.Tables(1).Borders(wdBorderRight).LineStyle = wdLineStyleNone
+  Selection.Tables(1).Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+  Selection.Tables(1).Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+End If
+Selection.HomeKey Unit:=wdStory
+End Sub
+

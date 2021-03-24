@@ -1,0 +1,11 @@
+Sub CommentNext()
+' Paul Beverley - Version 15.03.14
+' Goes to next comment
+
+hereNow = Selection.Start
+WordBasic.GoToNextComment
+If Selection.Start = hereNow Then
+  Beep
+End If
+End Sub
+

@@ -1,0 +1,74 @@
+Sub CountRemainder()
+' Paul Beverley - Version 13.01.21
+' Counts words below the cursor
+
+altDisplay = False
+' altDisplay = True
+
+Dim wordsTotal As Long, wordsLeft As Long, wordsDone As Long
+
+On Error GoTo ReportIt
+wordsTotal = ActiveDocument.Content.ComputeStatistics(wdStatisticWords)
+On Error GoTo 0
+
+' Turn to a string with single decimal place
+If altDisplay = True Then
+  totWords = Trim(Str(Int(wordsTotal / 1000))) & "," & Right(Trim(wordsTotal), 3)
+Else
+  totWords = Trim(Str(Int(wordsTotal / 100) / 10))
+  If InStr(totWords, ".") = 0 Then totWords = totWords & ".0"
+  If wordsTotal < 1000 Then totWords = "0" & totWords
+End If
+
+' Count remainder
+Selection.End = ActiveDocument.Content.End
+wordsLeft = Selection.Range.ComputeStatistics(wdStatisticWords)
+Selection.Collapse wdCollapseStart
+
+wordsDone = wordsTotal - wordsLeft
+If altDisplay = True Then
+  readWords = Trim(Str(Int(wordsDone / 1000))) & "," & Right(Trim(wordsDone), 3)
+Else
+  readWords = Trim(Str(Int(wordsDone / 100) / 10))
+  If InStr(readWords, ".") = 0 Then readWords = readWords & ".0"
+  If wordsDone < 1000 Then readWords = "0" & readWords
+End If
+
+' Calculate words to go as a proportion of actual total
+If altDisplay = True Then
+  wordsToGo = Trim(Str(Int(wordsLeft / 1000))) & "," & Right(Trim(wordsLeft), 3)
+Else
+  wordsToGo = Trim(Str(Int(wordsLeft / 100) / 10))
+  If InStr(wordsToGo, ".") = 0 Then wordsToGo = wordsToGo & ".0"
+  If wordsLeft < 1000 Then wordsToGo = "0" & wordsToGo
+End If
+pCent = Trim(Str(Int(wordsLeft / wordsTotal * 100)))
+MsgBox wordsToGo & "   left, out of   " & Trim(totWords) & vbCr & vbCr _
+      & readWords & "   done." & vbCr & vbCr & "To go: " _
+      & pCent & " %"
+Exit Sub
+
+ReportIt:
+If Err.Number = 4658 Then
+  lang = "Unknown language"
+  If Selection.LanguageID = wdEnglishUK Then lang = "UK English"
+  If Selection.LanguageID = wdEnglishUS Then lang = "US English"
+  
+  myResponse = MsgBox("Mixed language setting used." & vbCr & vbCr & _
+  "Set language to " & lang & "?", vbQuestion + vbYesNoCancel, _
+       "CountRemainder")
+  If myResponse <> vbYes Then
+    Exit Sub
+  Else
+    myTrack = ActiveDocument.TrackRevisions
+    ActiveDocument.TrackRevisions = False
+    ActiveDocument.Content.LanguageID = Selection.LanguageID
+    ActiveDocument.TrackRevisions = myTrack
+    Resume
+  End If
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+

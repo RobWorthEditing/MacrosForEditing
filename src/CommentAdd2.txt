@@ -1,0 +1,82 @@
+Sub CommentAdd2()
+' Paul Beverley - Version 01.06.13
+' Add a comment
+
+attrib1 = "PB: "
+' attrib2 = "T/S: "
+' postText = " is not on the refs list."
+ postText = " Will the readers know this acronym?"
+' postText = " Undefined acronym " & Chrw(8217) & " "
+' postText = " - reference?"
+
+addPageNum1 = True
+addLineNum1 = True
+addPageNum2 = True
+addLineNum2 = True
+highlightTheText = False
+textHighlightColour = wdYellow
+colourTheText = False
+textColour = wdColorBlue
+keepPaneOpen = False
+myStart = Selection.Start
+wasEnd = Selection.End
+Set rng = Selection.Range
+rng.Collapse wdCollapseEnd
+rng.MoveEnd , 1
+pageNum = rng.Information(wdActiveEndAdjustedPageNumber)
+lineNum = rng.Information(wdFirstCharacterLineNumber)
+If myStart <> wasEnd Then
+  If Right(Selection, 1) = Chr(32) Then
+    Selection.MoveEnd wdCharacter, -1
+    wasEnd = wasEnd - 1
+  End If
+  myTrack = ActiveDocument.TrackRevisions
+  ActiveDocument.TrackRevisions = False
+' Either highlight it ...
+  If highlightTheText = True Then Selection.Range.HighlightColorIndex _
+       = textHighlightColour
+' And/or change the text colour to red
+  If colourTheText = True Then Selection.Font.Color = textColour
+' Now create the comment
+  Selection.Copy
+  Selection.Collapse wdCollapseEnd
+  If addPageNum1 = True Then attrib1 = attrib1 & "(p. " & _
+       pageNum & ") "
+  If addLineNum1 = True Then attrib1 = attrib1 & "(line " & _
+       lineNum & ") "
+  Selection.TypeText Text:=attrib1 & ChrW(8216) & ChrW(8217)
+' Move back to between the close and open quotes
+  Selection.MoveLeft 1
+' Paste in a copy of the selected text
+  Selection.Paste
+' Move back past the close quote
+  Selection.MoveRight Count:=1
+  If postText > "" Then
+    Selection.TypeText Text:=postText
+  Else
+    Selection.TypeText Text:=" " & ChrW(8211) & " "
+  End If
+  Selection.Start = wasEnd
+  Selection.Range.Revisions.AcceptAll
+' If wanted, unhighlight the text clear
+  If removeHighlight = True Then Selection.Range.HighlightColorIndex = wdAuto
+  Selection.Cut
+  If Asc(Selection) = 13 Then Selection.MoveEnd 1: Selection.Delete
+  Selection.Comments.Add Range:=Selection.Range
+  Selection.Paste
+  ActiveDocument.TrackRevisions = myTrack
+Else
+  cmntText = attrib2
+  If addPageNum2 = True Then cmntText = cmntText & _
+       "(p. " & pageNum & ") "
+  If addLineNum2 = True Then cmntText = cmntText & _
+       "(line " & lineNum & ") "
+  Selection.MoveEnd , 1
+  Selection.Comments.Add Range:=Selection.Range
+  Selection.TypeText cmntText
+  Selection.HomeKey Unit:=wdLine
+  Selection.Fields.Unlink
+End If
+If keepPaneOpen = False Then ActiveWindow.ActivePane.Close
+End Sub
+

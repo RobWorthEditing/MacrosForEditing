@@ -1,0 +1,17 @@
+Sub FindAdvanced3()
+' Paul Beverley - Version 01.06.11
+' Call up Advanced Find dialog box
+
+With Selection.Find
+  .MatchFuzzy = False
+  .MatchPhrase = False
+  .MatchAllWordForms = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .MatchCase = False
+End With
+
+Dialogs(wdDialogEditFind).Show
+End Sub
+

@@ -1,0 +1,27 @@
+Sub TagsShowHide()
+' Paul Beverley - Version 08.09.20
+' Changes tags into hidden text and then reveals them again
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\<[/A-Z1-5\-]{2,}\>"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.Hidden = True
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+  DoEvents
+If .Found = False Then
+  rng.Font.Hidden = False
+Else
+  .Execute Replace:=wdReplaceAll
+End If
+End With
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

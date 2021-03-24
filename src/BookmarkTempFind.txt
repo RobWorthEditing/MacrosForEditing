@@ -1,0 +1,57 @@
+Sub BookmarkTempFind()
+' Paul Beverley - Version 29.04.20
+' Go to temporary marker
+
+forceToTop = True
+
+findMark = "myTempMark"
+If Selection.Bookmarks.Exists(findMark) Then _
+ findMark = "myTempMark2"
+
+If ActiveDocument.Bookmarks.Exists(findMark) Then
+  myTrack = ActiveDocument.TrackRevisions
+  ActiveDocument.TrackRevisions = False
+  ActiveDocument.Bookmarks(findMark).Select
+  If forceToTop = True Then
+    Set wasSelected = Selection.range
+    Application.ScreenUpdating = False
+    Selection.EndKey Unit:=wdStory
+    wasSelected.Select
+    Application.ScreenUpdating = True
+    ActiveDocument.ActiveWindow.SmallScroll Down:=1
+  End If
+  ActiveDocument.TrackRevisions = myTrack
+  Selection.Collapse wdCollapseEnd
+  Selection.MoveRight , 1
+Else
+  If ActiveDocument.Bookmarks.Exists("myTempMark2") Then
+    myTrack = ActiveDocument.TrackRevisions
+    ActiveDocument.TrackRevisions = False
+    ActiveDocument.Bookmarks("myTempMark2").Select
+    If forceToTop = True Then
+      Set wasSelected = Selection.range
+      Application.ScreenUpdating = False
+      Selection.EndKey Unit:=wdStory
+      wasSelected.Select
+      Application.ScreenUpdating = True
+      ActiveDocument.ActiveWindow.SmallScroll Down:=1
+    End If
+    ActiveDocument.TrackRevisions = myTrack
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveRight , 1
+  Else
+      Beep
+    If ActiveDocument.Bookmarks.Exists("myTempMark") Then
+      MsgBox "You're already at the bookmark!"
+      Selection.MoveLeft , 1
+      Selection.MoveRight , 1
+    Else
+      Selection.Collapse wdCollapseEnd
+      MsgBox "No temporary bookmarks found"
+    End If
+  End If
+End If
+ActiveDocument.ActiveWindow.SmallScroll Down:=1
+Selection.MoveLeft , 1
+End Sub
+

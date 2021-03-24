@@ -1,0 +1,55 @@
+Sub TitlesReveal()
+' Paul Beverley - Version 25.11.20
+' Switches the next light grey font colour to full colour
+
+preBlue = &HF6F6F6
+preRed = &HF4F4F4
+preBlack = &HF5F5F5
+
+pbTitlesFile.Activate
+myMix = 9999999
+Do
+  Selection.Expand wdParagraph
+  ln = Len(Selection)
+  Selection.Collapse wdCollapseEnd
+  DoEvents
+  If Selection.Start = ActiveDocument.Content.End Then
+    Beep
+    Exit Sub
+  End If
+Loop Until ln > 1
+Selection.MoveUp wdParagraph, 1
+Selection.MoveEnd , 1
+nowCol = Selection.Font.Color
+If nowCol <> preBlue And nowCol <> preRed _
+     And nowCol <> preBlack Then
+  Do
+    i = i + 1
+    Selection.MoveRight , 1
+    Selection.MoveEnd , 1
+    If i > 500 Then
+      MsgBox "Can't find anything to reveal!"
+      Exit Sub
+    End If
+    DoEvents
+  Loop Until Selection.Font.Color = preBlue _
+       Or Selection.Font.Color = preRed _
+       Or Selection.Font.Color = preBlack _
+       Or Selection.End > ActiveDocument.Content.End - 10
+End If
+Selection.MoveEndUntil cset:=vbCr & ChrW(160), Count:=wdForward
+
+Set rng = Selection.Range.Duplicate
+For i = 1 To Len(Selection)
+  rng.End = Selection.Start + i
+  rng.Start = rng.End - 1
+  Select Case rng.Font.Color
+    Case preBlue: rng.Font.Color = wdColorBlue
+    Case preRed: rng.Font.Color = wdColorRed
+    Case preBlack: rng.Font.Color = wdColorBlack
+  End Select
+Next i
+Selection.Collapse wdCollapseEnd
+If Selection.Text = vbCr Then Selection.MoveRight , 1
+End Sub
+

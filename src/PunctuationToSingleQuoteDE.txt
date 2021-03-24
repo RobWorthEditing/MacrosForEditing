@@ -1,0 +1,57 @@
+Sub PunctuationToSingleQuoteDE()
+' Paul Beverley - Version 11.12.19
+' Changes next quote mark to German single curly
+
+trackit = True
+
+openQuote = ChrW(8218)
+closeQuote = ChrW(8216)
+
+myTrack = ActiveDocument.TrackRevisions
+If trackit = False Then ActiveDocument.TrackRevisions = False
+
+searchChars = Chr(34) & Chr(39) & ChrW(8216) & ChrW(8217) _
+       & ChrW(8220) & ChrW(8221) & ChrW(8249) & ChrW(8250) _
+       & ChrW(8222) & ChrW(8218) & ChrW(171) & ChrW(187) _
+       & ChrW(96) & ChrW(8242) & ChrW(8243)
+unText = " (,!)" & vbCr
+Selection.Collapse wdCollapseEnd
+startHere = Selection.Start
+Set rng = ActiveDocument.Content
+theEnd = rng.End
+Do While InStr(searchChars, Selection) = 0
+  Selection.MoveRight , 1
+  If Selection.Start > startHere + 1000 Or _
+       Selection.Start > theEnd - 2 Then
+    Beep
+    ActiveDocument.TrackRevisions = myTrack
+    Exit Sub
+  End If
+Loop
+Selection.MoveEnd wdCharacter, 1
+thisChar = Selection
+myStart = Selection.Start
+Set rng = ActiveDocument.range(myStart - 1, myStart)
+
+preChar = rng.Text
+Set rng = ActiveDocument.range(myStart + 1, myStart + 2)
+
+postChar = rng.Text
+
+myQuote = ""
+If LCase(preChar) <> UCase(preChar) Then myQuote = closeQuote
+If LCase(postChar) <> UCase(postChar) Then myQuote = openQuote
+
+If myQuote = "" Then
+  If InStr(unText, preChar) > 0 Then myQuote = openQuote
+  If InStr(unText, postChar) > 0 Then myQuote = closeQuote
+End If
+
+If myQuote <> "" Then
+  Selection.TypeText Text:=myQuote
+Else
+  Beep
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

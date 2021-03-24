@@ -1,0 +1,15 @@
+Sub SpellcheckWarn()
+' Paul Beverley - Version 30.04.11
+' Run a spellcheck, but beep if not UK or langauges are mixed
+' F7
+langHere = Selection.LanguageID
+If langHere <> wdEnglishUK Then Beep
+
+Set rng = ActiveDocument.Content
+langMix = rng.LanguageID
+
+If langMix > 9999 Then MsgBox _
+    ("Beware: multiple languages within document")
+ActiveDocument.CheckSpelling
+End Sub
+

@@ -1,0 +1,87 @@
+Sub ListLowercaseNoPunct()
+' Paul Beverley - Version 03.10.17
+' Lowercases the initial char + removes end punctuation
+
+trackThis = False
+doLowerCase = True
+
+nowTrack = ActiveDocument.TrackRevisions
+If trackThis = False Then ActiveDocument.TrackRevisions = False
+
+Selection.Expand wdParagraph
+nowStyle = Selection.range.Style
+nowList = Selection.range.ListFormat.ListType
+startHere = Selection.Start
+endHere = Selection.End - 1
+Selection.Collapse wdCollapseEnd
+
+' Check next paragraph
+Selection.Expand wdParagraph
+nextStyle = Selection.range.Style
+nextList = Selection.range.ListFormat.ListType
+nextStart = Left(Selection, 5)
+isLastItem = False
+If nowStyle <> nextStyle Then isLastItem = True: Beep
+If nowList > 0 And nextList = 0 Then isLastItem = True: Beep
+
+Selection.End = Selection.Start + 5
+nextPosTab = InStr(Selection, Chr(9))
+If nextPosTab = 0 And nowList = 0 Then
+  nextPosTab = InStr(Selection, " ")
+End If
+
+' Check beginning of nowParagraph
+Selection.Start = startHere
+Selection.End = endHere + 5
+posTab = InStr(Selection, Chr(9))
+
+If posTab = 0 And nowList = 0 Then
+  posTab = InStr(Selection, " ")
+End If
+' select first character
+Selection.End = startHere + 1
+
+' If there's a bullet + a tab, go past it
+If posTab > 0 Then
+  If nextPosTab = 0 Then isLastItem = True: Beep
+  Selection.MoveStart wdCharacter, posTab
+  Selection.Collapse wdCollapseStart
+End If
+If doLowerCase = True Then
+  If trackThis = False Then
+    Selection.range.Case = wdLowerCase
+  Else
+    newText = LCase(Selection)
+    Selection.Delete
+    Selection.TypeText newText
+  End If
+End If
+If trackThis = True Then endHere = endHere + 1
+Selection.Start = endHere - 1
+Selection.End = endHere
+If Asc(Selection) = 13 Then
+  Selection.MoveStart , -1
+  Selection.MoveEnd , -1
+End If
+If Selection = " " Then
+  Selection.Delete
+  Selection.MoveStart wdCharacter, -1
+End If
+If Selection = " " Then
+  Selection.Delete
+  Selection.MoveStart wdCharacter, -1
+End If
+If Selection = "." And isLastItem = False Then Selection.Delete
+If Selection = ";" Then Selection.Delete
+If Selection = "," Then Selection.Delete
+If Asc(Selection) = 2 Then
+  Selection.MoveLeft Unit:=wdCharacter, Count:=2
+  Selection.Delete
+End If
+Selection.Start = Selection.End - 5
+If Selection = "; and" Then Selection.Delete
+Selection.Start = endHere
+If isLastItem = False Then Selection.MoveRight , 1
+ActiveDocument.TrackRevisions = nowTrack
+End Sub
+

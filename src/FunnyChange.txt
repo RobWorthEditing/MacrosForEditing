@@ -1,0 +1,14 @@
+Sub FunnyChange()
+' Paul Beverley - Version 01.06.10
+' Make various complicated changes to all paragraphs
+For Each myPara In ActiveDocument.Paragraphs
+ If myPara.Range.ParagraphFormat.Alignment = wdAlignParagraphJustify _
+      And myPara.Range.Font.Size = 14 And myPara.Range.Font.Bold = True Then
+   myPara.Range.ParagraphFormat.Alignment = wdAlignParagraphLeft
+   myPara.Range.Font.Size = 12
+   myPara.Range.Font.Bold = False
+   myPara.Range.Font.Italic = True
+ End If
+Next
+End Sub
+

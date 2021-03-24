@@ -1,0 +1,87 @@
+Sub BordersNext()
+' Paul Beverley - Version 10.10.19
+' Finds next paragraph with borders
+
+selectFind = False
+
+Set rng = ActiveDocument.range(0, Selection.End)
+paraNum = rng.Paragraphs.Count
+If ActiveDocument.Paragraphs(paraNum).range.End = _
+     Selection.End Then paraNum = paraNum + 1
+totParas = ActiveDocument.Paragraphs.Count
+
+Set pRng = ActiveDocument.Paragraphs(paraNum).range.Duplicate
+hasBorder = (pRng.Font.Borders(1).LineStyle <> wdLineStyleNone)
+Set sRng = Selection.range.Duplicate
+
+paraEnd = pRng.End
+slcnStart = sRng.Start
+If hasBorder = True Then
+  Set rng = ActiveDocument.range(slcnStart, slcnStart + 1)
+  styleNow = rng.Font.Borders(1).LineStyle
+  Set rng = ActiveDocument.range(slcnStart, paraEnd)
+  moreBorderInPara = (rng.Font.Borders(1).LineStyle <> wdLineStyleNone)
+  If styleNow <> wdLineStyleNone Then
+  ' We are in a border, so find its end
+    endBorder = paraEnd
+    For ptr = slcnStart + 1 To paraEnd
+      Set rng = ActiveDocument.range(ptr, ptr + 1)
+      styleHere = rng.Font.Borders(1).LineStyle
+      If styleHere = wdLineStyleNone Then
+        endBorder = ptr
+        Exit For
+      End If
+    Next ptr
+    Set rng = ActiveDocument.range(endBorder, paraEnd)
+    If rng.Font.Borders(1).LineStyle = wdLineStyleNone _
+         Then moreBorderInPara = False
+  End If
+  
+  If moreBorderInPara = True Then
+   ' ptr is now at a no-border character and there's more
+    For ptr = endBorder To paraEnd
+      Set rng = ActiveDocument.range(ptr, ptr + 1)
+      If rng.Font.Borders(1).LineStyle > 0 Then Exit For
+    Next ptr
+    borderStart = ptr
+    For ptr = borderStart + 1 To ActiveDocument.Content.End
+      Set rng = ActiveDocument.range(ptr, ptr + 1)
+      If rng.Font.Borders(1).LineStyle = 0 Then Exit For
+    Next ptr
+    borderEnd = ptr
+    Set rng = ActiveDocument.range(borderStart, borderEnd)
+    rng.Select
+    If selectFind = False Then Selection.Collapse wdCollapseStart
+    Exit Sub
+  End If
+End If
+
+' Check by paragraph
+For i = paraNum + 1 To totParas
+  gotBorders = ActiveDocument.Paragraphs(i).range.Font.Borders(1).LineStyle <> _
+        wdLineStyleNone
+  If gotBorders Then Exit For
+Next i
+If gotBorders = 0 Then
+  Beep
+  Exit Sub
+End If
+
+' Find first border bit
+paraSt = ActiveDocument.Paragraphs(i).range.Start
+paraEnd = ActiveDocument.Paragraphs(i).range.End
+For ptr = paraSt To paraEnd
+  Set rng = ActiveDocument.range(ptr, ptr + 1)
+  If rng.Font.Borders(1).LineStyle > 0 Then Exit For
+Next ptr
+borderStart = ptr
+For ptr = borderStart + 1 To ActiveDocument.Content.End
+  Set rng = ActiveDocument.range(ptr, ptr + 1)
+  If rng.Font.Borders(1).LineStyle = 0 Then Exit For
+Next ptr
+borderEnd = ptr
+Set rng = ActiveDocument.range(borderStart, borderEnd)
+rng.Select
+If selectFind = False Then Selection.Collapse wdCollapseStart
+End Sub
+

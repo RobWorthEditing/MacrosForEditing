@@ -1,0 +1,112 @@
+Sub HighlightMinus()
+' Paul Beverley - Version 29.05.18
+' Removes or adds highlight in a choice of colours
+
+colourOffToo = True
+uLineOffToo = True
+strikeThroughToo = True
+removeShadingToo = True
+
+Dim myCol(9)
+myCol(0) = wdNoHighlight
+myCol(1) = wdBrightGreen
+myCol(2) = wdYellow
+myCol(3) = wdTurquoise
+myCol(4) = wdPink
+myCol(5) = wdRed
+myCol(6) = wdGreen
+myCol(7) = wdDarkYellow
+myCol(8) = wdGray50
+myCol(9) = wdGray25
+myColTotal = 9
+
+' Remember track changes status, then switch it off
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Dim v As Variable, nowColour As Long
+varsExist = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "colNum" Then varsExist = True: Exit For
+Next v
+
+If varsExist = False Then
+  ActiveDocument.Variables.Add "selStart", 0
+  ActiveDocument.Variables.Add "selEnd", 0
+  ActiveDocument.Variables.Add "colNum", 0
+End If
+
+wasStart = ActiveDocument.Variables("selStart")
+wasEnd = ActiveDocument.Variables("selEnd")
+wasCol = ActiveDocument.Variables("colNum")
+
+' If no text is selected ...
+If Selection.Start = Selection.End Then
+  ' If the cursor is outside the area, give up
+  If Selection.Start < wasStart Or Selection.End _
+       > wasEnd - 1 Then GoTo LineClear
+  ' Otherwise check the highlight colour
+  Selection.Start = wasStart
+  Selection.End = wasStart + 1
+  nowColour = Selection.range.HighlightColorIndex
+  If nowColour <> myCol(wasCol) Then
+    ' colour has changed, so go back to colour 1
+    nowCol = 0
+  Else
+    ' go to next colour
+    nowCol = wasCol - 1
+    If nowCol < 0 Then nowCol = myColTotal
+  End If
+  Selection.End = wasEnd
+Else
+  ' if some text is selected ...
+  ' As long as it's not the whole text that's been selected,
+  ' record the current selection range
+  If colourOffToo = True Then
+  ' If all text is selected, take off colouration AND patterning
+    If Selection.range.Words.Count = ActiveDocument.Words.Count Then
+      If strikeThroughToo = True Then
+        Selection.range.Font.StrikeThrough = False
+      End If
+      If uLineOffToo = True Then
+        Selection.range.Font.Underline = True
+        Selection.range.Font.Underline = False
+      End If
+      Selection.range.Font.Color = wdColorAutomatic
+      Selection.range.HighlightColorIndex = wdNoHighlight
+      If removeShadingToo = True Then Selection.Shading.BackgroundPatternColor _
+           = wdColorAutomatic
+    End If
+  End If
+  If Not (Selection.Start = 0 And Selection.End = _
+       ActiveDocument.range.End) Then
+    ActiveDocument.Variables("selStart") = Selection.Start
+    ActiveDocument.Variables("selEnd") = Selection.End
+  End If
+  nowCol = 0
+End If
+ActiveDocument.Variables("colNum") = nowCol
+'    This following line solves the problem where text
+'    is highlighted, yet its colour is apparently 0(!)
+'    so force it to turquoise, then back to 0.
+If nowCol = 0 And Selection.range.HighlightColorIndex = 0 Then
+  Selection.range.HighlightColorIndex = 3
+End If
+Selection.range.HighlightColorIndex = myCol(nowCol)
+Selection.End = Selection.Start
+ActiveDocument.TrackRevisions = myTrack
+Exit Sub
+
+LineClear:
+Selection.HomeKey Unit:=wdLine
+clearStart = Selection.Start
+Selection.MoveDown Unit:=wdLine, Count:=1
+Selection.HomeKey Unit:=wdLine
+Set rng = Selection.range
+rng.Start = clearStart
+ActiveDocument.Variables("selStart") = clearStart
+ActiveDocument.Variables("selEnd") = Selection.End
+rng.HighlightColorIndex = wdNoHighlight
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

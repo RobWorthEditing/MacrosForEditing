@@ -1,0 +1,34 @@
+Sub ListOfTaggedHeadings()
+' Paul Beverley - Version 21.09.18
+' Lists all tagged headings, <A>, <B>, etc
+
+withFormatting = True
+
+Set nowDoc = ActiveDocument
+Set rng = ActiveDocument.Content
+Documents.Add
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\<[A-E]\>"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.Expand wdParagraph
+  Selection.EndKey Unit:=wdStory
+  If withFormatting = True Then
+    Selection.FormattedText = rng.FormattedText
+  Else
+    Selection.Text = rng.Text
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+nowDoc.Activate
+End Sub
+

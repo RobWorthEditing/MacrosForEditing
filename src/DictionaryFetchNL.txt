@@ -1,0 +1,11 @@
+Sub DictionaryFetchNL()
+' Paul Beverley - Version 08.08.20
+' Launches selected text to https://www.vandale.nl
+
+mySite = "https://www.vandale.nl/gratis-woordenboek/nederlands/betekenis/"
+
+If Len(Selection) = 1 Then Selection.Expand wdWord
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubj

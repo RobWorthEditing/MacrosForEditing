@@ -1,0 +1,141 @@
+Sub TitleHeadingCapper()
+' Paul Beverley - Version 18.02.20
+' Uppercase initial letter of all major words (title case)
+
+trackIt = True
+
+maxWordsInTitle = 40
+
+' If the headings are all in caps, say True
+allIsInCaps = True
+
+' Do you want an initial cap after a colon?
+colonCap = True
+
+' Do you want an initial cap after a hyphen?
+hyphenCap = True
+
+' List of lowercase words, each surrounded by spaces
+lclist = " a an and as at by for from hoc if in is it into of "
+lclist = lclist & " on or s that the to with "
+
+
+Selection.Collapse wdCollapseStart
+Selection.Expand wdParagraph
+If Len(Selection) < 3 Then
+  Selection.Collapse wdCollapseEnd
+  Beep
+  Exit Sub
+End If
+Selection.MoveEnd , -1
+If Selection.range.Words.Count > maxWordsInTitle Then
+  MsgBox "Too long!"
+  Exit Sub
+End If
+Set rng = Selection.range
+wasText = rng.Text
+
+'If a word is in an acronym, e.g. BBC, ignore it
+If allIsInCaps = False Then
+  For Each wd In rng.Words
+    If UCase(wd) = wd And Len(Trim(wd)) > 1 Then wd.Font.Shadow = True
+  Next
+End If
+
+' If there's a tag or a number, jump past it
+Set rng2 = rng.Duplicate
+charOne = Left(rng2, 1)
+If charOne = "<" Then
+  rng2.Start = rng2.Start + InStr(rng2, ">") + 1
+  charOne = Left(rng2, 1)
+End If
+If LCase(charOne) = UCase(charOne) Then
+  Do
+    rng2.MoveStart , 1
+    sdgfdf = rng2.Text
+  Loop Until Asc(rng2) < 33
+  rng2.MoveStart , 1
+End If
+rng2.End = rng2.Start + 1
+rng2.Case = wdUpperCase
+rng.Start = rng2.Start
+endHere = rng.End
+startHere = rng.Start
+rng.Case = wdTitleWord
+
+Set rng2 = rng.Duplicate
+' Force lower case after hyphen?
+If hyphenCap = False Then
+  rng2.Start = startHere
+  Do
+' Capitalise after a colon if option set
+    myText = rng2.Text
+    hyphenPos = InStr(myText, "-")
+    If hyphenPos > 0 Then
+      rng2.MoveStart , hyphenPos
+      rng2.End = rng2.Start + 1
+      rng2.Case = wdLowerCase
+      rng2.End = endHere
+    End If
+  Loop Until hyphenPos = 0
+End If
+
+For wrd = 2 To rng.Words.Count
+  thisWord = Trim(rng.Words(wrd))
+  
+  thisWord = " " & LCase(thisWord) & " "
+  If InStr(lclist, thisWord) Then
+    rng.Words(wrd).Case = wdLowerCase
+  End If
+Next wrd
+
+' Force upper case after colon?
+If colonCap = True Then
+  rng.Start = startHere
+  Do
+' Capitalise after a colon if option set
+    myText = rng.Text
+    colonPos = InStr(myText, ": ")
+    If colonPos > 0 Then
+      rng.MoveStart , colonPos + 1
+      rng.End = rng.Start + 1
+      rng.Case = wdUpperCase
+      rng.End = endHere
+    End If
+  Loop Until colonPos = 0
+End If
+
+Set rng = Selection.range
+
+For Each wd In rng.Words
+  If wd.Font.Shadow = True Then
+    wd.Case = wdUpperCase
+  End If
+Next
+
+Selection.Font.Shadow = False
+Set r = Selection.range.Duplicate
+nowText = r.Text
+
+If ActiveDocument.TrackRevisions = True And _
+     trackIt = True Then
+  myExtra = 0
+  For i = 1 To Len(wasText) - 2
+    w = Mid(wasText, i, 1)
+    n = Mid(nowText, i, 1)
+    If n <> w Then
+      ActiveDocument.TrackRevisions = False
+      r.End = Selection.Start + i + myExtra
+      r.Start = r.End - 1
+      r.Text = w
+      ActiveDocument.TrackRevisions = True
+      r.Text = n
+      myExtra = myExtra + 1
+    End If
+  Next i
+End If
+Selection.Start = endHere + myExtra
+Selection.End = endHere + myExtra
+Selection.MoveRight , 1
+End Sub
+

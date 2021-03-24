@@ -1,0 +1,135 @@
+Sub HighlightFindDown()
+' Paul Beverley - Version 27.11.19
+' Selects the next piece of highlighted text
+
+nowColour = Selection.range.HighlightColorIndex
+myEnd = ActiveDocument.Content.End
+If Selection.Start <> Selection.End And nowColour > 0 Then
+  Selection.End = Selection.Start + 1
+  myColour = Selection.range.HighlightColorIndex
+  Do
+    Selection.MoveEnd , 1
+    Selection.MoveStart , 1
+    nowColour = Selection.range.HighlightColorIndex
+  Loop Until nowColour <> myColour Or Selection.End = myEnd
+  Do
+    Selection.MoveEnd , 1
+    Selection.MoveStart , 1
+    nowColour = Selection.range.HighlightColorIndex
+  Loop Until nowColour = myColour Or nowColour = 0 Or _
+       Selection.End = myEnd
+  If nowColour = myColour Then
+    st = Selection.Start
+    Do
+      Selection.MoveEnd , 1
+      Selection.MoveStart , 1
+      nowColour = Selection.range.HighlightColorIndex
+    Loop Until nowColour <> myColour Or Selection.End = myEnd
+    Selection.Start = st
+    Selection.MoveEnd , -1
+    GoTo ClearUp
+  End If
+Else
+  myColour = 0
+End If
+Selection.Collapse wdCollapseEnd
+Selection.MoveEnd , 1
+If Selection.range.HighlightColorIndex <> wdNoHighlight Then
+  Selection.Collapse wdCollapseEnd
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Replacement.Text = ""
+    .Wrap = wdFindStop
+    .Forward = True
+    .Highlight = False
+    .MatchWildcards = False
+    .Execute
+  End With
+  Selection.Collapse wdCollapseEnd
+End If
+
+If Selection.End = ActiveDocument.Content.End Then
+  Selection.Collapse wdCollapseEnd
+  Beep
+  GoTo ClearUp
+End If
+
+Selection.Collapse wdCollapseStart
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = ""
+  .Forward = True
+  .Wrap = wdFindStop
+  .Highlight = True
+  .MatchWildcards = False
+  .Execute
+End With
+If Selection.Find.Found = False Then
+  Selection.Collapse wdCollapseEnd
+  Beep
+  GoTo ClearUp
+End If
+
+nowColour = Selection.range.HighlightColorIndex
+If myColour = 0 Or nowColour = myColour Then
+  GoTo ClearUp
+End If
+
+'Searching for just one colour
+Do
+  Set rng = Selection.range.Duplicate
+  st = rng.Start
+  lenSelection = Len(rng.Text)
+  For i = 0 To lenSelection - 1
+    nowColour = ActiveDocument.range(st + i, _
+         st + i + 1).HighlightColorIndex
+    If nowColour = myColour Then
+      ActiveDocument.range(st + i, st + i + 1).Select
+      Exit For
+    End If
+dfvgdfs = 0
+  Next i
+  If Len(Selection) = 1 Then
+    Do
+    Selection.MoveEnd , 1
+    selColour = Selection.range.HighlightColorIndex
+    Loop Until selColour <> nowColour
+    Selection.MoveEnd , -1
+    GoTo ClearUp
+  End If
+  Selection.Find.Execute
+Loop Until Selection.Find.Found = False
+Beep
+
+ClearUp:
+Set rng = Selection.range.Duplicate
+For i = 1 To 3
+  rng.Select
+  DoEvents
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.05
+  Selection.Collapse wdCollapseStart
+  DoEvents
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.05
+Next i
+If myColour > 0 Then
+  Selection.MoveEnd , 1
+  If Selection.range.HighlightColorIndex <> myColour Then _
+       Selection.Collapse wdCollapseEnd
+End If
+
+With Selection.Find
+  .Text = ""
+  .Replacement.Text = ""
+  .Forward = True
+  .Wrap = wdFindContinue
+End With
+End Sub
+

@@ -1,0 +1,40 @@
+Sub FontFind()
+' Paul Beverley - Version 08.09.17
+' Finds text in a given font name in selected text or whole file
+
+nmlFont = ActiveDocument.Styles(wdStyleNormal).Font.Name
+If Selection.End - Selection.Start < 2 Then
+  Selection.End = Selection.Start + 1
+  fn = Selection.range.Font.Name
+  If fn = nmlFont Then
+    Selection.Expand wdParagraph
+    Selection.MoveEnd , -1
+    fn = Trim(Selection.Text)
+    Selection.MoveEnd , 1
+  End If
+Else
+  If Selection.range.Font.Name = "" Then
+    Selection.End = Selection.Start + 1
+    fn = Selection.range.Font.Name
+  Else
+    fn = Trim(Selection.range.Text)
+  End If
+End If
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Name = fn
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+If Not (Selection.Find.Found) Then Beep
+End Sub
+

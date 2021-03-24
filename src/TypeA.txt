@@ -1,0 +1,82 @@
+Sub TypeA()
+' Paul Beverley - Version 15.01.21
+' Types 'a' or 'A', (or 'an' or 'An') between two words
+
+If Len(Selection) > 2 Then
+  Selection.Expand wdWord
+  cap = Left(Selection, 1)
+  If LCase(cap) = cap Then
+    If InStr("aeiou", cap) > 0 Then
+      Selection.TypeText "an "
+    Else
+      Selection.TypeText "a "
+    End If
+  Else
+    Selection.TypeText "A "
+  End If
+  Selection.MoveLeft , 1
+  Exit Sub
+End If
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start - 1
+rng.End = Selection.Start
+prevChar = Asc(rng)
+If prevChar = 13 And UCase(A) <> A Then Selection.TypeText "a ": Exit Sub
+
+Selection.MoveStart , -2
+Selection.MoveEnd , 1
+newPos = InStr(Selection, " ")
+If newPos = 0 Then newPos = 3
+Selection.MoveStart , newPos
+Selection.Expand wdWord
+Do While InStr(ChrW(13) & " ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+
+' For the/The, sort out the capitalisation
+firstChar = Left(Selection, 1)
+secondChar = Mid(Selection, 2, 1)
+If Len(Selection) > 2 Then
+  thirdChar = Mid(Selection, 3, 1)
+Else
+  thirdChar = "a" ' not an uppercase char
+End If
+Selection.Collapse wdCollapseStart
+  
+' Check for sentence start indicator
+Set rng = Selection.Range
+rng.MoveStart wdCharacter, -5
+spPos = InStr(rng, Chr(32))
+crPos = InStr(rng, vbCr) - 3
+tabPos = InStr(rng, Chr(9))
+fpPos = InStr(rng, ".")
+If fpPos = 0 Then fpPos = InStr(rng, "?")
+If fpPos = 0 Then fpPos = InStr(rng, "!")
+gotanFP = tabPos + fpPos + crPos
+thisText = rng
+If Len(thisText) - Len(Replace(thisText, vbCr, "")) > 1 Then gotanFP = 1
+If Len(thisText) - Len(Replace(thisText, " ", "")) > 1 Then gotanFP = 0
+If gotanFP > 0 Then
+  gotAnAcronym = False
+  If LCase(secondChar) <> secondChar Or LCase(secondChar) = _
+       UCase(secondChar) Or LCase(thirdChar) <> thirdChar Or _
+       LCase(thirdChar) = UCase(thirdChar) Then gotAnAcronym = True
+        
+  If gotAnAcronym = False And firstChar <> LCase(firstChar) Then
+    Selection.Delete
+    Selection.TypeText LCase(firstChar)
+    Selection.MoveEnd wdCharacter, -1
+  End If
+  Selection.TypeText "A "
+Else
+  Selection.TypeText "a "
+End If
+nextchar = Chr(Asc(Selection))
+Selection.MoveLeft , 1
+' A list of letters where we say 'an' rather than 'a'
+If InStr("aAeEiIoOuU", nextchar) = 0 Then Exit Sub
+Selection.TypeText "n"
+End Sub
+

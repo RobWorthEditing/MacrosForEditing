@@ -1,0 +1,54 @@
+Sub MultiChoiceTidierSingle()
+' Paul Beverley - Version 28.01.11
+' Lowercases initial char of answer + remove end spaces + punct
+
+myMarker = "." & " "
+'myMarker = "." & Chr(9)
+'myMarker = ")" & " "
+'myMarker = ")" & Chr(9)
+myChars = "ABCDE"
+' Find a line that looks like an answer line
+isAnAnswer = False
+
+' Find an answer line
+Do
+  Selection.Paragraphs(1).Range.Select
+  startHere = Selection.Start
+  endHere = Selection.End - 1
+  myText = Selection.Text
+  Selection.Collapse wdCollapseEnd
+  If Len(myText) > 2 Then
+    startLetter = Left(myText, 1)
+    If InStr(myText, myMarker) = 2 And InStr(myChars, _
+         startLetter) > 0 Then isAnAnswer = True
+  End If
+  isTheEnd = (ActiveDocument.Content.End - Selection.End < 2)
+Loop Until isAnAnswer = True Or isTheEnd
+
+Do
+  If isAnAnswer = True Then
+    Set rng = ActiveDocument.Content
+    rng.Start = endHere
+    rng.End = endHere
+  ' Strip off spaces and punctuation
+    rng.MoveStartWhile cset:=". :;!?", Count:=wdBackward
+    If Len(rng.Text) > 0 Then rng.Delete
+    rng.Start = startHere + 3
+    rng.End = startHere + 4
+    rng.Case = wdLowerCase
+  End If
+  isAnAnswer = False
+' Check the following line
+  Selection.Paragraphs(1).Range.Select
+  startHere = Selection.Start
+  endHere = Selection.End - 1
+  myText = Selection.Text
+  Selection.Collapse wdCollapseEnd
+  If Len(myText) > 2 Then
+    startLetter = Left(myText, 1)
+    If InStr(myText, myMarker) = 2 And InStr(myChars, _
+         startLetter) > 0 Then isAnAnswer = True
+  End If
+Loop Until isAnAnswer = False
+End Sub
+

@@ -1,0 +1,47 @@
+Sub CiteFindName()
+' Paul Beverley - Version 21.10.11
+' Jump back from date to name
+
+beepIFand = True
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[A-Z]"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = False
+  .MatchWildcards = True
+  .Execute
+End With
+
+backHere = Selection.Start
+Selection.MoveLeft Unit:=wdCharacter, Count:=3
+Selection.Words(1).Select
+If Selection = "and " Then
+  Selection.MoveLeft Unit:=wdCharacter, Count:=3
+  Selection.Words(1).Select
+  Selection.End = Selection.Start
+  If beepIFand = True Then Beep
+Else
+  Selection.Start = backHere
+  Selection.Words(1).Select
+  Selection.End = Selection.Start
+End If
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = oldFind
+  .Forward = True
+  .Highlight = False
+  .Replacement.Text = oldReplace
+  .MatchWildcards = True
+  .Wrap = wdFindContinue
+End With
+
+End Sub
+

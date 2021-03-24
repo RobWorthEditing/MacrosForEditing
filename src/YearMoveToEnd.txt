@@ -1,0 +1,43 @@
+Sub YearMoveToEnd()
+' Paul Beverley - Version 10.05.14
+' Move the year to end of reference
+
+' delete this many characters before the year
+cutBefore = 2
+' delete this many characters after the year
+cutAfter = 1
+
+' add this text before the year
+textBefore = ", ("
+' add this text after the year
+textAfter = ")"
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start
+Do
+  rng.Expand wdParagraph
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^#^#^#^#"
+    .MatchWildcards = False
+    .Execute
+  End With
+  If rng.Find.Found = False Then rng.Select: Beep:  Exit Sub
+  rng.Copy
+  rng.MoveEnd , cutAfter
+  rng.MoveStart , -cutBefore
+  rng.Delete
+  rng.Expand wdParagraph
+  rng.MoveEnd , -2
+  rng.Collapse wdCollapseEnd
+  rng.Select
+  Selection.TypeText textBefore
+  Selection.Paste
+  Selection.TypeText textAfter
+  rng.Expand wdParagraph
+  rng.Collapse wdCollapseEnd
+Loop Until rng.End = ActiveDocument.Range.End - 1
+Beep
+End Sub
+

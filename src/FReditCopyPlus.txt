@@ -1,0 +1,73 @@
+Sub FReditCopyPlus()
+' Paul Beverley - Version 18.01.18
+' Copy word to make FRedit script item + highlight + case insensitive
+
+' Highlighting?
+myHighlight = wdGray25
+myHighlight = 0
+
+' Text colouring?
+myColour = 0
+myColour = wdColorBlue
+
+' Case?
+anyCase = True
+anyCase = False
+
+' Tracked?
+tracked = True
+tracked = False
+
+Selection.Expand wdParagraph
+If ActiveDocument.range.End = Selection.End Then
+  Selection.Collapse wdCollapseEnd
+  Selection.TypeParagraph
+  Selection.MoveLeft , 1
+  Selection.Expand wdParagraph
+End If
+If Len(Selection) > 3 Then
+  Selection.Collapse wdCollapseEnd
+  Selection.MoveLeft , 1
+  Selection.TypeParagraph
+Else
+  Selection.Collapse wdCollapseStart
+  Selection.TypeParagraph
+  Selection.MoveLeft , 1
+End If
+' Selection.PasteAndFormat (wdFormatPlainText)
+Selection.PasteSpecial DataType:=wdPasteText
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start - 1
+rng.End = Selection.Start
+If rng = " " Then rng.Delete
+Selection.Expand wdParagraph
+tabPos = InStr(Selection, Chr(9))
+If tabPos > 0 Then
+  Selection.MoveStart wdCharacter, tabPos - 1
+  Selection.MoveEnd wdCharacter, -1
+  Selection.Delete
+  Selection.Expand wdParagraph
+End If
+Selection.MoveEnd wdCharacter, -1
+dotPos = InStr(Selection, " . .")
+lineStart = Selection.Start
+If dotPos > 0 Then
+  Selection.MoveStart , dotPos - 1
+  Selection.Delete
+  Selection.MoveStart , -1
+  If Selection = "." Then Selection.Delete
+  Selection.Start = lineStart
+End If
+Selection.Copy
+Selection.EndKey Unit:=wdLine
+Selection.TypeText Text:=ChrW(124)
+Selection.Paste
+Selection.Expand wdParagraph
+Selection.range.HighlightColorIndex = myHighlight
+Selection.Font.Color = myColour
+Selection.range.Font.StrikeThrough = Not (tracked)
+Selection.HomeKey Unit:=wdLine
+If anyCase = True Then Selection.TypeText Text:=ChrW(172)
+Selection.EndKey Unit:=wdLine
+End Sub
+

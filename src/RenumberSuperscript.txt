@@ -1,0 +1,36 @@
+Sub RenumberSuperscript()
+' Paul Beverley - Version 28.11.20
+' Renumbers all superscript numbers
+
+' Check if user wants to work on whole file of selection
+If Selection.End = Selection.Start Then
+  myResponse = MsgBox("Do this to the WHOLE file?", _
+       vbQuestion + vbYesNo)
+  If myResponse = vbNo Then Exit Sub
+  Set rng = ActiveDocument.Content
+Else
+  Set rng = Selection.Range.Duplicate
+End If
+
+i = 1
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = True
+  .Text = "[0-9]{1,}"
+  .Font.Superscript = True
+  .Replacement.Text = ""
+  .Wrap = wdFindStop
+  .Execute
+End With
+ 
+Do While rng.Start < Selection.End
+  rng.Text = Trim(Str(i))
+  i = i + 1
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+rng.Select
+End Sub
+

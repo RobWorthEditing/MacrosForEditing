@@ -1,0 +1,23 @@
+Sub TrackChangeShowHide()
+' Paul Beverley - Version 16.07.15
+' Set up track changes to taste
+
+putTCinBubbles = True
+
+With ActiveWindow.View
+' Do you want comments showing?
+  .ShowComments = True
+' Do you want insertions and deletions showing?
+  .ShowInsertionsAndDeletions = True
+' Do you want format changes showing?
+  .ShowFormatChanges = True
+
+' Now switch the track changes on/off
+  .ShowRevisionsAndComments = Not .ShowRevisionsAndComments
+  .RevisionsView = wdRevisionsViewFinal
+End With
+If putTCinBubbles = True Then
+  ActiveWindow.View.MarkupMode = wdBalloonRevisions
+End If
+End Sub
+

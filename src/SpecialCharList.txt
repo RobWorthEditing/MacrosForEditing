@@ -1,0 +1,71 @@
+Sub SpecialCharList()
+' Paul Beverley - Version 28.02.10
+' Creates a list of the Unicode characters in the document
+
+Dim myFileSystem, myFileList, myFile, myFileType As String
+Dim myDoc As Document
+
+myChars = ""
+mySymbols = ""
+myResponse = MsgBox("Greek character collector" & vbCrLf & _
+     "Multiple files?", vbQuestion + vbYesNo)
+If myResponse = vbNo Then myFile = "": GoTo oneFile
+
+myFolder = ActiveDocument.Path
+ActiveDocument.Close SaveChanges:=False
+
+Set myFileSystem = CreateObject("Scripting.FileSystemObject")
+Set myFileList = myFileSystem.GetFolder(myFolder).Files
+
+FilesTotal = 0
+For Each myFile In myFileList
+  myFileType = Right(myFile, 4)
+  If (myFileType = ".doc" Or myFileType = "docx") And _
+       Left(myFile, 1) <> "~" Then
+    StatusBar = myFile
+    Set myDoc = Application.Documents.Open(FileName:=myFile.Path, _
+         ReadOnly:=True)
+oneFile:
+    StatusBar = "                           Counting ..."
+    For Each myChr In ActiveDocument.Range.Characters
+      If AscW(myChr) >= 255 Then
+        If InStr(myChars, myChr) = 0 Then myChars = myChars & myChr & vbCrLf
+      End If
+      If myChr.Font.Name = "Symbol" Then
+        If InStr(mySymbols, myChr) = 0 Then mySymbols = mySymbols & myChr & vbCrLf
+      End If
+    Next myChr
+    If myResponse = vbNo Then GoTo theEnd
+    myDoc.Close SaveChanges:=wdDoNotSaveChanges
+  End If
+Next myFile
+
+theEnd:
+Documents.Add
+Selection.TypeText Text:=myChars & vbCrLf
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending
+Selection.EndKey Unit:=wdStory
+
+Selection.TypeText Text:=vbCrLf & vbCrLf _
+     & "Symbol fonts" & vbCrLf & vbCrLf
+firstEnd = Selection.End
+Selection.TypeText Text:=mySymbols & vbCrLf
+Selection.Start = firstEnd
+Selection.Sort SortOrder:=wdSortOrderAscending
+Selection.Font.Name = "Symbol"
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Unicode fonts" & vbCrLf & vbCrLf
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13{1,}"
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+StatusBar = ""
+Selection.HomeKey Unit:=wdStory
+End Sub
+

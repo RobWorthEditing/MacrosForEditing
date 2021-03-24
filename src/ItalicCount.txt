@@ -1,0 +1,63 @@
+Sub ItalicCount()
+' Paul Beverley - Version 22.07.10
+' Counts the number of words that are in italic
+
+Selection.EndKey Unit:=wdStory
+theEnd = Selection.Start
+
+' copy all the footnotes to the end of the text
+If ActiveDocument.Footnotes.Count > 0 Then
+  For Each fn In ActiveDocument.Footnotes
+    fn.Range.Copy
+    Selection.Paste
+  Next
+End If
+
+' copy all the endnotes to the end of the text
+If ActiveDocument.Endnotes.Count > 0 Then
+  For Each fn In ActiveDocument.Endnotes
+    fn.Range.Copy
+    Selection.Paste
+  Next
+End If
+
+' copy all the textboxes to the end of the text
+Set rng = ActiveDocument.Range
+rng.Start = rng.End
+If ActiveDocument.Shapes.Count > 0 Then
+  For Each shp In ActiveDocument.Shapes
+    If shp.TextFrame.HasText Then
+      Set rng2 = shp.TextFrame.TextRange
+      rng2.Copy
+      rng.Paste
+      rng.Start = rng.End
+    End If
+  Next
+End If
+
+Selection.HomeKey Unit:=wdStory
+totItalic = 0
+totRoman = 0
+totChars = ActiveDocument.Characters.Count
+For Each myChar In ActiveDocument.Characters
+  If myChar.Font.Italic = True Then
+    totItalic = totItalic + 1
+  Else
+    totRoman = totRoman + 1
+  End If
+If totItalic Mod 100 = 0 Then StatusBar = _
+     "    Press Ctrl-Break to stop.      " _
+     & "Remaining:  " & Int((totChars - totItalic - totRoman) / 100)
+Next
+
+' Delete all the added text
+Selection.EndKey Unit:=wdStory
+Selection.Start = theEnd
+Selection.Delete
+Selection.HomeKey Unit:=wdStory
+
+StatusBar = ""
+MsgBox ("Italic: " & totItalic & vbCrLf & vbCrLf _
+     & "Roman: " & totRoman)
+End Sub
+

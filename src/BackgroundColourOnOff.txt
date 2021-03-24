@@ -1,0 +1,17 @@
+Sub BackgroundColourOnOff()
+' Paul Beverley - Version 25.08.20
+' Switches background colour on/off
+
+myColour = RGB(233, 232, 219)
+
+With ActiveDocument.Background.Fill
+  If .ForeColor.RGB = myColour Then
+   .ForeColor.RGB = RGB(255, 255, 255)
+  Else
+    .ForeColor.RGB = myColour
+  End If
+  .Visible = msoTrue
+  .Solid
+End With
+End Sub
+

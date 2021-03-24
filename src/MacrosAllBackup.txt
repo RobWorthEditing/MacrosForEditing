@@ -1,0 +1,62 @@
+Sub MacrosAllBackup()
+' Paul Beverley - Version 18.11.19
+' Creates a list of all macro keystrokes
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Sub Macros" & "AllRestore()"
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute
+End With
+CR = vbCr
+CR2 = CR & CR
+If Selection.Find.Found = False Then
+  MsgBox "Can't find Sub Macros" & "AllRestore" & CR & CR _
+       & "Please copy your macros into this file."
+  Exit Sub
+End If
+
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .Text = "Keybind" & "ings start"
+  .Execute
+End With
+
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseEnd
+bindersStart = Selection.Start
+With Selection.Find
+  .Text = "Keybind" & "ings end"
+  .Execute
+End With
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Selection.MoveEnd , -1
+Selection.Start = bindersStart
+Selection.Delete
+Selection.TypeText Text:=CR
+
+numKeys = 0
+For Each kb In KeyBindings
+  If kb.KeyCategory = 2 Then  ' It's a Macro
+    cmd = kb.Command
+    If Left(cmd, 6) = "Normal" Then
+      cmd = Replace(cmd, "Normal.NewMacros.", "")
+      Selection.TypeText Text:="' " & cmd & ":  " & kb.KeyString & CR
+      numKeys = numKeys + 1
+    End If
+  End If
+Next kb
+
+Selection.Start = bindersStart
+Selection.Sort SortOrder:=wdSortOrderAscending
+DoEvents
+myTot = ActiveDocument.range.End
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "End Sub"

@@ -1,0 +1,170 @@
+Sub MiniFRedit()
+' Paul Beverley - Version 15.10.18
+' Adds attributes to certain words
+
+doSpeedup = False
+
+' Find #
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "#^p"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = False
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute
+End With
+
+rng.Collapse wdCollapseEnd
+If rng.Find.Found = False Then
+  Beep
+  MsgBox ("Can't find the list!")
+  Exit Sub
+End If
+
+' Remember cursor position
+Set rngOld = Selection.range.Duplicate
+
+' Locate the list
+rng.End = ActiveDocument.Content.End
+listText = rng
+numLines = Len(listText) - Len(Replace(listText, vbCr, ""))
+rng.Collapse wdCollapseStart
+startList = rng.Start
+
+oldColour = Options.DefaultHighlightColorIndex
+fnNum = ActiveDocument.Footnotes.Count
+enNum = ActiveDocument.Endnotes.Count
+nmlFont = ActiveDocument.Styles(wdStyleNormal).Font.Name
+nmlSize = ActiveDocument.Styles(wdStyleNormal).Font.Size
+
+ActiveDocument.TrackRevisions = False
+' To speed up search
+If doSpeedup Then Selection.HomeKey Unit:=wdStory
+
+For i = 1 To numLines
+  rng.Expand wdParagraph
+  If Len(rng) > 1 Then
+    Set tst = rng.Duplicate
+    tst.MoveEnd , -1
+    myFind = tst.Text
+    If Left(myFind, 1) = "!" Then
+      myFind = Mid(myFind, 2)
+      doUndo = True
+    Else
+      doUndo = False
+    End If
+    If Right(myFind, 1) = "-" Then
+      myFind = Left(myFind, Len(myFind) - 1)
+    Else
+      myFind = myFind & ">"
+    End If
+    If Left(myFind, 1) = "-" Then
+      myFind = Mid(myFind, 2)
+    Else
+      myFind = "<" & myFind
+    End If
+    tst.MoveStart , 1
+    tst.End = tst.Start + 1
+    
+    ' Check highlight and font colours
+    hiColor = tst.HighlightColorIndex
+    Options.DefaultHighlightColorIndex = hiColor
+    fontColour = tst.Font.Color
+    
+    ' Check the attributes on this item
+    myBold = tst.Font.Bold
+    myItal = tst.Font.Italic
+    mySize = tst.Font.Size
+    fntName = tst.Font.Name
+    myStrike = tst.Font.StrikeThrough
+    mySuper = tst.Font.Superscript
+    mySub = tst.Font.Subscript
+    myUline = tst.Font.Underline
+    
+    ' Now do the F&Rs
+    For j = 1 To 3
+      If j = 1 And fnNum = 0 Then j = 2
+      If j = 2 And enNum = 0 Then j = 3
+      Select Case j
+        Case 1: Set rng2 = ActiveDocument.StoryRanges(wdFootnotesStory)
+        Case 2: Set rng2 = ActiveDocument.StoryRanges(wdEndnotesStory)
+        Case 3: Set rng2 = ActiveDocument.Content: rng2.End = startList
+      End Select
+      DoEvents
+      If Len(myFind) > 1 Then
+        With rng2.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .Text = myFind
+          .Replacement.Text = ""
+          .Wrap = False
+          
+          ' Apply (or remove, for unDo) the attribute
+          If hiColor <> wdNoHighlight Then
+            .Replacement.Highlight = True
+            If doUndo Then .Replacement.Highlight = False
+          End If
+          
+          If fontColour <> wdColorAutomatic Then
+               .Replacement.Font.Color = fontColour
+             If doUndo Then .Replacement.Font.Color = wdColorAutomatic
+          End If
+          
+          If myBold Then
+            .Replacement.Font.Bold = True
+            If doUndo Then .Replacement.Font.Bold = False
+          End If
+          
+          If myItal Then
+            .Replacement.Font.Italic = True
+            If doUndo Then .Replacement.Font.Italic = False
+          End If
+          
+          If myStrike Then
+            .Replacement.Font.StrikeThrough = True
+            If doUndo Then .Replacement.Font.StrikeThrough = False
+          End If
+          
+          If rng.Font.Name <> nmlFont Then
+            .Replacement.Font.Name = fntName
+            If doUndo Then .Replacement.Font.Name = nmlFont
+          End If
+          
+          If rng.Font.Size <> nmlSize Then
+               .Replacement.Font.Size = mySize
+            If doUndo Then .Replacement.Font.Size = nmlSize
+          End If
+          
+          If mySuper Then
+            .Replacement.Font.Superscript = True
+            If doUndo Then .Replacement.Font.Superscript = False
+          End If
+          
+          If mySub Then
+            .Replacement.Font.Subscript = True
+            If doUndo Then .Replacement.Font.Subscript = False
+          End If
+          
+          If myUline Then
+            .Replacement.Font.Underline = True
+            If doUndo Then .Replacement.Font.Underline = False
+          End If
+          
+          .Forward = True
+          .MatchWildcards = True
+          .Execute Replace:=wdReplaceAll
+        End With
+      End If
+    Next j
+  End If
+  rng.Collapse wdCollapseEnd
+Next i
+Options.DefaultHighlightColorIndex = oldColour
+If doSpeedup Then rngOld.Select
+Beep
+End Sub
+

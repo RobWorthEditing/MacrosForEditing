@@ -1,0 +1,13 @@
+Sub CommentInitialFandR()
+' Paul Beverley - Version 14.08.19
+' Finds and replaces comment initials
+
+oldInitial = "SPQR"
+newInitial = "PEB"
+For i = 1 To ActiveDocument.Comments.Count
+  If ActiveDocument.Comments(i).Initial = oldInitial Then
+    ActiveDocument.Comments(i).Initial = newInitial
+  End If
+Next i
+End Sub
+

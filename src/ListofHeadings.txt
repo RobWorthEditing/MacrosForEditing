@@ -1,0 +1,265 @@
+Sub ListofHeadings()
+' Paul Beverley - Version 06.12.18
+' Create a list of all headings
+
+Dim myStyle(10)
+' How many styles
+numStyles = 3
+' What are their names
+myStyle(1) = "Heading 1"
+myStyle(2) = "Heading 2"
+myStyle(3) = "Heading 3"
+
+' minimum heading length
+minLength = 8
+
+Dim v As Variable, listDoc, textDoc As Document
+Dim fText, lineText As String
+Dim textArray(500), styleArray(500)
+nameNow = ""
+
+' First check if there are any styles specified
+endPara = ActiveDocument.Paragraphs.Count
+myStyles = 0
+For i = 0 To 5
+  Set rng = ActiveDocument.Paragraphs(endPara - i).range
+  myTestPara = rng
+  myTestPara = Left(myTestPara, Len(myTestPara) - 1)
+  If myTestPara = "Heading" Then
+  ' As long as it's a heading type, record it
+    myStyles = myStyles + 1
+    thisStyle = rng.Style
+    myStyle(myStyles) = thisStyle
+  ' and remember where it starts
+    headingFirst = rng.Start
+  End If
+Next i
+If myStyles > 0 Then numStyles = myStyles
+
+' Are we in the List of headings? If so go to FoldBack
+Set rng = ActiveDocument.Paragraphs(1).range
+fText = rng
+If InStr(fText, "List of headings") > 0 Then GoTo FoldBack
+
+' We are in the text, not the list
+findThis = Selection
+newList = False
+If Selection.Start <> Selection.End Then
+' If some text is selected, offer to create a new list
+  myResponse = MsgBox("Create new list?", vbQuestion + vbYesNo)
+  If myResponse = vbNo Then Exit Sub
+  newList = True
+End If
+Set textDoc = ActiveDocument
+foundList = False
+For Each doc In Documents
+  If aDoc <> "Normal.dot" Then
+  dfgsdf = doc.Name
+    Set rng = doc.Paragraphs(1).range
+    fText = rng
+    If InStr(fText, "List of headings") Then
+      If newList = False Then
+        Exit Sub
+      Else
+        Set listDoc = doc
+        foundList = True
+      End If
+    End If
+  End If
+Next doc
+
+' Go back to text file
+asdfasd = textDoc.Name
+textDoc.Activate
+ActiveDocument.range.Copy
+
+'Create a dummy file to avoid changing the original document
+Documents.Add
+ActiveDocument.range.Paste
+
+' Collect all the headings
+Set rng = ActiveDocument.Content
+For n = 1 To numStyles
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Replacement.Text = "abbb^&zxzx^p"
+    .MatchWildcards = False
+    .Style = myStyle(n)
+    .Wrap = False
+    .Format = True
+    .Execute Replace:=wdReplaceAll
+  End With
+Next n
+
+i = 0
+Do
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "abbb(*)zxzx"
+    .Replacement.Text = "\1"
+    .MatchWildcards = True
+    .Wrap = False
+    .Format = True
+    .Execute Replace:=wdReplaceOne
+  End With
+  gotOne = (rng.Find.Found = True)
+  If gotOne = True Then
+    i = i + 1
+    textArray(i) = rng
+    styleArray(i) = rng.Style
+  End If
+Loop Until gotOne = False
+iMax = i
+
+' Get rid of the temporary document
+ActiveDocument.Close SaveChanges:=wdDoNotSaveChanges
+
+' Find a List of headings document ...
+gottaDoc = False
+For Each doc In Documents
+  doc.Activate
+  Set rng = ActiveDocument.Paragraphs(1).range
+  fText = rng
+  If InStr(fText, "List of headings") Then
+    gottaDoc = True: Exit For
+  End If
+Next
+
+' ... or open a new one
+If foundList = True Then
+  listDoc.Activate
+  Selection.WholeStory
+  Selection.Delete
+Else
+  Documents.Add
+  Set listDoc = ActiveDocument
+  textDoc.Activate
+  Set rng = ActiveDocument.Content
+  rng.Start = headingFirst
+  rng.Select
+  Selection.Copy
+  Selection.HomeKey Unit:=wdStory
+  listDoc.Activate
+  Selection.Paste
+End If
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="List of headings" & vbCrLf
+Selection.MoveUp Unit:=wdLine, Extend:=wdExtend
+Selection.Style = wdStyleNormal
+Selection.Start = Selection.End
+
+' Type in the lines of headings text
+For i = 1 To iMax
+  If Len(textArray(i)) > minLength Then
+    Selection.TypeText Text:=textArray(i)
+    Selection.MoveUp Unit:=wdLine, Extend:=wdExtend
+    Selection.Style = styleArray(i)
+    Selection.Collapse wdCollapseEnd
+  End If
+Next
+
+Selection.HomeKey Unit:=wdStory
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^12"
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Wrap = False
+  .Format = True
+  .Execute Replace:=wdReplaceAll
+End With
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p^p"
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Wrap = False
+  .Format = True
+  .Execute Replace:=wdReplaceAll
+End With
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Heading^p"
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Wrap = False
+  .Format = True
+  .Execute Replace:=wdReplaceAll
+End With
+With ActiveDocument.Styles(wdStyleNormal).ParagraphFormat
+  .KeepWithNext = True
+End With
+Exit Sub
+
+
+FoldBack:
+' Select the cursor line
+Selection.HomeKey Unit:=wdLine
+Selection.EndKey Unit:=wdLine, Extend:=wdExtend
+Selection.MoveLeft Unit:=wdCharacter, Count:=1, Extend:=wdExtend
+fText = Selection
+fStyle = Selection.Style
+
+' Find the right document
+Set rng = ActiveDocument.Paragraphs(2).range
+firstHeading = rng
+DocName = ""
+For Each doc In Documents
+  If doc <> "Normal.dot" Then
+    doc.Activate
+    Set rng = ActiveDocument.Paragraphs(1).range
+    topText = rng
+    If topText = firstHeading Then
+      DocName = ActiveDocument.Name
+    End If
+    If DocName > "" Then Exit For
+  End If
+Next
+If DocName = "" Then
+  MsgBox ("Can't find file: " & firstHeading)
+  Exit Sub
+End If
+
+' Try to find the searched-for line
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = fText
+  .Replacement.Text = ""
+  .Style = fStyle
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute
+End With
+' select the searched-for heading
+If Selection.Find.Found Then
+   Selection.EndKey Unit:=wdLine
+Else
+' Somehow we missed it!
+  If nameNow > "" Then
+    listDoc.Activate
+    MsgBox ("For some reason I can't find this heading.")
+  End If
+End If
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = fText
+  .MatchCase = False
+End With
+End Sub
+

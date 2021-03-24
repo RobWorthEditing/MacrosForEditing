@@ -1,0 +1,67 @@
+Sub PDFsoftHyphenRemove()
+' Paul Beverley - Version 04.01.14
+' Unhyphenate split words
+
+' Highlight the result (use zero for no highlight)
+myColour = wdGray25
+
+Selection.HomeKey Unit:=wdStory
+langText = Languages(Selection.LanguageID).NameLocal
+
+' Go and find the first occurrence
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[a-zA-Z]-^13"
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+' If you want to count them...
+  splitPoint = rng.Start + 1
+  rng.End = rng.Start + 1
+  rng.Start = rng.Start - 60
+  wordOne = rng.Words.Last
+  myStart = rng.End - Len(wordOne)
+  rng.Start = splitPoint + 2
+  rng.End = rng.Start + 25
+  wordTwo = Trim(rng.Words.First)
+  myEnd = rng.Start + Len(wordTwo)
+  gotOne = False
+' If it's a spelling error...
+  oneWord = wordOne & wordTwo
+  If InStr(oneWord, "_") = 0 Then
+    If Application.CheckSpelling(oneWord, _
+         MainDictionary:=langText) = True Then
+      rng.Start = splitPoint
+      rng.End = splitPoint + 2
+      rng.Delete
+      rng.Select
+      gotOne = True
+      rng.Start = myEnd - 2
+      rng.End = myEnd - 1
+      rng.Select
+      rng.Text = vbCr
+    End If
+  End If
+  myCount = myCount + 1
+  If myColour > 0 And gotOne = True Then
+    rng.Start = myStart
+    rng.End = myEnd - 2
+    rng.HighlightColorIndex = myColour
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+rng.Select
+MsgBox "Changed: " & myCount
+End Sub
+

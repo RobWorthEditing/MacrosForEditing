@@ -1,0 +1,21 @@
+Sub FunnyFontClear()
+' Paul Beverley - Version 07.09.17
+' Makes all text in the selection the same font
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Set rng = Selection.range.Duplicate
+startFont = Selection.range.Characters(1).Font.Name
+For i = 1 To rng.Characters.Count
+  Set ch = rng.Characters(i)
+  If ch.Font.Name <> startFont Then
+    myChar = Asc(ch.Text)
+    ch.Select
+    ch.Delete
+    Selection.Text = Chr(myChar)
+  End If
+Next i
+Selection.Collapse wdCollapseEnd
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

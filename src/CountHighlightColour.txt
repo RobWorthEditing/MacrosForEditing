@@ -1,0 +1,48 @@
+Sub CountHighlightColour()
+' Paul Beverley - Version 04.03.11
+' Count how many times a highlight colour occurs
+
+selColour = Selection.Range.HighlightColorIndex
+hereNow = Selection.Start
+
+If selColour = 0 Then
+  MsgBox ("Select colour to be counted")
+  Exit Sub
+End If
+
+i = 0
+Set rng = ActiveDocument.Content
+theEnd = rng.End
+Do
+  If rng.Start > 0 Then rng.Start = rng.End
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = ""
+   .Highlight = True
+   .Wrap = False
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = False
+   .Execute
+  End With
+  If rng.Find.Found = True Then
+    If rng.HighlightColorIndex = selColour Then i = i + 1
+    If i Mod 10 = 0 Then StatusBar = "To go: " _
+        & Str(Int((theEnd - rng.Start) / 100))
+  End If
+Loop Until rng.End = rng.Start Or rng.End = ActiveDocument.Range.End
+StatusBar = ""
+
+MsgBox ("Found: " & Str(i))
+
+Selection.Start = hereNow
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .Wrap = wdFindContinue
+End With
+End Sub
+

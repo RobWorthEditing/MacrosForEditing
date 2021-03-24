@@ -1,0 +1,22 @@
+Sub ListHighlighter()
+' Paul Beverley - Version 19.10.10
+' This highlights all 'short' paragraphs in a text
+
+minLength = 10
+MaxLength = 150
+MyColour = wdBrightGreen
+
+OldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = MyColour
+
+For Each myPara In ActiveDocument.Paragraphs
+  paraWords = myPara
+  lineLen = Len(paraWords)
+  If lineLen < MaxLength And lineLen > minLength Then
+    myPara.Range.HighlightColorIndex = MyColour
+  End If
+Next
+Options.DefaultHighlightColorIndex = OldColour
+Selection.HomeKey Unit:=wdStory
+End Sub
+

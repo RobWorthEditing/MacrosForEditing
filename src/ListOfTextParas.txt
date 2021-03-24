@@ -1,0 +1,44 @@
+Sub ListOfTextParas()
+' Paul Beverley - Version 16.01.21
+' Lists all paragraphs (pure text) starting with certain text
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+End If
+
+' In the main text, find the search word(s) then create the list
+findString = InputBox("Search for?", "ListOfTextParas", Trim(Selection))
+If findString = "" Then Exit Sub
+If startOfLine Then findString = "^13" & findString
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13" & findString
+  .Wrap = wdFindStop
+  .MatchCase = False
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+Documents.Add
+Set resultsDoc = ActiveDocument
+Set rng2 = resultsDoc.Content
+Do While rng.Find.Found = True
+  rng.MoveStart , 1
+  rng.Expand wdParagraph
+  myText = rng.Text
+  rng.Collapse wdCollapseEnd
+  rng2.InsertAfter Text:=myText
+  rng.Find.Execute
+Loop
+Beep
+Selection.EndKey Unit:=wdStory
+resultsDoc.Activate
+End Sub
+

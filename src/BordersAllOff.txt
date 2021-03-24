@@ -1,0 +1,18 @@
+Sub BordersAllOff()
+' Paul Beverley - Version 26.05.18
+' Removes border attributes from some or all text
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+If Selection.Start = Selection.End Then
+  myResponse = MsgBox("Remove borders from whole text?", vbQuestion _
+          + vbYesNoCancel, "BordersAllOff")
+  If myResponse <> vbYes Then Exit Sub
+  Set rng = ActiveDocument.Content
+Else
+  Set rng = Selection.range.Duplicate
+End If
+rng.Font.Borders(1).LineStyle = wdLineStyleNone
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

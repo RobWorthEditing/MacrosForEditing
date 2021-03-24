@@ -1,0 +1,8 @@
+Sub FindReplaceStay()
+' Paul Beverley - Version 09.03.17
+' Finds and replaces but don't move to next
+
+Selection.Collapse wdCollapseStart
+Selection.Find.Execute Replace:=wdReplaceOne
+End Sub
+

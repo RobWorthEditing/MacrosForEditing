@@ -1,0 +1,12 @@
+Sub SetTextBoxStyle()
+' Paul Beverley - Version 01.06.10
+' Apply style to all textboxes
+  Dim myStoryRange As Range
+  Set myStoryRange = ActiveDocument.StoryRanges(wdTextFrameStory)
+  myStoryRange.Style = "List Bullet"
+  While Not (myStoryRange.NextStoryRange Is Nothing)
+    Set myStoryRange = myStoryRange.NextStoryRange
+    myStoryRange.Style = "List Bullet"
+  Wend
+End Sub
+

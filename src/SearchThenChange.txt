@@ -1,0 +1,58 @@
+Sub SearchThenChange()
+' Paul Beverley - Version 16.01.21
+' Finds one of the words from a list, then changes to its alternate
+
+myWords = "am:was, are:were, is:was, have:had, has:had, can:could,"
+myWords = myWords & ",does:did, do:did, goes:went, go:went,"
+
+myrange = 200
+
+myWords = "," & myWords & ","
+myWords = Left(myWords, Len(myWords) - 1)
+myWords = Replace(myWords, " ", "")
+myWords = Replace(myWords, ",,", ",")
+myWords = Replace(myWords, ",,", ",")
+myWords = Left(myWords, Len(myWords) - 1)
+fWord = Split(myWords, ",")
+rWord = Split(myWords, ",")
+
+myFindWords = ","
+For i = 1 To UBound(fWord)
+  colonPos = InStr(fWord(i), ":")
+  f = Left(fWord(i), colonPos - 1)
+  r = Mid(fWord(i), colonPos + 1)
+  fWord(i) = f
+  rWord(i) = r
+  myFindWords = myFindWords & f & ","
+Next i
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start
+wdsLeft = rng.Words.Count
+If myrange > wdsLeft Then myrange = wdsLeft
+For i = 1 To myrange
+  wd = rng.Words(i)
+  If LCase(wd) <> UCase(wd) Then
+    wd = Replace(wd, " ", "")
+    Debug.Print wd
+    If InStr(myFindWords, "," & wd & ",") > 0 Then Exit For
+  End If
+  DoEvents
+Next i
+If i > myrange Then
+  rng.Words(i - 1).Select
+  Beep
+Else
+  For j = 1 To UBound(fWord)
+    If wd = fWord(j) Then Exit For
+  Next j
+  newWord = rWord(j)
+  rng.Words(i).Select
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.TypeText Text:=newWord
+End If
+End Sub
+

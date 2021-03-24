@@ -1,0 +1,79 @@
+Sub BasicIndexer2()
+' Paul Beverley - Version 22.10.12
+' Basic indexing
+repeatNumbers = False
+listDelimiter = ", "
+addaTab = True
+myResponse = MsgBox("Is the cursor on the first line of the word list?", _
+      vbQuestion + vbYesNo)
+If myResponse = vbNo Then Exit Sub
+
+paraStart = ActiveDocument.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
+Selection.HomeKey Unit:=wdLine
+listStart = Selection.Start
+For paraNum = paraStart To ActiveDocument.Paragraphs.Count
+  Set rng = ActiveDocument.Paragraphs(paraNum).Range
+  rng.Select
+  Selection.Range.HighlightColorIndex = wdGray25
+  Selection.MoveEnd , -1
+  headWord = Selection
+
+' Various dashes and apostrophes to "any character"
+  headWord = Replace(headWord, "-", "^?")
+  headWord = Replace(headWord, ChrW(8211), "^?")
+  headWord = Replace(headWord, ChrW(8212), "^?")
+  headWord = Replace(headWord, "'", "^?")
+  headWord = Replace(headWord, ChrW(8217), "^?")
+  If Len(headWord) > 3 Then
+    Set rng = ActiveDocument.Content
+    foundPages = ""
+    Do
+    previousPage = ""
+    ' Find each occurrence of headword
+      With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .MatchWildcards = False
+        .MatchCase = False
+        .Highlight = False
+        .Text = headWord
+        .Replacement.Highlight = True
+        .Execute Replace:=wdReplaceOne
+      End With
+      rng.Start = rng.End
+      If rng.Find.Found Then
+      ' Find current page number
+        Application.Browser.Target = wdBrowsePage
+        pageNum = Trim(Str(rng.Information(wdActiveEndAdjustedPageNumber)))
+        If repeatNumbers = True Then
+          foundPages = foundPages & pageNum & listDelimiter
+        Else
+          If previousNumber <> pageNum Then
+            foundPages = foundPages & pageNum & listDelimiter
+            previousNumber = pageNum
+          End If
+        End If
+      End If
+    Loop Until rng.Find.Found = False
+   
+    If addaTab = True Then foundPages = vbTab & foundPages
+    Selection.InsertAfter Text:=foundPages
+  End If
+Next paraNum
+
+' Remove trailing commas from list
+Set rng = ActiveDocument.Content
+rng.Start = listStart
+rng.HighlightColorIndex = 0
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = False
+  .Text = ", ^p"
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+End With
+rng.Select
+Selection.Collapse wdCollapseEnd
+End Sub
+

@@ -1,0 +1,54 @@
+Sub CountDownVisible()
+' Paul Beverley - Version 03.04.20
+' Shows a statusbar and Big Text countdown to zero
+
+myDownTime = 5
+doBeep = True
+beepAt = 2
+
+doBigText = True
+myZoomSize = 400
+myFontSize = 144
+
+ActiveWindow.ActivePane.View.Zoom.Percentage = myZoomSize
+
+If doBigText = True Then
+  Selection.HomeKey Unit:=wdStory
+  If ActiveDocument.Paragraphs(1).Range.Font.Size _
+       <> myFontSize Then
+  Selection.TypeText Text:=Trim(Str(myDownTime)) & vbCr
+  Set rng = ActiveDocument.Paragraphs(1).Range
+  rng.Font.Size = myFontSize
+  rng.Font.Bold = True
+  Else
+    ActiveDocument.Paragraphs(1).Range.Text = _
+         Trim(Str(myDownTime)) & vbCr
+  End If
+End If
+
+myTime = Timer
+For i = myDownTime To 1 Step -1
+  StatusBar = myPrompt
+  If doBigText = True Then
+    ActiveDocument.Paragraphs(1).Range.Text = Trim(Str(i)) & vbCr
+  End If
+  Do
+    DoEvents
+  Loop Until Timer > myTime + myDownTime - i + 1
+  myPrompt = ""
+  For j = 1 To 25
+    myPrompt = myPrompt & Str(i) & "      "
+  Next j
+  Debug.Print i
+  If doBeep = True And i < beepAt + 1 Then
+    Beep
+    thisTime = Timer
+    Do
+    Loop Until Timer > thisTime + 0.2
+    Beep
+  End If
+Next i
+StatusBar = ""
+If doBigText = True Then ActiveDocument.Paragraphs(1).Range.Delete
+End Sub
+

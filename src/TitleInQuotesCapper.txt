@@ -1,0 +1,119 @@
+Sub TitleInQuotesCapper()
+' Paul Beverley - Version 25.08.20
+' Uppercases the initial letter of all major words (title case)
+
+findSingles = True
+findDoubles = True
+
+' Do you want an initial cap after a colon?
+colonCap = False
+' Do you want an initial cap after a hyphen?
+hyphenCap = False
+
+' List of lowercase words, each surrounded by spaces
+lclist = " a an and at by for from in into is it of "
+lclist = lclist & " on or that the their they to "
+lclist = lclist & " we with "
+
+
+myFind = ""
+If findSingles = True Then myFind = ChrW(8216)
+If findDoubles = True Then myFind = myFind & ChrW(8220)
+Debug.Print myFind
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[" & myFind & "]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+Do
+  Selection.Collapse wdCollapseEnd
+  Set rng = Selection.Range
+  DoEvents
+  rng.MoveEndUntil cset:=ChrW(8221) & ChrW(8217) & "'"")", Count:=wdForward
+  Do
+    Set rng2 = rng.Duplicate
+    rng2.Start = rng2.End + 1
+    rng2.End = rng2.End + 1
+    keepGoing = False
+    If UCase(rng2) <> LCase(rng2) Then
+      rng.End = rng.End + 1
+      rng.MoveEndUntil cset:=ChrW(8221) & ChrW(8217) & _
+           "'"")", Count:=wdForward
+      keepGoing = True
+    End If
+    DoEvents
+  Loop Until keepGoing = False
+  rng.MoveStartUntil cset:=ChrW(8220) & ChrW(8216) & "'""(", Count:=wdBackward
+  
+  endHere = rng.End
+  startHere = rng.Start
+  rng.Case = wdTitleWord
+  rng.Select
+  
+  For Each wd In rng.Words
+    If UCase(wd) = wd And Len(Trim(wd)) > 1 Then wd.Font.Shadow = True
+  Next
+  
+  Set rng2 = rng.Duplicate
+  ' Force lower case after hyphen?
+  If hyphenCap = False Then
+    rng2.Start = startHere
+    Do
+  ' Capitalise after a colon if option set
+      myText = rng2.Text
+      hyphenPos = InStr(myText, "-")
+      If hyphenPos > 0 Then
+        rng2.MoveStart , hyphenPos
+        rng2.End = rng2.Start + 1
+        rng2.Case = wdLowerCase
+        rng2.End = endHere
+      End If
+    Loop Until hyphenPos = 0
+  End If
+  
+  For wrd = 2 To rng.Words.Count
+    thisWord = Trim(rng.Words(wrd))
+    thisWord = " " & LCase(thisWord) & " "
+    If InStr(lclist, thisWord) Then
+      rng.Words(wrd).Case = wdLowerCase
+    End If
+  Next wrd
+  
+  ' Force upper case after colon?
+  If colonCap = True Then
+    rng.Start = startHere
+    Do
+  ' Capitalise after a colon if option set
+      myText = rng.Text
+      colonPos = InStr(myText, ": ")
+      If colonPos > 0 Then
+        rng.MoveStart , colonPos + 1
+        rng.End = rng.Start + 1
+        rng.Case = wdUpperCase
+        rng.End = endHere
+      End If
+    Loop Until colonPos = 0
+  End If
+  
+  Set rng = Selection.Range
+  For Each wd In rng.Words
+    If wd.Font.Shadow = True Then
+      wd.Case = wdUpperCase
+    End If
+  Next
+  Selection.Font.Shadow = False
+  myResponse = MsgBox("Continue?", _
+          vbQuestion + vbYesNoCancel, "TitleInQuotesCapper")
+  Selection.Collapse wdCollapseEnd
+  If myResponse = vbYes Then
+    Selection.Find.Execute
+  End If
+Loop Until myResponse <> vbYes Or Selection.Find.Found = False
+Beep
+End Sub
+

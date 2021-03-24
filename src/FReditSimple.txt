@@ -1,0 +1,50 @@
+Sub FReditSimple()
+' Paul Beverley - Version 10.12.16
+' Performs a list of F&Rs
+
+Set rng = ActiveDocument.Content
+nowTrack = ActiveDocument.TrackRevisions
+If InStr(Left(rng, 100), "|") > 0 Then
+  MsgBox "Place the cursor in the file to be edited."
+  Exit Sub
+End If
+gottaList = False
+For Each myWnd In Application.Windows
+  If InStr(Left(myWnd.Document.Content.Text, 100), "|") > 0 Then
+    gottaList = True
+    Exit For
+  End If
+Next myWnd
+If gottaList = False Then MsgBox "Can't find a changes list.": Exit Sub
+For Each myPara In myWnd.Document.Paragraphs
+  myText = Replace(myPara.range.Text, vbCr, "")
+  If Left(myText, 1) = "#" Then Beep: Exit Sub
+  If Len(myText) > 2 And Left(myText, 1) <> "|" Then
+    padPos = InStr(myText, "|")
+    If padPos = 0 Then myPara.range.Select: MsgBox "No vertical bar!": Exit Sub
+    thisColour = myPara.range.HighlightColorIndex
+    If thisColour > 999 Then myPara.range.Select: _
+         MsgBox "Please highlight the whole line.": Exit Sub
+    Options.DefaultHighlightColorIndex = thisColour
+    myFind = Left(myText, padPos - 1)
+    myRepl = Mid(myText, padPos + 1)
+    doWC = (Asc(myFind) = Asc("~"))
+    doAllCase = (Asc(myFind) = Asc("¬"))
+    If doWC Or doAllCase Then myFind = Mid(myFind, 2)
+    ActiveDocument.TrackRevisions = nowTrack And Not myPara.range.Font.StrikeThrough
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Wrap = wdFindContinue
+      .Text = myFind
+      .Replacement.Text = myRepl
+      .Replacement.Highlight = True
+      .MatchCase = Not doAllCase
+      .MatchWildcards = doWC
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+Next myPara
+Beep
+End Sub
+

@@ -1,0 +1,8 @@
+Sub HiLightOFF()
+' Paul Beverley - Version 01.01.10
+' Removes highlight (text colour) from selected text
+   Selection.Range.HighlightColorIndex = wdNoHighlight
+'  Selection.Range.Font.Color = wdColorAutomatic
+   Selection.Start = Selection.End
+End Sub
+

@@ -1,0 +1,345 @@
+Sub MultiFileCount()
+' Paul Beverley - Version 13.12.17
+' Count words in a group of files
+
+useStats = True
+useBoth = True
+countEquations = True
+
+Dim FilesTotal As Integer, myCountMain As Long, myCountAll As Long
+Dim StatWordsMain As Long, StatWordsAll As Long, myErr As Long
+Dim myCountMainTot As Long, myCountAllTot As Long
+Dim StatWordsMainTot As Long, StatWordsAllTot As Long
+Dim allMyFiles(200) As String
+
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  myResponse = MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "Multifile Text Collection")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.Count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+
+  myResponse = MsgBox("Count ALL the files in this folder:" & dirName _
+       & " ?", vbQuestion + vbYesNoCancel, "Multifile Wordcount")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  myResponse = MsgBox("Count just the files listed here?", _
+       vbQuestion + vbYesNoCancel, "Multifile Wordcount")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.Range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+Documents.Add
+Set myResults = ActiveDocument
+totMathType = 0
+numEqnEditor = 0
+For i = 1 To numFiles
+  thisFile = myFolder & myDelimiter & allMyFiles(i)
+  Set myDoc = Application.Documents.Open(FileName:=thisFile)
+  StatusBar = allMyFiles(i)
+  numMathType = ActiveDocument.InlineShapes.Count
+  numEqnEditor = ActiveDocument.OMaths.Count
+  DoEvents
+
+  ' Clean up the document
+  ActiveDocument.ConvertNumbersToText
+  Set rng = ActiveDocument.Range
+  rng.Fields.Unlink
+  If ActiveDocument.Comments.Count > 0 Then ActiveDocument.DeleteAllComments
+  ActiveDocument.TrackRevisions = False
+  Selection.Range.Revisions.AcceptAll
+
+  ' Mark the end of the main text
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText "zczczczc" & vbCr & vbCr
+  Selection.EndKey Unit:=wdStory
+
+  ' copy all the footnotes to the end of the text
+  If ActiveDocument.Footnotes.Count > 0 Then
+    For Each fn In ActiveDocument.Footnotes
+      fn.Range.Copy
+      Selection.Paste
+      Selection.TypeText " "
+    Next
+  End If
+
+  ' copy all the endnotes to the end of the text
+  If ActiveDocument.Endnotes.Count > 0 Then
+    For Each en In ActiveDocument.Endnotes
+      en.Range.Copy
+      Selection.Paste
+      Selection.TypeText " "
+    Next
+  End If
+
+  ' copy all the textboxes to the end of the text
+  Set rng = ActiveDocument.Range
+  rng.Start = rng.End
+  If ActiveDocument.Shapes.Count > 0 Then
+    For Each shp In ActiveDocument.Shapes
+      If shp.Type <> 24 And shp.Type <> 3 Then
+        If shp.TextFrame.HasText Then
+          Set rng2 = shp.TextFrame.TextRange
+          rng2.Cut
+          rng.Paste
+          rng.Start = rng.End
+        End If
+      End If
+    Next
+  End If
+
+' Delete all notes
+  Set rng = ActiveDocument.Range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Text = "^2"
+    .Replacement.Text = " "
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  Set rng = ActiveDocument.Range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .MatchWildcards = True
+    .Text = "[0-9].[0-9]"
+    .Replacement.Text = "111"
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  Set rng = ActiveDocument.Range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .MatchWildcards = True
+    .Text = "[0-9].[0-9]"
+    .Replacement.Text = "111"
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  If useStats = True Or useBoth = True Then
+  ' Ensure only a single language
+    Set rng = ActiveDocument.Content
+    rng.LanguageID = wdEnglishUK
+
+    ' Count the whole of the text
+    Selection.EndKey Unit:=wdStory
+    StatWordsAll = ActiveDocument.Content.ComputeStatistics(wdStatisticWords) - 1
+    StatWordsAllTot = StatWordsAllTot + StatWordsAll
+
+    ' Now delete the extra text ready for a recount
+    Set rng = ActiveDocument.Range
+    With rng.Find
+      .MatchWildcards = False
+      .Text = "zczczczc"
+      .Replacement.Text = " "
+      .Execute
+    End With
+    rng.End = ActiveDocument.Range.End
+    rng.Cut
+
+    ' Count just the main text
+    Selection.HomeKey Unit:=wdStory
+    Selection.EndKey Unit:=wdStory
+    StatWordsMain = ActiveDocument.Content.ComputeStatistics(wdStatisticWords)
+    If StatWordsAll - StatWordsMain = -1 Then StatWordsMain = StatWordsAll
+    StatWordsMainTot = StatWordsMainTot + StatWordsMain
+    ' Put the extra text back in
+    Selection.Paste
+  End If
+
+  If useStats = False Or useBoth = True Then
+  ' Deal with hyphens and apostrophes (e.g. half-hearted and can't)
+  ' treating them as single words
+    Set rng = ActiveDocument.Range
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .MatchWildcards = True
+      .Text = "([a-zA-Z])[-'\&" & ChrW(8217) & "]([a-zA-Z])"
+      .Replacement.Text = "\1x\2"
+      .Execute Replace:=wdReplaceAll
+    End With
+ 
+    ' Change '/' into a space for "this/that" type occurences;
+    ' also punctuation, brackets etc.
+    Set rng = ActiveDocument.Range
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .MatchWildcards = True
+      .Text = "[_/\(\)\<\>\&\@\[\]""'\!\?\,\.+\-;:...^l^m^t^13" & ChrW(8220) _
+             & ChrW(8221) & ChrW(8216) & ChrW(8217) & ChrW(8226) & "]"
+      .Replacement.Text = " "
+      .Execute Replace:=wdReplaceAll
+    End With
+ 
+    Set rng = ActiveDocument.Range
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .MatchWildcards = True
+      .Text = " [!a-zA-Z] "
+      .Replacement.Text = "   "
+      .Execute Replace:=wdReplaceAll
+    End With
+       
+    ' Count all the text -1 for zczc, and -1 because .Count adds one!
+    tot = ActiveDocument.Content.Words.Count - 2
+    myCountAll = tot
+    myCountAllTot = myCountAllTot + myCountAll
+ 
+    ' Now delete the extra text ready for a recount
+    Set rng = ActiveDocument.Range
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .MatchWildcards = True
+      .Text = "zczczczc"
+      .Replacement.Text = " "
+      .Execute
+    End With
+    rng.End = ActiveDocument.Range.End
+    rng.Cut
+    myCountMain = ActiveDocument.Content.Words.Count - 1
+    If myCountAll - myCountMain = -1 Then myCountMain = myCountAll
+    myCountMainTot = myCountMainTot + myCountMain
+  End If
+
+  myDoc.Close SaveChanges:=wdDoNotSaveChanges
+  FilesTotal = FilesTotal + 1
+  myFileName = Left(allMyFiles(i), InStr(allMyFiles(i), ".") - 1)
+  Selection.TypeText myFileName
+
+  If useStats = True Or useBoth = True Then _
+       Selection.TypeText vbTab & Str(StatWordsMain) & _
+       vbTab & Str(StatWordsAll - StatWordsMain) & vbTab & Str(StatWordsAll)
+
+  If useStats = False Or useBoth = True Then _
+       Selection.TypeText vbTab & Str(myCountMain) & vbTab & _
+       Str(myCountAll - myCountMain) & vbTab & Str(myCountAll)
+  If useBoth = True Then
+    myErr = myCountAll - StatWordsAll
+    myErrPC = Int(2000 * myErr / (myCountAll + StatWordsAll)) / 10
+    If myErr = 0 Then
+      myPC = ChrW(8212)
+    Else
+      myPC = Trim(Str(Abs(myErrPC)))
+      If InStr(myPC, ".") = 0 Then myPC = myPC & ".0"
+      If Abs(myErrPC) < 1 Then myPC = "0" & myPC
+      myPC = myPC & "%"
+      If myErr > 0 Then
+        myPC = "+" & myPC
+      Else
+        myPC = ChrW(8722) & myPC
+      End If
+    End If
+    Selection.TypeText vbTab & myPC
+  End If
+  If countEquations = True And (numMathType + numEqnEditor) > 0 Then
+    Selection.TypeText vbTab & Str(numMathType) & vbTab & _
+       Str(numEqnEditor)
+    totMathType = totMathType + numMathType
+    totEqnEditor = totEqnEditor + numEqnEditor
+  End If
+  Selection.TypeText vbCr
+Next i
+
+Selection.TypeText vbCr
+Selection.TypeText "Totals (" & Trim(Str(FilesTotal)) & ChrW(160) & "files)"
+If useStats = True Or useBoth = True Then _
+     Selection.TypeText vbTab & Str(StatWordsMainTot) & vbTab & _
+     Str(StatWordsAllTot - StatWordsMainTot) & vbTab & Str(StatWordsAllTot)
+If useStats = False Or useBoth = True Then _
+     Selection.TypeText vbTab & Str(myCountMainTot) & vbTab & _
+     Str(myCountAllTot - myCountMainTot) & vbTab & Str(myCountAllTot)
+If countEquations = True And (totMathType + totEqnEditor) > 0 Then _
+     Selection.TypeText vbTab & vbTab & Str(totMathType) & vbTab & _
+     Str(totEqnEditor)
+' Add title line and make it bold
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText "File"
+If useStats = True Or useBoth = True Then _
+     Selection.TypeText vbTab & "Main (stats)" & vbTab & _
+     "Extras" & vbTab & "All"
+If useStats = False Or useBoth = True Then _
+     Selection.TypeText vbTab & "Main (count)" & vbTab & _
+     "Extras" & vbTab & "All"
+If useBoth = True Then Selection.TypeText vbTab & "Diff."
+If countEquations = True And (totMathType + totEqnEditor) > 0 Then _
+     Selection.TypeText vbTab & "Math Type" & vbTab & "Eqn Editor"
+Selection.TypeText vbCr & vbCr
+
+Selection.MoveUp Unit:=wdParagraph, Count:=1, Extend:=wdExtend
+Selection.Start = 0
+Selection.Font.Bold = True
+
+' Make the totals line bold
+Selection.EndKey Unit:=wdStory
+Selection.MoveUp Unit:=wdParagraph, Count:=1, Extend:=wdExtend
+Selection.Font.Bold = True
+
+Selection.WholeStory
+Set tbl = Selection.ConvertToTable(Separator:=wdSeparateByTabs)
+tbl.Columns.AutoFit
+Selection.HomeKey Unit:=wdStory
+End Sub
+

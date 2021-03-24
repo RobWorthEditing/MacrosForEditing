@@ -1,0 +1,20 @@
+Sub FindFwd()
+' Paul Beverley - Version 09.01.21
+' Finds next match forwards, case insensitively
+
+Selection.Start = Selection.End
+hereNow = Selection.End
+With Selection.Find
+  .Wrap = wdFindStop
+  .Forward = True
+  .MatchCase = False
+  .Execute
+End With
+myStart = Selection.Start
+If Selection.Start = hereNow Then
+  If Selection.Find.Found = False Then Beep
+End If
+' Leave F&R dialogue in a sensible state
+Selection.Find.Wrap = wdFindContinue
+End Sub
+

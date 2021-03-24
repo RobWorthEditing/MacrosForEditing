@@ -1,0 +1,128 @@
+Sub SpecialSortsLister()
+' Paul Beverley - Version 25.11.20
+' Collect all special sorts in a file
+
+listAccentedChars = True
+
+Set FUT = ActiveDocument
+doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
+
+
+Set rng = ActiveDocument.Range
+rng.Copy
+Documents.Add
+Selection.Paste
+Selection.WholeStory
+Selection.Range.Style = ActiveDocument.Styles(wdStyleNormal)
+Selection.Font.Reset
+numberCmnts = ActiveDocument.Comments.Count
+If numberCmnts > 0 Then ActiveDocument.DeleteAllComments
+Set rng = ActiveDocument.Content
+
+CR = vbCr
+If listAccentedChars = True Then
+  mainChars = "[abcdefghijklmnopqrstuvwxyz" & _
+       "ABCDEFGHIJKLMNOPQRSTUVWXYZ^+ ]{1,}"
+Else
+  mainChars = "[a-zA-Z^+ ]{1,}"
+End If
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = mainChars
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Beep
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[^m0-9^13^t,.:;\!\?^=^+\-\(\)£]{1,}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+Beep
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[" & ChrW(8216) & ChrW(8217) & ChrW(8221) & ChrW(8220) _
+       & ChrW(8230) & ChrW(174) & ChrW(176) & "]{1,}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Beep
+
+allSorts = ""
+For Each myChar In ActiveDocument.Characters
+  uCode = 0
+  If myChar > "" Then uCode = AscW(myChar)
+  If InStr(allSorts, myChar) = 0 And uCode > 128 Then
+    allSorts = allSorts & myChar & vbTab
+    Select Case uCode
+      Case 160: extraBit = "non-breaking space"
+      Case 176: extraBit = "degree symbol"
+      Case 178: extraBit = "dodgy squared symbol"
+      Case 179: extraBit = "dodgy cubed symbol"
+      Case 184: extraBit = "cedilla"
+      Case 186: extraBit = "masculine ordinal"
+      Case 215: extraBit = "proper multiply symbol"
+      Case 8194: extraBit = "en space"
+      Case 8195: extraBit = "em space"
+      Case 8201: extraBit = "thin space"
+      Case 8222: extraBit = "German open curly quote"
+      Case 8226: extraBit = "ordinary bullet"
+      Case 8242: extraBit = "unicode: single prime"
+      Case 8243: extraBit = "unicode: double prime"
+      Case 8249: extraBit = "French open quote"
+      Case 8250: extraBit = "French close quote"
+      Case 8722: extraBit = "minus sign"
+
+      Case Else: extraBit = "zczc"
+    End Select
+    allSorts = allSorts & extraBit & CR
+    DoEvents
+  End If
+Next myChar
+Selection.WholeStory
+If allSorts = "" Then allSorts = CR & "No special sorts used"
+Selection.TypeText allSorts
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^tzczc"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+Selection.EndKey Unit:=wdStory
+Selection.TypeText CR
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText "Special sorts used" & CR
+ActiveDocument.Paragraphs(1).Style = ActiveDocument.Styles(wdStyleHeading1)
+If doingSeveralMacros = False Then
+  Beep
+Else
+  FUT.Activate
+End If
+End Sub
+

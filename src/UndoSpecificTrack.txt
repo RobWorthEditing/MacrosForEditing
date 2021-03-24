@@ -1,0 +1,38 @@
+Sub UndoSpecificTrack()
+' Paul Beverley - Version 06.04.16
+' Find specific text and undo the track changes on it
+
+myPhrase = "Big Company"
+doMatchCase = False
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myPhrase
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = doMatchCase
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While Selection.Find.Found = True
+  myStart = Selection.Start
+  myEnd = Selection.End
+  Selection.MoveLeft , 1
+  theStart = Selection.Start
+  Selection.Find.Execute
+  Selection.MoveRight , 1
+  Selection.Start = theStart
+  myCount = myCount + 1
+  Selection.range.Revisions.RejectAll
+  Selection.Collapse wdCollapseEnd
+  Selection.Find.Execute
+Loop
+MsgBox "Changed: " & myCount
+End Sub
+

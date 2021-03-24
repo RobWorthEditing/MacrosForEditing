@@ -1,0 +1,32 @@
+Sub PunctuationToTimesSign()
+' Paul Beverley - Version 06.06.20
+' Changes the next 'x' to a times sign
+
+myTimes = ChrW(215) ' Times sign
+
+trackIt = True
+
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+
+searchChars = "x"
+Selection.End = Selection.Start
+Set rng = Selection.Range.Duplicate
+rng.End = rng.Start + 20
+While InStr(searchChars, Selection) = 0
+  Selection.MoveRight , 1
+  i = i + 1
+  If i = 50 Then
+    Beep
+    Selection.MoveEnd , 4
+    MsgBox "Up to here, no suitable character found"
+    ActiveDocument.TrackRevisions = myTrack
+    Exit Sub
+  End If
+Wend
+Selection.MoveEnd wdCharacter, 1
+Selection.Delete
+Selection.TypeText myTimes
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

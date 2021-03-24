@@ -1,0 +1,37 @@
+Sub DeleteAllSpellingErrors()
+' Paul Beverley - Version 08.05.19
+' Deletes all spelling errors
+
+minLengthSpell = 2
+myColour = wdBrightGreen
+
+If Selection.Start = Selection.End Then
+  Set rng = ActiveDocument.Content
+Else
+  Set rng = Selection.range.Duplicate
+End If
+myLanguage = Selection.LanguageID
+For Each wd In rng.Words
+  If Len(wd) >= minLengthSpell Then
+    If Application.CheckSpelling(wd, _
+         MainDictionary:=Languages(myLanguage).NameLocal) = False Then
+      wd.Font.DoubleStrikeThrough = True
+      wd.HighlightColorIndex = wdBrightGreen
+    End If
+  End If
+Next wd
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.DoubleStrikeThrough = True
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+End With
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

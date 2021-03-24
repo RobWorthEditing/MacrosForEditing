@@ -1,0 +1,22 @@
+Sub StyleBodyIndent()
+' Paul Beverley - Version 20.01.17
+' Adds body style generally, plus No indent after headings
+
+bodyStyle = "Body text"
+indentStyle = "No indent"
+
+noIndent = False
+For Each myPara In ActiveDocument.Paragraphs
+  If InStr(myPara.range.Style, "Heading") > 0 Then
+    noIndent = True
+  Else
+    If noIndent = False Then
+      myPara.range.Style = bodyStyle
+    Else
+      myPara.range.Style = indentStyle
+      noIndent = False
+    End If
+  End If
+Next myPara
+End Sub
+

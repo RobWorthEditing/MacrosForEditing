@@ -1,0 +1,42 @@
+Sub ShowFixedSpaces()
+' Paul Beverley - Version 09.02.10
+' Fixed spaces visible
+
+myColour = wdGray25
+
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Text = "^s"
+  .Highlight = True
+  .Wrap = wdFindContinue
+  .Execute
+End With
+If rng.Find.Found = False Then
+  OldColour = Options.DefaultHighlightColorIndex
+  Options.DefaultHighlightColorIndex = myColour
+  Set rng = ActiveDocument.Range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^s"
+    .Replacement.Text = "^s"
+    .Replacement.Highlight = True
+    .Wrap = wdFindContinue
+    .Execute Replace:=wdReplaceAll
+  End With
+  Options.DefaultHighlightColorIndex = OldColour
+Else
+  Set rng = ActiveDocument.Range
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^s"
+    .Replacement.Text = "^s"
+    .Replacement.Highlight = False
+    .Wrap = wdFindContinue
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+End Sub
+

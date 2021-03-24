@@ -1,0 +1,21 @@
+Sub TrackDateTimeList()
+' Paul Beverley - Version 13.05.20
+' Lists the date and time of all track changes
+
+Set rng = ActiveDocument.Content
+Documents.Add
+
+tot = rng.Revisions.Count
+For i = 1 To tot
+  Selection.TypeText Text:=rng.Revisions(i).Date & vbCr
+  DoEvents
+Next i
+
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.Text = rng.Text
+
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending
+End Sub
+

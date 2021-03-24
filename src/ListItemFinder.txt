@@ -1,0 +1,25 @@
+Sub ListItemFinder()
+' Paul Beverley - Version 28.08.14
+' Jump to an auto-list number
+
+myOffset = 0
+
+If Selection.Start = Selection.End Then Selection.Expand wdWord
+mySearchText = Trim(Selection)
+mySearchNumber = Val(mySearchText)
+If mySearchNumber = 0 Then MsgBox "Place the cursor in the citation number": Exit Sub
+myDocName = Left(ActiveDocument.Name, InStr(ActiveDocument.Name, ".") - 1)
+nowSelection = Selection
+Windows(myDocName & ":1").Activate
+If Selection = nowSelection Then Windows(myDocName & ":2").Activate
+
+For i = myOffset + mySearchNumber To ActiveDocument.ListParagraphs.Count
+  num = ActiveDocument.ListParagraphs(i).Range.ListFormat.ListString
+  If Val(num) = mySearchNumber Then
+    ActiveDocument.ListParagraphs(i).Range.Select
+  Exit Sub
+  End If
+Next i
+MsgBox "Sorry, I can't find an item of that number."
+End Sub
+

@@ -1,0 +1,85 @@
+Sub ItalicQuoteToggle()
+' Paul Beverley - Version 13.07.20
+' Toggles between italic and single or double quote
+
+useSingle = True
+' Make it useSingle = False for double quotes
+
+hereNow = Selection.Start
+If useSingle = True Then
+  openQ = 8216
+  closeQ = 8217
+  qt = "single"
+Else
+  openQ = 8220
+  closeQ = 8221
+  qt = "double"
+End If
+If Selection.Font.Italic = True Then GoTo AddQuote
+gotStart = False
+
+i = 0
+Do
+  Selection.MoveLeft Unit:=wdWord, Count:=1
+  Selection.MoveStart Count:=-1
+  If AscW(Selection) = openQ Then
+    Selection.Delete
+    gotStart = True
+  End If
+  DoEvents
+  i = i + 1
+  If i > 100 Then
+    Beep
+    MsgBox ("Sorry, I can't find an open " & qt & " quote.")
+    Exit Sub
+  End If
+Loop Until gotStart = True
+startItal = Selection.Start
+Do
+  Selection.MoveRight Unit:=wdCharacter, Count:=1
+  DoEvents
+Loop Until AscW(Selection) = closeQ
+Selection.Delete Unit:=wdCharacter, Count:=1
+Selection.Start = startItal
+Selection.Font.Italic = True
+Selection.Start = hereNow - 1
+Selection.End = Selection.Start
+Exit Sub
+
+AddQuote:
+myStart = 0
+Do
+  Selection.MoveLeft 1
+  If Selection.Font.Italic = False Then
+    myStart = Selection.Start
+    Selection.TypeText ChrW(openQ)
+  End If
+  DoEvents
+Loop Until myStart > 0
+
+Selection.Start = hereNow + 1
+myEnd = 0
+Do
+  Selection.MoveRight 1
+  DoEvents
+  If Selection.Font.Italic = False Then
+    Selection.MoveLeft 1
+    myEnd = Selection.Start
+    Selection.MoveStart Count:=-1
+    If Asc(Selection) = 32 Then
+      Selection.MoveEnd Count:=-1
+      myEnd = myEnd + 1
+    Else
+      Selection.MoveStart Count:=1
+    End If
+    Selection.TypeText ChrW(closeQ)
+    Selection.End = myEnd + 1
+    Selection.Start = myStart
+    Selection.Font.Italic = False
+  End If
+  DoEvents
+Loop Until myEnd > 0
+Selection.Start = hereNow + 1
+Selection.End = Selection.Start
+End Sub
+

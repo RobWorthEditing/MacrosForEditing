@@ -1,0 +1,23 @@
+Sub CopyHighlightedTextSentences()
+' Paul Beverley - Version 09.06.20
+' Copies sentences containing highlighted text into a new file
+
+doColouredText = True
+doubleSpace = True
+
+Set rng = ActiveDocument.Content
+Documents.Add
+For Each sn In rng.Sentences
+  copyIt = (sn.HighlightColorIndex > 0)
+  If doColouredText = True Then
+    If sn.Font.Color > 0 Then copyIt = True
+  End If
+  If copyIt = True Then
+    sn.Copy
+    Selection.Paste
+    Selection.Collapse wdCollapseEnd
+    If doubleSpace = True Then Selection.TypeText vbCr
+  End If
+Next sn
+End Sub
+

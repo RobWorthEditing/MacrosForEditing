@@ -1,0 +1,29 @@
+Sub PunctuationOffNearHere()
+' Paul Beverley - Version 03.11.17
+' Removes the punctuation near the cursor
+
+ignoreThese = " )(][/0123456789"
+rngForward = 3
+rngBackward = 3
+
+Selection.Collapse wdCollapseStart
+Selection.MoveStart , -rngBackward
+Selection.MoveEnd , rngForward
+For i = 1 To Len(Selection)
+ch = Selection.Characters(i)
+  If LCase(ch) = UCase(ch) And InStr(ignoreThese, ch) = 0 Then
+    gotOne = True
+    Exit For
+  Else
+    gotOne = False
+  End If
+Next i
+If gotOne = True Then
+  Selection.Characters(i).Select
+  Selection.Delete
+Else
+  Beep
+End If
+Selection.Collapse wdCollapseEnd
+End Sub
+

@@ -1,0 +1,113 @@
+Sub FontColourSame()
+' Paul Beverley - Version 13.01.21
+' Highlights all occurrences of this text in this colour
+
+textColour = wdColorBlue
+
+' Preserve TC status and existing highlight colour
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Dim v As Variable, nowColour As Long
+nowColour = Selection.Font.Color
+varsExist = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "selStart" Then varsExist = True: Exit For
+Next v
+
+If varsExist Then
+  wasStart = ActiveDocument.Variables("selStart")
+  wasEnd = ActiveDocument.Variables("selEnd")
+  If Selection.Start > wasStart - 1 And Selection.End < wasEnd + 1 Then
+    Selection.Start = wasStart
+    Selection.End = wasEnd
+  End If
+End If
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start - 1
+rng.End = Selection.Start
+If Selection.End = Selection.Start Then
+  partWord = False
+  Selection.MoveEnd , 1
+  myChar = Selection
+  nonText = (UCase(myChar) = LCase(myChar))
+  If nonText = True Then
+    nowColour = Selection.Font.Color
+    If nowColour = wdNoHighlight Then
+      newColour = nonTextColour
+    Else
+      newColour = wdNoHighlight
+    End If
+  Else
+    If UCase(rng) <> LCase(rng) And rng.HighlightColorIndex > 0 Then
+      newColour = wdNoHighlight
+    Else
+      nowColour = Selection.Font.Color
+      If nowColour = wdNoHighlight Then
+        newColour = textColour
+      Else
+        newColour = textColour
+      End If
+    End If
+    Selection.Expand wdWord
+    Do While InStr(searchChars, Left(Selection.Text, 1)) = 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+  End If
+Else
+  partWord = True
+  nowColour = Selection.Font.Color
+'  If nowColour = 0 Then nowColour = nontextColour
+  If nowColour > 1000 Then
+    Set rng = ActiveDocument.Content
+    rng.Start = Selection.Start
+    rng.End = Selection.Start + 1
+    nowColour = rng.Font.Color
+  End If
+  newColour = nowColour
+End If
+
+findText = Selection
+Select Case Asc(findText)
+  Case 9:  findText = "^t"
+  Case 30:  findText = "^~": partWord = True ' non-breaking hyphen
+End Select
+
+Selection.Collapse wdCollapseStart
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = findText
+  .MatchCase = True
+  .Forward = True
+  .Replacement.Text = "^&"
+  .Replacement.Font.Color = newColour
+  .Wrap = wdFindContinue
+  If partWord = False And nonText = False Then .MatchWholeWord = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Restore to original state
+oldColour = newColour
+newColour = oldColour
+ActiveDocument.TrackRevisions = nowTrack
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchCase = False
+  .MatchWholeWord = False
+  .Replacement.Highlight = False
+End With
+If Selection.End = Selection.Start Then
+   myChar = Selection
+  If UCase(myChar) <> LCase(myChar) Then
+    Selection.Move , 1
+  End If
+End If
+End Sub
+

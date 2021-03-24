@@ -1,0 +1,83 @@
+Sub NotesInlineToEmbed()
+' Paul Beverley - Version 24.11.20
+' Copies in-line notes into embedded notes
+
+
+' Guillemets
+' myOpen = ChrW(171)
+' myClose = ChrW(187)
+
+' myOpen = "["
+' myClose = "]"
+
+' myOpen = "{"
+' myClose = "}"
+
+myOpen = "<"
+myClose = ">"
+
+
+For i = ActiveDocument.Endnotes.Count To 1 Step -1
+  ActiveDocument.Endnotes(i).Delete
+  StatusBar = "                                   " & i
+Next i
+
+For i = ActiveDocument.Footnotes.Count To 1 Step -1
+  ActiveDocument.Footnotes(i).Delete
+  StatusBar = "                                   " & i
+Next i
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myOpen
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+Do While rng.Find.Found
+  rng.End = ActiveDocument.Content.End
+  rng.Select
+  myEnd = rng.Start + InStr(rng.Text, myClose)
+  rng.End = myEnd - 1
+  rng.Start = rng.Start + 1
+  rng.Select
+  rng.Copy
+  Selection.Collapse wdCollapseStart
+  Selection.MoveLeft , 1
+  Selection.Footnotes.Add Range:=Selection.Range, Reference:=""
+  Selection.Paste
+  Selection.Range.Font.ColorIndex = wdBlue
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+
+' Correct the line spacing
+For i = 1 To ActiveDocument.Footnotes.Count
+  mySize = ActiveDocument.Footnotes(i).Range.Font.Size
+  ActiveDocument.Footnotes(i).Range.ParagraphFormat.LineSpacing = mySize
+Next i
+
+' Now delete inline notes
+If Asc(myOpen) < 126 Then myOpen = "\" & myOpen
+If Asc(myClose) < 126 Then myClose = "\" & myClose
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myOpen & "*" & myClose
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+End Sub
+

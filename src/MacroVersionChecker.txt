@@ -1,0 +1,130 @@
+Sub MacroVersionChecker()
+' Paul Beverley - Version 18.11.19
+' Checks Paul Beverley - Version dates of all your macros against MacroList
+
+Set myListDoc = ActiveDocument
+
+listIfUpToDate = True
+
+Dim namePosn As Long
+gotList = False
+For Each myDoc In Documents
+  thisName = myDoc.Name
+  If InStr(thisName, "MacroList") > 0 Then
+    Set listRng = myDoc.Content
+    gotList = True
+    fullList = LCase(listRng.Text)
+  End If
+Next myDoc
+
+If gotList = False Then
+  Beep
+  myResponse = MsgBox("Download MacroList file from Paul's website?", _
+       vbQuestion + vbYesNoCancel, "MacroVersionChecker")
+  If myResponse <> vbYes Then Exit Sub
+  Documents.Open FileName:="http://www.archivepub.co.uk/documents/MacroList"
+  Set listRng = ActiveDocument.Content
+  fullList = LCase(listRng.Text)
+End If
+
+myListDoc.Activate
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Sub [a-zA-Z]{1,}\(\)"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+tabs2 = vbTab & vbTab
+myOutput = "1111zzzzZBlankLine" & tabs2 & vbCr & "2222zzzzZBlankLine" & _
+     tabs2 & vbCr & "3333zzzzZBlankLine" & vbCr
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  EndNow = rng.End
+  rng.Start = rng.Start + 4
+  rng.End = rng.End - 2
+  mcName = rng.Text
+  rng.Collapse wdCollapseEnd
+  rng.End = rng.End + 80
+  versPosn = InStr(rng.Text, "' Paul Beverley - Version ")
+  If versPosn > 0 Then
+    rng.Start = rng.Start + versPosn + 9
+    rng.End = rng.Start + 8
+    mcDate = rng.Text
+  Else
+    mcDate = "(Not Paul's?)"
+  End If
+  
+  namePosn = InStr(fullList, LCase(mcName) & vbCr)
+  If namePosn > 0 Then
+    paulDate = Mid(fullList, namePosn + Len(mcName) + 2, 8)
+  Else
+    paulDate = "Not listed?"
+  End If
+  
+  myNewItem = mcName & vbTab & mcDate & vbTab
+  If paulDate = "Not listed?" Then myNewItem = "3333" & myNewItem _
+       & paulDate
+  If mcDate <> paulDate And (LCase(paulDate) = UCase(paulDate)) _
+       Then myNewItem = "1111" & myNewItem & "  (" _
+       & paulDate & ")"
+  If mcDate = "(Not Paul's?)" Then myNewItem = "2222" & myNewItem
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+  If mcDate <> paulDate Or listIfUpToDate = True Then _
+       myOutput = myOutput & myNewItem & vbCr
+  If myCount Mod 25 = 0 Then Debug.Print myNewItem & _
+       "  " & Str(myCount)
+Loop
+Documents.Add
+Selection.TypeText Text:=myOutput
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending
+With rng.Find
+  .Text = "[123]{4}"
+  .Font.Italic = False
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+With rng.Find
+  .Text = "zzzzZBlankLine"
+  .Font.Italic = False
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Macros list"
+startTable = Selection.End + 1
+ActiveDocument.Paragraphs(1).Style = _
+     ActiveDocument.Styles(wdStyleHeading1)
+Selection.Start = startTable
+Selection.End = ActiveDocument.range.End
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+
+Set tb = ActiveDocument.Tables(1)
+tb.Style = "Table Grid"
+tb.AutoFitBehavior (wdAutoFitContent)
+  tb.Borders(wdBorderTop).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderRight).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+Selection.HomeKey Unit:=wdStory
+
+Beep
+MsgBox "Found: " & myCount & " macros"
+End Sub
+

@@ -1,0 +1,35 @@
+Sub ContentsListerByNumber()
+' Paul Beverley - Version 25.09.15
+' Create a contents list from numbered headings
+
+Selection.WholeStory
+Selection.Copy
+Selection.HomeKey Unit:=wdStory
+Documents.Add
+Selection.Paste
+ActiveDocument.ConvertNumbersToText
+
+For Each myTable In ActiveDocument.Tables
+  myTable.Delete
+Next myTable
+For Each myPara In ActiveDocument.Paragraphs
+  fstChar = Left(myPara.range.Text, 1)
+  If InStr("123456789", fstChar) = 0 Then myPara.range.Delete
+Next myPara
+
+For Each myPara In ActiveDocument.Paragraphs
+  chop = False
+  myText = myPara.range.Text
+  allLen = Len(myText)
+  If allLen - Len(Replace(myText, Chr(9), "")) > 1 Then chop = True
+  If InStr(myText, "<book>") > 0 Then chop = True
+  If InStr(myText, "<other>") > 0 Then chop = True
+  wrdNum = myPara.range.Words.Count
+  If wrdNum > 40 Then chop = True
+  If InStr(myText, "<journal>") > 0 Then chop = True
+  If chop = True Then myPara.range.Delete
+Next myPara
+
+Beep
+End Sub
+

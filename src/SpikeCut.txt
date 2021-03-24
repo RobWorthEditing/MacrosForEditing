@@ -1,0 +1,7 @@
+Sub SpikeCut()
+' Paul Beverley - Version 26.02.11
+' Cut to spike
+
+NormalTemplate.AutoTextEntries.AppendToSpike Range:=Selection.Range
+End Sub
+

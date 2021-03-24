@@ -1,0 +1,43 @@
+Sub SupercriptNumberFormatter()
+' Paul Beverley - Version 28.10.19
+' Corrects spaces + punctuation on superscripted numbers
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{1,}"
+  .Font.Superscript = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+rng.Select
+
+Do While rng.Find.Found = True
+  EndNow = rng.End
+  Set rng2 = ActiveDocument.range(EndNow, EndNow + 1)
+  If InStr(vbCr & " ", rng2.Text) = 0 Then
+    myPunct = rng2.Text
+    rng2.Delete
+  Else
+    myPunct = ""
+  End If
+  rng.Collapse wdCollapseStart
+  rng.Start = rng.End - 1
+  If rng.Text = " " Then
+    rng.Delete
+  End If
+  rng.Collapse wdCollapseEnd
+  If myPunct > "" Then rng.InsertAfter Text:=myPunct
+  rng.Start = EndNow + 1
+  rng.End = EndNow + 1
+  rng.Find.Execute
+  DoEvents
+Loop
+rng.Select
+Beep
+End Sub
+

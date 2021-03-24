@@ -1,0 +1,45 @@
+Sub Enigmatizer()
+' Paul Beverley - Version 25.10.19
+' Obfuscates/anonymises the current file
+
+shuffleNumbers = True
+notTheseStyles = "Heading 1,Heading 2"
+notTheseStyles = ""
+
+vowels = "aeiou"
+cons = "bcdfghjklmnpqrstvwstn"
+numCons = Len(cons)
+nums = "0123456789"
+ActiveDocument.TrackRevisions = False
+tot = ActiveDocument.Paragraphs.Count
+For Each myPara In ActiveDocument.Paragraphs
+  parStyle = myPara.range.Style
+  If InStr(notTheseStyles, parStyle) = 0 And Len(myPara.range.Text) > 3 Then
+    numChars = myPara.range.Characters.Count
+    For i = 2 To numChars - 1
+      cho = myPara.range.Characters(i)
+      ch = LCase(cho)
+      If UCase(cho) <> LCase(cho) Then
+        If InStr(vowels, LCase(ch)) > 0 Then
+          ch = cho
+        Else
+          ch = Mid(cons, Int(numCons * Rnd()) + 1, 1)
+        End If
+        isUC = (UCase(cho) = cho)
+        If isUC Then ch = UCase(ch)
+        myPara.range.Characters(i).Text = ch
+      Else
+        If shuffleNumbers = True And InStr(nums, ch) > 0 Then
+          ch = Mid(nums, Int(10 * Rnd()) + 1, 1)
+          myPara.range.Characters(i).Text = ch
+        End If
+      End If
+      DoEvents
+    Next i
+  End If
+  p = p + 1
+  l = tot - p
+Next myPara
+Beep
+End Sub
+

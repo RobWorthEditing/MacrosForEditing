@@ -1,0 +1,161 @@
+Sub Confusables()
+' Paul Beverley - Version 06.02.21
+' Highlights/colours list of words in confusables file
+
+onlyColourWholeWords = False
+
+closeConfusablesFile = False
+confusablesFile = "Confusables"
+
+' Address where Confusables file is held
+' On Windows, it will need to be something like:
+myFile = "C:\Documents and Settings\Paul\My Documents\Macro stuff\Confusables.docx"
+
+' On a Mac, it will need to be something like:
+myFile = "/Users/Paul/My Documents/Macro stuff/Confusables.docx"
+
+
+' Start of main program
+Set mainDoc = ActiveDocument
+
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+gottadoc = False
+For Each thisDoc In Application.Documents
+  thisName = thisDoc.Name
+  If InStr(thisName, confusablesFile) > 0 Then
+    gottadoc = True
+    closeExceptionsFile = False
+    thisDoc.Activate
+    Exit For
+  End If
+Next thisDoc
+
+On Error Resume Next
+If gottadoc = False Then
+  Documents.Open myFile
+  If Err.Number = 5174 Then
+    MsgBox ("Please open the confusables file")
+    Err.Clear
+    Exit Sub
+  Else
+    On Error GoTo 0
+  End If
+End If
+
+num = ActiveDocument.Paragraphs.Count
+ReDim wd(num) As String
+ReDim Hi(num) As Integer
+ReDim col(num) As Integer
+
+numWds = 0
+For Each pa In ActiveDocument.Paragraphs
+  Set rng = pa.Range.Duplicate
+  rng.End = rng.End - 1
+  thisWord = rng.Text
+  Debug.Print thisWord & "|"
+  If Len(thisWord) > 2 Then
+    numWds = numWds + 1
+    wd(numWds) = thisWord
+    Hi(numWds) = rng.HighlightColorIndex
+    col(numWds) = rng.Font.ColorIndex
+'Debug.Print hi(numWds)
+  End If
+Next pa
+If closeConfusablesFile = True Then
+  ActiveDocument.Close SaveChanges:=False
+End If
+
+mainDoc.Activate
+Selection.HomeKey Unit:=wdStory
+
+oldColour = Options.DefaultHighlightColorIndex
+For hit = 1 To 4
+  goes = 0
+  If hit = 1 Then
+    thisMany = ActiveDocument.Endnotes.Count
+    If thisMany > 0 Then
+      Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    End If
+  End If
+  If hit = 2 Then
+    thisMany = ActiveDocument.Footnotes.Count
+    If thisMany > 0 Then
+      Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    End If
+  End If
+  If hit = 3 Then
+    Set rng = ActiveDocument.Content
+    thisMany = 1
+    goes = 1
+  End If
+  goes = 1
+  someText = True
+  If hit = 4 Then
+    thisMany = ActiveDocument.Shapes.Count
+    goes = thisMany
+  End If
+  If goes > 0 And thisMany > 0 Then
+    For myGo = 1 To goes
+      If hit = 4 Then
+        Do
+          someText = False
+          If ActiveDocument.Shapes(myGo).Type <> 24 And _
+               ActiveDocument.Shapes(myGo).Type <> 3 Then
+            someText = ActiveDocument.Shapes(myGo).TextFrame.HasText
+            If someText Then
+              Set rng = ActiveDocument.Shapes(myGo).TextFrame.TextRange
+            Else
+              myGo = myGo + 1
+            End If
+          End If
+        Loop Until someText Or myGo > goes
+      End If
+      theEnd = rng.End
+      If someText = True Then
+        For i = 1 To numWds
+          Options.DefaultHighlightColorIndex = Hi(i)
+          With rng.Find
+            .ClearFormatting
+            .Replacement.ClearFormatting
+            .Format = True
+            .Text = wd(i)
+            .Wrap = wdFindContinue
+            .Replacement.Text = ""
+            If col(i) > 0 Then
+              .Replacement.Font.ColorIndex = col(i)
+            End If
+            If Hi(i) > 0 Then
+              .Replacement.Highlight = True
+            End If
+            .MatchWildcards = False
+            .MatchWholeWord = onlyColourWholeWords
+            .Execute Replace:=wdReplaceAll
+          End With
+          DoEvents
+        Next i
+      End If
+    Next myGo
+  End If
+Next hit
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+Options.DefaultHighlightColorIndex = oldColourw
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

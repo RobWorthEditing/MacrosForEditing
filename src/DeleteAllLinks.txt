@@ -1,0 +1,30 @@
+Sub DeleteAllLinks()
+' Paul Beverley - Version 30.10.12
+' Delete all hyperlinks
+
+' First the main text
+linksHere = ActiveDocument.Hyperlinks.Count
+linksTotal = linksHere
+If linksHere > 0 Then
+  Selection.WholeStory
+  Selection.Fields.Unlink
+End If
+
+' then the endnotes, if there are any
+linksHere = ActiveDocument.Endnotes.Count
+linksTotal = linksTotal + linksHere
+If linksHere > 0 Then
+  ActiveDocument.StoryRanges(wdEndnotesStory).Select
+  Selection.Fields.Unlink
+End If
+
+' then the footnotes, if there are any
+linksHere = ActiveDocument.Footnotes.Count
+linksTotal = linksTotal + linksHere
+If linksHere > 0 Then
+  ActiveDocument.StoryRanges(wdFootnotesStory).Select
+  Selection.Fields.Unlink
+End If
+MsgBox ("Links deleted: " & Str(linksTotal))
+End Sub
+

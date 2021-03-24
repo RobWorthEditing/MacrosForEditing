@@ -1,0 +1,20 @@
+Sub ShowFormatting()
+' Paul Beverley - Version 10.05.17
+' Display all formatting or just paragraph marks
+
+tabsToo = True
+
+sa = ActiveWindow.View.ShowAll
+sp = ActiveWindow.View.ShowParagraphs
+If Not (sa) And Not (sp) Then ActiveWindow.View.ShowAll = True
+If sa And Not (sp) Then
+  ActiveWindow.View.ShowAll = False
+  ActiveWindow.View.ShowParagraphs = True
+  If tabsToo = True Then ActiveWindow.View.ShowTabs = True
+End If
+If sp Then
+  ActiveWindow.View.ShowParagraphs = False
+  ActiveWindow.View.ShowTabs = False
+End If
+End Sub
+

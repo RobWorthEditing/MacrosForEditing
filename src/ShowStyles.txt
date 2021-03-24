@@ -1,0 +1,93 @@
+Sub ShowStyles()
+' Paul Beverley - Version 06.05.12
+' Show style names as <A>-type codes in the text
+
+noShow = ",N,Normal,TOC 1,TOC 2,TOC 3,,,,"
+noShow = noShow & ",Table of Figures,P1,,,"
+
+abbrvs = ",MTDisplayEquation,Disp,Heading 1,A,Heading 2,B,,,"
+abbrvs = abbrvs & ",Heading 3,C,Heading 4,D,Normal,N,"
+
+removePads = False
+
+doTables = True
+' Merged cells generate an error, so ignore it
+' and carry on regardless!
+If doTables = True Then On Error Resume Next
+
+' Find return <|
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<["
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+gotCode = rng.Find.Found
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+'If the codes are there, remove them
+If gotCode Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .Text = "\<\[*\]\>"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+Else
+' If no codes then add codes
+  i = ActiveDocument.Paragraphs.Count
+  abbrvs = abbrvs & ","
+  For Each myPara In ActiveDocument.Paragraphs
+    thisStyle = myPara.Style
+    typeIt = True
+    If InStr(noShow, "," & thisStyle & ",") > 0 Then typeIt = False
+    If doTables = False And myPara.Range.Information(wdWithInTable) = True Then typeIt = False
+    If typeIt = True Then
+      myPos = InStr(abbrvs, thisStyle)
+      If myPos > 0 Then
+        thisStyle = Mid(abbrvs, myPos + Len(thisStyle) + 1)
+        thisStyle = Left(thisStyle, InStr(thisStyle, ",") - 1)
+      End If
+      myPara.Range.InsertBefore Text:="<[" & thisStyle & "]>"
+    End If
+    i = i - 1
+    StatusBar = "Paragraphs to go: " & Str(i)
+  Next myPara
+End If
+
+If removePads = True And gotCode = False Then
+' Check whether the user wants to remove the pads
+  myResponse = MsgBox("Remove vertical bars?", vbQuestion + vbYesNo)
+  If myResponse = vbYes Then
+    Set rng = ActiveDocument.Content
+    With rng.Find
+      .Text = "<["
+      .Wrap = wdFindContinue
+      .Replacement.Text = "<"
+      .Forward = True
+      .MatchWildcards = False
+      .Execute Replace:=wdReplaceAll
+    End With
+    With rng.Find
+      .Text = "]>"
+      .Wrap = wdFindContinue
+      .Replacement.Text = ">"
+      .Forward = True
+      .MatchWildcards = False
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+End If
+StatusBar = ""
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

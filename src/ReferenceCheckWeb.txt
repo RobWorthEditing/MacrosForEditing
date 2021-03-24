@@ -1,0 +1,69 @@
+Sub ReferenceCheckWeb()
+' Paul Beverley - Version 30.08.16
+' Check each hyperlink and highlight accordingly
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "References" & "^p"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+refsStart = rng.End
+rng.End = ActiveDocument.Content.End
+rng.Font.Color = wdColorRed
+rng.Select
+
+For Each lnk In ActiveDocument.Fields
+  thisLinkOK = True
+  If lnk.Kind <> 2 Then
+    lnk.Select
+    MsgBox "Different link kind"
+    thisLinkOK = False
+  End If
+  
+  If lnk.Type <> 88 Then
+    lnk.Select
+    MsgBox "Different link type"
+    thisLinkOK = False
+  End If
+  
+  linkCode = lnk.Code
+  myURL = Replace(linkCode, "HYPERLINK", "")
+  myURL = Trim(Replace(myURL, """", ""))
+  
+  lnk.Select
+  If thisLinkOK = True Then
+    Set rng = ActiveDocument.Content
+    rng.Start = refsStart
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = myURL
+      .Wrap = wdFindContinue
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchCase = False
+      .MatchWildcards = False
+      .MatchWholeWord = False
+      .MatchSoundsLike = False
+      .Execute
+    End With
+    If rng.Find.Found Then
+      rng.Font.Color = wdColorBlack
+      Selection.range.HighlightColorIndex = wdBrightGreen
+    Else
+      Selection.range.HighlightColorIndex = wdRed
+    End If
+  End If
+  ' myVisibleText = lnk.Result
+Next lnk
+End Sub
+

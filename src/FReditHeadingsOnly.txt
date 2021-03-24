@@ -1,0 +1,13 @@
+Sub FReditHeadingsOnly()
+' Paul Beverley - Version 30.01.21
+' Run FRedit, but only on similarly formatted text
+
+Set rng = ActiveDocument.Content
+rng.Font.StrikeThrough = True
+Application.Run "SelectSimilarFormatting"
+Selection.Font.StrikeThrough = False
+Selection.Collapse wdCollapseStart
+Call FRedit
+rng.Font.StrikeThrough = False
+End Sub
+

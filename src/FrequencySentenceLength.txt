@@ -1,0 +1,310 @@
+Sub FrequencySentenceLength()
+' Paul Beverley - Version 15.04.20
+' Creates a histogram of sentence length
+
+maxNumColumns = 30
+maxBlocks = 60
+bigDoc = 250000
+
+myResponse = MsgBox("Allow macro to choose the column width?", vbQuestion _
+    + vbYesNoCancel, "Sentence Length Distribution")
+
+If myResponse = vbCancel Then Exit Sub
+If myResponse = vbNo Then
+  myText = InputBox("New column width?", "Frequency Sentence Length")
+  myWidth = Val(myText)
+If myWidth = 0 Then Exit Sub
+
+End If
+
+Set rng = ActiveDocument.Content
+n = InStr(ActiveDocument.Content, vbCr & "The end" & vbCr)
+If n > 0 Then
+  rng.End = n + 1
+Else
+  Set rng = ActiveDocument.Content
+  Documents.Add
+  Selection.Text = rng.Text
+  Selection.Collapse wdCollapseEnd
+  Selection.TypeText Text:=vbCr & "The end" & vbCr
+  DoEvents
+  Set rng = ActiveDocument.Content
+End If
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+' Remove full stops from initials
+  .Text = "(<[A-Z]>)."
+  .Replacement.Text = "\1"
+  .MatchWildcards = True
+  .Wrap = wdFindStop
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "[\)\(]"
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "[/^=^+\(\)\<\>\[\]^0133^0160^t%+" & _
+      ChrW(8220) & ChrW(8722) & ChrW(8221) & "]"
+  .Replacement.Text = " "
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+  .Text = "!."
+  .Replacement.Text = "!"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "[^11^12^14]"
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "\?[! ^13]"
+  .Replacement.Text = " "
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "? "
+  .Replacement.Text = "?^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "[.]{2,}"
+  .Replacement.Text = " "
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "[\!]{2,}"
+  .Replacement.Text = "!"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "[:,;]"
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+  .Text = "'"
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+' Remove multiple spaces
+  .Text = "[ ]{2,}"
+  .Replacement.Text = " "
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = " ([.\?\!])"
+  .Replacement.Text = "\1"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "^p "
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "p[0-9\-]{1,}"
+  .Replacement.Text = "pnnnn"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "[0-9][0-9.a-zA-Z]{1,}"
+  .Replacement.Text = "nnnn"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "^pnnnn^p"
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "[" & ChrW(912) & "-" & ChrW(8164) & "]{1,}"
+  .Replacement.Text = "z"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+' All sentences inside paras to separate paras
+  .Text = "([a-zA-Z0-9])[.\?\!][ ^13]"
+  .Replacement.Text = "\1^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+' Remove multiple newlines
+  .Text = "[^13]{2,}"
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+For Each sn In ActiveDocument.Sentences
+  wdCount = sn.Words.Count - 1
+  If wdCount > numMax And wdCount > 10 Then
+    numMax = wdCount
+  End If
+Next sn
+
+If myWidth = 0 Then myWidth = Int(numMax / maxNumColumns) + 1
+heads = Int(numMax / myWidth) + 1
+ReDim h(heads) As Integer
+
+For Each sn In ActiveDocument.Sentences
+  If InStr(sn, "The end") > 0 Then Exit For
+  wdCount = sn.Words.Count - 1
+  If wdCount > 1 Then
+  cat = Int((wdCount + myWidth - 1) / myWidth)
+  h(cat) = h(cat) + 1
+  End If
+Next sn
+
+maxCount = 0
+For i = 1 To heads
+  If h(i) > maxCount Then maxCount = h(i)
+Next i
+
+oneBlock = maxCount / maxBlocks
+If oneBlock < 1 Then oneBlock = 1
+Selection.EndKey Unit:=wdStory
+Selection.TypeText Text:=vbCr & vbCr
+myResult = ""
+For i = 1 To heads
+  fm = myWidth * (i - 1) + 1
+  too = fm + myWidth - 1
+  If fm = 1 Then fm = 2
+  myRange = Trim(Str(fm)) & "-" & Trim(Str(too))
+  numLeft = 0
+  For j = i To heads
+    numLeft = numLeft + h(j)
+  Next j
+  If numLeft = 0 Then Exit For
+  myResult = myResult & myRange & vbTab
+  For j = 1 To Int(h(i) / oneBlock)
+    myResult = myResult & ChrW(9632)
+  Next j
+  myResult = myResult & "   " & Trim(Str(h(i))) & vbCr
+Next i
+st = Selection.Start
+Selection.TypeText Text:=myResult
+Selection.Start = st
+Selection.ParagraphFormat.TabStops.Add Position:=CentimetersToPoints(1.5)
+Selection.Collapse wdCollapseEnd
+Beep
+
+myResponse = MsgBox("Create sorted list?", vbQuestion _
+     + vbYesNoCancel, "Frequency Sentence Length")
+     
+If myResponse <> vbYes Then Exit Sub
+If ActiveDocument.Words.Count > bigDoc Then
+  Beep
+  myResponse = MsgBox("This may take some time. OK?", vbQuestion _
+      + vbYesNoCancel, "Frequency Sentence Length")
+  If myResponse <> vbYes Then Exit Sub
+End If
+     
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.Text = rng.Text
+Selection.Collapse wdCollapseEnd
+Set tempDoc = ActiveDocument
+n = InStr(ActiveDocument.Content, "The end" & vbCr)
+If n > 0 Then
+  Set rng = ActiveDocument.Range(n - 1, ActiveDocument.Content.End)
+  rng.Delete
+End If
+
+For Each sn In ActiveDocument.Sentences
+  wdCount = sn.Words.Count - 1
+  If wdCount > 1 Then
+    myData = "[" & Trim(Str(wdCount + 1000)) & "] "
+  Else
+    myData = "x000x"
+  End If
+  sn.InsertBefore Text:=myData
+Next sn
+
+' Sort by straight searching & typing into new doc
+If ActiveDocument.Words.Count < bigDoc Then
+  Set rng = ActiveDocument.Content
+  rng.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Set rng = ActiveDocument.Content
+  n = InStr(rng.Text, "x000x")
+  If n > 0 Then
+    rng.Start = n - 1
+    rng.Delete
+  End If
+  rng.InsertAfter Text:=vbCr
+Else
+  Set tempDoc = ActiveDocument
+  Documents.Add
+  Set listDoc = ActiveDocument
+  For i = 1002 To 1000 + numMax
+    Set rng = tempDoc.Content
+    myText = ""
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "\[" & Trim(Str(i)) & "\]*^13"
+      .Wrap = False
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = True
+      .Execute
+    End With
+    
+    Do While rng.Find.Found = True
+      myText = myText & rng.Text
+      Selection.Collapse wdCollapseEnd
+      rng.Find.Execute
+    Loop
+    ss = Selection.Start
+    Selection.TypeText Text:=myText
+    Selection.Start = ss
+    Selection.Sort SortOrder:=wdSortOrderAscending
+    Selection.Collapse wdCollapseEnd
+  Next i
+  tempDoc.Close SaveChanges:=False
+  listDoc.Activate
+  Selection.EndKey Unit:=wdStory
+End If
+
+' Now strip leading zeros
+Set rng = ActiveDocument.Content
+With rng.Find
+' Remove leading 1000's
+  .Text = "\[1[0]{1,}"
+  .Replacement.Text = "["
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

@@ -1,0 +1,71 @@
+Sub HeadingSentenceCase()
+' Paul Beverley - Version 18.02.20
+' Sentence cases this selection or paragraph (but not acronyms)
+
+trackIt = True
+
+allowAreaSelection = False
+
+highlightChange = False
+If Selection.Start = Selection.End Or allowAreaSelection = False _
+     Then Selection.Expand wdParagraph
+If Len(Selection) < 3 Then
+  Selection.Collapse wdCollapseEnd
+  Beep
+  Exit Sub
+End If
+
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+
+myEnd = Selection.End - 1
+Selection.End = Selection.Start + 1
+' Skip past <> codes
+If Selection = "<" Then
+  Do
+    Selection.MoveRight , 1
+  Loop Until Selection = ">"
+  Selection.MoveRight , 1
+End If
+While LCase(Selection) = UCase(Selection)
+  Selection.MoveRight Unit:=wdWord, Count:=1
+  Selection.MoveEnd wdCharacter, 1
+Wend
+myStart = Selection.Start
+Set rng = ActiveDocument.Content
+Set rng1 = ActiveDocument.Content
+
+For i = myStart + 1 To myEnd
+  rng.Start = i
+  rng.End = i + 1
+  If Len(rng) > 0 Then
+    a = Asc(rng)
+  Else
+    a = 0
+  End If
+  If a > 64 And a < 91 Then
+    rng1.Start = i + 1
+    rng1.End = i + 2
+    a = Asc(rng1)
+      If a > 96 And a < 123 Then
+        rng1.Start = i - 2
+        rng1.End = i - 1
+        If Len(rng1) > 0 Then
+          a = Asc(rng1)
+        Else
+          a = 0
+        End If
+        rng1.Start = i - 1
+        rng1.End = i
+        b = Asc(rng1)
+        If Not (a = 46 Or a = 33 Or a = 63 Or b = 13 Or b = 9) Then
+          rng.Text = LCase(rng.Text)
+          If highlightChange = True Then rng.HighlightColorIndex = wdGray25
+        End If
+      End If
+  End If
+Next i
+ActiveDocument.TrackRevisions = myTrack
+Selection.Start = myEnd + 1
+End Sub
+

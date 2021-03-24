@@ -1,0 +1,12 @@
+Sub DeleteRestOfLine()
+' Paul Beverley - Version 09.06.17
+' Deletes from the beginning of current word to the end of the line
+
+Selection.Expand wdWord
+Selection.MoveStartUntil cset:=" ", Count:=wdBackward
+Selection.MoveStart , -1
+Selection.Collapse wdCollapseStart
+Selection.MoveEndUntil cset:=vbCr, Count:=wdForward
+Selection.Delete
+End Sub
+

@@ -1,0 +1,40 @@
+Sub EquationSpacer()
+' Paul Beverley - Version 10.02.17
+' Adds spaces either side of equations that butt up to some text
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+numMaths = ActiveDocument.InlineShapes.Count
+If numMaths > 0 = True Then
+  For Each myMath In ActiveDocument.InlineShapes
+    Set rng = myMath.range.Duplicate
+    myColour = myMath.range.HighlightColorIndex
+    myEnd = rng.End
+    myStart = rng.Start
+    rng.Start = myEnd
+    rng.End = myEnd + 1
+    myText = rng.Text
+    ' Look at what follows the equation
+    If LCase(myText) <> UCase(myText) Then
+      rng.InsertBefore Text:=ChrW(32)
+      rng.Font.Color = wdColorPink
+      rng.Start = rng.Start - 1
+      rng.HighlightColorIndex = wdNoHighlight
+      myMath.range.HighlightColorIndex = myColour
+      spacesAdded = spacesAdded + 1
+    End If
+    rng.Start = myStart - 1
+    rng.End = myStart
+    myText = rng.Text
+    ' Look at what precedes the equation
+    If LCase(myText) <> UCase(myText) Or myText = "." Or myText = "," Then
+      rng.InsertAfter Text:=ChrW(32)
+      rng.Font.Color = wdColorPink
+      spacesAdded = spacesAdded + 1
+    End If
+  Next myMath
+End If
+MsgBox spacesAdded & " spaces added to MathType equations"
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

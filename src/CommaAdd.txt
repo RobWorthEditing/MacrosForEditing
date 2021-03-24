@@ -1,0 +1,82 @@
+Sub CommaAdd()
+' Paul Beverley - Version 16.01.21
+' Adds a comma after the current word
+
+spanishPunct = False
+
+myTrack = ActiveDocument.TrackRevisions
+
+If Asc(Selection) = 1 Then
+  ActiveDocument.TrackRevisions = False
+  Selection.MoveRight , 2
+  Selection.InsertAfter Text:=", "
+  Selection.Collapse wdCollapseStart
+  Selection.TypeBackspace
+  ActiveDocument.TrackRevisions = myTrack
+  Exit Sub
+End If
+
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Selection.Collapse wdCollapseEnd
+If Selection <> " " Then Selection.MoveRight , 1
+Selection.MoveStart , -1
+fontBefore = Selection.Font.Name
+italBefore = (Selection.Font.Italic = True)
+boldBefore = (Selection.Font.Bold = True)
+Selection.Collapse wdCollapseEnd
+
+Selection.MoveEnd , 1
+If InStr(";.:!", Selection) > 0 Then
+  ActiveDocument.TrackRevisions = myTrack
+  Selection.TypeBackspace
+  ActiveDocument.TrackRevisions = False
+  Selection.MoveEnd , 1
+End If
+
+If Selection = ")" Or Selection = "]" Then
+  Selection.MoveStart , 1
+End If
+
+' Check state of following character
+italAfter = (Selection.Font.Italic = True)
+boldAfter = (Selection.Font.Bold = True)
+fontAfter = Selection.Font.Name
+
+Selection.Collapse wdCollapseStart
+ActiveDocument.TrackRevisions = myTrack
+Selection.TypeText ","
+ActiveDocument.TrackRevisions = False
+
+' Unitalicise/unbold the comma and space if necessary
+If boldAfter = False And boldBefore = True Then
+  If spanishPunct = False Then Selection.MoveStart , -1
+  Selection.MoveEnd , 1
+  Selection.Font.Bold = False
+  Selection.Collapse wdCollapseEnd
+  Selection.MoveLeft , 1
+End If
+
+If italAfter = False And italBefore = True Then
+  If spanishPunct = False Then Selection.MoveStart , -1
+  Selection.MoveEnd , 1
+  Selection.Font.Italic = False
+End If
+
+If fontAfter <> fontBefore Then
+  Selection.Collapse wdCollapseStart
+  Selection.MoveStart , -1
+  Selection.Font.Name = fontAfter
+End If
+
+If Selection.Start = Selection.End Then Selection.MoveStart , -1
+If Selection.Font.Superscript = True Then Selection.Font.Superscript = False
+If Selection.Font.Subscript = True Then Selection.Font.Subscript = False
+
+Selection.MoveRight , 2
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

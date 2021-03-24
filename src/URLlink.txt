@@ -1,0 +1,46 @@
+Sub URLlink()
+' Paul Beverley - Version 23.01.21
+' Makes the URL/email at the cursor a clickable link
+
+' Extra characters at the ends of a URL, NOT to be included
+extraneousChars = ".,)(;[]:< " & ChrW(8211) & ChrW(8212) _
+     & ChrW(8220) & ChrW(8221)
+oldFind = Selection.Find.Text
+
+Selection.Collapse wdCollapseStart
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[^13 " & ChrW(8212) & ChrW(8220) & "\[]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = False
+  .MatchWildcards = True
+  .Execute
+End With
+URLstart = Selection.Start + 1
+
+With Selection.Find
+  .Text = "[^13 \]]"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+Selection.MoveLeft , 1
+Selection.Start = URLstart
+Do While InStr(extraneousChars, Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Do While InStr(extraneousChars, Left(Selection.Text, 1)) > 0
+  Selection.MoveStart , 1
+  DoEvents
+Loop
+
+myAddress = Selection
+If InStr(myAddress, "@") > 0 Then myAddress = "mailto:" & myAddress
+ActiveDocument.Hyperlinks.Add Anchor:=Selection.Range, Address:=myAddress
+Selection.Find.Text = oldFind
+End Sub
+

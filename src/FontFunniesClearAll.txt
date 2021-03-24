@@ -1,0 +1,52 @@
+Sub FontFunniesClearAll()
+' Paul Beverley - Version 08.09.17
+' Changes all text in this specific font into the default font
+
+badFont = Selection.Font.Name
+highlightChanges = True
+myColour = wdBrightGreen
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^?"
+  .Font.Name = badFont
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+myCount = 0
+Do While Selection.Find.Found = True
+  myCount = myCount + 1
+  endNow = Selection.End
+  myChar = Asc(Selection.Text)
+  myCharW = AscW(Selection.Text)
+  isSuper = (Selection.Font.Superscript = True)
+  isSub = (Selection.Font.Subscript = True)
+  Selection.Delete
+  If myCharW < 0 Then
+    Selection.Text = Chr(myChar)
+  Else
+    Selection.Text = ChrW(myCharW)
+  End If
+  If isSuper = False And isSub = False Then
+    If Selection.Font.Superscript = True Then Selection.Font.Superscript = False
+    If Selection.Font.Subscript = True Then Selection.Font.Subscript = False
+  End If
+  If isSuper Then Selection.Font.Superscript = True
+  If isSub Then Selection.Font.Subscript = True
+  If highlightChanges = True Then Selection.range.HighlightColorIndex = myColour
+  Selection.Start = endNow
+  Selection.Find.Execute
+Loop
+MsgBox "Changed: " & myCount
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

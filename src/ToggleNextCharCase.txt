@@ -1,0 +1,13 @@
+Sub ToggleNextCharCase()
+' Paul Beverley - Version 28.06.09
+' Change case of the next character/selection
+myChar = Selection
+If Asc(myChar) > 96 Then
+  myChar = UCase(myChar)
+Else
+  myChar = LCase(myChar)
+End If
+Selection.Delete Unit:=wdCharacter, Count:=1
+Selection.TypeText Text:=myChar
+End Sub
+

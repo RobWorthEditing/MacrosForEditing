@@ -1,0 +1,175 @@
+Sub CountPhrase()
+' Paul Beverley - Version 16.01.21
+' Counts this word or phrase
+
+doFormatCount = True
+doCountWhole = True
+
+' If nothing is selected, select the current word
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+End If
+
+oldStart = Selection.Start
+oldEnd = Selection.End
+
+myPhrase = Trim(Selection)
+thisBit = Replace(myPhrase, "^", "^^")
+thisBit = Replace(thisBit, Chr(13), "^p")
+If Right(thisBit, 1) = ChrW(8217) Then thisBit _
+     = Left(thisBit, Len(thisBit) - 1)
+CR = vbCr: CR2 = CR & CR
+
+' Find whether we're in a footnote
+InANote = Selection.Information(wdInFootnote)
+
+If InANote = True Then
+  lineJump = 0
+  Do
+    Selection.MoveUp Unit:=wdLine, Count:=1
+    lineJump = lineJump + 1
+  Loop Until Selection.Information(wdInFootnote) = False
+  oldStart = Selection.Start
+  oldEnd = Selection.Start
+End If
+
+Set rng = ActiveDocument.Content
+aT = rng.Text
+myTot = ActiveDocument.Range.End
+
+ntsText = ""
+' Are there any footnotes?
+If ActiveDocument.Footnotes.Count > 0 Then
+  ntsText = ntsText & ActiveDocument.StoryRanges(wdFootnotesStory).Text
+  aT = aT & ntsText
+End If
+
+If ActiveDocument.Endnotes.Count > 0 Then
+  ntsText = ntsText & ActiveDocument.StoryRanges(wdEndnotesStory).Text
+  aT = aT & ntsText
+End If
+
+aT = Replace(aT, Chr(2), "")
+
+' Count all occurences
+aTlcase = LCase(aT)
+myTot = Len(aT)
+
+allCount = Len(Replace(aTlcase, LCase(myPhrase), myPhrase & "!")) - myTot
+
+myText = "All: " & Str(allCount) & CR
+
+' Count case sensitively
+caseCount = Len(Replace(aT, myPhrase, myPhrase & "!")) - myTot
+
+myText = myText & "Case sensitive: " & Str(caseCount) & CR2
+
+If doFormatCount = True Then
+  oldFind = Selection.Find.Text
+  oldReplace = Selection.Find.Replacement.Text
+  myTrack = ActiveDocument.TrackRevisions
+  ActiveDocument.TrackRevisions = False
+
+  myTotNow = ActiveDocument.Range.End
+  ' Count bold italic
+  With rng.Find
+    .ClearFormatting
+    .MatchCase = False
+    .Text = myPhrase
+    .Font.Italic = True
+    .Font.Bold = True
+    .Replacement.Text = "^&!"
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  biCount = ActiveDocument.Range.End - myTotNow
+  If biCount > 0 Then
+    WordBasic.EditUndo
+    myText = myText & "Bold italic (main text) : " _
+         & Str(biCount) & CR
+  End If
+
+  ' Count italic
+  With rng.Find
+    .ClearFormatting
+    .MatchCase = False
+    .Font.Italic = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  iCount = ActiveDocument.Range.End - myTotNow
+  If iCount > 0 Then
+    WordBasic.EditUndo
+    myText = myText & "Italic: " _
+         & Str(iCount) & CR
+  End If
+
+  ' Count bold
+  With rng.Find
+    .ClearFormatting
+    .Font.Bold = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  bCount = ActiveDocument.Range.End - myTotNow
+  If bCount > 0 Then
+    WordBasic.EditUndo
+    myText = myText & "Bold: " & _
+         Str(bCount) & CR2
+  End If
+  With Selection.Find
+    .Text = oldFind
+    .Replacement.Text = oldReplace
+    .MatchWildcards = False
+  End With
+  ActiveDocument.TrackRevisions = myTrack
+End If
+
+If doCountWhole = True Then
+  chs = " , . ! : [ ] { } ( ) / \ + "
+  chs = chs & ChrW(8220) & " "
+  chs = chs & ChrW(8221) & " "
+  chs = chs & ChrW(8201) & " "
+  chs = chs & ChrW(8222) & " "
+  chs = chs & ChrW(8217) & " "
+  chs = chs & ChrW(8216) & " "
+  chs = chs & ChrW(8212) & " "
+  chs = chs & ChrW(8722) & " "
+  chs = chs & vbCr & " "
+  chs = chs & vbTab & " "
+  
+  chs = " " & chs & " "
+  chs = Replace(chs, "  ", " ")
+  chs = Left(chs, Len(chs) - 1)
+  
+  chars = Split(chs, " ")
+  For i = 1 To UBound(chars)
+    aT = Replace(aT, chars(i), " ")
+  Next i
+  p = " " & myPhrase & " "
+  aTlcase = LCase(aT)
+  myTot = Len(aT)
+  
+  ' Count as whole words (case sensitive)
+  wholeWdCaseCount = Len(Replace(aT, p, _
+       p & "!")) - myTot
+  wholeWdNoCaseCount = Len(Replace(aTlcase, LCase(p), _
+       p & "!")) - myTot
+  myText = myText & "Whole words (case sensitive):" & _
+         Str(wholeWdCaseCount) & CR
+  myText = myText & "Whole words (case INsensitive):" & _
+         Str(wholeWdNoCaseCount) & CR
+End If
+
+printResult:
+Selection.End = oldStart
+Selection.MoveRight Unit:=wdCharacter, Count:=1
+Selection.Start = oldStart
+Selection.End = oldEnd
+
+myText = "Word searched:  " & myPhrase & CR2 & myText
+MsgBox myText, 0, "CountPhrase"
+End Sub
+

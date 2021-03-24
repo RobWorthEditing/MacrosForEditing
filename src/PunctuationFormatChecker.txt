@@ -1,0 +1,240 @@
+Sub PunctuationFormatChecker()
+' Paul Beverley - Version 06.08.15
+' Variously highlight italic/roman punctuation
+
+markAllItalicCommas = True
+markAllItalicCommas = False
+italColour = wdGray25
+
+markBoldHeadwordColons = True
+boldColonColour = wdTurquoise
+
+markRomanHeadwordColons = True
+romanColonColour = wdRed
+
+' Colour for all the rest:
+mainPunctuationColour = wdBrightGreen
+
+markCommas = True
+markColons = True
+markSemicolons = True
+markParens = True
+markQMs = True
+markEMs = True
+markSquBkts = True
+markSingleQuotes = True
+markDoubleQuotes = True
+
+p = ""
+If markCommas = True Then p = p & ","
+If markColons = True Then p = p & "\:"
+If markSemicolons = True Then p = p & "\;"
+If markParens = True Then p = p & "\(\)"
+If markQMs = True Then p = p & "\?"
+If markEMs = True Then p = p & "\!"
+If markSquBkts = True Then p = p & "\[\]"
+If markSingleQuotes = True Then p = p & "'" & ChrW(8216) & ChrW(8217)
+If markDoubleQuotes = True Then p = p & """" & ChrW(8220) & ChrW(8221)
+
+myFind = "[" & p & "]"
+
+If markAllItalicCommas = True Then
+  oldColour = Options.DefaultHighlightColorIndex
+  Options.DefaultHighlightColorIndex = italColour
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ","
+    .Font.Italic = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  Options.DefaultHighlightColorIndex = oldColour
+End If
+
+' Check italic punctuation
+Set rng = ActiveDocument.Content
+Set rng2 = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Font.Italic = True
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+allNumbers = "0123456789"
+Do While rng.Find.Found = True
+  rng2.Start = rng.Start
+  rng2.End = rng.Start
+  isAlpha = False
+  isNumber = False
+  Do
+    rng2.MoveStart , -1
+    isAlpha = UCase(Left(rng2, 1)) <> LCase(Left(rng2, 1))
+    isNumber = (InStr(allNumbers, Left(rng2, 1)) > 0)
+  Loop Until isAlpha Or isNumber
+  markStart = rng2.Start
+  preItalic = rng2.Font.Italic
+  preBold = rng2.Font.Bold
+  rng2.Start = rng.Start + 1
+  rng2.End = rng.Start + 1
+  
+  isAlpha = False
+  isNumber = False
+  Do
+    rng2.MoveEnd , 1
+    isAlpha = UCase(Right(rng2, 1)) <> LCase(Right(rng2, 1))
+    isNumber = (InStr(allNumbers, Right(rng2, 1)) > 0)
+  Loop Until isAlpha Or isNumber
+
+  postItalic = rng2.Font.Italic
+  postBold = rng2.Font.Bold
+  rng2.Start = markStart
+  doHighlight = False
+
+  If preItalic = Not (postItalic) Then
+    doHighlight = True
+  End If
+  If InStr(rng2, Chr(13)) > 0 Then doHighlight = False
+  If doHighlight = True Then
+    rng2.HighlightColorIndex = mainPunctuationColour
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+' Check bold punctuation
+Set rng = ActiveDocument.Content
+Set rng2 = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Font.Bold = True
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+allNumbers = "0123456789"
+Do While rng.Find.Found = True
+  rng2.Start = rng.Start
+  rng2.End = rng.Start
+  isAlpha = False
+  isNumber = False
+  Do
+    rng2.MoveStart , -1
+    isAlpha = UCase(Left(rng2, 1)) <> LCase(Left(rng2, 1))
+    isNumber = (InStr(allNumbers, Left(rng2, 1)) > 0)
+  Loop Until isAlpha Or isNumber
+  markStart = rng2.Start
+  preBold = rng2.Font.Bold
+  preBold = rng2.Font.Bold
+  rng2.Start = rng.Start + 1
+  rng2.End = rng.Start + 1
+  
+  isAlpha = False
+  isNumber = False
+  Do
+    rng2.MoveEnd , 1
+    isAlpha = UCase(Right(rng2, 1)) <> LCase(Right(rng2, 1))
+    isNumber = (InStr(allNumbers, Right(rng2, 1)) > 0)
+  Loop Until isAlpha Or isNumber
+
+  postBold = rng2.Font.Bold
+  postBold = rng2.Font.Bold
+  rng2.Start = markStart
+  doHighlight = False
+
+  If preBold = Not (postBold) Then
+    doHighlight = True
+  End If
+  If InStr(rng2, Chr(13)) > 0 Then doHighlight = False
+  If doHighlight = True Then
+    rng2.HighlightColorIndex = mainPunctuationColour
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+myMsg = "Finished!"
+
+' Check headword colons
+If markBoldHeadwordColons Or markRomanHeadwordColons Then
+  For Each myPara In ActiveDocument.Paragraphs
+    i = myPara.Range.Words.Count
+    Set rng = myPara.Range.Words(1)
+    firstBold = rng.Font.Bold
+    Set rng = myPara.Range.Words(i)
+    lastBold = rng.Font.Bold
+    If firstBold And Not (lastBold) Then
+      colonPos = InStr(myPara, ":")
+      If colonPos > 0 And colonPos < Len(myPara) - 6 Then
+        Set rng = myPara.Range.Characters(colonPos)
+        colonBold = rng.Font.Bold
+        Set rng2 = myPara.Range.Characters(colonPos - 1)
+        previousBold = rng2.Font.Bold
+        Set rng2 = myPara.Range.Characters(colonPos + 3)
+        followingBold = rng2.Font.Bold
+        rng.MoveStart , -1
+        rng.MoveEnd , 2
+        If colonBold And previousBold Then
+          If markBoldHeadwordColons Then
+            If Not followingBold Then rng.HighlightColorIndex = boldColonColour
+          Else
+            If Not followingBold Then rng.HighlightColorIndex = wdNoHighlight
+          End If
+        Else
+          If markRomanHeadwordColons And previousBold Then
+            If Not followingBold Then rng.HighlightColorIndex = romanColonColour
+           End If
+        End If
+      End If
+    End If
+  Next myPara
+
+' Prepare prompt
+  Select Case boldColonColour
+    Case wdYellow: boldColour = "Yellow"
+    Case wdRed: boldColour = "Red"
+    Case wdTurquoise: boldColour = "Turquoise"
+    Case wdBrightGreen: boldColour = "Bright green"
+    Case wdGreen: boldColour = "Green"
+    Case wdGray25: boldColour = "Light grey"
+    Case wdGray50: boldColour = "Dark grey"
+    Case wdDarkYellow: boldColour = "Dark yellow"
+    Case wdPink: boldColour = "Pink"
+    Case Else: boldColour = "Unknown colour"
+  End Select
+  Select Case romanColonColour
+    Case wdYellow: romanColour = "Yellow"
+    Case wdRed: romanColour = "Red"
+    Case wdTurquoise: romanColour = "Turquoise"
+    Case wdBrightGreen: romanColour = "Bright green"
+    Case wdGreen: romanColour = "Green"
+    Case wdGray25: romanColour = "Light grey"
+    Case wdGray50: romanColour = "Dark grey"
+    Case wdDarkYellow: romanColour = "Dark yellow"
+    Case wdPink: romanColour = "Pink"
+    Case Else: romanColour = "Unknown colour"
+  End Select
+  myMsg = myMsg & vbCr & vbCr
+  If markBoldHeadwordColons Then
+    myMsg = myMsg & boldColour & " = bold " & vbCr
+  End If
+  If markRomanHeadwordColons Then
+    myMsg = myMsg & romanColour & " = roman " & vbCr
+  End If
+End If
+Beep
+MsgBox (myMsg)
+End Sub
+

@@ -1,0 +1,94 @@
+Sub MultiFileAcceptTrackChanges()
+' Paul Beverley - Version 13.12.17
+' Accept track changes in multiple files
+
+Dim allMyFiles(200) As String
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  myResponse = MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "Multifile Text Collection")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.Count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+
+  myResponse = MsgBox("Accept track changes on ALL the files in this folder:" & dirName _
+       & " ?", vbQuestion + vbYesNoCancel, "Multifile FRedit")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  myResponse = MsgBox("Accept track changes on just the files listed here?", _
+       vbQuestion + vbYesNoCancel, "Multifile FRedit")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+Beep
+myResponse = MsgBox("Are you SURE you want to accept track changes on all" & Str(numFiles) _
+     & " files?" & vbCr & vbCr & "There's no going back, you know!", _
+     vbQuestion + vbYesNoCancel, "WARNING!   WARNING!   WARNING!")
+If myResponse <> vbYes Then Exit Sub
+
+For i = 1 To numFiles
+  thisFile = myFolder & myDelimiter & allMyFiles(i)
+  Set myDoc = Application.Documents.Open(FileName:=thisFile)
+  StatusBar = allMyFiles(i)
+  DoEvents
+  ActiveDocument.AcceptAllRevisions
+  myDoc.Save
+  ActiveWindow.Close
+Next
+Selection.HomeKey Unit:=wdStory
+MsgBox ("Tracks accepted on " + Str(numFiles) + " files")
+End Sub
+

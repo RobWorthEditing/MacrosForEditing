@@ -1,0 +1,36 @@
+Sub CountCase()
+' Paul Beverley - Version 23.11.11
+' Count the numbers of upper and lowercase characters
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+myTot = ActiveDocument.Range.End
+Set rng = ActiveDocument.Content
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[a-z]"
+  .Replacement.Text = "^&!"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+totLC = ActiveDocument.Range.End - myTot
+If totLC > 0 Then WordBasic.editunDo
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[A-Z]"
+  .Replacement.Text = "^&!"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+totUC = ActiveDocument.Range.End - myTot
+If totUC > 0 Then WordBasic.editunDo
+  MsgBox "Uppercase: " & totUC & vbCrLf & "Lowercase: " & _
+       totLC & vbCrLf & "Percentage: " & Int(1000 * _
+       totUC / totLC) / 10 & "%"
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

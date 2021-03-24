@@ -1,0 +1,83 @@
+Sub TagHighlighter()
+' Paul Beverley - Version 09.06.17
+' Highlights all of the ranges a paired tag, e.g. <em>, </em>
+
+
+myColour = wdBrightGreen
+offSymbol = "/"
+
+Selection.Collapse wdCollapseStart
+Set rng = Selection.range.Duplicate
+
+Selection.Expand wdWord
+Selection.MoveStart wdWord, -2
+Selection.MoveEnd wdWord, 2
+If InStr(Selection, "<") = 0 Or InStr(Selection, ">") = 0 Then
+  myResponse = MsgBox("Place the cursor inside the tag to be checked" _
+       , , "TagChecker")
+  Exit Sub
+End If
+rng.Select
+Selection.MoveEndUntil cset:=">", Count:=wdForward
+Selection.MoveStartUntil cset:="<", Count:=wdBackward
+
+myTag = Selection
+myTag = Replace(myTag, offSymbol, "")
+
+Set myDoc = ActiveDocument
+myDocName = myDoc.Name
+
+Set rng = ActiveDocument.Content
+rng.Copy
+rng.End = 50
+startBit = rng.Text
+gottafile = False
+For Each myWnd In Application.Windows
+  thisName = myWnd.Document.Name
+  Set rng = myWnd.Document.Content
+  rng.End = 50
+  If rng.Text = startBit And thisName <> myDocName Then
+    myWnd.Document.Activate
+    Set rng = ActiveDocument.Content
+    rng.HighlightColorIndex = wdNoHighlight
+    gottafile = True
+    Exit For
+  End If
+Next myWnd
+If Not gottafile Then
+  Documents.Add
+  DoEvents
+  Selection.PasteSpecial DataType:=wdPasteText
+  Selection.HomeKey Unit:=wdStory
+  DoEvents
+End If
+
+myFind = "\<" & myTag & "\>*\<" & offSymbol & myTag & "\>"
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+Options.DefaultHighlightColorIndex = oldColour
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<" & myTag & ">"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .MatchWildcards = False
+  .Execute
+End With
+Beep
+End Sub
+

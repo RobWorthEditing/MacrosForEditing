@@ -1,0 +1,60 @@
+Sub AuthorForenamesInitialiser()
+' Paul Beverley - Version 15.06.19
+' Changes author forenames to initials
+
+' For numeric keypad
+initialKey = "."
+nextParaKey = "+"
+stopKey = "0"
+
+addFullPt = True
+
+' If no numeric keypad, how about these?
+' initialKey = "#"
+' nextParaKey = "'"
+' stopKey = "]"
+
+Set rng = Selection.range.Duplicate
+myPosn = rng.Start
+rng.Expand wdParagraph
+For i = 1 To rng.Words.Count
+  Set wd = rng.Words(i)
+  If wd.Start > myPosn Then Exit For
+Next i
+iStart = i - 1
+If iStart = 1 Then iStart = 2
+Do
+' For each reference
+  For i = iStart To rng.Words.Count
+    Set wd = rng.Words(i)
+    myInit = wd.Characters(1)
+    If addFullPt = True Then myInit = myInit & "."
+    If (LCase(wd) <> UCase(wd)) And Len(Trim(wd)) > 1 And _
+         (UCase(myInit) = myInit) And (UCase(wd) <> wd) Then
+      wd.Select
+      If Right(wd, 1) = " " Then sp = " " Else sp = ""
+      nowWhat = InputBox("Initialise?", "Author Initialiser")
+      If nowWhat = initialKey Then wd.Text = myInit & sp
+      If nowWhat = nextParaKey Then Exit For
+      If nowWhat = stopKey Then Exit Sub
+    End If
+  Next i
+  posNow = wd.Start
+  Selection.Expand wdParagraph
+  Selection.Start = posNow
+  edPos = InStr(LCase(Selection), " ed")
+  If edPos = 0 Then edPos = InStr(LCase(Selection), "(ed")
+  If edPos > 0 Then
+    Set rng = Selection.range.Duplicate
+    rng.Start = posNow + edPos
+    Beep
+  Else
+    Selection.Collapse wdCollapseEnd
+    Set rng = Selection.range.Duplicate
+    rng.Collapse wdCollapseEnd
+    rng.Expand wdParagraph
+  End If
+  iStart = 2
+Loop Until rng.End = ActiveDocument.Content.End
+End Sub
+

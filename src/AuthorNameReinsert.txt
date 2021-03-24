@@ -1,0 +1,50 @@
+Sub AuthorNameReinsert()
+' Paul Beverley - Version 05.09.20
+' Replaces the dash-and-comma for the author's name
+
+repeatText = "^=,"
+
+If Selection.Start <> Selection.End Then
+  Set rng = Selection.Range.Duplicate
+Else
+  Beep
+  myResponse = MsgBox("Work on the whole file?", _
+       vbQuestion + vbYesNoCancel, "AcceptFormatting365")
+  If myResponse <> vbYes Then Exit Sub
+  Set rng = ActiveDocument.Content
+End If
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = repeatText
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.End = rng.End - 3
+  rng.Expand wdParagraph
+  nameStart = rng.Start
+  commaPos = InStr(rng.Text, ",")
+  rng.Start = rng.Start + commaPos + 1
+  commaPos = InStr(rng.Text, ",")
+  rng.Start = rng.Start + commaPos
+  rng.Collapse wdCollapseStart
+  rng.Start = nameStart
+  rng.Copy
+  rng.Collapse wdCollapseStart
+  rng.Find.Execute
+  rng.Delete
+  rng.Paste
+  rng.Select
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+End Sub
+

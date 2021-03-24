@@ -1,0 +1,133 @@
+Sub FindColouredText()
+' Paul Beverley - Version 28.02.12
+' Finds coloured text
+
+Dim v As Variable: Dim rng As Range
+' Check what the background (black) colour is
+Set rng = ActiveDocument.Content
+rng.Collapse wdCollapseEnd
+myBlack = rng.Font.Color
+
+' Check for search colour variable
+varExists = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "tColour" Then varExists = True: Exit For
+Next v
+
+If varExists = False Then ActiveDocument.Variables.Add "tColour", 0
+searchColour = ActiveDocument.Variables("tColour")
+
+initialPosition = Selection.End
+' If no text is selected, search for next coloured bit
+If Selection.Start = Selection.End Then GoTo FindNext
+
+' If some text is selected, see what colour it is;
+' then go find more text of that colour.
+
+searchColour = Selection.Font.Color
+If searchColour < 0 Then searchColour = 0
+ActiveDocument.Variables("tColour") = searchColour
+If searchColour > 0 Then GoTo FindNext
+
+Selection.Start = Selection.End
+
+' Go and find the next non-black colour
+Set rng = ActiveDocument.Content
+theEnd = rng.End
+Do
+  Set rng = ActiveDocument.Content
+  Set rng2 = ActiveDocument.Content
+  rng.Start = Selection.End
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = ""
+   .Font.Color = myBlack
+   .Wrap = False
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = False
+   .Execute
+  End With
+' Examine the character after the end of the find
+  rng2.Start = rng.End
+  rng2.End = rng.End + 1
+' If the next bit is still black, find the end of that
+  Do While rng2.Font.Color = myBlack
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+    rng2.Start = rng.End
+    rng2.End = rng.End + 1
+  Loop
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  rng.Collapse wdCollapseStart
+  rng.Start = rng.Start - 1
+  colourHere = rng.Font.Color
+  rng.Select
+  myResponse = MsgBox("This colour? (Cancel = any colour)", vbQuestion + vbYesNoCancel)
+  If myResponse = vbCancel Then
+    Selection.Collapse wdCollapseEnd
+    ActiveDocument.Variables("tColour") = 0
+    Exit Sub
+  End If
+  If rng.End = theEnd Then Exit Sub
+Loop Until myResponse = vbYes
+ActiveDocument.Variables("tColour") = colourHere
+GoTo finish
+
+FindNext:
+If searchColour = 0 Then
+  Set rng = ActiveDocument.Content
+  Set rng2 = ActiveDocument.Content
+  rng.Start = Selection.End
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = ""
+   .Font.Color = myBlack
+   .Wrap = False
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = False
+   .Execute
+  End With
+  If rng.Find.Found = True Then
+  ' Examine the character after the end of the find
+    rng2.Start = rng.End
+    rng2.End = rng.End + 1
+  ' If the next bit is still black, find the end of that
+    Do While rng2.Font.Color = myBlack
+      rng.Collapse wdCollapseEnd
+      rng.Find.Execute
+      rng2.Start = rng.End
+      rng2.End = rng.End + 1
+    Loop
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+    rng.Collapse wdCollapseStart
+  End If
+  GoTo finish
+Else
+  Set rng = ActiveDocument.Content
+  rng.Start = Selection.End
+  foundHlight = False
+  With rng.Find
+   .ClearFormatting
+   .Replacement.ClearFormatting
+   .Text = ""
+   .Font.Color = searchColour
+   .Wrap = False
+   .Replacement.Text = ""
+   .Forward = True
+   .MatchWildcards = False
+   .Execute
+  End With
+End If
+
+finish:
+rng.Start = rng.End
+rng.Select
+If Selection.End = initialPosition Then Beep
+End Sub
+

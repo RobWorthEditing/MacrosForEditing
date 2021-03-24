@@ -1,0 +1,29 @@
+Sub NavPaneCustomize()
+' Paul Beverley - Version 12.01.21
+' Opens the navigation pane where and how you want
+
+h = 600
+w = 400
+
+' doSetUp = True
+doSetUp = False
+
+If doSetUp = True Then
+  w = Application.CommandBars("Navigation").Width
+  h = Application.CommandBars("Navigation").Height
+  MsgBox "H: " & h & vbCr & vbCr & "W: " & w
+  Exit Sub
+End If
+
+If Application.CommandBars("Navigation").Visible = False Then
+  Application.CommandBars("Navigation").Visible = True
+  'Application.CommandBars("Navigation").Position = msoBarRight
+  Application.CommandBars("Navigation").Position = msoBarLeft
+  'Application.CommandBars("Navigation").Position = msoBarFloating
+  'Application.CommandBars("Navigation").Height = h
+  Application.CommandBars("Navigation").Width = w
+Else
+  Application.CommandBars("Navigation").Visible = False
+End If
+End Sub
+

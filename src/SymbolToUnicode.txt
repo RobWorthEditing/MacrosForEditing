@@ -1,0 +1,100 @@
+Sub SymbolToUnicode()
+' Paul Beverley - Version 11.11.13
+' Converts Symbol font characters to Unicode characters
+
+' myColourFound = wdYellow
+myColourFound = wdNoHighlight
+
+myColourNotFound = wdTurquoise
+myColourWarning = wdRed
+
+myResponse = MsgBox("Go ahead without a test run?", vbQuestion _
+        + vbYesNoCancel, "SymbolToUnicode")
+If myResponse = vbCancel Then Exit Sub
+If myResponse = vbNo Then
+  testRun = True
+Else
+  testRun = False
+End If
+
+' Greek type
+myList = "F044,0394; F046,03A6; F061,03B1; F062,03B2; F065,03B5;"
+myList = myList & "F067,03B3; F068,03B7; F071,03B8; F069,03B9; F063,03C7;"
+myList = myList & "F056,03C2; F074,03C4; F077,03C9; F078,03BE; F079,03C8;"
+myList = myList & "F057,03A9; F066,03D5; F06B,03BA; F072,03C1; F073,03C3;"
+myList = myList & "F06A,03C6; F06C,03BB; F06D,03BC; F06E,03BD; F070,03C0;"
+myList = myList & "F075,03C5; F076,03C9; F047,0393; F07A,03B6; F059,03A8;"
+myList = myList & "F04C,039B; F050,03A0; F051,0398; F053,03A3; F058,039E;"
+myList = myList & "F04A,03D1; F064,03B4; F009,03B4; (both delta)"
+myList = myList & ""
+
+' Maths symbol type
+myList = myList & "F0AC,2190; F0AD,2191; F0AE,2192; F0AF,2193; F0B8,00F7;"
+myList = myList & "F0DC,21D0; F0DD,21D1; F0DE,21D2; F0DF,21D3; F0A3,2264;"
+myList = myList & "F0D7,22C5; F0C5,2295; F0C7,2229; F0C8,222A; F0C9,2283;"
+myList = myList & "F0CA,2287; F0CB,2284; F0CC,2282; F0CD,2286; F0A5,221E;"
+myList = myList & "F0B5,221D; F0B9,2260; F0BB,2248; F0CE,220A; F0CF,2209;"
+myList = myList & "F0DB,21D4; F0C1,2111; F0B6,2202; F0C2,211C; F0C3,2118;"
+myList = myList & "F0D6,221A; F0B4,00D7; F0A4,2265; F0B1,00B1; F0D1,2207;"
+myList = myList & "F02D,2212; F0B3,2265; F0BA,2261; F022,2200; F0A2,2032;"
+myList = myList & "F0B7,2022; F052,211D; "
+
+' Ordinary characters, space, comma, etc
+myList = myList & "F020,0020; F02C,002C; F07D,007D; F07B,007B;"
+myList = myList & "F028,0028; F029,0029; F02B,002B; F03D,003D;"
+myList = myList & "F030,0030; F031,0031; F032,0032; F033,0033;"
+myList = myList & "F034,0034; F035,0035; F036,0036; F037,0037;"
+myList = myList & "F038,0038; F039,0039; F02F,002F; F03D,002F;"
+myList = myList & "F0B0,00B0; F03C,003C; F03E,003E; F02E,002E;"
+myList = myList & "F03B,003B; F07C,007C; F02A,002A; F0D2;00AE;"
+
+myFont = ActiveDocument.Styles(wdStyleNormal).Font.Name
+ActiveDocument.TrackRevisions = False
+gotOne = False
+For Each myChar In ActiveDocument.Characters
+  ascChar = Asc(myChar)
+  ascWChar = AscW(myChar)
+  myFontName = myChar.Font.Name
+  If ascChar = 40 Or ascChar = 63 Then
+    myChar.Select
+    myFontName = Selection.Font.Name
+    ascWChar = Dialogs(wdDialogInsertSymbol).CharNum
+  End If
+  If gotOne = False And ascWChar < 0 Then
+    myChar.Select
+    symbolCode = Replace(Hex(ascWChar), "FFFF", "")
+    myPos = InStr(myList, symbolCode)
+    If myPos > 0 And ascWChar <> 40 Then
+      gotOne = True
+      uCode = Val("&H" & Mid(myList, myPos + 5, 4))
+      If testRun = False Then
+        Selection.Font.Name = myFont
+        Selection.TypeText ChrW(uCode)
+        Selection.MoveStart , -1
+      Else
+        Selection.Collapse wdCollapseEnd
+        Selection.TypeText " "
+        Selection.MoveStart , -1
+        Selection.Font.Name = myFont
+        Selection.TypeText ChrW(uCode)
+        Selection.MoveStart , -1
+      End If
+      Selection.Range.HighlightColorIndex = myColourFound
+      If myFontName <> "Symbol" Then
+        Selection.Range.HighlightColorIndex = myColourWarning
+        Beep
+      End If
+    Else
+      If Not (myFontName = myFont And Asc(myChar) = 40) Then _
+           Selection.Range.HighlightColorIndex = myColourNotFound
+      gotOne = False
+      Beep
+    End If
+  Else
+    gotOne = False
+  End If
+Next
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

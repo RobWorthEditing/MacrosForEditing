@@ -1,0 +1,57 @@
+Sub SwapNames()
+' Paul Beverley - Version 06.10.14
+' Swap adjacent names
+
+addComma = True
+fpOnInitials = True
+minLen = 50
+
+startAgain:
+startPoint = Selection.Start
+Selection.Expand wdParagraph
+If Len(Selection) < minLen Then GoTo cantDoIt
+myText = Replace(Selection, ".", "")
+myText = Replace(myText, ",", "")
+
+wd = Split(myText, " ")
+
+
+startHere = Selection.Start
+
+If addComma = True Then w2 = w2 & ","
+
+' This is for Fred Bloggs
+If Len(wd(0)) > 1 And Len(wd(1)) > 1 Then
+  secondNameEnd = InStr(Selection, wd(1)) + Len(wd(1))
+  If addComma = True Then wd(1) = wd(1) & ","
+  Selection.End = startHere + secondNameEnd - 1
+  Selection.TypeText Text:=wd(1) & " " & wd(0)
+  GoTo getNext
+End If
+
+' This is for F. Bloggs
+If Len(wd(0)) = 1 And Len(wd(1)) > 1 Then
+  secondNameEnd = InStr(Selection, wd(1)) + Len(wd(1))
+  If addComma = True Then wd(1) = wd(1) & ","
+  Selection.End = startHere + secondNameEnd - 1
+  If fpOnInitials = True Then
+    wd(0) = wd(0) & "."
+  End If
+  Selection.TypeText Text:=wd(1) & " " & wd(0)
+  GoTo getNext
+End If
+
+' If none of the above!
+cantDoIt:
+Beep
+Exit Sub
+
+getNext:
+Selection.Expand wdParagraph
+lenPara = Len(Selection)
+Selection.Collapse wdCollapseEnd
+endPoint = Selection.Start
+If lenPara > minLen And endPoint <> startPoint Then GoTo startAgain
+Beep
+End Sub
+

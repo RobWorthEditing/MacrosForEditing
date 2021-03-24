@@ -1,0 +1,83 @@
+Sub WordPairPunctuate()
+' Paul Beverley - Version 16.01.21
+' Makes word pair hyphenated or single word
+
+reverseOrder = True
+
+varExists = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "pairWord" Then varExists = True: Exit For
+Next v
+
+If varExists = False Then ActiveDocument.Variables.Add _
+     "pairWord", "Dummy%Dummy"
+myWord = ActiveDocument.Variables("pairWord")
+
+myFirst = ""
+mySecond = ""
+myBreak = "-"
+For i = 1 To Len(myWord)
+  char = Mid(myWord, i, 1)
+  If LCase(char) = UCase(char) Then
+    myFirst = Left(myWord, i - 1)
+    myBreak = char
+    mySecond = Mid(myWord, i + 1)
+  End If
+Next i
+
+Selection.Expand wdWord
+myStart = Selection.Start
+firstWd = Trim(Selection)
+endFirstWd = myStart + Len(firstWd)
+Selection.Collapse wdCollapseEnd
+Selection.Expand wdWord
+secondWd = Trim(Selection)
+isHyph = (secondWd = "-")
+nowBreak = " "
+If isHyph = True Then
+  Selection.Collapse wdCollapseEnd
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' " & vbCr, Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  secondWd = Selection
+  nowBreak = "-"
+End If
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+myEnd = Selection.End
+
+If firstWd = myFirst & mySecond Then
+  myEnd = endFirstWd
+  myBreak = "|"
+End If
+If myBreak = "%" Or myFirst = "Dummy" Or _
+     (myFirst <> firstWd And myEnd <> endFirstWd) Then
+  myFirst = firstWd
+  mySecond = secondWd
+  myBreak = nowBreak
+End If
+If reverseOrder = False Then
+  Select Case myBreak
+    Case "|": newWord = myFirst & "-" & mySecond
+    Case "-": newWord = myFirst & " " & mySecond
+    Case " ": newWord = myFirst & "|" & mySecond
+  End Select
+Else
+  Select Case myBreak
+    Case "|": newWord = myFirst & " " & mySecond
+    Case " ": newWord = myFirst & "-" & mySecond
+    Case "-": newWord = myFirst & "|" & mySecond
+  End Select
+End If
+ActiveDocument.Variables("pairWord") = newWord
+Selection.Start = myStart
+Selection.End = myEnd
+Selection.TypeText Replace(newWord, "|", "")
+Selection.Start = myStart
+Selection.Collapse wdCollapseStart
+End Sub
+

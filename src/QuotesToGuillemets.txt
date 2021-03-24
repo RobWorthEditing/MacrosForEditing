@@ -1,0 +1,32 @@
+Sub QuotesToGuillemets()
+' Paul Beverley - Version 26.11.20
+' Changes all curly double quotes to guillemets
+
+Options.AutoFormatAsYouTypeReplaceQuotes = False
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8220) & " "
+  .Wrap = wdFindContinue
+  .Replacement.Text = ChrW(171) & ChrW(160)
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  .Text = ChrW(8220)
+  .Replacement.Text = ChrW(171) & ChrW(160)
+  .Execute Replace:=wdReplaceAll
+  .Text = " " & ChrW(8221)
+  .Replacement.Text = ChrW(160) & ChrW(187)
+  .Execute Replace:=wdReplaceAll
+  .Text = ChrW(8221)
+  .Replacement.Text = ChrW(160) & ChrW(187)
+  .Execute Replace:=wdReplaceAll
+End With
+Options.AutoFormatAsYouTypeReplaceQuotes = False
+End Sub
+

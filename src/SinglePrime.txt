@@ -1,0 +1,9 @@
+Sub SinglePrime()
+' Paul Beverley - Version 19.02.16
+' Add single prime
+
+myFont = Selection.Font.Name
+' myFont = "Times New Roman"
+Selection.InsertSymbol Font:=myFont, CharacterNumber:=8242, unicode:=True
+End Sub
+

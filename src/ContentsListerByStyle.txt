@@ -1,0 +1,30 @@
+Sub ContentsListerByStyle()
+' Paul Beverley - Version 16.07.13
+' Create a contents list from numbered heading style
+
+bigFontSize = 12
+
+Selection.WholeStory
+Selection.Copy
+Selection.HomeKey Unit:=wdStory
+Documents.Add
+Selection.Paste
+For Each myTable In ActiveDocument.Tables
+  myTable.Delete
+Next myTable
+
+For Each myPara In ActiveDocument.Paragraphs
+  cutIt = True
+  mySize = myPara.range.Font.Size
+  If mySize > bigFontSize And mySize < 100 Then cutIt = False
+  sfdhlsgk = myPara.range.Style
+  myStyle = Left(myPara.range.Style, 4)
+  myText = myPara.range.Text
+  If Left(myPara.range.Style, 4) = "Head" Then cutIt = False
+  ' If myPara.range.Style = "Heading 4" Then cutIt = True
+
+  If cutIt = True Then myPara.range.Delete
+Next myPara
+
+End Sub
+

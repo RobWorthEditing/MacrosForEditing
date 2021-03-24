@@ -1,0 +1,28 @@
+Sub UnderlineOnlyItalic()
+' Paul Beverley - Version 08.06.17
+' Removes all underlining, then underlines all italic text
+
+' If a selection is made, it just removes all underline
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Set rng = ActiveDocument.Content
+rng.Font.Underline = False
+If Selection.Start = Selection.End Then
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Italic = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Font.Underline = True
+    .Forward = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

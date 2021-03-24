@@ -1,0 +1,11 @@
+Sub AutoListLcaseOne()
+' Paul Beverley - Version 30.01.12
+' Lowercase initial letter of one auto-bulleted/numbered list item
+
+Selection.HomeKey Unit:=wdLine
+Set rng = Selection.Range
+rng.End = rng.Start + 1
+rng.Case = wdLowerCase
+Selection.MoveDown Unit:=wdLine, Count:=1
+End Sub
+

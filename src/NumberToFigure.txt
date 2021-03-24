@@ -1,0 +1,38 @@
+Sub NumberToFigure()
+' Paul Beverley - Version 16.01.21
+' Converts the next number to a figure
+
+includeTen = False
+
+allNums = ",one,two,three,four,five,six,seven,eight,nine,"
+If includeTen = True Then allNums = allNums & ",ten,"
+  Selection.Expand wdWord
+
+Do
+  i = i + 1
+  Selection.MoveRight Unit:=wdWord, Count:=1
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  wd = Trim(Selection)
+Loop Until i > 100 Or (Len(wd) > 2 And InStr(allNums, "," & wd & ",") > 0)
+
+If i > 100 Then Beep: Exit Sub
+
+Select Case wd
+  Case "one": fig = "1"
+  Case "two": fig = "2"
+  Case "three": fig = "3"
+  Case "four": fig = "4"
+  Case "five": fig = "5"
+  Case "six": fig = "6"
+  Case "seven": fig = "7"
+  Case "eight": fig = "8"
+  Case "nine": fig = "9"
+  Case "ten": fig = "10"
+End Select
+Selection = Replace(Selection, wd, fig)
+End Sub
+

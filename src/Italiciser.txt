@@ -1,0 +1,46 @@
+Sub Italiciser()
+' Paul Beverley - Version 16.01.21
+' Toggles next character or selected text italic.
+
+Dim charsItalic As Long
+myLen = Selection.End - Selection.Start
+Select Case myLen
+  Case 0
+    Selection.Font.Italic = True
+    Selection.MoveEnd 1
+    If Selection.Information(wdInCommentPane) Or _
+         Selection.Information(wdInFootnote) Or _
+         Selection.Information(wdInEndnote) Or _
+         Asc(Selection) < 33 Or _
+         LCase(Selection) = UCase(Selection) _
+         Then Selection.Collapse wdCollapseStart
+    Selection.Font.Italic = Not (Selection.Font.Italic = True)
+    Selection.Collapse wdCollapseEnd
+  Case 1
+    Selection.Font.Italic = Not (Selection.Font.Italic = True)
+    Selection.Collapse wdCollapseEnd
+  Case Else
+' How many italic/roman chars?
+    For i = Selection.Start To Selection.End
+      If i < ActiveDocument.Range.End Then
+        Set rng = ActiveDocument.Range(Start:=i, End:=i + 1)
+        If rng.Font.Italic = True Then charsItalic = charsItalic + 1
+      End If
+    Next i
+    charsRoman = Len(Selection) - charsItalic
+  ' Change to italic or roman, accordingly
+    If charsItalic > charsRoman Or charsRoman = 0 Then
+      Selection.Font.Italic = False
+    Else
+    ' Don't italicise following space or quote
+      Set rng = Selection
+      Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+        rng.MoveEnd , -1
+        DoEvents
+      Loop
+      rng.Font.Italic = True
+      rng.Select
+    End If
+End Select
+End Sub
+

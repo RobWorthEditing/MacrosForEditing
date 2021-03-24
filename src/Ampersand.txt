@@ -1,0 +1,19 @@
+Sub Ampersand()
+' Paul Beverley - Version 06.03.18
+' Change ampersand to 'and'
+
+startHere = Selection.Start
+  Selection.MoveRight , -1
+Do
+  Selection.MoveRight , 1
+  DoEvents
+  If Selection.Start > startHere + 400 Then
+    Beep
+    Selection.MoveEnd , 10
+    Exit Sub
+  End If
+Loop Until Selection = "&"
+Selection.MoveEnd wdCharacter, 1
+Selection.TypeText Text:="and"
+End Sub
+

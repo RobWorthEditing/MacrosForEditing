@@ -1,0 +1,65 @@
+Sub NotesCopyToInline()
+' Paul Beverley - Version 24.11.20
+' Copies notes into inline notes in brackets
+
+' Guillemets
+' myOpen = ChrW(171)
+' myClose = ChrW(187)
+
+' myOpen = "["
+' myClose = "]"
+
+' myOpen = "{"
+' myClose = "}"
+
+myOpen = "<"
+myClose = ">"
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^2"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+If ActiveDocument.Endnotes.Count > 0 Then
+  For i = 1 To ActiveDocument.Endnotes.Count
+    Set en = ActiveDocument.Endnotes(i).Range
+    Selection.Collapse wdCollapseEnd
+    myStart = Selection.Start + 1
+    Selection.TypeText Text:=myOpen & myClose
+    Selection.MoveLeft , 1
+    en.Copy
+    Selection.Paste
+    Selection.Start = myStart
+    Selection.Range.Font.ColorIndex = wdBlue
+    Selection.Collapse wdCollapseEnd
+    Selection.Find.Execute
+    DoEvents
+  Next i
+End If
+
+If ActiveDocument.Footnotes.Count > 0 Then
+  For i = 1 To ActiveDocument.Footnotes.Count
+    Set fn = ActiveDocument.Footnotes(i).Range
+    Selection.Collapse wdCollapseEnd
+    myStart = Selection.Start + 1
+    Selection.TypeText Text:=myOpen & myClose
+    Selection.MoveLeft , 1
+    fn.Copy
+    Selection.Paste
+    Selection.Start = myStart
+    Selection.Range.Font.ColorIndex = wdBlue
+    Selection.Collapse wdCollapseEnd
+    Selection.Find.Execute
+    DoEvents
+  Next i
+End If
+End Sub
+

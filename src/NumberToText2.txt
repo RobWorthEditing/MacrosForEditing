@@ -1,0 +1,55 @@
+Sub NumberToText2()
+' Paul Beverley - Version 30.05.10
+' Convert next number into text
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+' Find a number (six figures max)
+Selection.End = Selection.Start
+With Selection.Find
+  .ClearFormatting
+  .Text = "[0-9]{1,6}"
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Forward = True
+  .Execute
+End With
+
+Selection.Collapse Direction:=wdCollapseStart
+
+With Selection.Find
+  .ClearFormatting
+  .Text = "[0-9 ,^0160]{1,9}"
+  .MatchWildcards = True
+  .Execute
+End With
+
+myDigits = Replace(Selection, Chr(160), "")
+myDigitsNow = Replace(myDigits, " ", "")
+myDigitsFinal = Replace(myDigitsNow, ",", "")
+
+' Create a field containing the digits and a special format code
+Selection.Fields.Add Range:=Selection.Range, _
+   Type:=wdFieldEmpty, Text:="= " + myDigitsFinal + " \* CardText", _
+   PreserveFormatting:=True
+
+' Select the field and copy it
+Selection.MoveStart Unit:=wdCharacter, Count:=-1
+Selection.Copy
+
+' Paste the text unformatted, replacing the field
+Selection.PasteSpecial Link:=False, DataType:=wdPasteText, _
+   Placement:=wdInLine, DisplayAsIcon:=False
+
+If Right(myDigitsNow, 1) = "," Then Selection.TypeText Text:=","
+If Right(myDigits, 1) = " " Then Selection.TypeText Text:=" "
+
+' Restore Find to original
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchWildcards = False
+End With
+End Sub
+

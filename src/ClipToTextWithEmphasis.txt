@@ -1,0 +1,14 @@
+Sub ClipToTextWithEmphasis()
+' Paul Beverley - Version 23.02.11
+' Get pure text from pdfs and websites
+Documents.Add
+Selection.Paste
+Selection.WholeStory
+Selection.Cut
+Selection.PasteAndFormat (wdFormatSurroundingFormattingWithEmphasis)
+Selection.WholeStory
+Selection.Copy
+ActiveDocument.Close SaveChanges:=False
+Selection.Paste
+End Sub
+

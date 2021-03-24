@@ -1,0 +1,431 @@
+Sub HyphenAlyse()
+' Paul Beverley - Version 18.01.21
+' Creates a frequency list of all possible hyphenations
+
+myList = "anti,cross,eigen,hyper,inter,meta,mid,multi," _
+     & "non,over,post,pre,pseudo,quasi,semi,sub,super"
+    
+deleteTableBorders = True
+includeNumbers = True
+lighterColour = wdGray25
+' lighterColour = wdColor50
+
+Dim myResult As String
+myList = "," & myList
+myList = Replace(myList, ",,", ",")
+pref = Split(myList, ",")
+
+Set FUT = ActiveDocument
+doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
+
+If doingSeveralMacros = False Then
+  myResponse = MsgBox("    HyphenAlyse" & vbCr & vbCr & _
+       "Analyse hyphenated words?", vbQuestion _
+       + vbYesNoCancel, "HyphenAlyse")
+  If myResponse <> vbYes Then Exit Sub
+End If
+Dim pr(8000) As String
+Set mainDoc = ActiveDocument
+strttime = Timer
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.FormattedText = rng.FormattedText
+Selection.HomeKey Unit:=wdStory
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.StrikeThrough = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Set rng = ActiveDocument.Content
+rng.Case = wdLowerCase
+Set tempDoc = ActiveDocument
+Documents.Add
+Set newTemp = ActiveDocument
+Selection.Text = rng.Text
+tempDoc.Close SaveChanges:=False
+newTemp.Activate
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8217) & "[!a-z]"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "!!"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+If includeNumbers = True Then
+  schStr = "[a-z0-9]{1,}[-^=][0-9a-z-]{1,}"
+Else
+  schStr = "[a-z]{1,}[-^=][a-z-]{1,}"
+End If
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = schStr
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+' Find all hyphenated/dashed word pairs
+myPairs = 0
+allWords = ","
+Do While rng.Find.Found = True
+  wdPair = Replace(rng.Text, ChrW(8211), "-")
+  If InStr(allWords, "," & wdPair & ",") = 0 _
+       And (UCase(wdPair) <> wdPair) Then
+    myPairs = myPairs + 1
+    pr(myPairs) = wdPair
+    allWords = allWords & wdPair & ","
+    If myPairs Mod 10 = 0 Then
+      If doingSeveralMacros = False Then _
+           Debug.Print rng.Text, myPairs
+      StatusBar = rng.Text & "     " & myPairs
+    End If
+  End If
+  If Right(wdPair, 1) <> "s" Then
+    wdPairs = wdPair & "s"
+    If InStr(allWords, "," & wdPairs & ",") = 0 Then
+      myPairs = myPairs + 1
+      pr(myPairs) = wdPairs
+      allWords = allWords & wdPairs & ","
+      If myPairs Mod 10 = 0 Then
+        If doingSeveralMacros = False Then _
+             Debug.Print rng.Text, myPairs
+        StatusBar = rng.Text & "     " & myPairs
+      End If
+    End If
+  End If
+  rng.Find.Execute
+  DoEvents
+Loop
+
+' Collect words with each prefix
+For i = 1 To UBound(pref)
+  hPos = Len(pref(i))
+  allPreWords = ","
+  
+  If includeNumbers = True Then
+    schStr = "<" & pref(i) & "[0-9a-z]{2,}"
+  Else
+    schStr = "<" & pref(i) & "[a-z]{2,}"
+  End If
+  
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = schStr
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    wd = rng.Text
+    If InStr(wd, "-") = 0 Then wd = Left(wd, hPos) _
+         & "-" & Mid(wd, hPos + 1)
+    If InStr(allPreWords, "," & wd & ",") = 0 And _
+         InStr(allWords, "," & wd & ",") = 0 Then
+      myPairs = myPairs + 1
+      pr(myPairs) = wd
+      allPreWords = allPreWords & wd & ","
+      If myPairs Mod 10 = 0 Then
+        If doingSeveralMacros = False Then _
+             Debug.Print wd, myPairs
+        StatusBar = wd & "     " & myPairs
+      End If
+    End If
+    DoEvents
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+Next i
+
+' Collect word pairs with each prefix, e.g. "mid height"
+For i = 1 To UBound(pref)
+  hPos = Len(pref(i))
+  allPreWords = ","
+  
+  If includeNumbers = True Then
+    schStr = "<" & pref(i) & " [0-9a-z]{2,}"
+  Else
+    schStr = "<" & pref(i) & " [a-z]{2,}"
+  End If
+
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "<" & pref(i) & " [0-9a-z]{2,}"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    wd = rng.Text
+    If InStr(wd, " ") = 0 Then wd = Left(wd, hPos) _
+         & " " & Mid(wd, hPos + 1)
+    wd = Replace(wd, " ", "-")
+    If InStr(allPreWords, "," & wd & ",") = 0 And _
+         InStr(allWords, "," & wd & ",") = 0 Then
+      myPairs = myPairs + 1
+      pr(myPairs) = wd
+      allPreWords = allPreWords & wd & ","
+      If myPairs Mod 10 = 0 Then
+        If doingSeveralMacros = False Then _
+             Debug.Print wd, myPairs
+        StatusBar = wd & "     " & myPairs
+      End If
+    End If
+    DoEvents
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+Next i
+halfTime = Timer
+
+' Count the frequencies
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText vbCr & vbCr
+Selection.HomeKey Unit:=wdStory
+ActiveDocument.Paragraphs(1).Style = _
+     ActiveDocument.Styles(wdStyleHeading1)
+
+allText = " " & ActiveDocument.Range.Text & " "
+     
+' At this point, change all "^p" to "^p "
+' all punctuation to " "
+chs = " , . ! : ; [ ] { } ( ) / \ + "
+chs = chs & ChrW(8220) & " "
+chs = chs & ChrW(8221) & " "
+chs = chs & ChrW(8201) & " "
+chs = chs & ChrW(8222) & " "
+chs = chs & ChrW(8217) & " "
+chs = chs & ChrW(8216) & " "
+chs = chs & ChrW(8212) & " "
+chs = chs & ChrW(8722) & " "
+chs = chs & vbCr & " "
+chs = chs & vbTab & " "
+
+' To force space at start; no space at end
+' i.e. one space for each character that
+' needs changing to a space
+chs = " " & chs & " "
+chs = Replace(chs, "  ", " ")
+chs = Replace(chs, "  ", " ")
+chs = Left(chs, Len(chs) - 1)
+
+chars = Split(chs, " ")
+For i = 1 To UBound(chars)
+  allText = Replace(allText, chars(i), " ")
+Next i
+allText = Replace(allText, "  ", " ")
+
+cnt = Len(allText)
+For i = 1 To myPairs
+  totFinds = 0
+  thisFind = ""
+  Set rng = ActiveDocument.Content
+  myTot = rng.End
+  wdHyph = pr(i)
+  wd = Replace(wdHyph, "-", "")
+  For j = 1 To 4
+    Select Case j
+      Case 1: schWd = wdHyph
+      Case 2: schWd = Replace(wdHyph, "-", " ")
+      Case 3: schWd = wd
+      Case 4: schWd = Replace(wdHyph, "-", ChrW(8211))
+    End Select
+    sc = " " & schWd & " "
+    myCount = Len(Replace(allText, sc, sc & "!")) - cnt
+    If myCount > 0 Then
+      totFinds = totFinds + 1
+      Selection.HomeKey Unit:=wdStory
+      thisFind = thisFind & schWd & " . ." & _
+           Str(myCount) & ":"
+    Else
+      thisFind = thisFind & ":"
+    End If
+    DoEvents
+  Next j
+  If (myPairs - i) Mod 10 = 0 Then
+    If doingSeveralMacros = False Then _
+         Debug.Print "To go:  ", myPairs - i
+    ActiveDocument.Paragraphs(1).Range.Text = "To go:  " _
+         & myPairs - i & vbCr
+  End If
+  If Len(thisFind) > 8 Then myResult = myResult & "%" & _
+       wd & "%" & thisFind & "!"
+Next i
+myResult = Replace(myResult, ":!", vbCr)
+myResult = Replace(myResult, ":", vbTab)
+Selection.WholeStory
+Selection.Delete
+Set rng = ActiveDocument.Content
+rng.InsertAfter myResult
+Selection.Sort SortOrder:=wdSortOrderAscending
+Selection.HomeKey Unit:=wdStory
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "%*%"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText "Hyphenation use"
+startTable = Selection.End + 1
+ActiveDocument.Paragraphs(1).Style = _
+     ActiveDocument.Styles(wdStyleHeading1)
+Selection.Start = startTable
+Selection.End = ActiveDocument.Range.End
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+
+Set tb = ActiveDocument.Tables(1)
+For i = 1 To tb.Rows.Count
+  num = 0
+  For j = 1 To 4
+    If Len(tb.Cell(i, j).Range.Text) > 2 Then num = num + 1
+  Next j
+  If num = 1 Then
+    For j = 1 To 4
+      tb.Cell(i, j).Range.Font.ColorIndex = lighterColour
+    Next j
+  End If
+Next i
+
+Set tb = ActiveDocument.Tables(1)
+For i = 1 To tb.Rows.Count
+  For j = 1 To 4
+    hyphPos = 0
+    txt = tb.Cell(i, j).Range.Text
+    hyphPos = InStr(txt, "-")
+    dashPos = InStr(txt, ChrW(8211))
+    tstText = txt
+    If hyphPos + dashPos > 0 Then
+      tstText = "," & Left(txt, hyphPos + dashPos _
+           - 1) & ","
+      If InStr(myList, tstText) > 0 Then
+        tb.Cell(i, j).Range.Font.ColorIndex = wdBlue
+      End If
+    Else
+      For k = 1 To UBound(pref)
+        If InStr("," & txt, "," & pref(k)) > 0 Then
+          tb.Cell(i, j).Range.Font.ColorIndex = wdBlue
+        End If
+      Next k
+    End If
+  Next j
+Next i
+
+For i = 1 To tb.Rows.Count
+    s = 0
+    If Len(tb.Cell(i, 1).Range.Text) > 2 Then s = s + 1
+    If Len(tb.Cell(i, 3).Range.Text) > 2 Then s = s + 1
+    If Len(tb.Cell(i, 4).Range.Text) > 2 Then s = s + 1
+  If s > 1 Then
+    For j = 1 To 4
+      tb.Cell(i, j).Range.Font.ColorIndex = wdRed
+    Next j
+  End If
+  If InStr(tb.Cell(i, 1).Range.Text, "ly-") > 0 And _
+       Len(tb.Cell(i, 2).Range.Text) > 2 Then
+    For j = 1 To 4
+      tb.Cell(i, j).Range.Font.ColorIndex = wdRed
+    Next j
+  End If
+Next i
+
+allText = ActiveDocument.Content
+For Each myCell In tb.Range.Cells
+  myText = myCell.Range.Text
+  Set rng = myCell.Range.Duplicate
+  rng.End = rng.Start + 1
+  myColour = rng.Font.ColorIndex
+  i = InStr(myText, " . .")
+  If myColour = lighterColour And i > 2 Then
+    myWord = Left(myText, i - 1)
+    If Right(myWord, 1) = "s" Then
+      mySingular = Left(myText, i - 2)
+      If InStr(allText, mySingular & " . .") > 0 Then _
+        myCell.Range.Font.Color = wdColorAutomatic
+      myTest = Replace(mySingular, "-", "")
+      If InStr(allText, mySingular & " . .") > 0 Then _
+        myCell.Range.Font.Color = wdColorAutomatic
+      myTest = Replace(mySingular, "-", " ")
+      If InStr(allText, myTest & " . .") > 0 Then _
+        myCell.Range.Font.Color = wdColorAutomatic
+    End If
+    If InStr(allText, myWord & "s . .") > 0 Then _
+      myCell.Range.Font.Color = wdColorAutomatic
+    myTest = Replace(myWord, "-", "")
+    If InStr(allText, myTest & "s . .") > 0 Then _
+      myCell.Range.Font.Color = wdColorAutomatic
+    myTest = Replace(myText, "-", " ")
+    If InStr(allText, myWord & "s . .") > 0 Then _
+      myCell.Range.Font.Color = wdColorAutomatic
+  End If
+Next myCell
+
+tb.Style = "Table Grid"
+tb.AutoFitBehavior (wdAutoFitContent)
+If deleteTableBorders = True Then
+  tb.Borders(wdBorderTop).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderRight).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+End If
+Selection.HomeKey Unit:=wdStory
+
+timNow = Timer
+
+If doingSeveralMacros = False Then
+  timGone = timNow - strttime
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+  m = Int(timGone / 60)
+  s = Int(timGone) - m * 60
+  timeAll = "Time:  " & Trim(Str(m)) & " m " & _
+       Trim(Str(s)) & " s"
+  Selection.HomeKey Unit:=wdStory
+  numPairs = ActiveDocument.Tables(1).Rows.Count
+  MsgBox "Items:  " & Trim(Str(numPairs)) & vbCr & vbCr _
+       & timeAll
+Else
+  FUT.Activate
+End If
+End Sub
+

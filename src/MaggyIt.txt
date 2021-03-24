@@ -1,0 +1,13 @@
+Sub MaggyIt()
+' Paul Beverley - Version 28.10.17
+' Creates a Maggied Paul Beverley - Version of the current file
+
+Selection.EndKey Unit:=wdStory
+Selection.TypeText Text:=vbCr & vbCr
+Set rng = ActiveDocument.Content
+rng.End = rng.End - 2
+Documents.Add
+Set rngNew = ActiveDocument.Content
+rngNew.FormattedText = rng.FormattedText
+End Sub
+

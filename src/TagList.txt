@@ -1,0 +1,155 @@
+Sub TagList()
+' Paul Beverley - Version 19.01.13
+' Add tags to a numbered or bulleted list
+
+newLine = vbCrLf
+startTextBullet = "<BL>"
+' endTextBullet = "</BL>" & newLine
+endTextBullet = "</BL>"
+
+startTextNum = "<NL>"
+' endTextNum = "</NL>" & newLine
+endTextNum = "</NL>"
+
+startTextLttr = "<Box>"
+'startTextLttr = "<LL>"
+' endTextLttr = "</LL>" & newLine
+'endTextLttr = "</LL>"
+endTextLttr = "</Box>"
+
+endTextOnSameLine = True
+
+numList = False
+bulletList = False
+lttrList = False
+startText = startTextBullet
+endText = endTextBullet
+myStyle = ""
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+localFont = Selection.Font.Name
+' Go to start of this line and add the tag
+Selection.Paragraphs(1).Range.Select
+i = Asc(Selection)
+If i > 47 And i < 59 Then numList = True
+If i = 149 Then bulletList = True
+thisStyle = Selection.Range.Style
+If InStr(thisStyle, "umber") > 0 Then numList = True: myStyle = thisStyle
+If InStr(thisStyle, "ullet") > 0 Then bulletList = True: myStyle = thisStyle
+myListString = Selection.FormattedText.ListFormat.ListString
+If myListString > "" Then
+  If UCase(myListString) <> LCase(myListString) Then
+    lttrList = True
+  Else
+    numList = True
+  End If
+If Selection.FormattedText.ListFormat.ListValue > 3 Then: numList = False
+End If
+Selection.End = Selection.Start + 1
+myFont = ""
+thisFont = Selection.Font.Name
+If thisFont = "Symbol" Or thisFont = "Wingdings" Then
+  bulletList = True
+  myFont = thisFont
+End If
+If (numList = False And bulletList = False) Then
+  lttrList = True
+  startText = startTextLttr
+  endText = endTextLttr
+End If
+If (numList = True And bulletList = True) Then
+  myResponse = MsgBox("Bullets?", vbQuestion + vbYesNo)
+  If myResponse = vbNo Then
+    numList = True: bulletList = False
+  Else
+    numList = False: bulletList = True
+  End If
+End If
+
+If numList = True Then
+  startText = startTextNum
+  endText = endTextNum
+Else
+End If
+Selection.InsertBefore Text:=startText
+Selection.MoveEnd wdCharacter, -1
+Selection.Font.Name = localFont
+Selection.Start = Selection.End
+
+' Find the final item
+Selection.Paragraphs(1).Range.Select
+myListValue = Selection.FormattedText.ListFormat.ListValue
+Selection.Start = Selection.End
+If myStyle > "" Then
+  Do
+    Selection.Paragraphs(1).Range.Select
+    thisStyle = Selection.Style
+    Selection.Start = Selection.End
+  Loop Until thisStyle <> myStyle
+Else
+  If numList = True Then
+    If myListString = "" Then
+      Do
+        Selection.Paragraphs(1).Range.Select
+        i = Asc(Selection)
+        Selection.Start = Selection.End
+      Loop Until i < 48 Or i > 58
+    Else
+      Do
+        Selection.Paragraphs(1).Range.Select
+        thisListString = Selection.FormattedText.ListFormat.ListString
+        Selection.Start = Selection.End
+      Loop Until thisListString = ""
+    End If
+  Else
+  ' It's either a bullet list or a letter list
+    If bulletList = True Then
+      If myFont > "" Then
+    ' Find the end by a font change
+        Do
+          Selection.End = Selection.Start + 1
+          thisFont = Selection.Font.Name
+          Selection.Paragraphs(1).Range.Select
+          Selection.Start = Selection.End
+        Loop Until thisFont <> myFont
+      Else
+    ' Find the end by bullet ASCII codes
+        Do
+          Selection.Paragraphs(1).Range.Select
+          i = Asc(Selection)
+          Selection.Start = Selection.End
+        Loop Until i <> 149
+      End If
+    Else
+    ' It's a lettered list
+      If myListString = "" Then
+        Do
+          Selection.End = Selection.Start + 6
+          thisBit = Selection
+          Selection.Paragraphs(1).Range.Select
+          Selection.Start = Selection.End
+        Loop Until InStr(thisBit, Chr(9)) = 0
+      Else
+        Do
+          Selection.Paragraphs(1).Range.Select
+          thisListString = Selection.FormattedText.ListFormat.ListString
+          Selection.Start = Selection.End
+        Loop Until thisListString = ""
+      End If
+    End If
+  End If
+End If
+Selection.MoveUp Unit:=wdParagraph, Count:=1
+Selection.Paragraphs(1).Range.Select
+Selection.End = Selection.Start
+
+' Tag on this line or next?
+If endTextOnSameLine = True Then
+  Selection.MoveLeft Unit:=wdCharacter, Count:=1
+End If
+Selection.InsertBefore Text:=endText
+Selection.Style = wdStyleNormal
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

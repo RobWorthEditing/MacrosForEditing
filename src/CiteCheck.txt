@@ -1,0 +1,329 @@
+Sub CiteCheck()
+' Paul Beverley - Version 09.12.16
+' Checks reference citations
+
+moveOnAfterOK = True
+citeCheckBackwards = False
+wholeName = False
+mainColour = wdYellow
+myWarningColour = wdRed
+myCitationColour = wdGray25
+
+' If you want a beep warning for a multi-author citation...
+addaBeepMulti = False
+
+myCite = "myTempBookmark"
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+oldWild = Selection.Find.MatchWildcards
+oldColour = Options.DefaultHighlightColorIndex
+
+isRefs = Selection.range.Font.Underline
+
+' Refs doc procedure
+If isRefs Then
+  If Selection.Start = Selection.End Then Selection.Expand wdWord
+  myName = Trim(Selection)
+  ' remember whether the selection is highlighted
+  thisColour = Selection.range.HighlightColorIndex
+  isHighlight = (thisColour = myWarningColour) Or thisColour > 255
+  ' check for a hyphenated name
+  Selection.MoveRight unit:=wdWord, Count:=2, Extend:=wdExtend
+  If Selection.range.Words(2) = "-" Then myName = Trim(Selection)
+  Selection.Collapse wdCollapseStart
+
+  ' if the name (beginning of the line) is highlighted,
+  ' unhighlight all identical author names
+  If isHighlight Then
+    Selection.Expand wdParagraph
+    Selection.MoveLeft , 2
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "^13" & myName & "??"
+      .Font.Underline = True
+      .Replacement.Text = ""
+      .Replacement.Highlight = False
+      .Wrap = wdFindContinue
+      .Forward = True
+      .MatchWildcards = True
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+  ' go back to the text
+  If ActiveDocument.Bookmarks.Exists(myCite) Then
+    ActiveDocument.Bookmarks(myCite).Select
+  Else
+    Beep
+  End
+
+  If moveOnAfterOK = True Then
+    Selection.Collapse wdCollapseEnd
+    With Selection.Find
+      .ClearFormatting
+      .Highlight = False
+      .Replacement.ClearFormatting
+      .Text = "[0-9]{4}[a-k\);:,]"
+      .Replacement.Text = ""
+      .Forward = True
+      .Wrap = wdFindStop
+      .MatchWildcards = True
+      .Execute
+    End With
+    Selection.MoveLeft unit:=wdWord, Count:=2
+    Selection.Expand wdWord
+    Exit Sub
+  End If
+  GoTo restoreFandR
+End If
+
+' Text doc procedure
+ActiveDocument.Bookmarks.Add Name:="myTempMark"
+' OR, if you're in the text, select the current word
+Selection.Expand wdWord
+Selection.MoveEndWhile cset:=ChrW(8217) & " '", Count:=wdBackward
+myName = Trim(Selection)
+
+
+' remember where the name starts and ends
+Set rngName = Selection.range.Duplicate
+'nameStart = Selection.Start
+'nameEnd = Selection.End
+
+Selection.MoveRight unit:=wdWord, Count:=2, Extend:=wdExtend
+Selection.MoveEndWhile cset:=ChrW(8217) & " '", Count:=wdBackward
+If Selection.range.Words(2) = "-" Then myName = Trim(Selection)
+
+
+' find the next date
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Text = "[01][0-9]{3}"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+Set rngDate = Selection.range.Duplicate
+
+' check if it's '2005a', '2005b' etc
+Selection.Collapse wdCollapseEnd
+Selection.MoveEnd , 1
+mySuffix = Selection
+If Asc(mySuffix) < 97 Or Asc(mySuffix) > 122 Then
+  Selection.MoveEnd , -1
+End If
+'Selection.Start = dateStart
+'myDate = Selection
+'dateEnd = Selection.End
+
+' Record whole citation
+Selection.Start = rngNameStart
+wholeCitation = Selection
+isMulti = False
+If InStr(Selection, " and ") > 0 Or InStr(Selection, " and ") > 0 _
+      Or InStr(Selection, " et al") > 0 Then isMulti = True
+Selection.Collapse wdCollapseStart
+
+' Find the beginning of the references
+Set rng = ActiveDocument.Content
+With Selection.Find
+  .ClearFormatting
+  .Text = ""
+  .Replacement.Text = ""
+  .Font.Underline = True
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+' Selection.MoveLeft Unit:=wdCharacter, Count:=1
+' find the name
+If citeCheckBackwards = True Then
+  crBit = ""
+  cr13Bit = ""
+Else
+  crBit = "^p"
+  cr13Bit = "^13"
+End If
+Selection.HomeKey unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Text = crBit & myName
+  .Replacement.Text = ""
+  .Forward = True
+  .Wrap = wdFindStop
+  .MatchWildcards = False
+  .Execute
+End With
+
+' if no such reference exists then
+' try to find a name starting with the same
+' letters, and then exit
+If Selection.Find.Found = False Then
+  For i = 1 To Len(myName) - 1
+    Beep
+    myTime = Timer: Do: Loop Until Timer > myTime + 0.05
+    myName = Left(myName, Len(myName) - 1)
+    With Selection.Find
+      .ClearFormatting
+      .Text = crBit & myName
+      .Execute
+    End With
+    If Selection.Find.Found = True Then GoTo restoreFandR
+  Next
+  GoTo restoreFandR
+End If
+
+' Change highlight colour
+Options.DefaultHighlightColorIndex = mainColour
+
+Do
+' if you've found one, is it the right date?
+  Selection.MoveStart , 1
+  Selection.MoveDown unit:=wdParagraph, Count:=1, Extend:=wdExtend
+  wholeRef = Selection
+  myStart = Selection.Start
+  myEnd = Selection.End
+  With Selection.Find
+    .ClearFormatting
+    .Text = myDate
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  gotOne = Selection.Find.Found
+  Selection.Find.MatchWildcards = False
+  Selection.Start = Selection.End
+  If Asc(Selection) > 96 And Asc(Selection) < 123 Then gotOne = False
+  If gotOne = True Then
+    dateEnd = Selection.End
+  ' Check the current highlight colour a few characters to the right
+    Selection.Start = Selection.End - 1
+    hiColour = Selection.range.HighlightColorIndex
+    Selection.Start = myStart
+    Selection.End = myStart
+  ' Move selection to top of the screen
+    Selection.MoveDown unit:=wdScreen, Count:=2
+    Selection.End = myStart - 1
+    Selection.MoveRight unit:=wdCharacter, Count:=1
+
+    ' Ask if OK?
+    Selection.End = dateEnd + 1
+    Selection.range.HighlightColorIndex = mainColour
+    If isMulti = True Then
+      If addaBeepMulti = True Then Beep
+      Selection.range.HighlightColorIndex = myWarningColour
+    End If
+    Selection.End = Selection.Start
+    myResponse = MsgBox("OK?", vbQuestion + vbYesNo)
+    If myResponse = vbNo Then
+      Selection.MoveDown unit:=wdParagraph, Count:=1, Extend:=wdExtend
+      Selection.range.HighlightColorIndex = hiColour
+      Selection.End = Selection.Start
+      GoTo restoreFandR
+    Else
+    ' Unhighlight reference
+      Selection.MoveDown unit:=wdParagraph, Count:=1, Extend:=wdExtend
+      Selection.range.HighlightColorIndex = wdNoHighlight
+      Selection.End = Selection.Start
+    
+    ' Go back to text and grey all identical citations
+      lookingFor = textDoc
+      Windows(textDoc).Activate
+      If Err.Number = 5941 Then
+        Err.Clear
+        textDoc = Replace(textDoc, ".", " [Compatibility Mode].")
+        Windows(textDoc).Activate
+      End If
+      Options.DefaultHighlightColorIndex = myCitationColour
+      nowTrack = ActiveDocument.TrackRevisions
+      ActiveDocument.TrackRevisions = False
+      Selection.Start = Selection.End
+      Set rng = ActiveDocument.range
+      With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = wholeCitation
+        .Replacement.Text = "^&"
+        .Replacement.Highlight = True
+        .Wrap = wdFindContinue
+        .Execute Replace:=wdReplaceAll
+      End With
+      ActiveDocument.TrackRevisions = nowTrack
+      Options.DefaultHighlightColorIndex = oldColour
+      If moveOnAfterOK = True Then
+        With Selection.Find
+          .ClearFormatting
+          .Highlight = False
+          .Replacement.ClearFormatting
+          .Text = "[0-9]{4}[a-k\);:,]"
+          .Replacement.Text = ""
+          .Forward = True
+          .Wrap = wdFindStop
+          .MatchWildcards = True
+          .Execute
+        End With
+        Exit Sub
+      End If
+    End If
+    GoTo restoreFandR
+  End If
+  ' but if not the right date, look for next name
+  Selection.Start = Selection.End
+  Selection.MoveLeft unit:=wdCharacter, Count:=1
+  With Selection.Find
+    .ClearFormatting
+    .Text = crBit & myName
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  nameStart = Selection.Start + 1
+' keep looking until no such date can be found
+Loop Until Selection.Find.Found = False
+
+' if no such date for that author, highlight all
+' like names, but first choose your favourite
+' highlighting colour
+Selection.HomeKey unit:=wdStory
+Beep
+' find the first such name
+Options.DefaultHighlightColorIndex = myWarningColour
+'Set rng = ActiveDocument.Range
+With Selection.Find
+  .ClearFormatting
+  If wholeName = True Then
+    .Text = cr13Bit & myName & "[!a-z]"
+  Else
+    .Text = cr13Bit & myName
+  End If
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+' highlight them all
+Selection.Find.Execute Replace:=wdReplaceAll
+Selection.MoveStart , 1
+Selection.End = Selection.Start
+For i = 1 To 3
+  Beep
+  myTime = Timer: Do: Loop Until Timer > myTime + 0.1
+Next
+
+restoreFandR:
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchWildcards = oldWild
+End With
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

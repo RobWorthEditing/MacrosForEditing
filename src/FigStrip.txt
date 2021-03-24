@@ -1,0 +1,113 @@
+Sub FigStrip()
+' Paul Beverley - Version 09.05.13
+' Strip out all figures and leave a callout
+
+myFormat = "<xxx about here>"
+
+myFig = "^13Fig"
+myFig = "[^13^n^m^l]Fig"
+myFig = "\<Cap\>Fig"
+myFig = "zczcFig"
+
+captionWithText = True
+captionWithFigs = True
+
+
+myFind = Replace(myFig, "\<", "<")
+myFind = Replace(myFind, "\>", ">")
+myResponse = MsgBox("Searching for: " & ChrW(8220) & myFind & _
+     ChrW(8221), vbQuestion + vbYesNoCancel, "Figure Stripper")
+If myResponse <> vbYes Then Exit Sub
+
+ActiveDocument.TrackRevisions = False
+Set thisDoc = ActiveDocument
+Documents.Add
+Set figDoc = ActiveDocument
+thisDoc.Activate
+
+oldFind = Selection.Find.Text
+Selection.HomeKey Unit:=wdStory
+thisMany = 0
+Do
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myFig
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  gotOne = Selection.Find.Found
+  Selection.MoveDown Unit:=wdParagraph, Count:=1
+  myEnd = Selection.Start
+  Selection.MoveUp Unit:=wdParagraph, Count:=1
+  ' Cursor now at start of caption line
+  captionStart = Selection.Start
+  Do
+    Selection.MoveRight Unit:=wdCharacter, Count:=1
+  Loop Until Selection = " " Or Selection = vbTab
+  Do
+    Selection.MoveRight Unit:=wdCharacter, Count:=1
+  Loop Until Selection = " " Or Selection = vbTab
+  Selection.Start = captionStart
+  figTitle = Selection
+  
+  ' Now start to look for one or more figures
+  figEnd = captionStart
+  If gotOne Then
+    Do
+      Selection.MoveUp Unit:=wdLine, Count:=1
+      Selection.Expand wdParagraph
+    Loop Until Selection.Words.Count > 2
+    Selection.Collapse wdCollapseEnd
+    Selection.End = myEnd
+  ' Is this a figure i've found?[[[
+    figsBefore = ActiveDocument.InlineShapes.Count _
+         + ActiveDocument.Shapes.Count
+    Selection.Cut
+    figsAfter = ActiveDocument.InlineShapes.Count _
+         + ActiveDocument.Shapes.Count
+    If figsAfter = figsBefore Then
+    ' If not, put it back
+      Selection.Paste
+      Selection.MoveLeft Unit:=wdWord, Count:=2
+    Else
+      Selection.InsertAfter Replace(myFormat, "xxx", figTitle) & vbCr
+      Selection.ParagraphFormat.Alignment = wdAlignParagraphLeft
+      Selection.HomeKey Unit:=wdLine
+      figDoc.Activate
+      Selection.Paste
+      ' But mark the caption ready to copy it back
+      Selection.MoveUp Unit:=wdParagraph, Count:=1, Extend:=wdExtend
+      ' Either
+      If captionWithFigs = True Then
+        Selection.Copy
+      Else
+        Selection.Cut
+        Selection.TypeText figTitle
+      End If
+      Selection.Start = Selection.End
+      Selection.TypeParagraph
+      Selection.TypeParagraph
+      thisMany = thisMany + 1
+      thisDoc.Activate
+      ' If caption wanted in text, paste it back in
+      If captionWithText = True Then
+        Selection.MoveDown Unit:=wdParagraph, Count:=1
+        Selection.Paste
+      End If
+    End If
+  End If
+Loop Until gotOne = False
+figDoc.Activate
+
+Selection.TypeText Str(thisMany) & " figures extracted" & vbCr
+
+Selection.Find.Text = oldFind
+Selection.Find.MatchWildcards = False
+Beep
+End Sub
+

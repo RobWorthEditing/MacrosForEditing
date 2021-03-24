@@ -1,0 +1,96 @@
+Sub ClipStore()
+' Paul Beverley - Version 20.03.20
+' Copies the selected text into a clip list
+
+maxClips = 6
+myLabel = "#"
+
+useDedicatedFile = True
+myClipFile = "zClipboard.docx"
+
+' On Windows, it will need to be something like:
+myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff"
+
+' On a Mac, it will need to be something like:
+myFolder = "/Users/Paul/My Documents/Macro stuff"
+
+If useDedicatedFile = False Then myClipFile = "Document"
+
+If Selection.Start = Selection.End Then
+  ss = Selection.Start
+  Selection.Paste
+  Selection.Start = ss
+  Selection.Copy
+  WordBasic.EditUndo
+Else
+  Selection.Copy
+End If
+Set myDoc = ActiveDocument
+Set rng = Selection.range.Duplicate
+
+' Go and look for the clip file
+On Error GoTo ReportIt
+gottaList = False
+For i = 1 To Application.Windows.Count
+  Set thisFile = Application.Windows(i).Document
+  If InStr(thisFile.Name, myClipFile) > 0 _
+       And myDoc.Name <> thisFile.Name _
+       And thisFile.Content.Characters(1) = myLabel Then
+    Set listDoc = Application.Windows(i).Document
+    gottaList = True
+    Exit For
+  End If
+Next i
+If gottaList = False Then
+  If useDedicatedFile = True Then
+    Documents.Open myFolder & myClipFile
+  Else
+    Documents.Add
+  End If
+Else
+  listDoc.Activate
+End If
+
+If InStr(ActiveDocument.Content.Text, myLabel) = 0 Then
+  nowClip = 0
+Else
+  Selection.EndKey Unit:=wdStory
+  Selection.MoveEndUntil cset:=myLabel, Count:=wdBackward
+  Selection.MoveEndUntil cset:=vbCr, Count:=wdForward
+  nowClip = Val(Selection)
+End If
+newClip = (nowClip Mod maxClips) + 1
+newClipText = myLabel & Trim(Str(newClip))
+
+oldClipPos = InStr(ActiveDocument.Content.Text, newClipText)
+If oldClipPos > 0 Then
+  Selection.Start = oldClipPos + 2
+  Selection.End = ActiveDocument.Content.End
+  nextClipPos = InStr(Selection.range.Text, myLabel)
+  If nextClipPos > 0 Then
+    Selection.End = Selection.Start + nextClipPos - 1
+    Selection.Start = 0
+    Selection.Delete
+  End If
+End If
+Selection.EndKey Unit:=wdStory
+Selection.TypeText Text:=newClipText & vbCr
+Selection.Paste
+Selection.TypeText Text:=vbCr
+myDoc.Activate
+rng.Select
+Exit Sub
+
+ReportIt:
+If Err.Number = 5174 Then
+  Err.Clear
+  Beep
+  myClipFile = Replace(myClipFile, ".docx", "")
+  myResponse = MsgBox("Can't find your clipboard file: """ _
+       & myClipFile & """", vbOKOnly, "ClipStore")
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+

@@ -1,0 +1,98 @@
+Sub ListAlyse()
+' Paul Beverley - Version 11.11.20
+' Makes a list of all the 'list' items - then you can analyse them!
+
+Set orig = ActiveDocument.Content
+
+Set FUT = ActiveDocument
+doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
+
+If doingSeveralMacros = False Then
+  myResponse = MsgBox("    ListAlyse" & vbCr & vbCr & _
+       "Analyse this document?", vbQuestion _
+       + vbYesNoCancel, "ListAlyse")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+Documents.Add
+' Selection.Text = orig.Text
+Selection.FormattedText = orig.FormattedText
+ActiveDocument.ConvertNumbersToText
+
+Set rng = ActiveDocument.Content
+Set wasRng = ActiveDocument.Paragraphs(1)
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13{2,}"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+numTables = ActiveDocument.Tables.Count
+If numTables > 0 Then
+  For i = numTables To 1 Step -1
+   ActiveDocument.Tables(i).Delete
+  Next i
+End If
+
+Set rng = ActiveDocument.Content
+rng.Font.Underline = True
+inList = False
+For Each myPara In ActiveDocument.Paragraphs
+  isItem = False
+  ' Bullet
+  If myPara.Range.Characters(1) = ChrW(8226) Then isItem = True
+  ' Weird bullets from auto-lists
+  Debug.Print myPara.Range.Characters(1)
+  Debug.Print Asc(myPara.Range.Characters(1))
+  myPara.Range.Select
+  If Asc(myPara.Range.Characters(1)) = 63 Then isItem = True
+  ' en dash
+  If myPara.Range.Characters(1) = ChrW(8211) Then isItem = True
+  ' numbered line
+  If Val(myPara.Range.Words(1)) > 0 Then isItem = True
+  ' a. or a)
+  If InStr("abcdefghijkl", myPara.Range.Words(1)) > 0 Then isItem = True
+  If isItem Then
+    myPara.Range.Font.Underline = False
+    wasRng.Font.Underline = False
+    inList = True
+  Else
+    If inList = True Then
+      wasRng.InsertAfter vbCr
+      wasRng.Start = wasRng.Start - 1
+      wasRng.Font.Underline = False
+      wasRng.Select
+      inList = False
+    End If
+  End If
+  DoEvents
+  Set wasRng = myPara.Range.Duplicate
+Next myPara
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Selection.HomeKey Unit:=wdStory
+If doingSeveralMacros = True Then
+  FUT.Activate
+Else
+  Beep
+End If
+End Sub
+

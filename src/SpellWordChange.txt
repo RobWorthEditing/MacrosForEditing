@@ -1,0 +1,38 @@
+Sub SpellWordChange()
+' Paul Beverley - Version 14.01.21
+' Accepts Word's spelling suggestion for current word
+
+' Select the word, and nothing but the word
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+langText = Languages(Selection.LanguageID).NameLocal
+
+' Make erWord and actual Word 'word'
+Set erWord = Selection.Words.First
+
+' If it's a spelling error...
+If Application.CheckSpelling(erWord, MainDictionary:=langText) = False Then
+  Set suggList = Application.GetSpellingSuggestions(erWord, MainDictionary:=langText)
+  If suggList.Count > 0 Then
+  ' and if an alternative is available, type it
+    Selection.TypeText suggList.Item(1).Name
+  Else
+  ' otherwise just colour it
+    Selection.Range.HighlightColorIndex = wdGray25
+  End If
+  ' Beep twice
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+Else
+' But if correctly spelt, beep once and move on
+  Beep
+End If
+Selection.Start = Selection.End + 1
+End Sub
+

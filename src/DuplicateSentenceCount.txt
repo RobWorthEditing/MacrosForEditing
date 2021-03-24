@@ -1,0 +1,216 @@
+Sub DuplicateSentenceCount()
+' Paul Beverley - Version 27.10.18
+' Counts frequency of any duplicated sentences
+
+minWords = 10
+
+myTab = " . . . "
+myColour = wdBrightGreen
+
+dupSents = ""
+myExtraLines = ""
+sentNum = ActiveDocument.Sentences.Count
+If sentNum > 2000 Then splitLevel = 150 _
+     Else splitLevel = 60
+Selection.HomeKey Unit:=wdStory
+Set myDoc = ActiveDocument.Content
+
+Dim num(27) As Integer
+' Find out how many sentences there are for each
+' letter of the alphabet
+For Each sent In myDoc.Sentences
+  init = Left(Trim(sent.Text), 1)
+  If InStr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", init) > 0 Then
+    n = Asc(init) - 64
+    num(n) = num(n) + 1
+  Else
+    num(27) = num(27) + 1
+  End If
+  If Asc(sent) = Asc("|") Then
+    parenPos = InStr(sent, " (")
+    addBit = Left(sent, parenPos - 1)
+    myExtraLines = myExtraLines & addBit & vbCr
+  End If
+Next sent
+
+Documents.Add
+Set myFinal = ActiveDocument
+Documents.Add
+' If there are a lot of sentences for a given letter
+' then split them up based on a second character.
+' I randomly chose the fifth letter (rather than
+' the more obvious second character
+For a = Asc("A") To Asc("Z") + 1
+  If num(a - 64) > splitLevel Then
+    ' Split up on fifth letter
+    For b = Asc("A") To Asc("Z") + 1
+      Set tmp = ActiveDocument.Content
+      If b = 91 Then
+        ' 91 is the next number to Z's ASCII value
+        ' Use it to catch then non-A-Z letters,
+        ' such as parentheses and bullets
+        For Each sent In myDoc.Sentences
+          If sent.Words.Count > minWords And _
+               UCase(sent) <> LCase(sent) Then
+            thisSent = Replace(Trim(sent.Text), vbCr, "")
+            ' CHeck the fifth letter
+            myTest = UCase(Mid(thisSent, 5, 1))
+            q = Asc(thisSent)
+            If q = a And LCase(myTest) = myTest Then
+              Selection.TypeText Text:=Trim(thisSent) & vbCr
+              DoEvents
+            End If
+            k = Asc(myTest)
+            ' Allow chars in the range 34 to 64, or over 90 (q)
+            ' And similarly for the fifth character (k)
+            If a = 91 And (q < 65 Or q > 90) And q > 33 And _
+                 (k < 65 Or k > 90) And k > 33 Then
+              Selection.TypeText Text:=Trim(thisSent) & vbCr
+              DoEvents
+            End If
+          End If
+        Next sent
+      Else
+        For Each sent In myDoc.Sentences
+          ' This is where we just test all of a set of lettered
+          ' sentences when there aren't too many of them.
+          If sent.Words.Count > minWords Then
+            thisSent = Replace(Trim(sent.Text), vbCr, "")
+            myTest = UCase(Mid(thisSent, 5, 1))
+            q = Asc(thisSent)
+            If q = a And myTest = Chr(b) Then
+              Selection.TypeText Text:=Trim(thisSent) & vbCr
+              DoEvents
+            End If
+            If a = 91 And (q < 65 Or q > 90) And q > 33 And _
+                 myTest = Chr(b) Then
+              Selection.TypeText Text:=Trim(thisSent) & vbCr
+              DoEvents
+            End If
+          End If
+        Next sent
+      End If
+      numSents = ActiveDocument.Sentences.Count
+      dupSents = ""
+      For i = 1 To numSents
+        If tmp.Sentences(i).Words.Count > minWords Then
+          testSent = Replace(Trim(tmp.Sentences(i).Text), vbCr, "")
+          If InStr(dupSents, testSent) = 0 And Len(testSent) > 10 Then
+            myCount = 1
+            For j = i + 1 To numSents
+              DoEvents
+              compSent = Replace(Trim(tmp.Sentences(j).Text), vbCr, "")
+              If compSent = testSent Then
+                myCount = myCount + 1
+              End If
+            Next j
+            StatusBar = numSents - i
+            If myCount > 1 Then
+              DoEvents
+              StatusBar = testSent
+              ' Create the lines that list the duplicated sentences
+              ' giving the frequency of each multiple sentence
+              sentPlusCount = testSent & myTab & Trim(Str(myCount)) _
+                   & vbCr & vbCr
+              dupSents = dupSents + sentPlusCount
+            End If
+          End If
+        End If
+      Next i
+      If dupSents > "" Then myFinal.Content.InsertAfter Text:=dupSents
+      tmp.Text = ""
+    Next b
+  Else
+    Set tmp = ActiveDocument.Content
+    For Each sent In myDoc.Sentences
+      thisSent = Trim(Replace(sent.Text, vbCr, "")) & vbCr
+      q = Asc(thisSent)
+      If q = a Then
+        Selection.TypeText Text:=thisSent
+        DoEvents
+      End If
+      If a = 91 And (q < 65 Or q > 90) And q > 32 Then
+        Selection.TypeText Text:=thisSent
+        DoEvents
+      End If
+    Next sent
+    ' Check to see if there any duplicate sentences
+    ' in the current batch.
+    numSents = ActiveDocument.Sentences.Count
+    dupSents = ""
+    For i = 1 To numSents
+      If tmp.Sentences(i).Words.Count > minWords Then
+        testSent = Replace(tmp.Sentences(i).Text, vbCr, "")
+        If InStr(dupSents, testSent) = 0 And Len(testSent) > 10 Then
+          myCount = 1
+          For j = i + 1 To numSents
+            DoEvents
+            compSent = Replace(tmp.Sentences(j).Text, vbCr, "")
+            If compSent = testSent Then
+              myCount = myCount + 1
+            End If
+          Next j
+          StatusBar = numSents - i
+          If myCount > 1 Then
+            DoEvents
+            StatusBar = testSent
+            sentPlusCount = testSent & myTab & Trim(Str(myCount)) _
+                & vbCr & vbCr
+            dupSents = dupSents + sentPlusCount
+          End If
+        End If
+      End If
+    Next i
+    If dupSents > "" Then myFinal.Content.InsertAfter Text:=dupSents
+    tmp.Text = ""
+  End If
+Next a
+Selection.InsertAfter Text:=myFinal.Content
+Selection.Collapse wdCollapseStart
+
+' Create the two display files
+' This one creates the FRedit list
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myTab & "[0-9]{1,}" & vbCr
+  .Wrap = wdFindContinue
+  .Replacement.Text = "|^^&"
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+gogo = True
+Do While gogo = True
+  gogo = False
+  ' But if any of the FRedit items is too long, it'll
+  ' cause an error in FRedit, so split them into sub-items
+  For i = ActiveDocument.Paragraphs.Count To 1 Step -1
+    myLine = ActiveDocument.Paragraphs(i).range.Text
+    myLen = Len(myLine)
+    If myLen > 200 Then
+      gogo = True
+      myLeft = Int(myLen / 2)
+      newLine1 = Left(myLine, myLeft) & "|^&"
+      newLine2 = Mid(myLine, myLeft + 1)
+      ActiveDocument.Paragraphs(i).range.Text = newLine1 _
+           & vbCr & newLine2
+    End If
+  Next i
+Loop
+
+Set rng = ActiveDocument.Content
+rng.HighlightColorIndex = myColour
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:=vbCr
+ActiveDocument.Paragraphs(1).range.HighlightColorIndex _
+     = wdNoHighlight
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:=myExtraLines
+myFinal.Activate
+Beep
+End Sub
+

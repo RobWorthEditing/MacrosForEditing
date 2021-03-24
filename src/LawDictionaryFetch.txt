@@ -1,0 +1,14 @@
+Sub LawDictionaryFetch()
+' Paul Beverley - Version 13.09.20
+' Launches selected text to Dictionary.Law website
+
+mySite = "https://dictionary.law.com/Default.aspx?typed="
+If Len(Selection) = 1 Then Selection.Expand wdWord
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubject, ChrW(8217), "'")
+ActiveDocument.FollowHyperlink Address:=mySite & mySubject & "&type=1"
+Selection.Collapse wdCollapseEnd
+End Sub
+

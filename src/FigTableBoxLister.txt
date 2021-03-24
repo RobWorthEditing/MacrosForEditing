@@ -1,0 +1,386 @@
+Sub FigTableBoxLister()
+' Paul Beverley - Version 09.07.20
+' Finds figure/table/box elements and their citations
+
+mainDocBackToFront = True
+
+listCaptions = True
+capTag = "<Cap>"
+' Number of characters of the caption listed
+maxLen = 60
+
+' Which letters are searched for as, e.g. "Figure 16.5c/d/e etc"
+myLetters = "a-h"
+
+Set mainDoc = ActiveDocument
+CR = vbCr
+CR2 = CR & CR
+tb = Chr(9)
+Selection.HomeKey Unit:=wdStory
+Set rng = ActiveDocument.Content
+' Prepare a range for plurals
+Set rng3 = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "F[iI][Gg][uUrReE. ]{1,4}[1-9]"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+isFigure = rng.Find.Found
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "T[aA][bB][lL][eE] [1-9]"
+  .MatchWildcards = True
+  .Execute
+End With
+isTable = rng.Find.Found
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "Box [1-9]"
+  .MatchWildcards = True
+  .Execute
+End With
+isBox = rng.Find.Found
+
+If isFigure Then
+  foundList = ""
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+    .Text = "F[iI][Gg][uUrReE. ]{1,4}[0-9.:" & myLetters & "]{1,}"
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    Set rng2 = rng.Paragraphs(1).Range
+    pa = rng2.Text
+    If InStr(pa, ">") > 0 Then
+      pa = Mid(pa, InStr(pa, ">") + 1)
+    End If
+    wd = rng.Text
+    If InStr(pa, wd) > 2 Then
+      foundList = foundList & tb
+    Else
+      wdLess = wd
+      If Right(wd, 1) = "." Or Right(wd, 1) = ":" Then wdLess = _
+           Left(wd, Len(wd) - 1)
+      If InStr(foundList, CR & wd & CR) > 0 Or InStr(foundList, CR & _
+           wd & ":" & CR) > 0 Or InStr(foundList, CR & wd & "." & CR) _
+           > 0 Or InStr(foundList, CR & wdLess & CR) > 0 Then foundList _
+           = foundList & tb & tb
+    End If
+    foundList = foundList & rng & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+  
+  ' Now look for "Figures"
+  pluralList = ""
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+    .Text = "Figures "
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    Set rng2 = ActiveDocument.Range(rng.Start, rng.End)
+    rng2.MoveEnd wdWord, 1
+    Do
+      stopNow = False
+      rng2.MoveEnd wdWord, 1
+      myText = rng2.Words(rng2.Words.Count)
+      If LCase(myText) <> UCase(myText) And _
+           Len(myText) > 3 Then stopNow = True
+      If Trim(myText) = "and" Then stopNow = False
+      If Asc(myText) = 13 Then stopNow = True
+    Loop Until stopNow
+    rng2.MoveEnd wdWord, -1
+    pluralList = pluralList & rng2 & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+  
+  Documents.Add
+  Set figDoc = ActiveDocument
+  Selection.TypeText foundList & CR2
+  For Each para In ActiveDocument.Paragraphs
+    pa = Replace(para.Range.Text, Chr(13), "")
+    If Right(pa, 1) = "." Or Right(pa, 1) = ":" Then pa = _
+           Left(pa, Len(pa) - 1)
+    If InStr(foundList, tb & pa) = 0 And InStr(pa, tb) = 0 Then _
+         para.Range.HighlightColorIndex = wdYellow
+    If InStr(foundList, CR & Replace(pa, Chr(9), "")) = 0 And InStr(pa, tb) _
+         > 0 Then para.Range.HighlightColorIndex = wdYellow
+  Next
+  If Len(pluralList) > 1 Then
+    Selection.HomeKey Unit:=wdStory
+    Selection.InsertBefore Text:=CR2 & "Plurals" & CR2
+    Selection.MoveStart wdWord, 2
+    Selection.MoveEnd wdWord, -1
+    Selection.Font.Bold = True
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveRight wdWord, 1
+    Selection.TypeText pluralList & CR2
+  End If
+  Selection.HomeKey Unit:=wdStory
+  rng.Start = 0: rng.End = 0
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = capTag & "Fig"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    rng.Expand wdParagraph
+    capText = Replace(rng.Text, vbTab, " ")
+    If Len(capText) > maxLen Then capText = _
+         Left(capText, maxLen) & vbCr
+    Selection.TypeText capText
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+  Selection.HomeKey Unit:=wdStory
+End If
+
+If isTable Then
+  foundList = ""
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+    .Text = "T[aA][bB][lL][eE] [0-9.:" & myLetters & "]{1,}"
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  Do While rng.Find.Found = True
+    Set rng2 = rng.Paragraphs(1).Range
+    pa = rng2.Text
+    If InStr(pa, ">") > 0 Then
+      pa = Mid(pa, InStr(pa, ">") + 1)
+    End If
+    wd = rng.Text
+    If InStr(pa, wd) > 2 Then
+      foundList = foundList & tb
+    Else
+      wdLess = wd
+      If Right(wd, 1) = "." Or Right(wd, 1) = ":" Then wdLess = _
+           Left(wd, Len(wd) - 1)
+      If InStr(foundList, CR & wd & CR) > 0 Or InStr(foundList, CR & _
+           wd & ":" & CR) > 0 Or InStr(foundList, CR & wd & "." & CR) _
+           > 0 Or InStr(foundList, CR & wdLess & CR) > 0 Then foundList _
+           = foundList & tb & tb
+    End If
+    foundList = foundList & rng & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+
+  pluralList = ""
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+    .Text = "Tables "
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    rng3.Start = rng.Start
+    rng3.End = rng.End
+    rng3.MoveEnd wdWord, 1
+    Do
+      stopNow = False
+      rng3.MoveEnd wdWord, 1
+      myText = rng3.Words(rng3.Words.Count)
+      If LCase(myText) <> UCase(myText) And _
+           Len(myText) > 3 Then stopNow = True
+      If Trim(myText) = "and" Then stopNow = False
+      If Asc(myText) = 13 Then stopNow = True
+    Loop Until stopNow
+    rng3.MoveEnd wdWord, -1
+    pluralList = pluralList & rng3 & CR
+   
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+  Documents.Add
+  Set tableDoc = ActiveDocument
+  Selection.TypeText foundList & CR2
+  For Each para In ActiveDocument.Paragraphs
+    pa = Replace(para.Range.Text, Chr(13), "")
+    If Right(pa, 1) = "." Or Right(pa, 1) = ":" Then pa = _
+           Left(pa, Len(pa) - 1)
+    If InStr(foundList, tb & pa) = 0 And InStr(pa, tb) = 0 Then _
+         para.Range.HighlightColorIndex = wdYellow
+    If InStr(foundList, CR & Replace(pa, Chr(9), "")) = 0 And InStr(pa, tb) _
+         > 0 Then para.Range.HighlightColorIndex = wdYellow
+  Next
+  If Len(pluralList) > 2 Then
+    Selection.HomeKey Unit:=wdStory
+    Selection.InsertBefore Text:=CR2 & "Plurals" & CR2
+    Selection.MoveStart wdWord, 2
+    Selection.MoveEnd wdWord, -1
+    Selection.Font.Bold = True
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveRight wdWord, 1
+    Selection.TypeText pluralList & CR2
+  End If
+  Selection.HomeKey Unit:=wdStory
+  rng.Start = 0: rng.End = 0
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = capTag & "Tab"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    rng.Expand wdParagraph
+    capText = Replace(rng.Text, vbTab, " ")
+    If Len(capText) > maxLen Then capText = _
+         Left(capText, maxLen) & vbCr
+    Selection.TypeText capText
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+  Selection.HomeKey Unit:=wdStory
+End If
+
+If isBox Then
+  foundList = ""
+  rng.Start = 0
+  rng.End = 0
+  With rng.Find
+    .Text = "Box [0-9.:" & myLetters & "]{1,}"
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    Set rng2 = rng.Paragraphs(1).Range
+    pa = rng2.Text
+    If InStr(pa, ">") > 0 Then
+      pa = Mid(pa, InStr(pa, ">") + 1)
+    End If
+    wd = rng.Text
+    If InStr(pa, wd) > 2 Then
+      foundList = foundList & tb
+    Else
+      wdLess = wd
+      If Right(wd, 1) = "." Or Right(wd, 1) = ":" Then wdLess = _
+           Left(wd, Len(wd) - 1)
+      If InStr(foundList, CR & wd & CR) > 0 Or InStr(foundList, CR & _
+           wd & ":" & CR) > 0 Or InStr(foundList, CR & wd & "." & CR) _
+           > 0 Or InStr(foundList, CR & wdLess & CR) > 0 Then foundList _
+           = foundList & tb & tb
+    End If
+    foundList = foundList & rng & CR
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+  rng.Start = 0
+  rng.End = 0
+  pluralList = ""
+  With rng.Find
+    .Text = "Boxes "
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    rng3.Start = rng.Start
+    rng3.End = rng.End
+    rng3.MoveEnd wdWord, 1
+    Do
+      stopNow = False
+      rng3.MoveEnd wdWord, 1
+      myText = rng3.Words(rng3.Words.Count)
+      If LCase(myText) <> UCase(myText) And _
+           Len(myText) > 3 Then stopNow = True
+      If Trim(myText) = "and" Then stopNow = False
+      If Asc(myText) = 13 Then stopNow = True
+    Loop Until stopNow
+    rng3.MoveEnd wdWord, -1
+    pluralList = pluralList & rng3 & CR
+   
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+  Loop
+  Documents.Add
+  Selection.TypeText foundList
+  For Each para In ActiveDocument.Paragraphs
+    pa = Replace(para.Range.Text, Chr(13), "")
+    If Right(pa, 1) = "." Or Right(pa, 1) = ":" Then pa = _
+           Left(pa, Len(pa) - 1)
+    If InStr(foundList, tb & pa) = 0 And InStr(pa, tb) = 0 Then _
+         para.Range.HighlightColorIndex = wdYellow
+    If InStr(foundList, CR & Replace(pa, Chr(9), "")) = 0 And InStr(pa, tb) _
+         > 0 Then para.Range.HighlightColorIndex = wdYellow
+  Next
+  If Len(pluralList) > 2 Then
+    Selection.InsertAfter Text:=CR2 & "Plurals" & CR
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStart wdWord, -2
+    Selection.MoveEnd wdWord, -1
+    Selection.Font.Bold = True
+    Selection.EndKey Unit:=wdStory
+    Selection.TypeText pluralList
+  End If
+  Selection.HomeKey Unit:=wdStory
+End If
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[A-Z]@>"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+If mainDocBackToFront Then
+  mainDoc.Activate
+Else
+' bring windows to the front
+  If isTable Then tableDoc.Activate
+  If isFigure Then figDoc.Activate
+End If
+Beep
+End Sub
+

@@ -1,0 +1,21 @@
+Sub PunctuationToComma()
+' Paul Beverley - Version 06.04.13
+' Changes the next punctuation item to a comma
+
+trackit = True
+
+myChar = ","
+myTrack = ActiveDocument.TrackRevisions
+If trackit = False Then ActiveDocument.TrackRevisions = False
+
+searchChars = ":;.,"
+Selection.End = Selection.Start
+While InStr(searchChars, Selection) = 0
+  Selection.MoveRight , 1
+Wend
+Selection.MoveEnd wdCharacter, 1
+Selection.Delete
+Selection.TypeText myChar
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

@@ -1,0 +1,98 @@
+Sub TitlesShowHide()
+' Paul Beverley - Version 25.11.20
+' Toggles between light grey font colour text and full colour
+
+preBlue = &HF6F6F6
+preRed = &HF4F4F4
+preBlack = &HF5F5F5
+
+Set pbTitlesFile = ActiveDocument
+
+If pbShowHide = True Then
+  pbShowHide = False
+  Selection.Collapse wdCollapseEnd
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Wrap = wdFindContinue
+    .Text = ""
+    .Font.Color = preBlue
+    .MatchWildcards = False
+    .Replacement.Text = ""
+    .Replacement.Font.Color = wdColorBlue
+    .Execute Replace:=wdReplaceAll
+  
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Wrap = wdFindContinue
+    .Font.Color = preRed
+    .Replacement.Font.Color = wdColorRed
+    .Execute Replace:=wdReplaceAll
+    
+    .ClearFormatting
+    .Wrap = wdFindContinue
+    .Replacement.ClearFormatting
+    .Font.Color = preBlack
+    .Replacement.Font.Color = wdColorBlack
+    .Execute Replace:=wdReplaceAll
+    .ClearFormatting
+    .Replacement.ClearFormatting
+  End With
+Else
+  pbShowHide = True
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Wrap = wdFindContinue
+    .Text = ""
+    .Font.Color = wdColorBlue
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Font.Color = preBlue
+    .Forward = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Wrap = wdFindContinue
+    .Font.Color = wdColorRed
+    .Replacement.Text = ""
+    .Replacement.Font.Color = preRed
+    .Execute Replace:=wdReplaceAll
+  
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Wrap = wdFindContinue
+    .Font.Color = wdColorBlack
+    .Replacement.Text = ""
+    .Replacement.Font.Color = preBlack
+    .Execute Replace:=wdReplaceAll
+  
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Font.Color = wdColorBlack
+    .Replacement.Text = ""
+    .Replacement.Font.Color = preBlack
+    .Execute Replace:=wdReplaceAll
+  
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ChrW(160)
+    .Replacement.Text = ""
+    .Replacement.Font.Underline = False
+    .Execute Replace:=wdReplaceAll
+  
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^p"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Font.Color = wdColorBlack
+    .Execute Replace:=wdReplaceAll
+    .ClearFormatting
+    .Replacement.ClearFormatting
+  End With
+End If
+End Sub
+

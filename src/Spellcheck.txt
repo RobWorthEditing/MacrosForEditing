@@ -1,0 +1,8 @@
+Sub Spellcheck()
+' Paul Beverley - Version 06.12.10
+' Run a spellcheck
+' F7
+If Selection.LanguageID = wdEnglishUS Then beep
+ActiveDocument.CheckSpelling
+End Sub
+

@@ -1,0 +1,19 @@
+Sub ListUcase()
+' Paul Beverley - Version 07.01.10
+' Upper case initial letter of list item
+Selection.End = Selection.Start
+With Selection.Find
+  .Text = "^0149^t"
+  .Replacement.Text = ""
+  .Format = False
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute
+End With
+
+Selection.MoveRight Unit:=wdCharacter, Count:=1, Extend:=wdExtend
+Selection.Range.Case = wdUpperCase
+' Now remove selection
+Selection.Collapse wdCollapseEnd
+End Sub
+

@@ -1,0 +1,47 @@
+Sub InitialSwapper()
+' Paul Beverley - Version 16.01.21
+' Swaps initials and surname
+
+commaAtEnd = False
+
+Selection.Collapse wdCollapseStart
+
+' Find end of surname
+Selection.MoveEndUntil cset:=" ", Count:=wdForward
+Selection.Start = Selection.End - 1
+If Selection = "," Then Selection.MoveEnd , -1
+surnameEnd = Selection.End
+Selection.MoveStartUntil cset:=" ", Count:=wdBackward
+If commaAtEnd Then Selection.MoveEnd , -1
+mySurname = Selection
+lenSurname = Len(Selection)
+endInitials = Selection.Start - 1
+foundEnd = False
+Do
+  startInitials = Selection.Start
+  Selection.MoveLeft wdWord, 1
+  Selection.End = startInitials
+  Debug.Print Selection & "|"
+  If Selection = "and " Then foundEnd = True
+  If Selection = "& " Then foundEnd = True
+  If Selection = ", " Then foundEnd = True
+  If Selection = "., " Then foundEnd = True
+  If Len(Selection) > 3 Then
+    foundEnd = True
+    Do While InStr(" ", Left(Selection.Text, 1)) = 0
+      Selection.MoveStart , 1
+      DoEvents
+    Loop
+    startInitials = Selection.Start + 1
+  End If
+  Selection.Collapse wdCollapseStart
+Loop Until foundEnd
+Selection.End = endInitials
+Selection.Start = startInitials
+myInitials = Selection
+Selection.End = surnameEnd
+myNewName = mySurname & ", " & myInitials
+' If commaAtEnd Then myNewName = myNewName & ","
+Selection.TypeText Text:=mySurname & ", " & myInitials
+End Sub
+

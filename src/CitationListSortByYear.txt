@@ -1,0 +1,59 @@
+Sub CitationListSortByYear()
+' Paul Beverley - Version 16.01.21
+' Sorts items in a citation list in the text by date.
+
+sortReversed = True
+
+If Selection.Start = Selection.End Then
+  Selection.MoveStartUntil cset:="(", Count:=wdBackward
+  Selection.MoveEndUntil cset:=")", Count:=wdForward
+Else
+  theEnd = Selection.End
+  Selection.Collapse wdCollapseStart
+  Selection.Expand wdWord
+  theStart = Selection.Start
+  Selection.End = theEnd
+  Selection.Collapse wdCollapseEnd
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Start = theStart
+End If
+
+myList = Selection
+myDelim = ", "
+If InStr(myList, ";") > 0 Then myDelim = "; "
+
+myBits = Split(myList, myDelim)
+lastItem = UBound(myBits)
+ReDim myGroup(lastItem) As String
+myGroup = myBits
+
+For i = 0 To lastItem
+  txt = myGroup(i)
+  myYear = Right(txt, 5)
+  myGroup(i) = myYear & Left(txt, Len(txt) - 5)
+Next i
+
+If sortReversed Then
+  WordBasic.SortArray myGroup(), 1
+Else
+  WordBasic.SortArray myGroup(), 0
+End If
+
+For i = 0 To lastItem
+  txt = myGroup(i)
+  myYear = Left(txt, 5)
+  myGroup(i) = Mid(txt, 6) & myYear
+Next i
+
+tempStr = ""
+For i = 0 To lastItem - 1
+  tempStr = tempStr & myGroup(i) & myDelim
+Next i
+tempStr = tempStr & myGroup(i)
+Selection.TypeText tempStr
+End Sub
+

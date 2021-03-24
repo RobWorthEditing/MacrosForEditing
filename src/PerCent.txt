@@ -1,0 +1,16 @@
+Sub PerCent()
+' Paul Beverley - Version 25.02.13
+' Change percent symbol to words
+
+Do
+  Selection.MoveRight Unit:=wdCharacter, Count:=1
+Loop Until Selection = "%"
+Selection.MoveEnd wdCharacter, 1
+
+If Selection.LanguageID = wdEnglishUK Then
+  Selection.TypeText Text:=" per cent"
+Else
+  Selection.TypeText Text:=" percent"
+End If
+End Sub
+

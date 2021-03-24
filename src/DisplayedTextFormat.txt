@@ -1,0 +1,44 @@
+Sub DisplayedTextFormat()
+' Paul Beverley - Version 28.03.17
+' Removes quotes and romanises (and trims trailing spaces)
+
+removeItalic = True
+
+myDeletables = " '""" & ChrW(8216) & ChrW(8217) & _
+     ChrW(8220) & ChrW(8221) & Chr(9)
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Selection.Expand wdParagraph
+If removeItalic = True Then Selection.range.Font.Italic = False
+Selection.End = Selection.Start + 1
+If InStr(myDeletables, Selection) > 0 Then Selection.Delete
+Selection.Collapse wdCollapseStart
+Selection.End = Selection.Start + 1
+If InStr(myDeletables, Selection) > 0 Then Selection.Delete
+Selection.Collapse wdCollapseStart
+Selection.TypeText Text:="<DQ>"
+
+Selection.Expand wdParagraph
+theEnd = Selection.End
+Selection.Start = theEnd - 2
+Selection.End = theEnd - 1
+If InStr(myDeletables, Selection) > 0 Then Selection.Delete
+For i = 1 To 5
+  Selection.MoveStart , -1
+  Selection.End = Selection.Start + 1
+  If InStr(myDeletables, Selection) > 0 Then Selection.Delete
+Next i
+Selection.Expand wdParagraph
+With Selection.ParagraphFormat
+  .SpaceBeforeAuto = False
+  .SpaceAfterAuto = False
+  .FirstLineIndent = CentimetersToPoints(-0)
+End With
+
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 1
+Selection.TypeText Text:="</DQ>"
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

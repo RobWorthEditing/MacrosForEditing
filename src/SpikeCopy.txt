@@ -1,0 +1,8 @@
+Sub SpikeCopy()
+' Paul Beverley - Version 26.02.11
+' Copy to spike
+
+NormalTemplate.AutoTextEntries.AppendToSpike Range:=Selection.Range
+WordBasic.EditUnDo
+End Sub
+

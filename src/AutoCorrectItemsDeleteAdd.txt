@@ -1,0 +1,35 @@
+Sub AutoCorrectItemsDeleteAdd()
+' Paul Beverley - Version 03.01.17
+' Optionally deletes all items, then adds new items
+
+myResponse = MsgBox("Delete all existing autocorrect list?", vbQuestion _
+        + vbYesNoCancel, "Autocorrect Item Replacer")
+If myResponse = vbYes Then
+  totItems = Application.AutoCorrect.Entries.Count
+  For i = totItems To 1 Step -1
+    Application.AutoCorrect.Entries(i).Delete
+  Next i
+End If
+
+myResponse = MsgBox("Add in these autocorrect items?", vbQuestion _
+        + vbYesNoCancel, "Autocorrect Item Replacer")
+If myResponse = vbCancel Or myResponse = vbNo Then Exit Sub
+
+myItemCount = Application.AutoCorrect.Entries.Count
+myCount = 0
+For Each myPara In ActiveDocument.Paragraphs
+  myText = Replace(myPara.range.Text, vbCr, "")
+  tabPos = InStr(myText, vbTab)
+  If tabPos > 0 Then
+    myReplaceThis = Left(myText, tabPos - 1)
+    myWithThis = Mid(myText, tabPos + 1, (Len(myText) - 1))
+    If Len(myReplaceThis) > 0 And Len(myWithThis) > 0 Then _
+      Application.AutoCorrect.Entries.Add myReplaceThis, myWithThis
+      myCount = myCount + 1
+  End If
+Next
+
+MsgBox ("A total of " & myCount & " entries have been added," & vbCr _
+     & "making a total of " & Application.AutoCorrect.Entries.Count)
+End Sub
+

@@ -1,0 +1,53 @@
+Sub LongParagraphHighlighter()
+' Paul Beverley - Version 25.03.20
+' Highlights all paragraphs more than a certain length
+
+checkWordsCount = True
+mediumWordsLength = 100
+myWordsColourMed = wdYellow
+megaWordsLength = 150
+myWordsColourMega = wdBrightGreen
+
+checkSentsCount = True
+mediumSentsLength = 6
+mySentsColourMed = wdColorBlue
+megaSentsLength = 9
+mySentsColourMega = wdColorRed
+
+
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+For Each myPara In ActiveDocument.Paragraphs
+  If checkWordsCount = True Then
+    If myPara.range.Words.Count > megaWordsLength Then
+      myPara.range.HighlightColorIndex = myWordsColourMega
+      myPara.range.Select
+    Else
+      If myPara.range.Words.Count > mediumWordsLength Then
+        myPara.range.HighlightColorIndex = myWordsColourMed
+        myPara.range.Select
+      End If
+    End If
+  End If
+  DoEvents
+  
+  If checkSentsCount = True Then
+    If myPara.range.Sentences.Count > megaSentsLength Then
+      myPara.range.Font.Color = mySentsColourMega
+      myPara.range.Select
+      Selection.Collapse wdCollapseEnd
+    Else
+      If myPara.range.Sentences.Count > mediumSentsLength Then
+        myPara.range.Font.Color = mySentsColourMed
+        myPara.range.Select
+        Selection.Collapse wdCollapseEnd
+      End If
+    End If
+  End If
+  DoEvents
+Next
+ActiveDocument.TrackRevisions = nowTrack
+Beep
+End Sub
+

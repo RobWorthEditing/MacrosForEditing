@@ -1,0 +1,71 @@
+Sub FontLister()
+' Paul Beverley - Version 08.09.17
+' Lists all font names in selected text or whole file
+
+' stopWhenFound = False
+stopWhenFound = True
+
+If Selection.Start = Selection.End Then
+  doAll = True
+  Set rng = ActiveDocument.Content
+Else
+  doAll = False
+  Set rng = Selection.range.Duplicate
+End If
+
+CR = vbCr
+fontList = CR
+If doAll = True Then
+  For Each myPara In rng.Paragraphs
+    nm = myPara.range.Font.Name
+    If nm > "" Then
+      If InStr(fontList, nm) = 0 Then
+        fontList = fontList & nm & CR
+        If stopWhenFound = True Then myPara.range.Select: MsgBox nm
+      End If
+    Else
+      For Each wd In myPara.range.Words
+        nm = wd.Font.Name
+        If nm > "" Then
+          If InStr(fontList, nm) = 0 Then
+            fontList = fontList & nm & CR
+            If stopWhenFound = True Then
+              wd.Select
+              MsgBox nm
+            End If
+          End If
+        Else
+          For Each ch In wd.Characters
+            nm = ch.Font.Name
+            If InStr(fontList, nm) = 0 Then
+              fontList = fontList & nm & CR
+              If stopWhenFound = True Then ch.Select: MsgBox nm
+            End If
+          Next ch
+        End If
+      Next wd
+    End If
+  Next myPara
+  myTrack = ActiveDocument.TrackRevisions
+  ActiveDocument.TrackRevisions = False
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText Text:=CR
+  Selection.Start = 0
+  nmlFont = ActiveDocument.Styles(wdStyleNormal).Font.Name
+  Selection.Font.Name = nmlFont
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText Text:=fontList
+  Selection.Start = 0
+  Selection.Sort SortOrder:=wdSortOrderAscending
+  Selection.range.HighlightColorIndex = wdNoHighlight
+  Selection.HomeKey Unit:=wdStory
+  ActiveDocument.TrackRevisions = myTrack
+Else
+  For Each ch In rng.Characters
+    nm = ch.Font.Name
+    If InStr(fontList, nm) = 0 Then fontList = fontList & nm & CR
+  Next ch
+  MsgBox fontList
+End If
+End Sub
+

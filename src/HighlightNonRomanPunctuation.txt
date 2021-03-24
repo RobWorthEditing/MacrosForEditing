@@ -1,0 +1,38 @@
+Sub HighlightNonRomanPunctuation()
+' Paul Beverley - Version 25.03.20
+' Highlights non-roman punctuation
+
+myItalic = wdGray25
+myBold = wdGray25
+
+mySymbols = "[,.:\!\?]"
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myItalic
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = mySymbols
+  .Font.Italic = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+Options.DefaultHighlightColorIndex = myBold
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = mySymbols
+  .Font.Italic = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

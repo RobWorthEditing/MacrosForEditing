@@ -1,0 +1,13 @@
+Sub FReditSwap()
+' Paul Beverley - Version 20.01.16
+' Swaps the two sides of a FRedit item
+
+Selection.Expand wdParagraph
+Selection.MoveEnd , -1
+allText = Selection
+padPos = InStr(allText, ChrW(124))
+allText = Mid(allText, padPos + 1) & ChrW(124) & Left(allText, padPos - 1)
+Selection.TypeText allText
+Selection.MoveRight wdWord, 1
+End Sub
+

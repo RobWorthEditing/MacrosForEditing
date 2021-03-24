@@ -1,0 +1,32 @@
+Sub ItaliciseOneVariable()
+' Paul Beverley - Version 06.04.16
+' Run along to find the next single alpha char and italicise it
+' (but if a selection is made, italicise all alphas)
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+If Selection.Start <> Selection.End Then
+  Selection.Font.Italic = False
+  n = Len(Selection)
+  Set rng = Selection.range
+  For i = 1 To n
+    myTest = rng.Characters(i)
+    If UCase(myTest) <> LCase(myTest) Then
+      rng.Characters(i).Font.Italic = True
+    End If
+  Next i
+  Selection.Collapse wdCollapseEnd
+  ActiveDocument.TrackRevisions = myTrack
+  Exit Sub
+End If
+sdfg = Asc(Selection)
+Do While LCase(Selection) = UCase(Selection) And Asc(Selection) <> 40
+  Selection.MoveRight , 1
+Loop
+Selection.MoveEnd , 1
+Selection.Font.Italic = True
+Selection.Collapse wdCollapseEnd
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

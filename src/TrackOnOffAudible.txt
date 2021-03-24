@@ -1,0 +1,15 @@
+Sub TrackOnOffAudible()
+' Paul Beverley - Version 26.02.11
+' Track on/off with audio feedback
+' <Ctrl-alt-num-/>
+
+ActiveDocument.TrackRevisions = Not ActiveDocument.TrackRevisions
+Beep
+myTime = Timer
+If ActiveDocument.TrackRevisions = True Then
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+End If
+End Sub
+

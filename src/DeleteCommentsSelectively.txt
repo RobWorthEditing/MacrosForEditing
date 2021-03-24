@@ -1,0 +1,17 @@
+Sub DeleteCommentsSelectively()
+' Paul Beverley - Version 10.02.21
+' Accepts track changes of specific author/editor
+
+' deleteName = "Microsoft"
+deleteName = "Paul Beverley"
+
+For Each cm In ActiveDocument.Comments
+  If InStr(cm.Author, deleteName) > 0 Then
+  cm.Scope.Select
+    cm.Delete
+  End If
+  DoEvents
+Next cm
+Beep
+End Sub
+

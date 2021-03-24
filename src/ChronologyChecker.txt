@@ -1,0 +1,194 @@
+Sub ChronologyChecker()
+' Paul Beverley - Version 19.02.18
+' Copies paragraphs containing date references into a new file
+
+' Case sensitive
+myColour_1 = wdYellow
+myWords_1 = "Monday, Tuesday, Wednesday, Thursday, Friday,"
+myWords_1 = myWords_1 & "Saturday, Sunday,"
+
+myColour_2 = wdBrightGreen
+myWords_2 = "January, February, April, June, July, August,"
+myWords_2 = myWords_2 & "September, October, November, December"
+
+' Case insensitive
+myColour_3 = wdYellow
+myWords_3 = "years old, tomorrow, next day, morning, evening, week, month"
+
+' Case insensitive + whole word
+myColour_4 = wdYellow
+myWords_4 = "age, aged"
+
+' Case sensitive AND whole word
+myColour_5 = wdBrightGreen
+myWords_5 = "May, March, Mon, Tue, Tues, Wed, Weds, Thu, Thurs, Fri, Sat, Sun"
+
+' For years
+myColour_6 = wdTurquoise
+
+multiSpace = 4
+myWords_1 = Replace(myWords_1, " ", "")
+myWords_1 = Replace("," & myWords_1 & ",", ",,", ",")
+myWords_2 = Replace(myWords_2, " ", "")
+myWords_2 = Replace("," & myWords_2 & ",", ",,", ",")
+myWords_3 = Replace(myWords_3, " ", "")
+myWords_3 = Replace("," & myWords_3 & ",", ",,", ",")
+myWords_4 = Replace(myWords_4, " ", "")
+myWords_4 = Replace("," & myWords_4 & ",", ",,", ",")
+myWords_5 = Replace(myWords_5, " ", "")
+myWords_5 = Replace("," & myWords_5 & ",", ",,", ",")
+allWords = Replace(myWords_1 & myWords_2 & myWords_3 & myWords_4 _
+     & myWords_5, ",,", ",")
+For i = 1 To multiSpace
+  sp = sp & vbCr
+Next i
+Set rng = ActiveDocument.Content
+Documents.Add
+For Each myPara In rng.Paragraphs
+  copyIt = False
+  For Each wd In myPara.range.Words
+    DoEvents
+    myWd = Trim(wd.Text)
+    myTest = "," & LCase(myWd) & ","
+    If InStr(LCase(allWords), myTest) > 0 Then
+      copyIt = True
+      Exit For
+    End If
+    If Len(myWd) = 4 And LCase(myWd) = UCase(myWd) Then
+    ' Is the first character 1 or 2?
+      isYear = (InStr("12", Left(myWd, 1)) > 0)
+    ' Are the other three characters digits 0-9?
+      For i = 2 To 4
+        j = Asc(Mid(myWd, i)) - 48
+        If j < 0 Or j > 9 Then isYear = False
+      Next i
+      If isYear = True Then
+        copyIt = True
+        Exit For
+      End If
+    End If
+  Next wd
+  
+  If copyIt Then
+    myPara.range.Copy
+    Selection.Paste
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=sp
+    DoEvents
+  End If
+Next myPara
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Dates context" & vbCr & vbCr
+ActiveDocument.Paragraphs(1).range.Style = "Heading 2"
+Selection.MoveLeft , 2
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour_1
+ActiveDocument.Content.HighlightColorIndex = wdNoHighlight
+myWd = Split(myWords_1, ",")
+For i = 1 To UBound(myWd) - 1
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myWd(i)
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchCase = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Next i
+
+myWd = Split(myWords_2, ",")
+Options.DefaultHighlightColorIndex = myColour_2
+For i = 1 To UBound(myWd) - 1
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myWd(i)
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchCase = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Next i
+
+myWd = Split(myWords_3, ",")
+Options.DefaultHighlightColorIndex = myColour_3
+For i = 1 To UBound(myWd) - 1
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myWd(i)
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Next i
+
+myWd = Split(myWords_4, ",")
+Options.DefaultHighlightColorIndex = myColour_4
+For i = 1 To UBound(myWd) - 1
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myWd(i)
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchCase = False
+    .MatchWholeWord = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Next i
+
+myWd = Split(myWords_5, ",")
+Options.DefaultHighlightColorIndex = myColour_5
+For i = 1 To UBound(myWd) - 1
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myWd(i)
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchCase = True
+    .MatchWholeWord = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Next i
+
+Options.DefaultHighlightColorIndex = myColour_6
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "<[12][0-9]{3}>"
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchCase = True
+    .MatchWholeWord = False
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+Options.DefaultHighlightColorIndex = oldColour
+
+For i = ActiveDocument.Paragraphs.Count To 2 Step -1
+  Set myPara = ActiveDocument.Paragraphs(i).range
+  If Len(myPara.Text) > 1 And myPara.HighlightColorIndex = wdNoHighlight Then
+    myPara.Select
+    Selection.MoveEnd , multiSpace
+    Selection.Delete
+  End If
+Next i
+End Sub
+

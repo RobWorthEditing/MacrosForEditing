@@ -1,0 +1,11 @@
+Sub OpenMySize()
+' Paul Beverley - Version 03.11.17
+' Opens the window to a particular size, position and magnification
+
+ActiveDocument.ActiveWindow.WindowState = wdWindowStateNormal
+Application.Move Left:=1440, Top:=2
+Application.Resize Width:=1425, Height:=780
+ActiveDocument.ActiveWindow.WindowState = wdWindowStateMaximize
+ActiveWindow.ActivePane.View.Zoom.Percentage = 200
+End Sub
+

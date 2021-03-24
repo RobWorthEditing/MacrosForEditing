@@ -1,0 +1,6 @@
+Sub RibbonMinMax()
+' Paul Beverley - Version 18.12.14
+' Toggle between maximize and minimize of the ribbon
+ActiveWindow.ToggleRibbon
+End Sub
+

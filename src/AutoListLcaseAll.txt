@@ -1,0 +1,19 @@
+Sub AutoListLcaseAll()
+' Paul Beverley - Version 30.01.12
+' Lowercase initial letter of all auto-bulleted/numbered list items
+If Selection.End - Selection.Start < 3 Then
+  myResponse = MsgBox("Whole document?!", vbQuestion + vbYesNo, "Lowercase initial letters")
+  If myResponse = vbNo Then Exit Sub
+  Set rng = ActiveDocument.Content
+  Else
+  Set rng = Selection.Range
+End If
+For Each myPara In rng.Paragraphs
+  If Len(myPara) > 1 Then
+    Set myChar = myPara.Range
+    myChar.End = myChar.Start + 1
+    myChar.Case = wdLowerCase
+  End If
+Next myPara
+End Sub
+

@@ -1,0 +1,15 @@
+Sub CharToAcute()
+' Paul Beverley - Version 01.02.21
+' Adds an acute accent to the next vowel
+
+myChars = "aeiouAEIOU"
+myAccents = ChrW(225) & ChrW(233) & ChrW(237) & ChrW(243) _
+     & ChrW(250) & ChrW(193) & ChrW(201) & ChrW(205) _
+     & ChrW(211) & ChrW(218)
+
+Selection.MoveUntil cset:=myChars, Count:=wdForward
+Selection.MoveEnd , 1
+charPos = InStr(myChars, Selection)
+Selection.TypeText Mid(myAccents, charPos, 1)
+End Sub
+

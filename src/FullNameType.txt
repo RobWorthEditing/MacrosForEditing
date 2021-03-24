@@ -1,0 +1,6 @@
+Sub FullNameType()
+' Paul Beverley - Version 31.03.11
+' Types out the full filename of the open file
+Selection.TypeText Text:=vbCrLf & ActiveDocument.FullName & vbCrLf
+End Sub
+

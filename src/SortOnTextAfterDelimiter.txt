@@ -1,0 +1,65 @@
+Sub SortOnTextAfterDelimiter()
+' Paul Beverley - Version 28.10.17
+' Sorts the selected list based on second 'field'
+
+If Selection.End = Selection.Start Then
+  myResponse = MsgBox("Sort the whole file?", _
+       vbQuestion + vbYesNo)
+  If myResponse = vbNo Then Exit Sub
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "[^13]{2,}"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "^p"
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Else
+  Set rng = Selection.range.Duplicate
+End If
+
+myChar = InputBox("Sort character?" & vbCr, "List sorter")
+
+If Len(myChar) > 0 Then
+  Select Case myChar
+    Case ChrW(8211): myChar = "^="
+    Case ChrW(8212): myChar = "^+"
+  End Select
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myChar
+    .Wrap = wdFindStop
+    .Replacement.Text = myChar & "|" & vbTab
+    .Forward = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+rng.Sort FieldNumber:="Field 2"
+  
+If Len(myChar) > 0 Then
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Wrap = wdFindStop
+    .Text = myChar & "|" & vbTab
+    .Replacement.Text = myChar
+    .Forward = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+End Sub
+

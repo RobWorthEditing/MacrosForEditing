@@ -1,0 +1,65 @@
+Sub MacroFetch()
+' Paul Beverley - Version 21.02.21
+' Fetches the macro named in the clipboard or at the cursor
+
+Application.ScreenUpdating = False
+Documents.Add
+Selection.Paste
+theClip = ActiveDocument.Content.Text
+If Len(theClip) > 30 Then theClip = "??": ' Impossible macro name
+ActiveDocument.Close SaveChanges:=False
+Application.ScreenUpdating = True
+
+clipHasMacro = True
+ch1 = Left(theClip, 1)
+If LCase(ch1) = ch1 Then clipHasMacro = False
+For i = 1 To Len(theClip) - 3
+  ch = Mid(theClip, i, 1)
+  If LCase(ch) = UCase(ch) Then
+    clipHasMacro = False
+    Exit For
+  End If
+  DoEvents
+Next i
+
+If clipHasMacro = True And Len(theClip) > 2 Then
+  myMacroName = theClip
+  myFolder = Left(myMacroName, 1)
+  myFullName = "http://www.wordmacrotools.com/macros/" & _
+       myFolder & "/" & myMacroName
+  ActiveDocument.FollowHyperlink Address:=myFullName
+End If
+
+Selection.Collapse wdCollapseEnd
+Selection.Expand wdWord
+If Len(Selection) < 3 Then
+  Selection.MoveLeft , 3
+  Selection.Expand wdWord
+End If
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+myMacroName = Selection
+
+gotMacro = True
+ch1 = Left(myMacroName, 1)
+If LCase(ch1) = ch1 Then gotMacro = False
+For i = 1 To Len(myMacroName) - 3
+  ch = Mid(myMacroName, i, 1)
+  If LCase(ch) = UCase(ch) Then
+    gotMacro = False
+    Exit For
+  End If
+  DoEvents
+Next i
+
+If Len(myMacroName) > 3 And gotMacro = True Then
+  myFolder = Left(myMacroName, 1)
+  myFullName = "http://www.wordmacrotools.com/macros/" & _
+       myFolder & "/" & myMacroName
+  ActiveDocument.FollowHyperlink Address:=myFullName
+End If
+ShowVisualBasicEditor = True
+End Sub
+

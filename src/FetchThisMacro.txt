@@ -1,0 +1,50 @@
+Sub FetchThisMacro()
+' Paul Beverley - Version 27.01.13
+' Find and copy the current macro
+
+stripOff = False
+
+' Find the macro title
+Selection.Paragraphs(1).Range.Select
+Selection.MoveEnd wdCharacter, -1
+myMacroName = Selection
+Selection.Start = Selection.End
+
+' Look down to find that macro name
+Set rng = ActiveDocument.Content
+rng.Start = Selection.End
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myMacroName
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+' Copy the macro
+myMacroStart = rng.Start
+rng.Start = rng.End
+rng.End = ActiveDocument.Content.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^pEnd S" & "ub"
+  .Wrap = False
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+End With
+rng.Start = myMacroStart
+rng.Copy
+
+' Create a new file and paste in the macro
+Documents.Add DocumentType:=wdNewBlankDocument
+Selection.Paste
+
+If stripOff = False Then Selection.HomeKey Unit:=wdStory: Exit Sub
+
+' Strip off the Sub and End Sub 

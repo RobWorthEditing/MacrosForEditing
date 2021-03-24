@@ -1,0 +1,188 @@
+Sub MultiFileReferenceCollator()
+' Paul Beverley - Version 13.12.17
+' Collects all references (or foot/endnotes) from multiple files
+
+collectNotes = True
+
+' refTitle = "^pReferences^p"
+refTitle = "<H1>References"
+
+Dim allMyFiles(200) As String
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+CR = vbCr
+CR2 = CR & CR
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  myResponse = MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "Multifile Text Collection")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.Count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+  myResponse = MsgBox("Collect formatted text " & _
+       "from ALL the files in" & " directory:" & dirName & _
+       " ?", vbQuestion + vbYesNoCancel, "Multifile Word")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  myResponse = MsgBox("Collect formatted text " & moreText & _
+       "from the files listed here?", vbQuestion + vbYesNoCancel, _
+       "Multifile Word")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+' Now pick up formatted text from all the files
+Set theseRefsDoc = Documents.Add
+Set theseRefsRng = ActiveDocument.Content
+Set allRefsDoc = Documents.Add
+Set allRefsRng = ActiveDocument.Content
+For i = 1 To numFiles
+  thisFile = myFolder & myDelimiter & allMyFiles(i)
+  Set thisdoc = Application.Documents.Open(FileName:=thisFile)
+  thisFileName = thisdoc.Name
+  dotPos = InStr(thisFileName, ".")
+  thisFileName = Left(thisFileName, dotPos - 1)
+  ActiveDocument.TrackRevisions = False
+  fnNum = ActiveDocument.Footnotes.Count
+  enNum = ActiveDocument.Endnotes.Count
+  
+  If collectNotes = True Then
+    If fnNum > 0 Then
+      Set thisRng = thisdoc.StoryRanges(wdFootnotesStory)
+      StatusBar = allMyFiles(i)
+      theseRefsRng.FormattedText = thisRng.FormattedText
+      DoEvents
+    End If
+  
+    If enNum > 0 Then
+      Set thisRng = thisdoc.StoryRanges(wdEndnotesStory)
+      StatusBar = allMyFiles(i)
+      theseRefsRng.FormattedText = thisRng.FormattedText
+      DoEvents
+    End If
+  Else
+    Selection.HomeKey Unit:=wdStory
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = refTitle
+      .MatchCase = False
+      .MatchWildcards = False
+      .Execute
+    End With
+    If Selection.Find.Found Then
+      Selection.Collapse wdCollapseEnd
+      Selection.Start = 0
+      Selection.Delete
+      With Selection.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = "[^12^13]\<"
+        .MatchCase = False
+        .MatchWildcards = True
+        .Execute
+      End With
+      If Selection.Find.Found Then
+        myStart = Selection.Start + 1
+        Selection.EndKey Unit:=wdStory
+        Selection.Start = myStart
+        Selection.Delete
+      End If
+      DoEvents
+    End If
+    theseRefsRng.Collapse wdCollapseEnd
+    theseRefsRng.FormattedText = thisdoc.Content.FormattedText
+  End If
+  With theseRefsRng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "([!^13])^13"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1 [" & thisFileName & "]^p"
+    .Forward = True
+    .MatchCase = False
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  allRefsRng.Collapse wdCollapseEnd
+  allRefsRng.FormattedText = theseRefsRng.FormattedText
+  thisdoc.Close SaveChanges:=wdDoNotSaveChanges
+  theseRefsRng.Text = ""
+Next i
+allRefsDoc.Activate
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "^m"
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+rng.Sort SortOrder:=wdSortOrderAscending
+rng.InsertAfter Text:=vbCr
+For Each myPara In ActiveDocument.Paragraphs
+  ch = myPara.range.Characters(1)
+  If LCase(ch) <> UCase(ch) Then
+    myPara.range.Select
+    Selection.Collapse wdCollapseStart
+    Exit For
+  End If
+Next myPara
+Selection.Start = 0
+Selection.Delete
+theseRefsDoc.Close SaveChanges:=wdDoNotSaveChanges
+allRefsDoc.Activate
+Selection.HomeKey Unit:=wdStory
+End Sub
+

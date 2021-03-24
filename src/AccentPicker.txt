@@ -1,0 +1,9 @@
+Sub AccentPicker()
+' Paul Beverley - Version 10.05.11
+' Call up the Insert Symbol window set to accented characters
+
+Selection.TypeText Text:=Chr(224)
+Selection.MoveStart wdCharacter, -1
+Application.Run MacroName:="InsertSymbol"
+End Sub
+

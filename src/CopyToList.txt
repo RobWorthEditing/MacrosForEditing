@@ -1,0 +1,89 @@
+Sub CopyToList()
+' Paul Beverley - Version 16.01.21
+' Copies selected text into a list file
+
+keyWord = "list"
+' keyWord = "sheet"
+
+wordsToAvoid = "switch"
+' wordsToAvoid = "FRedit,switch"
+
+copyWholePara = True
+copyWholePara = False
+includeFormatting = True
+
+addReturn = True
+addBlankLine = True
+addBlankLine = False
+
+goBackToSource = True
+alwaysCopyAtEnd = False
+
+
+Set thisDoc = ActiveDocument
+wds = Split("," & LCase(wordsToAvoid), ",")
+
+If Selection.Start = Selection.End Then
+  If copyWholePara = True Then
+    Selection.Expand wdParagraph
+  Else
+    Selection.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+  End If
+End If
+Set sourceText = Selection.Range
+gottaList = False
+For Each myDoc In Application.Documents
+  thisName = myDoc.Name
+  nm = LCase(thisName)
+  gottaList = False
+  If InStr(nm, LCase(keyWord)) > 0 Then gottaList = True
+  For i = 1 To UBound(wds)
+    If InStr(nm, wds(i)) > 0 Then gottaList = False
+  Next i
+  If gottaList = True Then
+    myDoc.Activate
+    Exit For
+  End If
+Next myDoc
+
+If gottaList = False Then
+  Beep
+  MsgBox "Can't find a list."
+  Exit Sub
+End If
+
+If alwaysCopyAtEnd = True Then
+  Selection.EndKey Unit:=wdStory
+Else
+  hereNow = Selection.Start
+  Selection.Expand wdParagraph
+  If Selection.Start = hereNow Then Selection.Collapse wdCollapseStart
+  If Len(Selection) = 1 Then
+    Selection.Collapse wdCollapseStart
+  Else
+    Selection.Collapse wdCollapseEnd
+  End If
+End If
+
+
+If includeFormatting = True Then
+  Selection.Range.FormattedText = sourceText.FormattedText
+Else
+  Selection.Text = sourceText.Text
+End If
+
+Selection.MoveRight , Len(sourceText)
+
+If InStr(sourceText, vbCr) = 0 Then
+  Selection.TypeText vbCr
+End If
+If addBlankLine = True Then
+  Selection.TypeText vbCr
+End If
+If goBackToSource = True Then thisDoc.Activate
+End Sub
+

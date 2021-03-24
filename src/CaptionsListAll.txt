@@ -1,0 +1,46 @@
+Sub CaptionsListAll()
+' Paul Beverley - Version 13.09.19
+' Lists all paragraphs with bold Figure, Table, Box
+
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.FormattedText = rng.FormattedText
+
+Set rng = ActiveDocument.Content
+rng.HighlightColorIndex = wdYellow
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[FTB][iao][gbx][ul ]"
+  .Font.Bold = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  rng.Expand wdParagraph
+  rng.HighlightColorIndex = wdNoHighlight
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+Beep
+End Sub
+

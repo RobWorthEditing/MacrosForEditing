@@ -1,0 +1,46 @@
+Sub FieldsUnlink()
+' Paul Beverley - Version 09.05.19
+' Selective field removal
+
+doubleCheck = False
+
+If doubleCheck = True Then
+  myResponse = MsgBox("Unlink all field except equations?", vbQuestion + vbYesNo)
+  If myResponse = vbNo Then Exit Sub
+End If
+
+myCount = ActiveDocument.Fields.Count
+' Do main text first
+For Each fld In ActiveDocument.Fields
+  If fld.Type <> 58 Then
+    fld.Unlink
+    i = i + 1
+    myCount = myCount - 1
+    StatusBar = "Links:  " & Str(myCount)
+  End If
+Next fld
+
+' Now do the textboxes, if there are any
+If ActiveDocument.Shapes.Count > 0 Then
+  For shp = 1 To ActiveDocument.Shapes.Count
+  ' Only check the text box if it has any text in it
+    If ActiveDocument.Shapes(shp).Type <> 24 And _
+         ActiveDocument.Shapes(shp).Type <> 3 Then
+      If ActiveDocument.Shapes(shp).TextFrame.hasText Then
+        Set rng = ActiveDocument.Shapes(shp).TextFrame.TextRange
+        For Each fld In rng.Fields
+          If fld.Type <> 58 Then
+            fld.Unlink
+            i = i + 1
+            myCount = myCount - 1
+            StatusBar = "Links:  " & Str(myCount)
+          End If
+        Next fld
+      End If
+    End If
+  Next shp
+End If
+StatusBar = ""
+MsgBox ("Fields unlinked: " & Str(i))
+End Sub
+

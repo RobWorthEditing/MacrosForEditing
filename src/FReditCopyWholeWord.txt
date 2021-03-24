@@ -1,0 +1,22 @@
+Sub FReditCopyWholeWord()
+' Paul Beverley - Version 17.01.12
+' Create FRedit item for whole-word F&R
+
+Selection.Paragraphs(1).Range.Select
+tabPos = InStr(Selection, Chr(9))
+If tabPos > 0 Then
+  Selection.MoveStart wdCharacter, tabPos - 1
+  Selection.MoveEnd , -1
+  Selection.Delete
+  Selection.Paragraphs(1).Range.Select
+End If
+Selection.MoveEnd , -1
+Selection.Copy
+Selection.Collapse wdCollapseStart
+Selection.TypeText Text:="~<"
+Selection.EndKey Unit:=wdLine
+Selection.TypeText Text:=">" & ChrW(124)
+Selection.Paste
+Selection.MoveRight Unit:=wdCharacter, Count:=1
+End Sub
+

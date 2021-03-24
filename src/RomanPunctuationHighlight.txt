@@ -1,0 +1,25 @@
+Sub RomanPunctuationHighlight()
+' Paul Beverley - Version 04.01.18
+' Finds roman punctuation that follows italic text
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Italic = True
+  .Wrap = wdFindStop
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd , 1
+  If LCase(rng) = UCase(rng) And rng <> " " Then
+    rng.HighlightColorIndex = wdGray25
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+End Sub
+

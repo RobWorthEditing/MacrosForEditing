@@ -1,0 +1,7 @@
+Sub SelectParagraph()
+' Paul Beverley - Version 24.11.10
+' Selects current paragraph
+
+Selection.Expand wdParagraph
+End Sub
+

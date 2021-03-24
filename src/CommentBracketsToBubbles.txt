@@ -1,0 +1,37 @@
+Sub CommentBracketsToBubbles()
+' Paul Beverley - Version 26.05.18
+' Copies text in square brackets and into comment bubbles
+
+deleteOriginalComments = True
+carryFormatting = False
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\[*\]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  Set cmt = Selection.Comments.Add(range:=rng)
+  If carryFormatting = True Then
+    cmt.range.FormattedText = rng.FormattedText
+  Else
+    cmt.range.Text = rng.Text
+  End If
+  numChars = cmt.range.Characters.Count
+  cmt.range.Characters(numChars) = ""
+  cmt.range.Characters(1) = ""
+  If deleteOriginalComments Then rng.Cut
+  rng.Find.Execute
+Loop
+MsgBox "Comments copied: " & myCount
+End Sub
+

@@ -1,0 +1,30 @@
+Sub IndentLeftSelector()
+' Paul Beverley - Version 18.02.13
+' Set left indent settings to specific values
+
+myValues = "0,0.5,1,-1,-0.5,0"
+' myValues = "0,-1,1,0"
+' myValues = "0,1.27,-1.27"
+ myValues = "1"
+
+Dim myValue(10)
+myValues = myValues & ","
+myValues = Replace(myValues, ",,", ",")
+numItems = Len(myValues) - Len(Replace(myValues, ",", ""))
+myValues = myValues & Left(myValues, InStr(myValues, ",") - 1) & ","
+
+For i = 0 To numItems
+  leftText = Left(myValues, InStr(myValues, ",") - 1)
+  myValue(i) = Val(leftText)
+  myValues = Mid(myValues, Len(leftText) + 2)
+Next i
+myValue(i + 1) = myValue(0)
+indentNow = PointsToCentimeters(Selection.ParagraphFormat.LeftIndent)
+indentNow = Int(indentNow * 100 + 0.5) / 100
+
+For i = 0 To numItems
+  If myValue(i) = indentNow Then Exit For
+Next i
+Selection.ParagraphFormat.LeftIndent = CentimetersToPoints(myValue(i + 1))
+End Sub
+

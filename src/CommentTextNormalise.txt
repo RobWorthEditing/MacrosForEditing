@@ -1,0 +1,14 @@
+Sub CommentTextNormalise()
+' Paul Beverley - Version 21.01.15
+' Get rid of "funny effects" in the comment boxes
+
+With ActiveDocument.Styles("Comment Text")
+  .LanguageID = wdEnglishUK
+  .AutomaticallyUpdate = False
+  .BaseStyle = "Normal"
+  .NextParagraphStyle = "Comment Text"
+  .Font.Name = "Times New Roman"
+  .Font.Size = 10
+End With
+End Sub
+

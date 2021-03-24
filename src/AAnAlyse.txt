@@ -1,0 +1,158 @@
+Sub AAnAlyse()
+' Paul Beverley - Version 16.01.21
+' Check a's and an's for agreement with following word
+
+OKwithA = ",europe,european,once,one,underline,unknown,unspaced,"
+OKwithA = OKwithA & ",uniaxial,uniaxially,uniform,uniformly,"
+OKwithA = OKwithA & ",unique,uniquely,unit,unitarian,united,"
+OKwithA = OKwithA & ",university,union,united,universe,"
+OKwithA = OKwithA & ",universal,universally,unilateral,unilaterally,"
+OKwithA = OKwithA & ",uppercase,useful,usefully,useless,uselessly,user,"
+OKwithA = OKwithA & ",usual,usually,,utility,utilities,utilitiarian,"
+OKwithA = OKwithA & ",utilization,utilisation,"
+
+OKwithAn = ",hour,hourly,honest,honestly,honor,honour,honorary,"
+OKwithAn = OKwithAn & ",honorarium,honorific,"
+
+strongColour = wdBrightGreen
+mutedColour = wdGray25
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[anA]{1,2}>"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+OKwithA = "," & OKwithA & ","
+OKwithAn = "," & OKwithAn & ","
+qts = "'""" & ChrW(8216) & ChrW(8220)
+
+Do While rng.Find.Found = True
+  endNow = rng.End
+  startArticle = rng.Start
+  article = LCase(rng)
+  rng.Start = endNow + 1
+  rng.End = endNow + 2
+  aOK = True
+  If Len(rng) > 0 Then
+    nextCharacter = Chr(Asc(rng))
+  Else
+    nextCharacter = ""
+  End If
+  rng.Expand wdWord
+  nextWord = rng
+
+  ' Check for quotes before and after
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+  If nextCharacter = "'" Then
+    rng.Start = rng.Start + 1
+    nextWord = rng
+    If Len(rng) > 0 Then
+      nextCharacter = Chr(Asc(rng))
+    Else
+      nextCharacter = ""
+    End If
+  End If
+  
+  ' Check for apostrophe-s
+  aposPosn = InStr(nextWord, ChrW(8217)) + InStr(nextWord, "'")
+  If aposPosn > 0 Then rng.End = rng.Start + aposPosn - 1
+  nextWord = rng
+  
+  ' Check for close quotes
+  If InStr(qts, nextWord) > 0 Then
+    rng.Collapse wdCollapseEnd
+    rng.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+      rng.MoveEnd , -1
+      DoEvents
+    Loop
+    nextWord = rng
+    If Len(rng) > 0 Then
+      nextCharacter = Chr(Asc(rng))
+    Else
+      nextCharacter = ""
+    End If
+  End If
+  endWord = rng.End
+  
+  ' Main check for agreement
+  If LCase(nextWord) <> UCase(nextWord) Then
+    If article = "a" Then
+      aOK = InStr("aAeEiIoO", nextCharacter) = 0
+    Else
+      aOK = InStr("aAeEiIoO", nextCharacter) > 0
+    End If
+    
+    ' Check single-letter words
+    If Len(nextWord) = 1 Then
+      If InStr("AaEeFfHhIiLlMmNnOoRrSsXx", nextCharacter) > 0 Then
+        aOK = (article = "an")
+      Else
+        aOK = (article = "a")
+      End If
+    End If
+    
+    rng.Start = startArticle
+    rng.End = endWord
+
+    ' Check words from lists above that are exceptions
+    testWord = "," & LCase(nextWord) & ","
+    If InStr(OKwithA, testWord) > 0 Then
+      If article = "a" Then aOK = True Else aOK = False
+    End If
+  
+    If InStr(OKwithAn, testWord) > 0 Then
+      If article = "an" Then aOK = True Else aOK = False
+    End If
+    
+    ' Ignore people with the initial 'A.'
+    If InStr(rng, ".") > 0 Then
+      aOK = True
+      nextWord = "xxx"
+    End If
+
+    ' Now highlight definite error
+    If aOK = False Then
+      rng.HighlightColorIndex = strongColour
+      rng.Select
+    End If
+  
+    ' Reduce highlight strength for acronyms
+    ' that might not be wrong
+    If UCase(nextWord) = nextWord And Len(nextWord) > 1 Then
+      If InStr("FHLMRSX", nextCharacter) > 0 Then
+        If LCase(article) = "an" Then
+          rng.HighlightColorIndex = mutedColour
+        Else
+          rng.HighlightColorIndex = strongColour
+        End If
+      End If
+      If InStr("U", nextCharacter) > 0 Then
+        If LCase(article) = "an" Then
+          rng.HighlightColorIndex = strongColour
+        Else
+          rng.HighlightColorIndex = mutedColour
+        End If
+      End If
+      Selection.Collapse wdCollapseEnd
+    End If
+  End If
+    rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Beep
+End Sub
+

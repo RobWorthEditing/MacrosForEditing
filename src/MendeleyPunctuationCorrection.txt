@@ -1,0 +1,28 @@
+Sub MendeleyPunctuationCorrection()
+' Paul Beverley - Version 13.09.19
+' Moves punctuation marks to before the note indicator
+
+For i = 1 To ActiveDocument.Fields.Count
+  Set fld = ActiveDocument.Fields(i)
+  tp = fld.Type
+  If tp = 81 Then
+    fld.Select
+    st = Selection.Start
+    Set rng = ActiveDocument.range(st, st)
+    Selection.MoveRight , 2
+    Do While Selection.Start > st + 2
+      st = Selection.Start
+      Selection.MoveRight , 2
+    Loop
+    Set rngpun = ActiveDocument.range(st - 1, st)
+    rngpun.Select
+    pun = Selection.Text
+    If InStr(",.?!:;", pun) > 0 Then
+      rng.InsertBefore pun
+      rngpun.Delete
+    End If
+  End If
+Next i
+Beep
+End Sub
+

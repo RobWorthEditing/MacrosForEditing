@@ -1,0 +1,25 @@
+Sub FileLister()
+' Paul Beverley - Version 19.09.18
+' Lists all files in a folder
+
+showAllFiles = True
+
+myResponse = MsgBox("Navigate to chosen folder; then click 'Cancel'" _
+    , , "FileLister")
+Dialogs(wdDialogFileOpen).Show
+dirPath = CurDir()
+ChDir dirPath
+' Read the names of all the files in this directory
+myFile = Dir(CurDir() & Application.PathSeparator)
+Documents.Add
+numFiles = 0
+Do While myFile <> ""
+  If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 _
+       Or showAllFiles Then Selection.TypeText myFile & vbCr
+  myFile = Dir()
+Loop
+Selection.HomeKey Unit:=wdStory
+Selection.InsertAfter Text:=dirPath & vbCr & vbCr
+Selection.Collapse wdCollapseStart
+End Sub
+

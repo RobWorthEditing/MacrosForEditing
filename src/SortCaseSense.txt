@@ -1,0 +1,35 @@
+Sub SortCaseSense()
+' Paul Beverley - Version 17.02.11
+' Sort into separate lists: Lcase/Ucase
+' <ctrl-alt-shift-S>
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13([A-Z])"
+  .Replacement.Text = "^pzzzz\1"
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Format = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zzzz"
+  .Replacement.Text = ""
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Format = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+Selection.HomeKey Unit:=wdStory
+End Sub
+

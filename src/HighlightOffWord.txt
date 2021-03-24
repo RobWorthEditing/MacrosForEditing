@@ -1,0 +1,109 @@
+Sub HighlightOffWord()
+' Paul Beverley - Version 16.01.21
+' Remove highlight from all occurrences of this word
+
+doNotes = True
+
+' Select current word
+If Selection.Start = Selection.End Then Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+theWord = Trim(Replace(Selection, ChrW(160), " "))
+theWord = Replace(theWord, ChrW(8217) & "s", "")
+theWord = Replace(theWord, Chr(9), "^t")
+Selection.Collapse wdCollapseEnd
+
+' Now unhighlight all occurrences of the word ...
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  If theWord <> "^t" Then
+    .Text = "<" & theWord & ">??"
+  Else
+    .Text = theWord
+  End If
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Replacement.Text = ""
+  .Replacement.Highlight = False
+  .Forward = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' ... and all occurrences of the word with a single (uncurly) quote
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<" & theWord & "'??"
+  .MatchWildcards = True
+  .Replacement.Text = ""
+  .Replacement.Highlight = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' ... and all occurrences of the word with a single quote
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<" & theWord & ChrW(8217) & "??"
+  .MatchWildcards = True
+  .Replacement.Text = ""
+  .Replacement.Highlight = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+If doNotes = True And ActiveDocument.Endnotes.Count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "<" & theWord & ">??"
+    .MatchWildcards = True
+    .Replacement.Text = ""
+    .Replacement.Highlight = False
+    .Forward = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  ' ... and all occurrences of the word with a single quote
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "<" & theWord & ChrW(8217) & "??"
+    .MatchWildcards = True
+    .Replacement.Text = ""
+    .Replacement.Highlight = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+If doNotes = True And ActiveDocument.Footnotes.Count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "<" & theWord & ">??"
+    .MatchWildcards = True
+    .Replacement.Text = ""
+    .Replacement.Highlight = False
+    .Forward = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  ' ... and all occurrences of the word with a single quote
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "<" & theWord & ChrW(8217) & "??"
+    .MatchWildcards = True
+    .Replacement.Text = ""
+    .Replacement.Highlight = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+End Sub
+

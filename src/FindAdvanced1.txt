@@ -1,0 +1,10 @@
+Sub FindAdvanced1()
+' Paul Beverley - Version 22.02.11
+' Call up Advanced Find dialog box
+
+With Dialogs(wdDialogEditFind)
+  .MatchCase = True
+  .Show
+End With
+End Sub
+

@@ -1,0 +1,58 @@
+Sub DuplicatesRemove()
+' Paul Beverley - Version 10.07.19
+' Remove duplicate items from a list
+
+anyCase = True
+
+' Exchange rogue linefeed (ascii 10)
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^10"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+If Selection.End = Selection.Start Then
+  myResponse = MsgBox("Remove duplicates from the WHOLE file?", _
+       vbQuestion + vbYesNo)
+  If myResponse = vbNo Then Exit Sub
+  listEnd = ActiveDocument.Paragraphs.Count
+  listStart = 1
+Else
+  myStart = Selection.Start
+  myEnd = Selection.End
+    For j = 1 To ActiveDocument.Paragraphs.Count
+      If ActiveDocument.Paragraphs(j).range.Start > myStart Then Exit For
+    Next j
+    listStart = j - 1
+    For j = ActiveDocument.Paragraphs.Count To 1 Step -1
+      If ActiveDocument.Paragraphs(j).range.Start < myEnd Then Exit For
+    Next j
+    listEnd = j
+End If
+
+For j = listEnd To listStart + 1 Step -1
+  Set rng1 = ActiveDocument.Paragraphs(j).range
+  Set rng2 = ActiveDocument.Paragraphs(j - 1).range
+  If anyCase = True Then
+    r1 = LCase(rng1)
+    r2 = LCase(rng2)
+  Else
+    r1 = rng1
+    r2 = rng2
+  End If
+  If r1 = r2 Then rng1.Delete
+  StatusBar = "Lines to go: " & Str(j)
+  DoEvents
+Next j
+StatusBar = ""
+ActiveDocument.Paragraphs(listStart).range.Select
+Selection.End = Selection.Start
+End Sub
+

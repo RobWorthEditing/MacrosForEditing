@@ -1,0 +1,36 @@
+Sub EmailFormatter()
+' Paul Beverley - Version 05.11.13
+' Format paragraphs in an email
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^11"
+  .Wrap = wdFindContinue
+  .Replacement.Text = " "
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .Text = "^p^p"
+  .Replacement.Text = "zczc"
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .Text = "^p"
+  .Replacement.Text = " "
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .Text = "zczc"
+  .Replacement.Text = "^p^p"
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+

@@ -1,0 +1,19 @@
+Sub CurlyQuotesToggle()
+' Paul Beverley - Version 18.02.20
+' Switches on auto curly quotes on and off
+
+If Options.AutoFormatAsYouTypeReplaceQuotes Then
+  Options.AutoFormatAsYouTypeReplaceQuotes = False
+  Options.AutoFormatReplaceQuotes = False
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+Else
+  Options.AutoFormatAsYouTypeReplaceQuotes = True
+  Options.AutoFormatReplaceQuotes = True
+  Beep
+End If
+End Sub
+

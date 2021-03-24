@@ -1,0 +1,118 @@
+Sub PDFhardHyphenRestore()
+' Paul Beverley - Version 18.04.13
+' Hyphenate falsely concatenated words
+
+' Highlight the result?
+hyphColour = wdNoHighlight
+' or
+hyphColour = wdGray25
+
+minWordLen = 5
+
+' For diagnostic purposes use yellow
+singleColour = wdYellow
+singleColour = wdNoHighlight
+
+Set rng = ActiveDocument.Content
+langText = Languages(Selection.LanguageID).NameLocal
+Selection.HomeKey Unit:=wdStory
+
+timeNow = Timer
+For Each myPara In ActiveDocument.Paragraphs
+  Set rng = myPara.Range
+  rng.End = rng.End - 1
+  myWord = rng.Words.Last
+  myLen = Len(myWord)
+' If it's a spelling error...
+  If myLen > minWordLen Then
+    If Application.CheckSpelling(myWord, MainDictionary:=langText) _
+           = False Then
+      For i = 2 To myLen - 2
+        wordOne = Left(myWord, myLen - i)
+        If Application.CheckSpelling(wordOne, _
+               MainDictionary:=langText) = True Then
+          wordTwo = Right(myWord, i)
+          If Application.CheckSpelling(wordTwo, _
+                 MainDictionary:=langText) = True Then
+            myPara.Range.Select
+            Selection.MoveEnd , -1
+            Selection.Start = Selection.End - myLen
+            Selection.InsertBefore Text:="zczc"
+            Selection.Start = Selection.End - i
+            Selection.InsertBefore Text:="pqpq"
+            Exit For
+          End If
+        End If
+      Next i
+    End If
+  End If
+Next myPara
+
+' Now check all zczc
+myCount = 0
+oldColour = Options.DefaultHighlightColorIndex
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zczc*^13"
+  .Replacement.Text = ""
+  .MatchCase = False
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+myCount = 0
+Selection.HomeKey Unit:=wdStory
+While rng.Find.Found
+  rng.End = rng.End - 1
+  wholeBit = rng
+  pqpqWord = Replace(wholeBit, "zczc", "")
+  hyphWord = Replace(pqpqWord, "pqpq", "-")
+  singleWord = Replace(pqpqWord, "pqpq", "")
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .Text = hyphWord
+    .Execute
+  End With
+' Does the hyphenated Paul Beverley - Version occur anywhere else in the text?
+  If rng.Find.Found Then
+  ' If so, change it and highlight it
+    Set rng = ActiveDocument.Content
+    Options.DefaultHighlightColorIndex = hyphColour
+    myCount = myCount + 1
+    With rng.Find
+      .Text = wholeBit
+      .Replacement.Text = hyphWord
+      .MatchCase = False
+      .Replacement.Highlight = True
+      .Execute Replace:=wdReplaceAll
+    End With
+    StatusBar = "Hyphenating :  " & hyphWord
+  Else
+  ' If not restore the original word
+    Set rng = ActiveDocument.Content
+    Options.DefaultHighlightColorIndex = singleColour
+    With rng.Find
+      .Text = wholeBit
+      .Replacement.Text = singleWord
+      .MatchCase = False
+      .Replacement.Highlight = True
+      .Execute Replace:=wdReplaceAll
+    End With
+    StatusBar = "Not hyphenating :  " & singleWord
+  End If
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .Text = "zczc*^13"
+    .MatchCase = False
+    .MatchWildcards = True
+    .Execute
+  End With
+Wend
+Options.DefaultHighlightColorIndex = oldColour
+MsgBox "Changed:  " & myCount & "  different words."
+End Sub
+

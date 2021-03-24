@@ -1,0 +1,16 @@
+Sub SelectTheseWords()
+' Paul Beverley - Version 12.12.11
+' Extend selection to whole words
+
+Selection.MoveEnd Unit:=wdWord, Count:=1
+startWas = Selection.Start
+Selection.MoveStart Unit:=wdWord, Count:=-1
+startNow = Selection.Start
+Selection.MoveStart Unit:=wdWord, Count:=1
+If Selection.Start <> startWas Then Selection.Start = startNow
+Do While InStr(ChrW(8217) & " ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+End Sub
+

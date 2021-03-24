@@ -1,0 +1,40 @@
+Sub HighlightMultiAuthorCitations()
+' Paul Beverley - Version 09.06.17
+' Finds and highlights all the multi-author citations in the text
+
+myColour = wdYellow
+minDate = 1900
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\(*\)"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  endNow = rng.End
+  Set rng2 = rng.Duplicate
+  numYrs = 0
+  For Each wd In rng2.Words
+    If Val(wd.Text) > minDate Then
+      numYrs = numYrs + 1
+    End If
+  Next wd
+  If numYrs > 0 Then
+    txt = rng.Text
+    numCommas = Len(txt) - Len(Replace(txt, ",", ""))
+    If numCommas > numYrs Then rng.HighlightColorIndex = myColour
+  End If
+  rng.Start = endNow
+  rng.End = endNow
+  rng.Find.Execute
+Loop
+End Sub
+

@@ -1,0 +1,41 @@
+Sub SemicolonEndPara()
+' Paul Beverley - Version 09.02.11
+' Lowercase first character + add semicolon at end
+
+Selection.Paragraphs(1).Range.Select
+Selection.End = Selection.Start
+lineStart = Selection.Start
+startChar = Selection
+If LCase(startChar) <> startChar Then
+  Selection.Delete Unit:=wdCharacter, Count:=1
+  Selection.TypeText Text:=LCase(startChar)
+End If
+
+Selection.End = Selection.End + 3
+Selection.Start = Selection.Start + 2
+startChar = Selection
+If LCase(startChar) <> startChar Then
+  Selection.Delete Unit:=wdCharacter, Count:=1
+  Selection.TypeText Text:=LCase(startChar)
+End If
+
+Selection.Paragraphs(1).Range.Select
+Selection.Start = Selection.End - 2
+Selection.End = Selection.End - 1
+lastChar = Selection
+If lastChar = " " Then
+  Selection.Delete
+  Selection.Start = Selection.Start - 1
+  lastChar = Selection
+End If
+If LCase(lastChar) = UCase(lastChar) And lastChar <> ";" _
+    And lastChar <> ")" Then
+  Selection.Delete
+Selection.TypeText Text:=";"
+Else
+  Selection.MoveRight Unit:=wdCharacter, Count:=1
+Selection.TypeText Text:=";"
+End If
+Selection.MoveRight Unit:=wdCharacter, Count:=2
+End Sub
+

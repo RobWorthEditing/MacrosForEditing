@@ -1,0 +1,183 @@
+Sub HyphenationToFRedit()
+' Paul Beverley - Version 13.05.16
+' Create a FRedit list from a HyphenAlyse file
+
+makeListCaseInsensitive = True
+
+myList = "anti,eigen,hyper,inter,meta,mid,multi," _
+     & "non,over,post,pre,pseudo,quasi,semi,sub,super"
+
+cr = vbCr
+inAtable = Selection.Information(wdWithInTable)
+If Not (inAtable) Then GoTo ProperNouns
+wantBoth = (Selection.Start = Selection.End)
+Set rng = Selection.range
+Selection.Expand wdParagraph
+startCell = Replace(Selection.Text, Chr(7), "")
+startCell = Replace(startCell, Chr(13), "")
+isBlank = (Len(startCell) < 3)
+colNum = Selection.Cells(1).ColumnIndex
+
+Selection.Expand wdRow
+myCell = Split(Chr(7) & Selection, Chr(7))
+For i = 1 To 3
+  myCell(i) = Replace(myCell(i), Chr(13), "")
+Next i
+
+If Len(myCell(1)) > 2 Then
+  preWord = Selection.Words(1)
+  postWord = Trim(Selection.Words(3))
+Else
+  preWord = ""
+End If
+
+If preWord = "" And Len(myCell(2)) > 2 Then
+  Selection.Collapse wdCollapseStart
+  Selection.MoveRight wdCell, 1
+  preWord = Trim(Selection.Words(1))
+  postWord = Trim(Selection.Words(2))
+End If
+
+If preWord = "" Then
+  myList = "," & myList & ","
+  justWord = Trim(Left(myCell(3), InStr(myCell(3), ".") - 1))
+  For i = 3 To 6
+    preWord = Left(justWord, i)
+    If InStr(myList, "," & preWord & ",") > 0 Then Exit For
+  Next i
+  If i > 5 Then
+    Beep
+    MsgBox ("Can't find this prefix")
+    Exit Sub
+  End If
+  postWord = Replace(justWord, preWord, "")
+End If
+
+Select Case colNum
+  Case 1: myJoin = "-"
+  Case 2: myJoin = " "
+  Case 3: myJoin = ""
+  Case Else
+    Beep
+    MsgBox ("Something has gone wrong.")
+    Exit Sub
+End Select
+
+targetWord = preWord & myJoin & postWord
+oneWord = preWord & postWord
+hyphWord = preWord & "-" & postWord
+twoWords = preWord & " " & postWord
+
+myFRitem = ""
+If makeListCaseInsensitive = True Then
+  cs = ChrW(172)
+Else
+  cs = ""
+End If
+
+If wantBoth Then
+  If targetWord = oneWord Then
+    myFRitem = cs & twoWords & ChrW(124) & oneWord & cr & _
+         cs & hyphWord & ChrW(124) & oneWord & cr
+  End If
+  If targetWord = twoWords Then
+    myFRitem = cs & oneWord & ChrW(124) & twoWords & cr & _
+         cs & hyphWord & ChrW(124) & twoWords & cr
+  End If
+  If targetWord = hyphWord Then
+    myFRitem = cs & twoWords & ChrW(124) & hyphWord & cr & _
+         cs & oneWord & ChrW(124) & hyphWord & cr
+  End If
+Else
+  If targetWord = oneWord Then
+    If myCell(1) > "" Then
+      myFRitem = myFRitem & cs & hyphWord & ChrW(124) & oneWord & cr
+    End If
+    If myCell(2) > "" Then
+      myFRitem = myFRitem & cs & twoWords & ChrW(124) & oneWord & cr
+    End If
+    If InStr(myFRitem, ChrW(124)) = 0 Then
+      myFRitem = cs & hyphWord & ChrW(124) & oneWord & cr
+    End If
+  End If
+  If targetWord = twoWords Then
+    If myCell(1) > "" Then
+      myFRitem = cs & hyphWord & ChrW(124) & twoWords & cr
+    End If
+    If myCell(3) > "" Then
+      myFRitem = myFRitem & cs & oneWord & ChrW(124) & twoWords & cr
+    End If
+    If InStr(myFRitem, ChrW(124)) = 0 Then
+      myFRitem = cs & hyphWord & ChrW(124) & twoWords & cr
+    End If
+  End If
+  If targetWord = hyphWord Then
+    If myCell(2) > "" Then
+      myFRitem = cs & twoWords & ChrW(124) & hyphWord & cr
+    End If
+    If myCell(3) > "" Then
+      myFRitem = cs & oneWord & ChrW(124) & hyphWord & cr
+    End If
+    If InStr(myFRitem, ChrW(124)) = 0 Then
+      myFRitem = cs & oneWord & ChrW(124) & hyphWord & cr
+    End If
+  End If
+End If
+If myFRitem = "" Then
+  Beep
+  MsgBox ("For prefixes, place the cursor in a blank cell.")
+Else
+  gottaFReditList = False
+  Set thisDoc = ActiveDocument
+  For Each myWnd In Application.Windows
+    myWnd.Document.Activate
+    Set rng = ActiveDocument.Content
+  ' Finding a '|' in the first 250 characters means it's a list
+    rng.End = rng.Start + 250
+    If InStr(rng.Text, "|") > 0 Then
+      gottaFReditList = True
+      Exit For
+    End If
+  Next myWnd
+  If gottaFReditList = False Then
+    thisDoc.Activate
+    MsgBox "Can't find a FRedit list file"
+    Exit Sub
+  End If
+  Selection.Expand wdParagraph
+  If Len(Selection) > 1 Then Selection.Collapse wdCollapseEnd
+  Selection.TypeText Text:=myFRitem
+End If
+thisDoc.Activate
+Exit Sub
+
+ProperNouns:
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Selection.Expand wdWord
+myWord = Trim(Selection)
+myFRitem = myWord & "|" & myWord & vbCr
+
+gottaFReditList = False
+Set thisDoc = ActiveDocument
+For Each myWnd In Application.Windows
+  myWnd.Document.Activate
+  Set rng = ActiveDocument.Content
+' Finding a '|' in the first 250 characters means it's a list
+  rng.End = rng.Start + 250
+  If InStr(rng.Text, "|") > 0 Then
+    gottaFReditList = True
+    Exit For
+  End If
+Next myWnd
+If gottaFReditList = False Then
+  thisDoc.Activate
+  MsgBox "Can't find a FRedit list file"
+  Exit Sub
+End If
+Selection.Expand wdParagraph
+If Len(Selection) > 1 Then Selection.Collapse wdCollapseEnd
+Selection.TypeText Text:=myFRitem
+thisDoc.Activate
+End Sub
+

@@ -1,0 +1,31 @@
+Sub ItalicWordList()
+' Paul Beverley - Version 19.09.18
+' Creates a list of all words in italic
+
+Call CopyTextSimple
+
+Set rng = ActiveDocument.range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Italic = False
+  .Replacement.Text = "^p"
+  .Forward = True
+  .Wrap = wdFindContinue
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13{1,}"
+  .Replacement.Text = "^p"
+  .Forward = True
+  .Wrap = wdFindContinue
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+

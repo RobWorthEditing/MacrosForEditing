@@ -1,0 +1,73 @@
+Sub NumberParasAuto()
+' Paul Beverley - Version 21.05.11
+' Adds hierarchical section numbering
+
+addChapterNum = False
+chapWord = ""
+chapNum = 1
+
+' Make sure that page breaks are in Normal style
+Set rng = ActiveDocument.Content
+With rng.Find
+ .ClearFormatting
+ .Replacement.ClearFormatting
+ .Text = "^m"
+ .Replacement.Text = ""
+ .Forward = True
+ .MatchWildcards = False
+ .Execute Replace:=wdReplaceAll
+ .Replacement.Style = ActiveDocument.Styles(wdStyleNormal)
+End With
+
+h = "Heading "
+levelWas = 1
+chapNum = chapNum - 1
+myNum = Trim(Str(chapNum))
+For Each para In ActiveDocument.Paragraphs
+  para.Range.Select
+  head = Selection.Style
+  If head = "Heading 1" Then
+    head = ""
+    If Left(para.Range, Len(chapWord)) = chapWord Then
+      levelWas = 1
+      chapNum = chapNum + 1
+      myNum = Trim(Str(chapNum))
+      If addChapterNum = True Then para.Range.InsertBefore _
+           Text:=myNum & vbTab
+    End If
+  End If
+  If InStr(head, h) > 0 Then
+    levelNow = Val(Replace(head, h, ""))
+    If levelNow = levelWas Then
+      endNum = Val(Right(myNum, 2))
+      If endNum < 1 Then endNum = Val(Right(myNum, 1))
+      newEndNum = endNum + 1
+      myNum = Replace(myNum & "!", Trim(Str(endNum)) & "!", Trim(Str(newEndNum)))
+    Else
+      If levelNow > levelWas Then
+        For i = 1 To levelNow - levelWas
+          myNum = myNum + ".1"
+        Next i
+      Else
+        For i = 1 To levelWas - levelNow
+          myNumPlus = myNum & "!"
+          temp = myNumPlus
+          temp = Right(temp, Len(temp) - InStr(temp, ".") - 1)
+          If Asc(temp) <> Asc(".") Then
+            temp = Right(temp, Len(temp) - 1)
+          End If
+        Next i
+        myNum = Replace(myNumPlus, temp, "")
+        endNum = Val(Right(myNum, 2))
+        If endNum < 1 Then endNum = Val(Right(myNum, 1))
+        newEndNum = endNum + 1
+        myNum = Replace(myNum & "!", Trim(Str(endNum)) & _
+               "!", Trim(Str(newEndNum)))
+      End If
+    End If
+    levelWas = levelNow
+    para.Range.InsertBefore Text:=myNum & vbTab
+  End If
+Next para
+End Sub
+

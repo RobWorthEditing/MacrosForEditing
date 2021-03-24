@@ -1,0 +1,50 @@
+Sub FormatNumbers()
+' Paul Beverley - Version 10.10.19
+' Formats number at cursor or numbers within a selection
+
+decimalFormat = "###,###,###,0.00"
+nonDecimalFormat = "###,###,###,0"
+fourDigitComma = False
+commaReplacement = ""
+' commaReplacement = ChrW(8201) ' thin space
+' commaReplacement = ChrW(160) ' non-breaking space
+
+If Selection.Start = Selection.End Then Selection.Expand wdCharacter
+Set allSelection = Selection.range.Duplicate
+
+Dim rng As range
+Do
+  myCount = myCount + 1
+  Selection.End = Selection.Start + 1
+  Set rng = Selection.range.Duplicate
+  ch = Selection.Text
+  If InStr("0123456789", ch) > 0 Then
+    rng.MoveStartWhile "0123456789.,", wdBackward
+    rng.MoveEndWhile "0123456789,."
+    If rng.Font.Superscript = 0 Then
+      dotPos = InStr(1, rng.Text, ".")
+      If dotPos > 0 Then
+        rng = Format(rng.Text, decimalFormat)
+        If dotPos = 5 And fourDigitComma = False Then
+          txt = rng.Text
+          newText = Left(txt, 1) & Mid(txt, 3)
+          rng.Text = newText
+        End If
+      Else
+        If Len(rng.Text) <> 4 Or fourDigitComma = True Then _
+          rng = Format(rng.Text, nonDecimalFormat)
+      End If
+      If commaReplacement > "" Then
+        newText = Replace(rng.Text, ",", commaReplacement)
+        rng.Text = newText
+      End If
+    Else
+      rng.HighlightColorIndex = wdBrightGreen
+    End If
+    rng.Collapse wdCollapseEnd
+    rng.Select
+  End If
+  Selection.MoveRight , 1
+Loop Until Selection.End > (allSelection.End - 1) Or myCount > 1000
+End Sub
+

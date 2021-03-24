@@ -1,0 +1,23 @@
+Sub TypeThinSpace()
+' Paul Beverley - Version 25.10.13
+' Types and highlights a thin space
+
+trackIt = False
+makeitColoured = False
+myColour = wdYellow
+makeNotSubSuper = True
+
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+Selection.TypeText ChrW(8201)
+Selection.MoveStart wdCharacter, -1
+If makeitColoured = True Then Selection.Range.HighlightColorIndex = myColour
+If Selection.Font.Name = "Symbol" Then Selection.Font.Name = "Times New Roman"
+If makeNotSubSuper = True Then
+  If Selection.Font.Subscript = True Then Selection.Font.Subscript = False
+  If Selection.Font.Superscript = True Then Selection.Font.Superscript = False
+End If
+Selection.Collapse wdCollapseEnd
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

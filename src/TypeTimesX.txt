@@ -1,0 +1,10 @@
+Sub TypeTimesX()
+' Paul Beverley - Version 25.09.18
+' Types '(×2)' then moves back to the number, ready to increase it
+
+Selection.Expand wdWord
+Selection.Collapse wdCollapseEnd
+Selection.TypeText Text:="(×2) "
+Selection.MoveLeft , 3
+End Sub
+

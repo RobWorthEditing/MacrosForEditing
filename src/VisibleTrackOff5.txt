@@ -1,0 +1,20 @@
+Sub VisibleTrackOff5()
+' Paul Beverley - Version 06.05.17
+' Visible trackchange reminder - selectable background colour
+
+r = 216: g = 216: b = 255
+
+ActiveDocument.TrackRevisions = Not ActiveDocument.TrackRevisions
+
+ActiveDocument.ActiveWindow.View.DisplayBackgrounds = True
+With ActiveDocument.Background.Fill
+  If ActiveDocument.TrackRevisions = False Then
+     .ForeColor.RGB = RGB(r, g, b)
+  Else
+     .ForeColor.RGB = RGB(255, 255, 255)
+  End If
+  .Visible = msoTrue
+  .Solid
+End With
+End Sub
+

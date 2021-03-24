@@ -1,0 +1,73 @@
+Sub HighlightPlus()
+' Paul Beverley - Version 27.10.17
+' Add highlight in a choice of colours
+
+Dim myCol(20)
+myCol(0) = wdNoHighlight
+myCol(1) = wdBrightGreen
+myCol(2) = wdYellow
+myCol(3) = wdTurquoise
+myCol(4) = wdPink
+myCol(5) = wdRed
+myCol(6) = wdGreen
+myCol(7) = wdDarkYellow
+myCol(9) = wdGray25
+myCol(8) = wdGray50
+myColTotal = 9
+
+' Remember track changes status, then switch it off
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Dim v As Variable, nowColour As Long
+varsExist = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "colNum" Then varsExist = True: Exit For
+Next v
+
+If varsExist = False Then
+  ActiveDocument.Variables.Add "selStart", 0
+  ActiveDocument.Variables.Add "selEnd", 0
+  ActiveDocument.Variables.Add "colNum", 0
+End If
+
+wasStart = ActiveDocument.Variables("selStart")
+wasEnd = ActiveDocument.Variables("selEnd")
+wasCol = ActiveDocument.Variables("colNum")
+' If no text is selected ...
+If Selection.Start = Selection.End Then
+  ' If the cursor is outside the area, give up
+  If Selection.Start < wasStart Or Selection.End > wasEnd Then
+    Selection.Expand wdWord
+    ActiveDocument.Variables("selStart") = Selection.Start
+    ActiveDocument.Variables("selEnd") = Selection.End
+    nowCol = 1
+  Else
+    ' Otherwise check the highlight colour
+    Selection.Start = wasStart
+    Selection.End = wasStart + 1
+    nowColour = Selection.range.HighlightColorIndex
+    If nowColour <> myCol(wasCol) Then
+      ' colour has changed, so go back to colour 1
+      nowCol = 1
+    Else
+      ' go to next colour
+      nowCol = wasCol + 1
+      If nowCol > myColTotal Then nowCol = 0
+    End If
+    Selection.End = wasEnd
+  End If
+Else:  ' if some text is selected ...
+  ' Record current selection range
+  ActiveDocument.Variables("selStart") = Selection.Start
+  ActiveDocument.Variables("selEnd") = Selection.End
+  nowCol = 1
+End If
+ActiveDocument.Variables("colNum") = nowCol
+Selection.range.HighlightColorIndex = myCol(nowCol)
+Selection.End = Selection.Start
+
+theEnd:
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

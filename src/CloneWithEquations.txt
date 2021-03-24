@@ -1,0 +1,238 @@
+Sub CloneWithEquations()
+' Paul Beverley - Version 01.09.16
+' Creates a clean copy of a file, including formatted equations
+
+doPrompts = False
+doPrompts = True
+
+numEqs = ActiveDocument.OMaths.Count
+Set rng = ActiveDocument.Content
+rng.Copy
+
+' Create new temporary document
+Documents.Add
+Set tempDoc = ActiveDocument
+Selection.Paste
+If doPrompts = True Then MsgBox "Whole text copied. Continue?"
+Selection.HomeKey unit:=wdStory
+If doPrompts = True Then MsgBox "Sure?"
+
+' Start working on the copy
+Selection.EndKey unit:=wdStory
+Selection.TypeText Text:=vbCr & vbCr & "----------" & vbCr
+
+' Copy all equations, in order, to the end of the file
+Set sc = ActiveDocument.Content
+For i = 1 To numEqs
+  sc.OMaths(i).range.Copy
+  Selection.EndKey unit:=wdStory
+  Selection.TypeText Text:="  " & vbCr
+  Selection.MoveLeft , 2
+  hereNow = Selection.Start
+  Selection.Paste
+  Selection.Start = hereNow
+  Selection.End = hereNow + 1
+  If Asc(Selection) = 11 Then Selection.Delete
+Next i
+
+' Delete each equation from the text, replacing with a marker
+For i = numEqs To 1 Step -1
+  ActiveDocument.OMaths(i).range.Select
+  Selection.Delete
+  Selection.TypeText "zczc" & Trim(Str(1000 + i))
+Next i
+
+' Find the equations and temporarily cut them out
+Set rng = ActiveDocument.Content
+theEnd = rng.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "----------"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+rng.Select
+rng.End = theEnd
+rng.Select
+rng.Cut
+
+' Add markers for all the required formatting elements
+' First italic
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Italic = True
+  .Replacement.Text = "pqpqi^&ipqpq"
+  .MatchWildcards = False
+  .MatchCase = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Bold
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Bold = True
+  .Replacement.Text = "pqpqb^&bpqpq"
+  .MatchWildcards = False
+  .MatchCase = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Superscript
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Superscript = True
+  .Replacement.Text = "pqpqs^&spqpq"
+  .MatchWildcards = False
+  .MatchCase = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Now put the equations back
+Selection.EndKey unit:=wdStory
+Selection.Paste
+
+If doPrompts = True Then MsgBox "Equations now copied to text. Continue?"
+Selection.EndKey unit:=wdStory
+If doPrompts = True Then MsgBox "Sure?"
+
+' Copy the whole of the temporary document
+Set sc = ActiveDocument.Content
+sc.Copy
+
+' Create new document and paste in TEXT only
+Documents.Add
+Set newDoc = ActiveDocument
+Selection.PasteSpecial DataType:=wdPasteText
+If doPrompts = True Then MsgBox "New doc opened. Continue?"
+Selection.HomeKey unit:=wdStory
+If doPrompts = True Then MsgBox "Sure?"
+
+' Now delete the useless text-only Paul Beverley - Version of the equations
+Set rng = ActiveDocument.Content
+theEnd = rng.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "----------"
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+End With
+rng.End = theEnd
+rng.Select
+Selection.Delete
+
+' Go back and get the formatted equations
+tempDoc.Activate
+Selection.HomeKey unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "----------"
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+End With
+Selection.End = ActiveDocument.Content.End
+Selection.Copy
+
+newDoc.Activate
+Selection.EndKey unit:=wdStory
+Selection.Paste
+If doPrompts = True Then MsgBox "Equations to be copied. Continue?"
+Selection.EndKey unit:=wdStory
+If doPrompts = True Then MsgBox "Continue?"
+
+' Copy the equations back into their original places
+For i = 1 To numEqs
+  ActiveDocument.OMaths(i).range.Select
+  Selection.Cut
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "zczc" & Trim(Str(1000 + i))
+    .Replacement.Text = ""
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceOne
+  End With
+  rng.Paste
+'  rng.Select
+'  Selection.Paste
+Next i
+
+' Restore formatting
+' First italic
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "pqpqi(*)ipqpq"
+  .Replacement.Text = "\1"
+  .Replacement.Font.Italic = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Bold
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "pqpqb(*)bpqpq"
+  .Replacement.Text = "\1"
+  .Replacement.Font.Bold = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Superscript
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "pqpqs(*)spqpq"
+  .Replacement.Text = "\1"
+  .Replacement.Font.Superscript = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+If doPrompts = True Then MsgBox "Finished!"
+Selection.HomeKey unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "----------"
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+End With
+Selection.End = ActiveDocument.Content.End
+Selection.Delete
+Selection.HomeKey unit:=wdStory
+
+tempDoc.Activate
+If doPrompts = False Then ActiveDocument.Close SaveChanges:=False
+newDoc.Activate
+numEqsNow = ActiveDocument.OMaths.Count
+
+MsgBox "Was: " & numEqs & "  Now: " & numEqsNow
+End Sub
+

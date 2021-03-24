@@ -1,0 +1,38 @@
+Sub TrackChangeCounter()
+' Paul Beverley - Version 22.04.20
+' Counts all the edits in a document
+
+On Error GoTo ErrorMsg
+Selection.HomeKey Unit:=wdStory
+i = 0
+xMax = 0
+wds = 0
+Do
+ j = 0
+  Do
+    Application.Run MacroName:="nextChangeOrComment"
+    DoEvents
+    j = j + 1
+  Loop While j < 1000 And _
+       Selection.Information(wdInCommentPane)
+  i = i + 1
+  wds = wds + Selection.Words.Count
+  xPos = Selection.Start
+  If xPos < xMax Then
+    Exit Do
+  Else
+    xMax = xPos
+  End If
+Loop Until 0
+Beep
+cmts = ActiveDocument.Comments.Count
+MsgBox "Edits: " & Trim(Str(i)) & vbCr & _
+     vbCr & "Words: " & Trim(Str(wds)) & vbCr & _
+     vbCr & "Comments: " & Trim(Str(cmts))
+Exit Sub
+
+ErrorMsg:
+MsgBox "Something's gone wrong. Please contact Paul if you want it fixing."
+Beep
+End Sub
+

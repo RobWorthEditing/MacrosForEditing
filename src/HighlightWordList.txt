@@ -1,0 +1,53 @@
+Sub HighlightWordList()
+' Paul Beverley - Version 27.01.17
+' Highlights (and/or colours) all the words/phrases in a list
+
+doWholeWordsOnly = False
+doMatchCase = True
+
+Set rng = ActiveDocument.Content
+gottaList = False
+For Each myWnd In Application.Windows
+  thisName = myWnd.Document.Name
+  If InStr(LCase(thisName), "list") > 0 Then
+    gottaList = True
+    Exit For
+  End If
+Next myWnd
+If gottaList = False Then MsgBox "Can't find a word list.": Exit Sub
+
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+For Each myPara In myWnd.Document.Paragraphs
+  myText = Replace(myPara.range.Text, vbCr, "")
+  If Left(myText, 1) = "#" Then
+    Beep
+    ActiveDocument.TrackRevisions = nowTrack
+    Exit Sub
+  End If
+  If Len(myText) > 1 And Left(myText, 1) <> "|" Then
+    thisHighlightColour = myPara.range.Characters(1).HighlightColorIndex
+    Options.DefaultHighlightColorIndex = thisHighlightColour
+    thisTextColour = myPara.range.Characters(1).Font.Color
+    myFind = myText
+    Set rng = ActiveDocument.Content
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Wrap = wdFindContinue
+      .Text = myFind
+      .Replacement.Text = "^&"
+      If thisHighlightColour > 0 Then .Replacement.Highlight = True
+      If thisTextColour > 0 Then .Replacement.Font.Color = thisTextColour
+      .MatchCase = doMatchCase
+      .MatchWildcards = False
+      .MatchWholeWord = doWholeWordsOnly
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+  DoEvents
+Next myPara
+Beep
+ActiveDocument.TrackRevisions = nowTrack
+End Sub
+

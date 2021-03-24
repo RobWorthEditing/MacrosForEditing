@@ -1,0 +1,63 @@
+Sub KeystrokesSaveAll()
+' Paul Beverley - Version 19.07.17
+' Creates a list of all user-defined keystrokes
+
+Documents.Add
+allKeys = ""
+For Each kb In KeyBindings
+  myCatNum = kb.KeyCategory
+  If myCatNum > 0 And myCatNum <> wdKeyCategoryPrefix Then
+    Select Case myCatNum
+      Case wdKeyCategorySymbol: myCat = "Symbol"
+      Case wdKeyCategoryFont: myCat = "Font"
+      Case wdKeyCategoryStyle: myCat = "Style"
+      Case wdKeyCategoryCommand: myCat = "Command"
+      Case wdKeyCategoryMacro: myCat = "Macro"
+      Case Else: myCat = "Unknown!"
+    End Select
+    cmd = kb.Command
+    allKeys = allKeys & myCat & vbTab & cmd & vbTab & kb.KeyString & vbCr
+  End If
+Next kb
+Selection.TypeText Text:=allKeys
+' Wait for repagination
+' Set rng = ActiveDocument.GoTo(what:=wdGoToBookmark, Name:="\EndOfDoc")
+
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending
+' Wait for repagination
+' Set rng = ActiveDocument.GoTo(what:=wdGoToBookmark, Name:="\EndOfDoc")
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Normal.NewMacros."
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.Color = wdColorGray25
+  .MatchCase = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "MathTypeCommands.UILib.MTCommand_"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.Color = wdColorGray25
+  .MatchCase = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+n = ActiveDocument.Paragraphs.Count
+Beep
+Selection.TypeText Text:="All key assignments" & _
+     vbCr & "Saved: " & n - 3 & vbCr
+End Sub
+

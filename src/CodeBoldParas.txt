@@ -1,0 +1,71 @@
+Sub CodeBoldParas()
+' Paul Beverley - Version 13.01.11
+' Tag/code every bold heading
+myCode1 = "<B>"
+myCode2 = "<A>"
+' If you don't want to change the numbered headings
+' to code 2, use myCode2 = ""
+
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+For Each para In ActiveDocument.Paragraphs
+  Set rng = para.Range
+  rng.End = rng.End - 1
+  If rng.Font.Bold = True Then
+    rng.End = rng.Start
+    rng.InsertAfter myCode1
+    rng.Select
+  End If
+Next para
+
+' And take out any examples of the code
+' being applied to a blank line
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myCode1 & "^p"
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Make sure there are no spaces at the beginnings
+' of coded lines
+With Selection.Find
+  .Replacement.ClearFormatting
+  .ClearFormatting
+  .Text = myCode1 & " "
+  .Replacement.Text = myCode1
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+
+' Optionally change the coding of any heading
+' that starts with a number
+If myCode2 > "" Then
+  mCod1 = Replace(myCode1, "<", "\<")
+  mCod1 = Replace(mCod1, ">", "\>")
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Text = mCod1 + "([0-9])"
+    .Replacement.Text = myCode2 & "\1"
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+' Now clear up
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchCase = False
+End With
+ActiveDocument.TrackRevisions = nowTrack
+End Sub
+

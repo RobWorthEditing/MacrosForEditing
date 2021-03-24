@@ -1,0 +1,22 @@
+Sub TableCellsInitialCaps()
+' Paul Beverley - Version 01.09.16
+' Applies an initial capital to every cell in the selected range
+
+trackIt = False
+
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+
+For Each myTable In Selection.range.Tables
+  For Each myCell In myTable.range.Cells
+    myText = Trim(Left(myCell.range, Len(myCell.range) - 2))
+    firstChar = Left(myText, 1)
+    newChar = UCase(firstChar)
+    If newChar <> firstChar Then
+      myCell.range = newChar & Mid(myText, 2)
+    End If
+  Next myCell
+Next myTable
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

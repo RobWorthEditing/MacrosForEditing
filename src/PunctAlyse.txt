@@ -1,0 +1,136 @@
+Sub PunctAlyse()
+' Paul Beverley - Version 18.10.11
+' Produces usage statistics of various punctuation
+
+Dim wasLen As Long
+CR = vbCrLf: CR2 = CR & CR
+
+Selection.WholeStory
+Selection.Copy
+Selection.HomeKey Unit:=wdStory
+Documents.Add
+' Selection.PasteAndFormat (wdFormatPlainText)
+Selection.PasteSpecial DataType:=wdPasteText
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Text = "[,.][0-9]"
+  .Replacement.Text = " 0"
+  .Replacement.Highlight = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+
+myResults = "Punctuation Use" & CR2
+
+wasLen = ActiveDocument.Range.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "."
+  .Replacement.Text = "^&!"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+pnts = ActiveDocument.Range.End - wasLen
+If pnts > 0 Then WordBasic.editunDo
+myResults = myResults & "Full points" & vbTab & Trim(Str(pnts)) & CR
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ","
+  .Replacement.Text = "^&!"
+  .Execute Replace:=wdReplaceAll
+End With
+coms = ActiveDocument.Range.End - wasLen
+If coms > 0 Then WordBasic.editunDo
+myResults = myResults & "Commas" & vbTab & Trim(Str(coms)) & CR
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ";"
+  .Replacement.Text = "^&!"
+  .Execute Replace:=wdReplaceAll
+End With
+semis = ActiveDocument.Range.End - wasLen
+If semis > 0 Then WordBasic.editunDo
+myResults = myResults & "Semicolons" & vbTab & Trim(Str(semis)) & CR
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ":"
+  .Replacement.Text = "^&!"
+  .Execute Replace:=wdReplaceAll
+End With
+colons = ActiveDocument.Range.End - wasLen
+If colons > 0 Then WordBasic.editunDo
+myResults = myResults & "Colons" & vbTab & Trim(Str(colons)) & CR
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "?"
+  .Replacement.Text = "^&!"
+  .Execute Replace:=wdReplaceAll
+End With
+qns = ActiveDocument.Range.End - wasLen
+If qns > 0 Then WordBasic.editunDo
+myResults = myResults & "Question marks" & vbTab & Trim(Str(qns)) & CR
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "!"
+  .Replacement.Text = "^&!"
+  .Execute Replace:=wdReplaceAll
+End With
+exclams = ActiveDocument.Range.End - wasLen
+If exclams > 0 Then WordBasic.editunDo
+myResults = myResults & "Exclamations" & vbTab & Trim(Str(exclams)) & CR2
+
+sentCount = pnts + qns + exclams
+commaFactor = Int(100 * coms / sentCount) / 10
+colonFactor = Int(1000 * colons / sentCount) / 10
+semiFactor = Int(1000 * semis / sentCount) / 10
+qnFactor = Int(1000 * qns / sentCount) / 10
+exclamFactor = Int(1000 * exclams / sentCount) / 10
+
+printMe = Trim(Str(commaFactor))
+If Left(printMe, 1) = "." Then printMe = "0" & printMe
+If InStr(printMe, ".") = 0 Then printMe = printMe & ".0"
+myResults = myResults & "Comma Factor" & vbTab & printMe & CR
+
+printMe = Trim(Str(semiFactor))
+If Left(printMe, 1) = "." Then printMe = "0" & printMe
+If InStr(printMe, ".") = 0 Then printMe = printMe & ".0"
+myResults = myResults & "Semicolon Factor" & vbTab & printMe & CR
+
+printMe = Trim(Str(colonFactor))
+If Left(printMe, 1) = "." Then printMe = "0" & printMe
+If InStr(printMe, ".") = 0 Then printMe = printMe & ".0"
+myResults = myResults & "Colon Factor" & vbTab & printMe & CR
+
+printMe = Trim(Str(qnFactor))
+If Left(printMe, 1) = "." Then printMe = "0" & printMe
+If InStr(printMe, ".") = 0 Then printMe = printMe & ".0"
+myResults = myResults & "Question Factor" & vbTab & printMe & CR
+
+printMe = Trim(Str(exclamFactor))
+If Left(printMe, 1) = "." Then printMe = "0" & printMe
+If InStr(printMe, ".") = 0 Then printMe = printMe & ".0"
+myResults = myResults & "Exclamation Factor" & vbTab & printMe & CR2
+
+Selection.WholeStory
+
+Selection.TypeText Text:=myResults
+Selection.WholeStory
+Selection.ParagraphFormat.TabStops.Add Position:=CentimetersToPoints(4)
+Selection.HomeKey Unit:=wdStory
+End Sub
+

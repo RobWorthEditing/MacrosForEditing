@@ -1,0 +1,25 @@
+Sub NoteJumper()
+' Paul Beverley - Version 21.05.12
+' Jump back and forth between notes and main text
+
+myStoryType = Selection.StoryType
+If (myStoryType = wdFootnotesStory Or myStoryType = wdEndnotesStory) Then
+   ActiveWindow.View.SeekView = wdSeekMainDocument
+Else
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^e"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  If ActiveDocument.Footnotes.Count >= 1 Then _
+      ActiveDocument.ActiveWindow.View.SeekView = wdSeekFootnotes
+  If ActiveDocument.Endnotes.Count >= 1 Then _
+      ActiveDocument.ActiveWindow.View.SeekView = wdSeekEndnotes
+End If
+End Sub
+

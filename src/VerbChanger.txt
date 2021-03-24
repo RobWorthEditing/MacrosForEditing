@@ -1,0 +1,72 @@
+Sub VerbChanger()
+' Paul Beverley - Version 16.01.21
+' Changes "(to) splodge" <-> "(of/for) splodging"
+
+preps = "to of for "
+useOf = (Selection.Start = Selection.End)
+If Asc(Selection) = 32 Then Selection.MoveRight , 1
+Selection.Expand wdWord
+wasWord = Selection
+
+' If it's a preposition, change it
+If InStr(preps, wasWord) > 0 Then
+  If wasWord = "to " Then
+    If useOf = True Then
+      newWord = "of "
+    Else
+      newWord = "for "
+    End If
+  End If
+  
+  If wasWord = "for " Or wasWord = "of " Then
+    newWord = "to "
+  End If
+  Selection.TypeText newWord
+  Selection.Expand wdWord
+End If
+
+Do While InStr(ChrW(8217) & ChrW(39) & " ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+theWord = Selection
+
+If Len(Selection) > 4 Then fiveChars = Right(Selection, 5)
+If Len(fiveChars) > 2 Then twoChars = Left(fiveChars, 2)
+
+If Right(Selection, 3) = "ing" Then
+' Remove 'ing' and try adding an 'e'
+  Selection.Start = Selection.End - 3
+  Selection.Delete
+  spellOK = Application.CheckSpelling(Left(theWord, Len(theWord) - 3))
+  If spellOK = False Then
+    If InStr("nn,rr,ll,tt,pp", twoChars) > 0 Then
+      Selection.MoveStart , -1
+      Selection.Delete
+    Else
+      If twoChars <> "el" Then Selection.TypeText "e"
+    End If
+  End If
+Else
+' Remove 'e' and try adding an 'ing'
+  Selection.Collapse wdCollapseEnd
+  Selection.MoveStart , -1
+  If Selection = "e" Then Selection.Delete: GoTo ing
+  Selection.MoveStart , -2
+  If Selection = "ies" Then Selection.TypeText "y": GoTo ing
+  Selection.MoveStart , 1
+  If Selection = "es" Then Selection.Delete: GoTo ing
+  If Selection = "ed" Then
+    spellOK = Application.CheckSpelling(Left(theWord, Len(theWord) - 2))
+    If spellOK = False And Len(theWord) > 4 Then Selection.Delete: GoTo ing
+  End If
+  twoChars = Selection
+  Selection.MoveStart , 1
+  If Selection = "s" And twoChars <> "ss" Then Selection.Delete
+  Selection.Collapse wdCollapseEnd
+ing:
+  Selection.TypeText "ing"
+  If InStr("an,ur,el,it", twoChars) > 0 Then Selection.MoveLeft , 3
+End If
+End Sub
+

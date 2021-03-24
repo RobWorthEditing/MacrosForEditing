@@ -1,0 +1,116 @@
+Sub CommentAdd()
+' Paul Beverley - Version 13.01.21
+' Adds a comment
+
+copySelectedText = True
+attrib1 = ""
+attrib2 = ""
+attrib1 = ""
+attrib2 = ""
+postText = ""
+addPageNum1 = False
+addLineNum1 = False
+addPageNum2 = False
+addLineNum2 = False
+highlightTheText = False
+textHighlightColour = wdYellow
+colourTheText = False
+textColour = wdColorBlue
+removeHighlight = True
+
+keepPaneOpen = False
+
+myStart = Selection.Start
+wasEnd = Selection.End
+Set rng = Selection.Range
+rng.Collapse wdCollapseEnd
+rng.MoveEnd , 1
+pageNum = rng.Information(wdActiveEndAdjustedPageNumber)
+lineNum = rng.Information(wdFirstCharacterLineNumber)
+If myStart <> wasEnd Then
+  If Right(Selection, 1) = Chr(32) Or Right(Selection, 1) = Chr(13) Then
+    Selection.MoveEnd wdCharacter, -1
+    wasEnd = wasEnd - 1
+  End If
+  
+  With ActiveWindow.View
+    showCmnts = .ShowComments
+    showInsDels = .ShowInsertionsAndDeletions
+    showFormats = .ShowFormatChanges
+    trackOnOffState = .ShowRevisionsAndComments
+  End With
+  myTrack = ActiveDocument.TrackRevisions
+  ActiveDocument.TrackRevisions = False
+
+' Either highlight it ...
+  If highlightTheText = True Then Selection.Range.HighlightColorIndex _
+       = textHighlightColour
+' And/or change the text colour to red
+  If colourTheText = True Then Selection.Font.Color = textColour
+' Now create the comment
+  Selection.Copy
+  Selection.Collapse wdCollapseEnd
+  Set rng = Selection.Range
+  Do
+    rng.MoveEnd , 1
+    DoEvents
+  Loop Until Right(rng.Text, 1) = Chr(13)
+Selection.End = rng.End
+  Selection.Collapse wdCollapseEnd
+  extraBitStart = Selection.Start
+  If addPageNum1 = True Then attrib1 = attrib1 & "(p. " & _
+       pageNum & ") "
+  If addLineNum1 = True Then attrib1 = attrib1 & "(line " & _
+       lineNum & ") "
+  Selection.TypeText attrib1
+  If copySelectedText = True Then
+  Selection.TypeText ChrW(8216) & ChrW(8217)
+  ' Move back to between the close and open quotes
+    Selection.MoveEnd wdCharacter, -1
+  ' Paste in a copy of the selected text
+     Selection.Paste
+  ' Move back past the close quote
+    Selection.MoveRight Count:=1
+  End If
+  If postText > "" Then
+    Selection.TypeText postText
+  Else
+    Selection.TypeText " " & ChrW(8211) & " "
+  End If
+  Selection.Start = extraBitStart
+' If wanted, unhighlight the text clear
+  If removeHighlight = True Then Selection.Range.HighlightColorIndex = wdAuto
+  Selection.Range.Revisions.AcceptAll
+  Selection.Font.Name = ActiveDocument.Styles(wdStyleNormal).Font.Name
+  Selection.Font.Size = ActiveDocument.Styles(wdStyleNormal).Font.Size
+  Selection.Cut
+  Selection.Start = myStart
+  Selection.End = wasEnd
+  Set cmt = Selection.Comments.Add(Range:=Selection.Range)
+  Selection.Paste
+  ActiveDocument.TrackRevisions = myTrack
+  With ActiveWindow.View
+    .ShowRevisionsAndComments = trackOnOffState
+    .ShowComments = showCmnts
+    .ShowInsertionsAndDeletions = showInsDels
+    .ShowFormatChanges = showFormats
+  End With
+Else
+  cmntText = attrib2
+  If addPageNum2 = True Then cmntText = cmntText & _
+       "(p. " & pageNum & ") "
+  If addLineNum2 = True Then cmntText = cmntText & _
+       "(line " & lineNum & ") "
+  Selection.MoveEnd , 1
+  Set cmt = Selection.Comments.Add(Range:=Selection.Range)
+  Selection.TypeText cmntText
+  Selection.HomeKey Unit:=wdLine
+  Selection.Fields.Unlink
+End If
+If keepPaneOpen = False Then ActiveWindow.ActivePane.Close
+cmt.Edit
+Selection.TypeText Text:=" "
+Selection.MoveStart , -1
+Selection.Cut
+End Sub
+

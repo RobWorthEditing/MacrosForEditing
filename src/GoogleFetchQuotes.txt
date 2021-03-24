@@ -1,0 +1,15 @@
+Sub GoogleFetchQuotes()
+' Paul Beverley - Version 08.08.20
+' Launches selected text - with quotes - on Google
+
+mySite = "http://www.google.co.uk/search?q="
+
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, vbCr, "")
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = "%22" & mySubject & "%22"
+ActiveDocument.FollowHyperlink Address:=mySite & mySubject
+Selection.Collapse wdCollapseEnd
+End Sub
+

@@ -1,0 +1,39 @@
+Sub DeleteRestOfSentence()
+' Paul Beverley - Version 14.01.21
+' Deletes from end of current word to the end of the sentence
+
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+myEnd = Selection.End
+Selection.Collapse wdCollapseEnd
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[.\!\?^13]"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+  DoEvents
+End With
+Selection.Collapse wdCollapseStart
+
+Selection.Start = myEnd
+qt = Selection.Characters(2)
+If qt = ChrW(8217) Or qt = ChrW(8221) Then
+  Selection.Delete
+  Selection.MoveRight , 1
+  Selection.TypeText Text:=qt
+Else
+  Selection.Delete
+End If
+End Sub
+

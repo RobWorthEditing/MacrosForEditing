@@ -1,0 +1,47 @@
+Sub SelectHighlightedText()
+' Paul Beverley - Version 05.09.11
+' Selects all text in a given highlight
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+' Find beginning to the nearest word
+nowCol = Selection.Range.HighlightColorIndex
+wasEnd = Selection.End
+Do
+  Selection.MoveStart wdWord, -1
+  Selection.MoveEnd wdWord, -1
+Loop Until Selection.Range.HighlightColorIndex <> nowCol
+Selection.MoveStart , -1
+
+' Find beginning to the nearest character
+Do
+  Selection.MoveStart , 1
+  Selection.MoveEnd , 1
+Loop Until Selection.Range.HighlightColorIndex = nowCol
+startHere = Selection.Start
+
+' Find end to the nearest word
+Selection.Start = wasEnd
+Selection.End = wasEnd
+Do
+  Selection.MoveEnd wdWord, 1
+  Selection.MoveStart wdWord, 1
+Loop Until Selection.Range.HighlightColorIndex <> nowCol
+Selection.MoveEnd , 1
+' Find end to the nearest character
+Do
+  Selection.MoveStart , -1
+  Selection.MoveEnd , -1
+Loop Until Selection.Range.HighlightColorIndex = nowCol
+Selection.Start = startHere
+
+' Now do to the highlighted text whatever you want
+' For example...
+
+'Selection.Range.HighlightColorIndex = wdNoHighlight
+
+'Selection.Font.Italic = wdToggle
+'Selection.Start = Selection.End
+ActiveDocument.TrackRevisions = nowTrack
+End Sub
+

@@ -1,0 +1,114 @@
+Sub NotesEmbed()
+' Paul Beverley - Version 04.02.21
+' Embed footnotes or endnotes
+
+Selection.HomeKey Unit:=wdLine
+If Selection <> "1" And Asc(Selection) <> 9 Then
+  myResponse = MsgBox("Is this the first line of the notes?", _
+        vbQuestion + vbYesNo)
+  If myResponse = vbNo Then Exit Sub
+End If
+
+With Selection.Find
+  .Text = "^p^p"
+  .Replacement.Text = "^p"
+  .Forward = True
+  .Wrap = wdFindStop
+  .Format = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+'Put a bookmark at the beginning of the footnotes
+ActiveDocument.Bookmarks.Add Name:="PBnoteStart"
+
+' Make sure there's a CR at the end of the file
+Selection.EndKey Unit:=wdStory
+Selection.TypeParagraph
+
+Do
+  Selection.GoTo what:=wdGoToBookmark, Name:="PBnoteStart"
+  ' Read the note number
+  myStart = Selection.Start
+  Selection.End = Selection.Start + 5
+  myText = Selection.Text
+  spPos = InStr(Selection, " ")
+  If spPos > 0 Then myText = Left(myText, spPos - 1)
+  tbPos = InStr(Selection, vbTab)
+  If tbPos > 0 Then myText = Left(myText, tbPos - 1)
+  myNote = Val(myText)
+
+  ' Give up if you've reached the end
+  If myNote = 0 Then Exit Do
+
+  ' Select the footnote
+  Selection.Start = myStart
+  Selection.End = myStart
+  Selection.MoveDown Unit:=wdParagraph, Count:=1, Extend:=wdExtend
+  myPara = Selection
+
+  ' If it's a blank line delete it and select the next paragraph
+  If Len(myPara) < 5 Then
+    Selection.Delete
+    Selection.MoveDown Unit:=wdParagraph, Count:=1, Extend:=wdExtend
+  End If
+
+  ' Find a tab or, if not, the first space, i.e. after the note number
+  spacePlace = InStr(myPara, Chr(9))
+  If spacePlace = 0 Then spacePlace = InStr(myPara, " ")
+  Selection.MoveEnd , -1
+  Selection.MoveStart , spacePlace
+  Selection.Copy
+  Selection.Start = myStart
+
+  ' Delete the used footnote
+  Selection.MoveEnd , 1
+  Selection.Delete
+  If myNote = 1 Then
+    Selection.HomeKey Unit:=wdStory
+  Else
+    ' Go back to the previous citation
+    Selection.GoTo what:=wdGoToBookmark, Name:="PBlastNote"
+  End If
+
+  ' Find the next citation (superscript number)
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = Trim(Str(myNote))
+    .Font.Superscript = True
+    .Replacement.Font.Superscript = False
+    .Replacement.Text = ""
+    .Wrap = wdFindContinue
+    .Forward = True
+    .Execute
+  End With
+  ' Delete the superscript number and add a footnote
+  Selection.Delete
+
+  ' Bookmark the place
+  ActiveDocument.Bookmarks.Add Name:="PBlastNote"
+
+  ' Add a footnote and paste in the text of the footnote
+  With ActiveDocument.Range(Start:=ActiveDocument.Content.Start, End:= _
+    ActiveDocument.Content.End)
+    .Footnotes.Add Range:=Selection.Range, Reference:=""
+  End With
+  Selection.Paste
+  DoEvents
+Loop Until myNote = 0
+
+' Tidy up and go to the end
+ActiveDocument.Bookmarks("PBnoteStart").Delete
+ActiveDocument.Bookmarks("PBlastNote").Delete
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+End With
+Selection.EndKey Unit:=wdStory
+myResponse = MsgBox("Convert to endnotes, rather than footnotes?", _
+     vbQuestion + vbYesNo)
+If myResponse = vbYes Then ActiveDocument.Footnotes.Convert
+End Sub
+

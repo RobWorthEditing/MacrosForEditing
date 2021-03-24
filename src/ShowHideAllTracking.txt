@@ -1,0 +1,7 @@
+Sub ShowHideAllTracking()
+' Paul Beverley - Version 01.01.10
+' Toggle showing track changes and comments on and off
+ActiveWindow.View.ShowRevisionsAndComments = Not _
+     ActiveWindow.View.ShowRevisionsAndComments
+End Sub
+

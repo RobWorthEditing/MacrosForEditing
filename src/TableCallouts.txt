@@ -1,0 +1,80 @@
+Sub TableCallouts()
+' Paul Beverley - Version 14.12.10
+' Table callout inserter
+
+thisChapter = InputBox("Chapter number?", "Table callouts")
+
+chapNumsExist = MsgBox("Existing chapter numbers?", vbQuestion + vbYesNo)
+addChapNums = MsgBox("Add chapter numbers?", vbQuestion + vbYesNo)
+
+' chapNumsExist = vbYes
+' addChapNums = vbNo
+
+
+Callout = "<Table " & thisChapter & ".XXXX about here>"
+findThis = "Table "
+orThis = "Tables "
+
+If chapNumsExist = vbYes Then
+  chapNum = thisChapter & "."
+Else
+  chapNum = ""
+End If
+
+
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+i = 0
+Selection.HomeKey Unit:=wdStory
+Do
+  i = i + 1
+  tableNum = Trim(Str(i))
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = findThis & chapNum & tableNum & "[!0-9]"
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  gotOne = Selection.Find.Found
+  If gotOne = False Then
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = orThis & chapNum & tableNum & "[!0-9]"
+      .Forward = True
+      .MatchWildcards = True
+      .Execute
+    End With
+    gotOne = Selection.Find.Found
+  End If
+  If gotOne = False Then
+    myResponse = MsgBox(findThis & tableNum & " missing!" _
+         & vbCrLf & vbCrLf & "Continue?", vbQuestion + vbYesNo)
+    If myResponse = vbNo Then Exit Sub
+  Else
+    If addChapNums = vbYes Then
+      With Selection.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = " "
+        .Forward = True
+        .MatchWildcards = False
+        .Execute
+      End With
+      Selection.TypeText Text:=" " & thisChapter & "."
+    End If
+    Selection.MoveUp Unit:=wdParagraph, Count:=1
+    typeThis = Replace(Callout, "XXXX", tableNum)
+    Selection.TypeText Text:=typeThis & vbCrLf
+    Selection.MoveUp Unit:=wdParagraph, Count:=1, Extend:=wdExtend
+    Selection.Style = ActiveDocument.Styles(wdStyleNormal)
+    Selection.Range.HighlightColorIndex = wdYellow
+    Selection.MoveRight Unit:=wdCharacter, Count:=1
+  End If
+Loop Until 0
+ActiveDocument.TrackRevisions = nowTrack
+Selection.Find.MatchWildcards = False
+End Sub
+

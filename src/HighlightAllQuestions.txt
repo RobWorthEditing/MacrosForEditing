@@ -1,0 +1,14 @@
+Sub HighlightAllQuestions()
+' Paul Beverley - Version 15.02.11
+' Highlights all questions
+
+qnColour = wdBrightGreen
+
+For Each sntce In ActiveDocument.Sentences
+  myWords = sntce
+  If Asc(Right(myWords, 2)) = Asc("?") Then
+    sntce.HighlightColorIndex = qnColour
+  End If
+Next
+End Sub
+

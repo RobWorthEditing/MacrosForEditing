@@ -1,0 +1,36 @@
+Sub ChapterMarker()
+' Paul Beverley - Version 17.05.10
+' For use with ChapterChopper
+
+chapMarker = "<CH>"
+If Selection.End = Selection.Start Then
+  myResponse = MsgBox("Chapter Marker" & vbCrLf & _
+     "Please select text to define chapter start")
+  Exit Sub
+End If
+
+chapTitle = Selection
+Selection.HomeKey Unit:=wdStory
+Do
+  With Selection.Find
+    .Text = chapTitle
+    .MatchWildcards = False
+    .MatchCase = True
+    .Execute
+  End With
+  If Selection.Find.Found = False Then
+    giveUp = True
+  Else
+    startBit = Selection.Start
+    Selection.MoveUp Unit:=wdParagraph, Count:=2
+    Selection.MoveDown Unit:=wdParagraph, Count:=1
+    If Selection.Start = startBit Then
+      Selection.TypeText Text:=chapMarker
+    Else
+      Selection.MoveDown Unit:=wdParagraph, Count:=2
+    End If
+  End If
+Loop Until giveUp = True
+
+End Sub
+

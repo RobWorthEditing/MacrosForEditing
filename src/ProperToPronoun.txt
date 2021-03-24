@@ -1,0 +1,37 @@
+Sub ProperToPronoun()
+' Paul Beverley - Version 02.05.18
+' Changes the next proper noun to a personal pronoun
+
+sheHasPriority = True
+' sheHasPriority = False
+
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[A-Z][a-z]"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute
+End With
+
+Selection.Expand wdWord
+Selection.MoveEnd , -1
+Selection.Delete
+If sheHasPriority Then
+  Selection.InsertAfter Text:="he"
+  Selection.InsertBefore Text:="s"
+  Selection.Collapse wdCollapseEnd
+Else
+  Selection.InsertAfter Text:="she"
+  Selection.Collapse wdCollapseStart
+  Selection.MoveEnd , 1
+  Selection.Delete
+End If
+End Sub
+

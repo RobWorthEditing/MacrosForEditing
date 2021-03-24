@@ -1,0 +1,55 @@
+Sub AcronymFinder()
+' Paul Beverley - Version 11.02.11
+' Find a group of words for an acronym
+
+myText = Trim(Selection)
+Selection.Start = Selection.End
+
+If Len(myText) = 1 Then
+  myText = InputBox("Find?", "Acronym finder", Selection)
+  If Len(myText) = 0 Then Exit Sub
+End If
+myFind = "<"
+abbrLength = Len(myText)
+For i = 1 To abbrLength
+  If i = 4 Then Exit For
+  myChar = Mid(myText, i, 1)
+  myChar = "[" & LCase(myChar) & UCase(myChar) & "]"
+  myFind = myFind & myChar & "[a-z]{1,}^32"
+Next i
+myFind = Left(myFind, Len(myFind) - 3)
+ 
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+
+If Selection.Find.Found = True Then
+  If abbrLength = 4 Then Selection.MoveRight Unit:=wdWord, Count:=2, Extend:=wdExtend
+  If abbrLength = 5 Then Selection.MoveRight Unit:=wdWord, Count:=3, Extend:=wdExtend
+  Exit Sub
+End If
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Text = "[[["
+  .MatchWildcards = False
+  .Execute
+End With
+
+Beep
+Selection.MoveUp Unit:=wdLine, Count:=2
+Selection.MoveDown Unit:=wdLine, Count:=2
+Selection.Find.Execute
+Selection.Find.Text = myFind
+Selection.Find.MatchWildcards = True
+End Sub
+

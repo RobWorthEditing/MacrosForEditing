@@ -1,0 +1,119 @@
+Sub SpellingErrorHighlighter()
+' Paul Beverley - Version 30.10.20
+' Highlights all spelling errors
+
+spellingListName = "SpellingErrors"
+
+CR = vbCr
+cr2 = CR & CR
+sp = "__________________________"
+
+' Find errors list
+Set mainDoc = ActiveDocument
+gottaList = False
+For Each myDoc In Documents
+  myFirstLine = myDoc.Paragraphs(1).Range.Text
+  If InStr(myFirstLine, spellingListName) > 0 Then
+    myDoc.Activate
+    gottaList = True
+    Exit For
+  End If
+Next myDoc
+
+If gottaList = False Then
+  Beep
+  MsgBox ("Please load file:  """ & spellingListName & """")
+  Exit Sub
+End If
+
+' Create list of words needing highlighting in each colour
+Dim myWordHighlightList(16) As String
+myCount = 0
+For Each myPara In ActiveDocument.Paragraphs
+  Set rng = myPara.Range.Duplicate
+  If Len(rng) > 2 Then
+    thisWord = Replace(rng.Text, CR, "")
+    myCol = rng.HighlightColorIndex
+    If myCol > 0 And myCol < 17 Then
+      myWordHighlightList(myCol) = myWordHighlightList(myCol) & _
+           thisWord & "_"
+      myCount = myCount + 1
+      StatusBar = sp & sp & sp & myCount
+    End If
+  End If
+Next myPara
+totCount = myCount
+
+If myCount = 0 Then
+  Beep
+  myResponse = MsgBox("Please highlight at least one word in the list!", _
+       vbQuestion + vbOK, "SpellingErrorHighlighter")
+  Exit Sub
+End If
+
+mainDoc.Activate
+Set rng = ActiveDocument.Content
+' To speed up search
+Selection.HomeKey Unit:=wdStory
+fnNum = ActiveDocument.Footnotes.Count
+enNum = ActiveDocument.Endnotes.Count
+ActiveDocument.TrackRevisions = False
+
+' For each highlight colour
+oldColour = Options.DefaultHighlightColorIndex
+For myCol = 1 To 16
+  If Len(myWordHighlightList(myCol)) > 0 Then
+    Options.DefaultHighlightColorIndex = myCol
+    myWds = Split(myWordHighlightList(myCol), "_")
+    For Each fWord In myWds
+      fWord = "<" & fWord & ">"
+      fWord = Replace(fWord, "(", "\(")
+      fWord = Replace(fWord, ")", "\)")
+      fWord = Replace(fWord, "\)>", "\)")
+      For j = 1 To 3
+        If j = 1 And fnNum = 0 Then j = 2
+        If j = 2 And enNum = 0 Then j = 3
+        Select Case j
+          Case 1: Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+          Case 2: Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+          Case 3: Set rng = ActiveDocument.Content
+        End Select
+        DoEvents
+        If Len(fWord) > 3 Then
+          With rng.Find
+            .ClearFormatting
+            .Replacement.ClearFormatting
+            .Text = fWord
+            .Replacement.Text = "^&"
+            .Font.StrikeThrough = False
+            .Forward = True
+            .Replacement.Highlight = True
+            .MatchWildcards = True
+            .Execute Replace:=wdReplaceAll
+            .ClearFormatting
+            .Replacement.ClearFormatting
+            .Text = "-" & fWord
+            .Replacement.Text = "^&"
+            .Font.StrikeThrough = False
+            .Forward = True
+            .Replacement.Highlight = False
+            .MatchWildcards = True
+            .Execute Replace:=wdReplaceAll
+          End With
+        End If
+        If j = 3 Then
+          myCount = myCount - 1
+          StatusBar = sp & sp & sp & "To go: " & myCount
+        End If
+      Next j
+    Next fWord
+  End If
+Next myCol
+
+Options.DefaultHighlightColorIndex = oldColour
+Beep
+StatusBar = " "
+myResponse = MsgBox("All those errors have been highlighted", _
+     vbOKOnly, "Spelling Error Highlighter")
+End Sub
+

@@ -1,0 +1,64 @@
+
+Sub NormaliseText()
+' Paul Beverley - Version 17.03.21
+' Sest Normal style and removes formatting
+
+removeHighlight = True
+
+' For part paragraph:
+resetAllFormat = False
+
+' which, if true, makes these redundant
+resetBoldItalic = True
+resetFontName = True
+resetFontSize = True
+resetSubSuper = True
+
+If Selection.Start = Selection.End Then Selection.Expand wdParagraph
+
+Set rng = Selection.Range.Duplicate
+numParas = Len(rng) - Len(Replace(rng, vbCr, ""))
+If Right(rng, 1) = vbCr Then rng.MoveEnd , -1
+
+If numParas > 0 And Right(rng, 1) <> vbCr Then
+  rng.MoveStartUntil cset:=vbCr, Count:=wdBackward
+  rng.MoveEndUntil cset:=vbCr, Count:=wdForward
+  rng.MoveEnd , 1
+End If
+rng.Select
+
+If resetAllFormat = False Then
+  If removeHighlight = True Then rng.HighlightColorIndex = wdNoHighlight
+  
+  If resetSubSuper = True Then
+    rng.Font.Superscript = False
+    rng.Font.Subscript = False
+  End If
+  
+  If resetBoldItalic = True Then
+    rng.Bold = False
+    rng.Italic = False
+  End If
+  
+  If resetFontName = True Then
+    myFont = ActiveDocument.Styles(wdStyleNormal).Font.Name
+    rng.Font.Name = myFont
+  End If
+  
+  If resetFontSize = True Then
+    myFont = ActiveDocument.Styles(wdStyleNormal).Font.Size
+    rng.Font.Name = myFont
+  End If
+Else
+  rng.Style = ActiveDocument.Styles(wdStyleNormal)
+  On Error GoTo ReportIt
+  rng.Font.Reset
+End If
+Selection.Collapse wdCollapseEnd
+Exit Sub
+
+ReportIt:
+Beep
+End Sub
+
+

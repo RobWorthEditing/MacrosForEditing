@@ -1,0 +1,76 @@
+Sub WordGraph()
+' Paul Beverley - Version 16.01.21
+' Gives a visual indication of the occurrences of a word or phrase
+
+myFontSize = 120
+myZoomSize = 10
+
+myHighlight = wdBrightGreen
+' myHighlight = wdNoHighlight
+
+
+If Len(Selection) > 1 Then
+  thisWord = Trim(Selection)
+Else
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  thisWord = InputBox("Word to show?", "WordGraph", Selection)
+  If thisWord = "" Then Exit Sub
+End If
+Selection.Collapse wdCollapseEnd
+If LCase(thisWord) <> thisWord Then
+  myResponse = MsgBox("Case sensitive?", vbQuestion _
+          + vbYesNoCancel, "WordGraph")
+  If myResponse = vbCancel Then Exit Sub
+  caseSense = (myResponse = vbYes)
+End If
+
+normalSize = ActiveDocument.Styles(wdStyleNormal).Font.Size
+If Left(ActiveDocument.Name, 8) = "Document" Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .MatchCase = False
+    .Font.Size = myFontSize
+    .Replacement.Text = ""
+    .Replacement.Font.Size = normalSize
+    .Replacement.Highlight = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Else
+  Set oldRng = ActiveDocument.Content
+  Documents.Add
+  Set rng = ActiveDocument.Content
+  rng.FormattedText = oldRng.FormattedText
+End If
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myHighlight
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = thisWord
+  If InStr(thisWord, "<") + InStr(thisWord, ">") + _
+       InStr(thisWord, "^") = 0 Then
+    .MatchWildcards = False
+  Else
+    .MatchWildcards = True
+  End If
+  If myHighlight > 0 Then
+    .Replacement.Highlight = True
+  End If
+  .Replacement.Text = ""
+  .Replacement.Font.Size = myFontSize
+  .MatchCase = caseSense
+  .Execute Replace:=wdReplaceAll
+End With
+ActiveWindow.ActivePane.View.Zoom.Percentage = myZoomSize
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

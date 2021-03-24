@@ -1,0 +1,47 @@
+Sub PunctuationOffRight()
+' Paul Beverley - Version 16.01.21
+' Removes the punctuation off a word end (and quote off start)
+
+deleteLHandQuote = True
+
+' Check first if there's a quote at the left
+gotLeftChar = False
+If deleteLHandQuote = True Then
+  Selection.Expand wdWord
+  If LCase(Selection) = UCase(Selection) Then
+    Selection.MoveLeft , 2
+    Selection.Expand wdWord
+  End If
+  Selection.Collapse wdCollapseStart
+  Selection.MoveStart , -1
+  If InStr(ChrW(8216) & ChrW(8220) & "('""", Selection) > 0 Then
+    Selection.Delete
+    gotLeftChar = True
+  End If
+  Selection.MoveRight , 2
+End If
+
+Selection.Expand wdWord
+myLen = Len(Selection)
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+If Len(Selection) > 1 Or Len(Selection) < myLen Then
+  Selection.Collapse wdCollapseEnd
+  Selection.MoveEnd , 1
+End If
+If Selection = "-" And gotLeftChar = True Then
+  Selection.MoveRight , 2
+Else
+  If Selection <> " " Then
+    Selection.Delete
+    Selection.Collapse wdCollapseEnd
+  Else
+    Selection.Collapse wdCollapseStart
+    Selection.MoveStart , -1
+    Selection.Delete
+  End If
+End If
+End Sub
+

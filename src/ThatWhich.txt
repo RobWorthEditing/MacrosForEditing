@@ -1,0 +1,26 @@
+Sub ThatWhich()
+' Paul Beverley - Version 26.07.10
+' Change that to which and vice versa
+Selection.MoveLeft Unit:=wdWord, Count:=1
+Selection.MoveRight Unit:=wdWord, Count:=1, Extend:=wdExtend
+thisWord = Selection
+If thisWord = "which " Then
+  Selection.TypeText Text:="that "
+  thisWord = ""
+End If
+If thisWord = "which" Then
+  Selection.TypeText Text:="that"
+  thisWord = ""
+End If
+If thisWord = "that " Then
+  Selection.Start = Selection.Start - 1
+  Selection.Delete
+  Selection.TypeText Text:=", which "
+  thisWord = ""
+End If
+If thisWord <> "" Then
+  Selection.Start = Selection.End
+  Selection.TypeText Text:="that "
+End If
+End Sub
+

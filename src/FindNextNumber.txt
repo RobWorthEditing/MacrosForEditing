@@ -1,0 +1,169 @@
+Sub FindNextNumber()
+' Paul Beverley - Version 09.01.13
+' Jump from one number to the next - section, fig, table, etc
+
+Selection.Words(1).Select
+If Selection.Start = 0 Then
+  Selection.InsertBefore Text:=Chr(13)
+  Selection.MoveStart wdCharacter, 1
+End If
+wd = Selection
+If InStr(wd, "Box") + InStr(wd, "Fig") + InStr(wd, "Tab") > 0 Then
+  Selection.Collapse wdCollapseEnd
+Else
+  Selection.Collapse wdCollapseStart
+End If
+Selection.MoveStartUntil cset:=Chr(13) & " " & Chr(9), Count:=wdBackward
+Selection.MoveEndUntil cset:=Chr(13) & " :" & Chr(9), Count:=wdForward
+
+myDelay = 0.1
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start - 1
+rng.End = Selection.Start
+b4Text = rng
+If b4Text <> Chr(13) Then
+  ' If the first char isn't a return, is there one further back?
+  gotCR = False
+  For j = 1 To 10
+    rng.MoveStart wdCharacter, -1
+    b4Text = rng
+    If Asc(rng) = 13 Then
+      rng.MoveStart wdCharacter, 1
+      gotCR = True
+      Exit For
+    End If
+  Next j
+  If gotCR = True Then
+    b4Text = "^p" & rng.Text
+  Else
+    rng.MoveStart wdCharacter, 5
+    b4Text = rng
+    If InStr(b4Text, "Fig.") > 0 Then b4Text = "^p" & "Fig. "
+  End If
+Else
+  rng.MoveStart wdCharacter, 1
+  b4Text = "^p" & rng.Text
+End If
+' At this point b4Txt has the preceding text, and
+' the number is selected
+allText = Selection
+txtStart = Selection.Start
+myLen = Len(allText)
+
+' See if the next level section number is there
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = b4Text & allText & ".1"
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+If Selection.Find.Found = True Then GoTo theEnd
+
+' So you've not found the ".1" just find the next heading
+gotNumber = False
+Do
+  'go find the next number of this level of heading
+  If InStr(allText, ".") = 0 Then
+    getNumber = Trim(Str(Val(allText) + 1)) & ".1"
+    i = 1
+  Else
+    For i = 1 To myLen
+      myText = Right(allText, i)
+      If gotNumber = True Then
+        If Asc(myText) < 48 Or Asc(myText) > 57 Then
+          theNumber = Val(Right(allText, i - 1))
+          Exit For
+        End If
+      End If
+      If Asc(myText) > 47 And Asc(myText) < 58 Then gotNumber = True
+    Next i
+    thisNumber = Val(theNumber)
+    getNumber = Left(allText, myLen - i + 1) & Trim(Str(thisNumber + 1))
+  End If
+  Selection.Collapse wdCollapseEnd
+  With Selection.Find
+    .Text = b4Text & getNumber
+    .Execute
+  End With
+  gotOne = Selection.Find.Found
+  If gotOne = True Then GoTo theEnd
+
+  If Len(b4Text) > 2 Then
+  ' Where a table has got in the way, search again w/o CR
+    b4Text2 = Replace(b4Text, "^p", "")
+    With Selection.Find
+      .Text = b4Text2 & getNumber
+      .Execute
+    End With
+    gotOne = Selection.Find.Found
+    If gotOne = True Then
+      Beep
+      GoTo theEnd
+    End If
+  End If
+  ' With section numbering, check for the next number in the sequence
+  getWas = getNumber
+  getNumber = Left(allText, myLen - i + 1) & Trim(Str(thisNumber + 2))
+  With Selection.Find
+    .Text = b4Text & getNumber
+    .Execute
+  End With
+  If Selection.Find.Found Then
+    Selection.Start = txtStart - 1
+    Selection.End = txtStart - 1
+    Selection.MoveRight Count:=1
+    b4Text = Replace(b4Text, "^p", "")
+    If Len(b4Text) = 0 Then b4Text = "Section "
+    MsgBox (b4Text & getWas & " missing!")
+    Exit Sub
+  Else
+    getWas2 = getNumber
+    getNumber = Left(allText, myLen - i + 1) & Trim(Str(thisNumber + 3))
+    With Selection.Find
+      .Text = b4Text & getNumber
+      .Execute
+    End With
+    If Selection.Find.Found Then
+      Selection.Start = txtStart - 1
+      Selection.End = txtStart - 1
+      Selection.MoveRight Count:=1
+      b4Text = Replace(b4Text, "^p", "")
+      If Len(b4Text) = 0 Then b4Text = "Section "
+      MsgBox (b4Text & getWas & " missing, AND " & getWas2 & "!")
+      Exit Sub
+    End If
+  End If
+
+  myLen = myLen - i
+  If myLen < 1 Then
+    GoTo theEnd
+  End If
+  allText = Left(allText, myLen)
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + myDelay
+  Beep
+Loop Until gotOne = True
+
+theEnd:
+Selection.Collapse wdCollapseEnd
+varExists = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "whereIwas" Then varExists = True: Exit For
+Next v
+If varExists = False Then
+  ActiveDocument.Variables.Add "whereIwas", txtStart
+Else
+  ActiveDocument.Variables("whereIwas") = txtStart
+End If
+
+End Sub
+

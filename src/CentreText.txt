@@ -1,0 +1,12 @@
+Sub CentreText()
+' Paul Beverley - Version 07.05.10
+' Centre the text
+' F6
+
+If Selection.ParagraphFormat.Alignment = wdAlignParagraphCenter Then
+  Selection.ParagraphFormat.Alignment = wdAlignParagraphLeft
+Else
+  Selection.ParagraphFormat.Alignment = wdAlignParagraphCenter
+End If
+End Sub
+

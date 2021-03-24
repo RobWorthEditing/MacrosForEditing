@@ -1,0 +1,221 @@
+Sub UnitSpacer()
+' Paul Beverley - Version 07.12.15
+' Find units with numbers and add a thin space
+
+'myColour = wdNoHighlight
+myColour = wdBrightGreen
+
+'mySpace = "<spc>"
+'mySpace = ChrW(160) ' non-breaking space
+mySpace = ChrW(8201) ' thin space
+
+' one- and two-letter words to ignore
+ignoreThese = ",a,b,c,d,e,f,g,h,i,j,k,n,o,p,q,r,t,u,v,w,x,y,z," & _
+              ",D,E,I,O,P,X,Y,Z" & _
+              ",AD,An,an,as,As,at,BC,be,by,do,en,gh,IC,ie,if,If," & _
+              "in,In,is,Is,it,It,nd,of,no,No,on,On," & _
+              ",or,pp,rd,Re,re,so,So,st,th,to,To,UK,US,vs,we,"
+
+' three-or-more letter words to include
+includeThese = "kWh,MPa,kHz,MHz"
+
+' three-or-more letter words to ignore
+excludeThese = "exp,"
+
+' Avoid things like "Fig. 2.3 A view..."
+notAfterThese = "Fig,Figure,Table,Box,Section,Chapter"
+
+' Mask off special constructions, e.g. H2O, BS5261C
+maskMixedNumbers = True
+
+mySymbols = ChrW(176) & ChrW(181) ' degree, mu (micro)
+
+myLanguage = wdEnglishUK
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+ignoreThese = "," & ignoreThese & "," & excludeThese & ","
+includeThese = "," & includeThese & ","
+
+For hit = 1 To 4
+  Select Case hit
+    Case 1: goes = ActiveDocument.Footnotes.Count
+      If goes > 0 Then
+        Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+        Set rng2 = ActiveDocument.StoryRanges(wdFootnotesStory)
+        Set rng3 = ActiveDocument.StoryRanges(wdFootnotesStory)
+        goes = 1
+      End If
+    Case 2: goes = ActiveDocument.Endnotes.Count
+      If goes > 0 Then
+        Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+        Set rng2 = ActiveDocument.StoryRanges(wdEndnotesStory)
+        Set rng3 = ActiveDocument.StoryRanges(wdEndnotesStory)
+        goes = 1
+      End If
+    Case 3: goes = 1: Set rng = ActiveDocument.Content
+                      Set rng2 = ActiveDocument.Content
+                      Set rng3 = ActiveDocument.Content
+    Case 4: goes = ActiveDocument.Shapes.Count
+  End Select
+  i = goes
+  Do While i > 0
+    doIt = True
+    If hit = 4 Then
+      If shp.Type <> 24 And shp.Type <> 3 Then
+        doIt = ActiveDocument.Shapes(i).TextFrame.HasText
+        If doIt Then
+          Set rng = ActiveDocument.Shapes(i).TextFrame.TextRange
+          Set rng2 = ActiveDocument.Shapes(i).TextFrame.TextRange
+          Set rng3 = ActiveDocument.Shapes(i).TextFrame.TextRange
+        End If
+      End If
+    End If
+    If doIt = True Then
+      If maskMixedNumbers = True Then
+        With rng.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .Text = "[a-zA-Z\-]{1,}[0-9]{1,}[\-a-zA-Z0-9]{1,}"
+          .Wrap = wdFindContinue
+          .Replacement.Text = "^&"
+          .Replacement.Font.DoubleStrikeThrough = True
+          .Forward = True
+          .MatchCase = False
+          .MatchWildcards = True
+          .MatchWholeWord = False
+          .MatchSoundsLike = False
+          .Execute Replace:=wdReplaceAll
+        End With
+        With rng.Find
+          .Text = "[0-9]{1,}[\-a-zA-Z]{1,}[0-9]{1,}"
+          .Replacement.Font.DoubleStrikeThrough = True
+          .Execute Replace:=wdReplaceAll
+        End With
+      End If
+      With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = "[0-9]{1,}[ a-zA-Z" & mySymbols & "]{1,}"
+        .Font.Superscript = False
+        .Wrap = False
+        .Replacement.Text = ""
+        .Forward = True
+        .MatchCase = False
+        .MatchWildcards = True
+        .Execute
+      End With
+      myEnd = rng.End
+      Do While rng.Find.Found = True
+        gotOne = True
+        rng2.Start = rng.Start
+        rng2.End = rng.Start
+        rng2.MoveStart wdWord, -1
+        allBefore = rng2.Text
+        Do
+          rng2.MoveStart wdWord, -1
+          rng2.MoveEnd wdWord, -1
+          allBefore = rng2.Text & allBefore
+        Loop Until LCase(rng2) <> UCase(rng2) Or rng2.Start < 50
+        rng.Collapse wdCollapseStart
+        rng.Find.Text = "[0-9]{1,}"
+        rng.Find.Execute
+        numFound = rng.Text
+        myColNum = rng.Information(wdStartOfRangeColumnNumber)
+        myRowNum = rng.Information(wdStartOfRangeRowNumber)
+        rng.Collapse wdCollapseEnd
+        startUnit = rng.Start
+        rng.MoveEnd , 1
+        gotSpc = (Asc(rng.Text) = 32)
+        If gotSpc Then
+          rng.Collapse wdCollapseEnd
+          startUnit = rng.Start
+        Else
+          rng.Collapse wdCollapseStart
+        End If
+        rng.Find.Text = "[a-zA-Z" & mySymbols & "]{1,}"
+        rng.Find.Execute
+        If rng.Start > myEnd Then rng.Collapse wdCollapseStart
+        If rng.Information(wdStartOfRangeColumnNumber) <> myColNum _
+             Then gotOne = False
+        If rng.Information(wdStartOfRangeRowNumber) <> myRowNum _
+             Then gotOne = False
+        wd = rng.Text
+        If wd > "" Then isDegree = (Asc(rng.Text) = 176)
+        If Len(wd) > 3 Then gotOne = False
+        If InStr(ignoreThese, "," & wd & ",") > 0 Then gotOne = False
+        If Len(wd) = 3 Then
+          If Application.CheckSpelling(wd, MainDictionary:= _
+               Languages(myLanguage).NameLocal) = True Then
+            gotOne = False
+          End If
+        End If
+        If InStr(includeThese, "," & wd & ",") > 0 Then gotOne = True
+        If Len(wd) = 0 Then gotOne = False
+        num = Val(numFound)
+        ' Trap "In the 1980s..."
+        If num > 1700 And num < 2100 Then
+          If wd = "s" Then gotOne = False
+        End If
+        ' Check the previous word
+        If InStr(allBefore, Chr(13)) > 0 Then gotOne = False
+        numFPs = Len(allBefore) - Len(Replace(allBefore, ".", ""))
+        If numFPs > 1 Then gotOne = False
+        If InStr(notAfterThese, Trim(rng2.Text)) > 0 Then gotOne = False
+        If rng.Font.DoubleStrikeThrough = True Then gotOne = False
+        If rng.Font.StrikeThrough = True Then gotOne = False
+        If gotOne = True Then
+        ' add the <whatever> space
+          noHighlight = False
+          If gotSpc Then
+            rng.Collapse wdCollapseStart
+            rng.Start = rng.Start - 1
+            ' For Symbol font degree
+            If Asc(rng) = 40 Then
+              rng.Start = rng.Start - 1
+              rng.End = rng.Start + 1
+              rng.Delete
+              noHighlight = True
+            Else
+              If isDegree = True Then
+                rng.Delete
+                noHighlight = True
+              Else
+                rng.Text = mySpace
+                DoEvents ' Debug.Print wd
+              End If
+            End If
+          Else
+            If Asc(rng) <> 176 Then
+              rng.InsertBefore Text:=mySpace
+            Else
+              noHighlight = True
+            End If
+            rng.End = rng.Start + Len(mySpace)
+          End If
+          If noHighlight = False And myColour > 0 Then
+            rng.HighlightColorIndex = myColour
+          End If
+           j = j + 1
+          If j Mod 10 = 2 Then rng.Select
+        End If
+        rng.Collapse wdCollapseEnd
+      ' Go and find the next occurrence (if there is one)
+        rng.Find.Text = "[0-9]{1,}[ a-zA-Z]{1,}"
+        rng.Find.Execute
+        myEnd = rng.End
+      Loop
+    End If
+    i = i - 1
+    If i > 0 Then
+      DoEvents ' Debug.Print "Textbox: " & Str(i)
+      StatusBar = "Textbox: " & Str(i)
+    End If
+    rng3.Font.DoubleStrikeThrough = False
+  Loop
+Next hit
+
+Beep
+Selection.HomeKey Unit:=wdStory
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

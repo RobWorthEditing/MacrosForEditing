@@ -1,0 +1,24 @@
+Sub DeleteAllImagesAddCallout()
+' Paul Beverley - Version 06.12.16
+' Deletes all images from a file and leave a caption line.
+
+' chapNumber = Mid(ActiveDocument.Name, 2, 1)
+' or maybe
+' chapNumber = Left(ActiveDocument.Name, 2)
+' If Left(chapNumber,1) = "0" Then chapNumber = Right(chapNumber,1)
+chapNumber = "19"
+
+myCaption = vbCr & "<Figure " & chapNumber & ".FigNum about here>" & vbCr
+numPics = ActiveDocument.InlineShapes.Count
+myResponse = MsgBox(Str(numPics) & " images to be deleted. OK?", vbQuestion _
+        + vbYesNoCancel, "Delete All Images")
+If myResponse <> vbYes Then Exit Sub
+
+i = 1
+For Each pic In ActiveDocument.InlineShapes
+  pic.range.InsertAfter Text:=Replace(myCaption, "FigNum", Trim(Str(i)))
+  pic.Delete
+  i = i + 1
+Next pic
+End Sub
+

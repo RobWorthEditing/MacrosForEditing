@@ -1,0 +1,23 @@
+Sub AcceptSpecificTrackChange()
+' Paul Beverley - Version 02.03.11
+' Accept all occurrences of one specific track change
+' Alt-Ctrl-Shift-f10
+
+myType = Selection.Range.Revisions.Item(1).FormatDescription
+
+theEnd = ActiveDocument.Content.End
+i = 0
+For Each rev In ActiveDocument.Range.Revisions
+  Set rng = rev.Range
+  thisType = rev.FormatDescription
+  If thisType = myType Then
+  i = i + 1
+  rng.Revisions.AcceptAll
+  End If
+  StatusBar = "Accepting track changes...  " _
+       & Str(theEnd - rng.End)
+Next rev
+StatusBar = "Accepted track changes:  " & Str(i)
+beep
+End Sub
+

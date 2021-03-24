@@ -1,0 +1,44 @@
+Sub URLshrinker()
+' Paul Beverley - Version 28.02.20
+' Reduces the extent of a URL link to just the selected text
+
+myStart = Selection.Start
+myEnd = Selection.End
+Selection.Expand wdParagraph
+Set rng = Selection.range.Duplicate
+For i = 1 To rng.Fields.Count
+  Set fld = rng.Fields(i)
+  myType = fld.Type
+  If myType = 88 Then
+    fld.Select
+    fldStart = Selection.Start
+    fldEnd = Selection.End
+    If fldEnd > myEnd Then Exit For
+  End If
+Next i
+myURLtext = fld.Code
+myDisplayText = fld.Result
+myStartText = fldEnd - Len(myDisplayText)
+myRight = Right(myDisplayText, fldEnd - myEnd - 1)
+myMiddle = Mid(myDisplayText, myStart - myStartText + 2, _
+     myEnd - myStart)
+myLeft = Left(myDisplayText, myStart - myStartText + 1)
+fld.Delete
+With Selection
+  .TypeText Text:=myLeft
+  .MoveStart , -Len(myLeft)
+  .range.Font.ColorIndex = wdAuto
+  .range.Underline = False
+  .Collapse wdCollapseEnd
+End With
+Set newLink = ActiveDocument.Hyperlinks.Add(Anchor:=Selection.range, _
+     TextToDisplay:=myMiddle, Address:=myURLtext)
+With Selection
+  .TypeText Text:=myRight
+  .MoveStart , -Len(myRight)
+  .range.Font.ColorIndex = wdAuto
+  .range.Underline = False
+  .Collapse wdCollapseEnd
+End With
+End Sub
+

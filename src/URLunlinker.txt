@@ -1,0 +1,55 @@
+Sub URLunlinker()
+' Paul Beverley - Version 28.02.20
+' Unlinks all the URLs in the selection or the whole file
+
+' foreText = " ("
+' afterText = ") "
+foreText = " "
+afterText = " "
+
+' remove1 = "http://"
+' remove2 = "Error! Hyperlink reference not valid.
+remove1 = ""
+remove2 = ""
+
+If Selection.Start <> Selection.End Then
+  Set rng = Selection.range.Duplicate
+Else
+  Set rng = ActiveDocument.Content
+End If
+
+For i = rng.Fields.Count To 1 Step -1
+  Set fld = rng.Fields(i)
+  myType = fld.Type
+  If myType = 88 Then
+    fld.Select
+    myURLtext = fld.Code
+    myDisplayText = fld.Result
+    myURLtext = Replace(myURLtext, "HYPERLINK """, "")
+    qtPos = InStr(myURLtext, """")
+    myURLtext = Trim(Left(myURLtext, qtPos - 1))
+    myURLtext = Replace(myURLtext, remove1, "")
+    myURLtext = Replace(myURLtext, remove2, "")
+    myDisplayText = Replace(myDisplayText, remove1, "")
+    myDisplayText = Replace(myDisplayText, remove2, "")
+    Debug.Print myDisplayText
+    Debug.Print myURLtext & vbCr
+    myStart = Selection.Start
+    myEnd = myStart + Len(myDisplayText)
+    fld.Delete
+    If myURLtext <> myDisplayText Then
+      Selection.TypeText Text:=myDisplayText & foreText _
+           & myURLtext & afterText
+    Else
+      Selection.TypeText Text:=myDisplayText
+    End If
+    Selection.Start = myStart
+    Selection.End = myEnd
+    If makeTextBold = True Then Selection.range.Bold = True
+    Selection.range.Font.ColorIndex = wdAuto
+    Selection.range.Underline = False
+  End If
+Next i
+End Sub
+
+

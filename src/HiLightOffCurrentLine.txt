@@ -1,0 +1,22 @@
+Sub HiLightOffCurrentLine()
+' Paul Beverley - Version 22.01.10
+' Removes highlight (text colour) from selected text or current line
+
+' Switch off track changes
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+' If nothing selected, select the whole line
+If Selection.Start = Selection.End Then
+  Selection.HomeKey Unit:=wdLine
+  Selection.MoveDown Unit:=wdLine, Count:=1, Extend:=wdExtend
+End If
+' Remove highlighting
+Selection.Range.HighlightColorIndex = wdNoHighlight
+' Remove text colouring
+' Selection.Range.Font.Color = wdColorAutomatic
+Selection.Collapse wdCollapseEnd
+
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

@@ -1,0 +1,13 @@
+Sub VisibleTrackOff2()
+' Paul Beverley - Version 01.01.10
+' Visible reminder that track changes is off
+If ActiveDocument.TrackRevisions = True Then
+  ActiveDocument.TrackRevisions = False
+  ActiveDocument.Range.Font.Underline = wdUnderlineDotted
+  ActiveDocument.Range.Font.UnderlineColor = wdColorBlue
+Else
+  ActiveDocument.Range.Font.Underline = False
+  ActiveDocument.TrackRevisions = True
+End If
+End Sub
+

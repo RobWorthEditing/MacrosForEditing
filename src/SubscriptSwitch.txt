@@ -1,0 +1,18 @@
+Sub SubscriptSwitch()
+' Paul Beverley - Version 05.09.11
+' Toggle subscript
+' F4
+If Selection.Start = Selection.End Then
+  Selection.MoveEnd wdCharacter, 1
+  If Asc(Selection) > 48 Then
+    Selection.Font.Subscript = Not Selection.Font.Subscript
+    Selection.End = Selection.Start
+  Else
+    Selection.End = Selection.Start
+    Selection.Font.Subscript = Not Selection.Font.Subscript
+  End If
+Else
+  Selection.Font.Subscript = Not Selection.Font.Subscript
+End If
+End Sub
+

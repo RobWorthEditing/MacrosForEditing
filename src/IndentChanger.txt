@@ -1,0 +1,21 @@
+Sub IndentChanger()
+' Paul Beverley - Version 07.07.11
+' Changes paras of one indent value to another
+
+wasIndent = 1.25
+newIndent = 0
+
+wasPoints = CentimetersToPoints(wasIndent)
+
+For Each myPara In ActiveDocument.Paragraphs
+  Set rng = myPara.Range
+  rng.Select
+  StatusBar = (rng.ParagraphFormat.LeftIndent)
+  myGuess = rng.ParagraphFormat.LeftIndent
+  If myGuess < wasPoints + 1 And myGuess > wasPoints - 1 Then
+    rng.ParagraphFormat.LeftIndent = CentimetersToPoints(newIndent)
+  End If
+Next myPara
+Beep
+End Sub
+

@@ -1,0 +1,61 @@
+Sub NumberIncrement()
+' Paul Beverley - Version 20.07.20
+' Adds one to the following number (or increase the letter)
+
+myJump = 1
+
+goNext = False
+
+lookAfterSelection = True
+
+trackIt = True
+
+doLettersToo = True
+searchRange = 100
+
+If lookAfterSelection = False Then
+  Selection.Collapse wdCollapseStart
+Else
+  Selection.Collapse wdCollapseStart
+End If
+
+searchChars = "0123456789"
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+
+i = 0
+myStart = Selection.Start
+If Selection.End = Selection.Start Or Val(Selection) = 0 Then
+  While InStr(searchChars, Selection) = 0
+    Selection.MoveRight 1
+    DoEvents
+    i = i + 1
+    If i = searchRange Then
+      Beep
+      Selection.Start = myStart
+      GoTo CleanExit
+    End If
+  Wend
+  myStart = Selection.Start
+  While InStr(searchChars, Selection) > 0
+    Selection.MoveRight 1
+    DoEvents
+  Wend
+  Selection.Start = myStart
+End If
+
+Selection.TypeText Trim(Str(Val(Selection) + myJump))
+Selection.Start = myStart
+Selection.End = myStart
+doLettersToo = False
+
+CleanExit:
+If doLettersToo = True Then
+  Selection.End = Selection.Start + 1
+  Selection.TypeText ChrW(AscW(Selection) + 1)
+  Selection.MoveLeft , 1
+End If
+ActiveDocument.TrackRevisions = myTrack
+If goNext = True Then Call FindFwd
+End Sub
+

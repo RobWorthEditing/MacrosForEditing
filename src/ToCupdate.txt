@@ -1,0 +1,167 @@
+Sub ToCupdate()
+' Paul Beverley - Version 16.12.13
+' Update (and customise) the table of contents
+' Ctrl-Alt-F3
+
+ActiveDocument.TablesOfContents(1).Update
+
+Options.DefaultHighlightColorIndex = wdYellow
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+' Now selectively delete any lines in the ToC
+' that you don't want.
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Text = "Macros for Editors by Paul Beverley, LCGI"
+  .Style = "Hyperlink"
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceOne
+End With
+Selection.TypeBackspace
+
+' This deletes some lines I don't want, from here...
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Stylesheet"
+  .Style = "Hyperlink"
+  .Replacement.Text = ""
+  .Execute
+End With
+myStart = Selection.Start
+
+' ...to here
+Selection.Start = Selection.End
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Notes to publisher"
+  .Style = "Hyperlink"
+  .Replacement.Text = ""
+  .Execute
+End With
+Selection.HomeKey Unit:=wdStory
+
+' Extend the selection back to the first line
+' that needs deleting.
+Selection.Start = myStart
+Selection.TypeBackspace
+Selection.TypeBackspace
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .Text = "Textual Analysis"
+  .Style = "Hyperlink"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceOne
+End With
+
+Selection.HomeKey Unit:=wdLine
+With Selection.Find
+  .Text = "Pre-editing Tools"
+  .Style = "Hyperlink"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceOne
+End With
+
+Selection.HomeKey Unit:=wdLine
+With Selection.Find
+  .Text = "Editing: Text Change"
+  .Style = "Hyperlink"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceOne
+End With
+
+Selection.HomeKey Unit:=wdLine
+With Selection.Find
+  .Text = "Editing: Information"
+  .Style = "Hyperlink"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceOne
+End With
+
+Selection.HomeKey Unit:=wdLine
+With Selection.Find
+  .Text = "Editing: Highlighting"
+  .Style = "Hyperlink"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceOne
+End With
+
+Selection.HomeKey Unit:=wdLine
+With Selection.Find
+  .Text = "Editing: Navigation"
+  .Style = "Hyperlink"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceOne
+End With
+
+Selection.HomeKey Unit:=wdLine
+With Selection.Find
+  .Text = "Editing: Comment Handling"
+  .Style = "Hyperlink"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceOne
+End With
+
+Selection.HomeKey Unit:=wdLine
+With Selection.Find
+  .Text = "Editing: Track Changes"
+  .Style = "Hyperlink"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceOne
+End With
+
+Selection.HomeKey Unit:=wdLine
+With Selection.Find
+  .Text = "Other Tools"
+  .Style = "Hyperlink"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceOne
+End With
+
+Selection.HomeKey Unit:=wdLine
+With Selection.Find
+  .Text = "The Macros"
+  .Style = "Hyperlink"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceOne
+End With
+
+Selection.HomeKey Unit:=wdLine
+With Selection.Find
+  .Text = "Changes Log"
+  .Style = "Hyperlink"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceOne
+End With
+
+Selection.HomeKey Unit:=wdStory
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+End With
+End Sub
+

@@ -1,0 +1,17 @@
+Sub FirstNotIndent()
+' Paul Beverley - Version 01.06.10
+' Full-out paragraph under all headings
+StyleList = "Heading 1, Heading 2, Heading 3, and any more you want"
+NoIndentStyle = "Body Text"
+IndentStyle = "Body Text First Indent"
+
+For i = 1 To (ActiveDocument.Paragraphs.Count - 1)
+  StyleNow = ActiveDocument.Paragraphs(i).Range.Style
+  StyleNext = ActiveDocument.Paragraphs(i + 1).Range.Style
+
+  If InStr(StyleList, StyleNow) And StyleNext = IndentStyle Then
+    ActiveDocument.Paragraphs(i + 1).Range.Style = NoIndentStyle
+  End If
+Next
+End Sub
+

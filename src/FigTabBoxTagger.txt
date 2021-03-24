@@ -1,0 +1,136 @@
+Sub FigTabBoxTagger()
+' Paul Beverley - Version 21.07.17
+' Add tags to captions of all Figures, Tables and Boxes
+
+myTag = "<Cap>"
+
+myCaptionStartFig = "Figure"
+addFullPointFig = True
+
+myCaptionStartTab = "Table"
+addFullPointTab = True
+
+myCaptionStartBox = "Box"
+addFullPointBox = True
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+checkForUnusedCaps = True
+
+Application.ScreenUpdating = False
+Dim myText(3) As String
+Dim FPoint(3) As Boolean
+myText(1) = myCaptionStartFig
+myText(2) = myCaptionStartTab
+myText(3) = myCaptionStartBox
+FPoint(1) = addFullPointFig
+FPoint(2) = addFullPointTab
+FPoint(3) = addFullPointBox
+For i = 1 To 3
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myText(i)
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  
+  Do While Selection.Find.Found = True
+    isCaption = True
+    startFind = Selection.Start
+    endFind = Selection.End
+    Selection.HomeKey Unit:=wdLine
+    If Selection.Start <> startFind Then isCaption = False
+    If isCaption = True Then
+      Selection.Collapse wdCollapseStart
+      Selection.MoveEnd , -1
+      If Selection = " " Then isCaption = False
+    End If
+    Selection.Start = startFind
+    Selection.End = startFind
+    If isCaption Then
+    ' If you've found a line beginning with Fig/Tab/Box
+      Selection.TypeText Text:=myTag
+      Selection.Expand wdParagraph
+      Selection.MoveEnd , -1
+      Selection.Start = Selection.End - 1
+      ' Strip off any trailing space
+      If Selection = " " Then
+        Selection.Delete
+        Selection.MoveStart , -1
+      End If
+      ' Add full point if wanted
+      If Selection <> "." And FPoint(i) = True Then
+        If Selection.Font.Superscript = False Then
+          Selection.Collapse wdCollapseEnd
+          Selection.TypeText Text:="."
+          Selection.MoveStart , -1
+          Selection.range.HighlightColorIndex = wdGray25
+        End If
+      End If
+    End If
+    Selection.Expand wdParagraph
+    Selection.Collapse wdCollapseEnd
+    Selection.Find.Execute
+  Loop
+  Selection.HomeKey Unit:=wdStory
+Next i
+
+If checkForUnusedCaps = True Then
+  ' Check if at least some of the first few captions are bold
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "<Cap>Fig"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  
+  clearUnusedCaps = False
+  For i = 1 To 6
+    If rng.Font.Bold = True Then clearUnusedCaps = True
+    rng.Find.Execute
+    rng.Collapse wdCollapseEnd
+  Next i
+  
+  If clearUnusedCaps = True Then
+  ' If the captions seem to be bold then remove any caption tags
+  ' that are not bold
+  
+    Set rng = ActiveDocument.Content
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "<Cap>"
+      .Font.Bold = False
+      .Wrap = wdFindContinue
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchCase = False
+      .MatchWildcards = False
+      .MatchWholeWord = False
+      .MatchSoundsLike = False
+      .Execute Replace:=wdReplaceAll
+    End With
+  
+  End If
+End If
+ActiveDocument.TrackRevisions = myTrack
+Application.ScreenUpdating = True
+Beep
+End Sub
+

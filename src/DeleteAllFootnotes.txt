@@ -1,0 +1,11 @@
+Sub DeleteAllFootnotes()
+' Paul Beverley - Version 19.09.18
+' Delete all footnotes
+
+numberFNs = ActiveDocument.Footnotes.Count
+For i = numberFNs To 1 Step -1
+  ActiveDocument.Footnotes(i).Delete
+  StatusBar = "                                   " & i
+Next i
+End Sub
+

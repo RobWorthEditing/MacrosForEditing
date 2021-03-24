@@ -1,0 +1,29 @@
+Sub SpracheCH()
+' Paul Beverley - Version 20.05.20
+' Sets language as SwissGerman
+
+myLanguage = wdSwissGerman
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+ActiveDocument.Content.LanguageID = myLanguage
+For Each aStory In ActiveDocument.StoryRanges
+ aStory.LanguageID = myLanguage
+Next aStory
+If ActiveDocument.Shapes.Count > 0 Then
+  For Each shp In ActiveDocument.Shapes
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.hasText Then
+        shp.TextFrame.TextRange.LanguageID = myLanguage
+      End If
+    End If
+  Next
+End If
+ActiveDocument.Styles(wdStyleNormal).LanguageID = myLanguage
+ActiveDocument.Styles(wdStyleCommentText).LanguageID = myLanguage
+ActiveDocument.Styles("Balloon Text").LanguageID = myLanguage
+ActiveDocument.SpellingChecked = False
+ActiveDocument.GrammarChecked = False
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

@@ -1,0 +1,34 @@
+Sub FindNextBigText()
+' Paul Beverley - Version 29.03.17
+' Searches down for a bigger than Normal font
+
+myBaseStyle = ActiveDocument.Styles(wdStyleNormal)
+normalSize = ActiveDocument.Styles(myBaseStyle).Font.Size
+myEnd = ActiveDocument.Content.End
+Do
+  Selection.Expand wdParagraph
+  Selection.Collapse wdCollapseEnd
+  DoEvents
+  If Selection.End > myEnd - 2 Or _
+       Selection.range.Information(wdInEndnote) Then
+    Beep
+    Exit Sub
+  End If
+  If Selection.range.Information(wdWithInTable) Then
+    Do
+      Selection.MoveDown , 1
+      DoEvents
+      Loop Until Not (Selection.range.Information(wdWithInTable))
+  End If
+  If Selection.range.Information(wdInFootnote) Then
+    Do
+      Selection.MoveDown , 1
+      DoEvents
+      Loop Until Not (Selection.range.Information(wdInFootnote))
+  End If
+  Selection.MoveEnd , 1
+Loop Until Selection.range.Font.Size > normalSize
+Selection.MoveUp , 1
+Selection.MoveDown , 1
+End Sub
+

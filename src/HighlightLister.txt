@@ -1,0 +1,59 @@
+Sub HighlightLister()
+' Paul Beverley - Version 26.05.11
+' List all the highlight colours used
+allHighs = ""
+Selection.WholeStory
+Selection.Copy
+Documents.Add
+Selection.Paste
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Highlight = False
+  .Text = ""
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+wasCol = 0
+For Each ch In ActiveDocument.Characters
+  thisCol = ch.HighlightColorIndex
+  If thisCol <> wasCol Then
+    Select Case thisCol
+      Case 0: 'Do nowt
+      Case wdYellow: col = "Yellow"
+      Case wdBrightGreen: col = "BrightGreen"
+      Case wdGreen: col = " Green"
+      Case wdPink: col = "Pink"
+      Case wdRed: col = "Red"
+      Case wdBlue: col = "Blue"
+      Case wdGray25: col = "Gray25"
+      Case wdGray50: col = "Gray50"
+      Case wdTurquoise: col = "Turquoise"
+      Case wdTeal: col = "Teal"
+      Case wdDarkBlue: col = "DarkBlue"
+      Case wdDarkYellow: col = "DarkYellow"
+      Case wdDarkRed: col = "DarkRed"
+      Case wdViolet: col = "Violet"
+    Case Else
+      ch.Select
+      col = "A colour not on the list!"
+    End Select
+    If InStr(allHighs, col) = 0 Then allHighs = allHighs & col & ","
+  End If
+  wasCol = thisCol
+  i = i + 1
+  If i Mod 50 = 0 Then StatusBar = "Checked: " & Str(i)
+Next ch
+
+ActiveDocument.Close SaveChanges:=False
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:=Replace(allHighs, ",", vbCrLf)
+Selection.Start = 0
+Selection.Style = wdStyleNormal
+Selection.Sort SortOrder:=wdSortOrderAscending
+Selection.End = 0
+End Sub
+

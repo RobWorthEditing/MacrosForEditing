@@ -1,0 +1,61 @@
+Sub SurnameSorter()
+' Paul Beverley - Version 01.10.18
+' Sorts a name list on surname, but allowing for postfixes
+
+myPostfixes = "| BSc| MSc| OBE|, Jr.|, Sr.|"
+myWd = Split(myPostfixes, "|")
+Set rng = ActiveDocument.Content
+For i = 0 To UBound(myWd)
+  wd = myWd(i)
+  If Len(wd) > 0 Then
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = wd
+      .Wrap = wdFindContinue
+      .Replacement.Text = "qpqp" & Trim(Str(i)) & "qpqp"
+      .MatchCase = True
+      .MatchWildcards = False
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+Next i
+
+For i = 1 To ActiveDocument.Paragraphs.Count
+  Set pa = ActiveDocument.Paragraphs(i).range
+  If pa.Words.Count > 2 Then
+    sName = pa.Words(pa.Words.Count - 1)
+    Debug.Print sName
+    pa.InsertBefore Text:="zczc" & sName & vbTab
+  End If
+Next i
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending
+
+For i = 0 To UBound(myWd)
+  wd = myWd(i)
+  If Len(wd) > 0 Then
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Wrap = wdFindContinue
+      .Text = "qpqp" & Trim(Str(i)) & "qpqp"
+      .Replacement.Text = wd
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+Next i
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Text = "zczc*^t"
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+rng.InsertAfter Text:=vbCr
+End Sub
+

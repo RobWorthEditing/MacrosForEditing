@@ -1,0 +1,39 @@
+Sub EmailLinker()
+' Paul Beverley - Version 18.10.19
+' Finds all email addresses in the text and links them
+
+charsInEmails = "[%./:a-zA-Z0-9_\-]"
+
+myFind = "<" & charsInEmails & "{3,}\@" & charsInEmails & "{3,}"
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = myFind
+  .Replacement.Text = ""
+  .Wrap = wdFindStop
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+rng.Select
+Do While rng.Find.Found = True
+  rng.Select
+  Selection.Collapse wdCollapseStart
+  stNow = Selection.Start
+  Selection.MoveLeft , 1
+  stBefore = Selection.Start
+  If stNow = stBefore + 1 Then
+    myAddress = rng.Text
+    rng.Select
+    Set myLink = ActiveDocument.Hyperlinks.Add(Anchor:=rng, _
+          Address:=myAddress, TextToDisplay:=rng.Text)
+    rng.Start = myLink.range.End
+    rng.End = ActiveDocument.Content.End
+  Else
+    rng.Start = rng.End
+  End If
+  rng.Find.Execute
+  DoEvents
+Loop
+Beep
+End Sub
+

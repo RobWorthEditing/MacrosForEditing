@@ -1,0 +1,696 @@
+Sub DictaFRedit()
+' Paul Beverley - Version 02.05.20
+' Adds features to Word 365 Dictate, and cleans up it errors
+
+doShowChanges = True
+
+assumeWholeText = False
+warnReWholeText = False
+
+doCopy = False
+
+myColour = wdColorBlue
+myColour = 0
+
+myHighlight = 0
+myHighlight = wdGray25
+
+doUnderline = False
+doSelectResult = False
+doBeep = True
+
+inFilename = "box"
+' inFilename = "Switch"
+
+' On Windows, it will need to be something like:
+myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff"
+
+' On a Mac, it will need to be something like:
+myFolder = "/Users/Paul/My Documents/Macro stuff"
+
+If doShowChanges = False Then
+  myColour = 0
+  myHighlight = 0
+  doUnderline = False
+End If
+
+listName = "zzDictateBox.docx"
+
+CR = vbCr: CR2 = CR & CR
+
+' Decide what range of text to process
+doingPara = False
+If InStr(ActiveDocument.Name, "zClipStore") > 0 Then
+  Selection.EndKey Unit:=wdStory
+  Do
+    Selection.MoveStart wdParagraph, -1
+    DoEvents
+  Loop Until Left(Selection, 1) = "_"
+  Selection.MoveStart wdParagraph, 1
+End If
+If Selection.Start = Selection.End Then
+  If assumeWholeText = True Then
+    Selection.WholeStory
+    If warnReWholeText = True Then
+      myResponse = MsgBox("Clean up WHOLE file?!", _
+            vbYesNoCancel, "DictaFRedit")
+      If myResponse <> vbYes Then Exit Sub
+    End If
+  Else
+    Selection.Expand wdParagraph
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=CR
+    Selection.MoveLeft , 2
+    Selection.Expand wdParagraph
+    doingPara = True
+  End If
+End If
+Selection.Copy
+
+' If first word of para is macro name, select it
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+rng.MoveStart , -1
+If Right(rng.Text, 1) = vbCr Then rng.End = rng.End - 1
+rng.Expand wdParagraph
+leadword = Trim(LCase(rng.Words(1)))
+If InStr("|google|dictionary|translate|map|", _
+      "|" & leadword & "|") > 0 Then
+  doingCall = True
+  rng.Select
+End If
+Selection.Copy
+originalStart = Selection.Start
+
+' Postcode wording error correction
+myPostcodeDebug = False
+A = ""
+A = A & ";are|R;zero|0;one|1;"
+A = A & ";two|2;three|3;for|4;"
+A = A & ";four|4;five|5;six|6;oh|O;"
+A = A & ";seven|7;eight|8;nine|9;ten|10;"
+A = A & "es|S;ke|K;-|;to|2;be|B;a |A ;"
+A = A & ";Zedd|Z;November|;|;|;"
+A = A & ";|;|;|;|;"
+
+' Correct postcodes
+testLength = 26
+
+If myPostcodeDebug = True Then
+  ActiveDocument.Content.Font.StrikeThrough = False
+  ActiveDocument.Content.Font.Underline = False
+  ActiveDocument.Content.HighlightColorIndex = wdNoHighlight
+  Set rng = Selection.Range.Duplicate
+End If
+
+Set wasRng = Selection.Range.Duplicate
+Set testRng = Selection.Range.Duplicate
+With testRng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "post"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchCase = False
+  .Execute
+End With
+
+myCount = 0
+Do While testRng.Find.Found = True
+  DoEvents
+  absPos = testRng.Start
+  endBit = absPos + testLength
+  endDoc = ActiveDocument.Content.End
+  If endBit > endDoc Then endBit = endDoc
+  Set thisRng = ActiveDocument.Range(absPos, endBit)
+  crPos = InStr(thisRng.Text, vbCr)
+  If crPos > 0 Then thisRng.End = thisRng.Start + crPos - 1
+  If myPostcodeDebug = True Then thisRng.Font.Underline = True
+  dCode = InStr(thisRng.Text, "code")
+  
+  If dCode > 0 Then
+    thisRng.Text = Replace(thisRng.Text, "  ", " ")
+    Set rng = ActiveDocument.Range(absPos + dCode + 4, thisRng.End)
+    myText = rng.Text
+    myTextWas = myText
+    If myPostcodeDebug = True Then rng.Font.StrikeThrough = True
+    A = Replace(A, ";;", ";")
+    myFR = Split(Trim(A), ";")
+    For i = 0 To UBound(myFR) - 1
+      txt = myFR(i)
+      pPos = InStr(txt, "|")
+      If pPos > 1 Then
+        myF = Left(txt, pPos - 1)
+        myR = Mid(txt, pPos + 1)
+        myWas = myText
+        myText = Replace(myText, myF, myR)
+        If myWas <> myText Then Debug.Print myF, myR, myText
+      End If
+      DoEvents
+    Next i
+    myText = UCase(myText)
+    
+    myPattern = ""
+    For i = 1 To Len(myText)
+      ch = Mid(myText, i, 1)
+      If LCase(ch) <> UCase(ch) Then
+        myPattern = myPattern & "."
+      Else
+        If ch = " " Then
+          myPattern = myPattern & " "
+        Else
+          myPattern = myPattern & "#"
+        End If
+      End If
+      DoEvents
+    Next i
+    Debug.Print myPattern
+    
+    
+    patnPos = InStr(myPattern, "#..")
+    pullBack = Len(myText) - patnPos - 2
+    
+    If patnPos = 0 Then
+      patnPos = InStr(myPattern, "# ..")
+      pullBack = Len(myText) - patnPos - 3
+    End If
+    
+    If patnPos = 0 Then
+      patnPos = InStr(myPattern, "#. .")
+      pullBack = Len(myText) - patnPos - 3
+    End If
+    
+    If patnPos = 0 Then
+      patnPos = InStr(myPattern, "# . .")
+      pullBack = Len(myText) - patnPos - 4
+    End If
+    
+    rng.Start = absPos
+    endPattern = Right(myPattern, pullBack)
+    If InStr(endPattern, "#") > 0 Then
+      pullBack = pullBack + 1
+    End If
+    rng.End = rng.End - pullBack
+    If myPostcodeDebug = True Then rng.HighlightColorIndex = wdBrightGreen
+    
+    If Left(myPattern, 6) = "..##.." Then
+      part1 = Left(myText, 3)
+      part2 = Mid(myText, 4, 3)
+      Debug.Print part1, part2, myText
+    End If
+    
+    If Left(myPattern, 7) = "..# #.." Then
+      part1 = Left(myText, 3)
+      part2 = Mid(myText, 5, 3)
+      Debug.Print part1, part2, myText
+    End If
+    
+    If Left(myPattern, 7) = ". .##.." Then
+      part1 = Replace(Left(myText, 4), " ", "")
+      part2 = Mid(myText, 5, 3)
+      Debug.Print part1, part2, myText
+    End If
+    
+    If Left(myPattern, 7) = "..##. ." Then
+      part1 = Left(myText, 3)
+      part2 = Replace(Mid(myText, 4, 4), " ", "")
+      Debug.Print part1, part2, myText
+    End If
+    
+    If Left(myPattern, 8) = ". .# #.." Then
+      part1 = Replace(Left(myText, 4), " ", "")
+      part2 = Mid(myText, 6, 3)
+      Debug.Print part1, part2, myText
+    End If
+    
+    If Left(myPattern, 9) = ". .# # .." Then
+      part1 = Replace(Left(myText, 4), " ", "")
+      part2 = Replace(Mid(myText, 6, 4), " ", "")
+      Debug.Print part1, part2, myText
+    End If
+    
+    If Left(myPattern, 9) = ". ## # .." Then
+      part1 = Replace(Left(myText, 4), " ", "")
+      part2 = Replace(Mid(myText, 6, 4), " ", "")
+      Debug.Print part1, part2, myText
+    End If
+    
+    If Left(myPattern, 10) = ".. ## # .." Then
+      part1 = Replace(Left(myText, 5), " ", "")
+      part2 = Replace(Mid(myText, 7, 4), " ", "")
+      Debug.Print part1, part2, myText
+    End If
+    
+    If Left(myPattern, 10) = ". .# # . ." Then
+      part1 = Replace(Left(myText, 4), " ", "")
+      part2 = Replace(Mid(myText, 6, 5), " ", "")
+      Debug.Print part1, part2, myText
+    End If
+    
+    If Left(myPattern, 10) = "..## # . ." Then
+      part1 = Replace(Left(myText, 4), " ", "")
+      part2 = Replace(Mid(myText, 6, 5), " ", "")
+      Debug.Print part1, part2, myText
+    End If
+    
+    If Left(myPattern, 11) = ". . ## # .." Then
+      part1 = Replace(Left(myText, 6), " ", "")
+      part2 = Replace(Mid(myText, 8, 4), " ", "")
+      Debug.Print part1, part2, myText
+    End If
+    
+    If Left(myPattern, 8) = "..#. #.." Then
+      part1 = Left(myText, 4)
+      part2 = Mid(myText, 6, 3)
+      Debug.Print part1, part2, myText
+    End If
+    
+    If Left(myPattern, 8) = "..## #.." Then
+      part1 = Left(myText, 4)
+      part2 = Mid(myText, 6, 3)
+      Debug.Print part1, part2, myText
+    End If
+    
+    myPCode = part1 & " " & part2
+    rng.Text = myPCode
+    rng.Collapse wdCollapseEnd
+    rng.MoveEnd , 2
+    If rng.Text = "to" Then rng.InsertBefore Text:=" "
+  End If
+  If myPostcodeDebug = True Then
+    rng.Select
+    wasRng.Select
+  End If
+  testRng.Start = rng.End
+  testRng.End = Selection.End
+  testRng.Find.Execute
+Loop
+
+
+' Find the conversion file
+Set workDoc = ActiveDocument
+thisName = LCase(workDoc.Name)
+gottaList = False
+If InStr(thisName, LCase(inFilename)) > 0 Then
+  gottaList = True
+  useThisList = True
+Else
+  useThisList = False
+  For Each myDoc In Documents
+    thisName = LCase(myDoc.Name)
+    myDoc.Activate
+    If InStr(thisName, LCase(inFilename)) > 0 Then
+      gottaList = True
+      Exit For
+    End If
+    DoEvents
+  Next myDoc
+  If gottaList = False Then
+    ' Load the DictateList/Box file
+    On Error Resume Next
+    useThisList = False
+    Documents.Open myFolder & "/" & listName
+    If Err.Number = 5174 Then
+      Err.Clear
+      Beep
+      myResponse = MsgBox("Can't find a zzSwitchList file!", _
+            vbOKOnly, "DictateExtra")
+      Exit Sub
+    Else
+      On Error GoTo 0
+      gottaList = True
+    End If
+  End If
+End If
+
+A = "": x = "": b = "|"
+
+' Create the initial F&R list
+i = 0: j = 0
+Dim bolda(500) As Boolean
+Dim boldx(500) As Boolean
+Dim itala(500) As Boolean
+Dim italx(500) As Boolean
+ 
+For Each myPara In ActiveDocument.Paragraphs
+  myLine = myPara.Range.Text
+  If Left(myLine, 1) = "#" Then Exit For
+  If InStr(myLine, "/") > 0 And _
+       Left(myLine, 1) <> "/" Then
+    Set myTest = myPara.Range.Characters(2)
+    isBold = (myTest.Font.Bold = True)
+    isItalic = (myTest.Font.Italic = True)
+    myLine = Replace(myLine, vbCr, "")
+    myLine = Replace(myLine, "^32", " ")
+    barPos = InStr(myLine, "/")
+    myF = Left(myLine, barPos)
+    myR = Mid(myLine, barPos + 1)
+    If Left(myR, 1) = "/" Then
+      myR = Mid(myR, 2)
+      x = x & myF & myR & b
+      j = j + 1
+      boldx(j) = isBold
+      italx(j) = isItalic
+    Else
+      A = A & myF & myR & b
+      i = i + 1
+      bolda(i) = isBold
+      itala(i) = isItalic
+    End If
+  End If
+  DoEvents
+Next myPara
+
+If useThisList = False Then workDoc.Activate
+' Execute the initial F&R list
+oldHighlight = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myHighlight
+
+Set rng = Selection.Range.Duplicate
+myFR = Split(Trim(A), "|")
+For k = 0 To UBound(myFR) - 1
+  txt = myFR(k)
+  pPos = InStr(txt, "/")
+  myF = Left(txt, pPos - 1)
+  If Left(myF, 1) = "~" Then
+    myF = Mid(myF, 2)
+    goWild = True
+  Else
+    goWild = False
+    If Left(myF, 1) = ChrW(172) Then
+      myF = Mid(myF, 2)
+      fixCase = False
+    Else
+      fixCase = True
+    End If
+  End If
+  myR = Mid(txt, pPos + 1)
+  If pPos > 1 Then
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .MatchWildcards = goWild
+      .MatchCase = fixCase
+      .Wrap = wdFindStop
+      .Forward = True
+      If myR <> " " And myR <> "" Then
+        .Replacement.Highlight = True
+        .Replacement.Font.Color = myColour
+        If bolda(k) = True Then
+          .Replacement.Font.Bold = True
+        End If
+        If itala(k) = True Then
+          .Replacement.Font.Italic = True
+        End If
+        If doUnderline = True Then
+          .Replacement.Font.Underline = True
+        End If
+      End If
+      .Replacement.Font.Color = myColour
+      .Text = myF
+      .Replacement.Text = myR
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+  DoEvents
+Next k
+
+' Do a load of funnies by global F&R
+Set rng = Selection.Range.Duplicate
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindStop
+  .Forward = True
+  .MatchWildcards = True
+  
+  .Text = "[Ii]talic [Oo]n (*) [Ii]talic [Oo]ff(?)"
+  .Replacement.Text = "\1zczc\2czcz"
+  .Replacement.Font.Italic = True
+  If myColour > 0 Then .Replacement.Font.Color = myColour
+  If myHighlight > 0 Then .Replacement.Highlight = True
+  If doUnderline = True Then .Replacement.Font.Underline = True
+  .Execute Replace:=wdReplaceAll
+
+  .Replacement.ClearFormatting
+  .Text = "[Bb]old on (*) [Bb]old off(?)"
+  .Replacement.Text = "\1zczc\2czcz"
+  .Replacement.Font.Bold = True
+  If myColour > 0 Then .Replacement.Font.Color = myColour
+  If myHighlight > 0 Then .Replacement.Highlight = True
+  If doUnderline = True Then .Replacement.Font.Underline = True
+  .Execute Replace:=wdReplaceAll
+
+
+  .Replacement.ClearFormatting
+  .Text = "[Ss]ma[l ]{2,3}[Cc]aps o"
+  .Replacement.Text = "smallcaps o"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "smallcaps on (*) smallcaps off(?)"
+  .Replacement.Text = "\1zczc\2czcz"
+  .Replacement.Font.SmallCaps = True
+  If myColour > 0 Then .Replacement.Font.Color = myColour
+  If myHighlight > 0 Then .Replacement.Highlight = True
+  If doUnderline = True Then .Replacement.Font.Underline = True
+  .Execute Replace:=wdReplaceAll
+  
+  .Replacement.ClearFormatting
+  .Text = "[Aa][l ]{2,3}[Cc]aps o"
+  .Replacement.Text = "allcaps o"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "allcaps on (*) allcaps off(?)"
+  .Replacement.Text = "\1zczc\2czcz"
+  .Replacement.Font.AllCaps = True
+  If myColour > 0 Then .Replacement.Font.Color = myColour
+  If myHighlight > 0 Then .Replacement.Highlight = True
+  If doUnderline = True Then .Replacement.Font.Underline = True
+  .Execute Replace:=wdReplaceAll
+  
+  .Replacement.ClearFormatting
+  .Text = "superscript on (*) superscript off(?)"
+  .Replacement.Text = "\1zczc\2czcz"
+  .Replacement.Font.Superscript = True
+  If myColour > 0 Then .Replacement.Font.Color = myColour
+  If myHighlight > 0 Then .Replacement.Highlight = True
+  If doUnderline = True Then .Replacement.Font.Underline = True
+  .Execute Replace:=wdReplaceAll
+  
+  .Replacement.ClearFormatting
+  .Text = "subscript on (*) subscript off(?)"
+  .Replacement.Text = "\1zczc\2czcz"
+  .Replacement.Font.Subscript = True
+  If myColour > 0 Then .Replacement.Font.Color = myColour
+  If myHighlight > 0 Then .Replacement.Highlight = True
+  If doUnderline = True Then .Replacement.Font.Underline = True
+  .Execute Replace:=wdReplaceAll
+  
+  ' ??????????????????????????????????????????????????????????????????????????
+  .Replacement.ClearFormatting
+  .Text = " to the minus (*)([!0-9a-zA-Z])"
+  .Replacement.Text = ChrW(8722) & "\1\2"
+  .Replacement.Font.Superscript = True
+  If myColour > 0 Then .Replacement.Font.Color = myColour
+  If myHighlight > 0 Then .Replacement.Highlight = True
+  If doUnderline = True Then .Replacement.Font.Underline = True
+  .Execute Replace:=wdReplaceAll
+  
+  .Replacement.ClearFormatting
+  .Text = " to the plus (*)([!0-9])"
+  .Replacement.Text = "+\1\2"
+  .Replacement.Font.Superscript = True
+  If myColour > 0 Then .Replacement.Font.Color = myColour
+  If myHighlight > 0 Then .Replacement.Highlight = True
+  If doUnderline = True Then .Replacement.Font.Underline = True
+  .Execute Replace:=wdReplaceAll
+  
+  .Replacement.ClearFormatting
+  .Text = " to the power (*)([!0-9])"
+  .Replacement.Text = "\1\2"
+  .Replacement.Font.Superscript = True
+  If myColour > 0 Then .Replacement.Font.Color = myColour
+  If myHighlight > 0 Then .Replacement.Highlight = True
+  If doUnderline = True Then .Replacement.Font.Underline = True
+  .Execute Replace:=wdReplaceAll
+  
+  ' Take attribute off following character
+  .Text = "zczc(?)czcz"
+  .Replacement.Text = "\1"
+  .Replacement.Font.SmallCaps = False
+  .Replacement.Font.AllCaps = False
+'                                .Replacement.Font.Bold = False
+  .Replacement.Font.Italic = False
+  .Replacement.Font.Superscript = False
+  .Replacement.Font.Subscript = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+
+myFRx = Split(Trim(x), "|")
+
+Set rng = Selection.Range.Duplicate
+For k = 0 To UBound(myFRx) - 1
+  txt = myFRx(k)
+  pPos = InStr(txt, "/")
+  myF = Left(txt, pPos - 1)
+  If Left(myF, 1) = "~" Then
+    myF = Mid(myF, 2)
+    goWild = True
+  Else
+    goWild = False
+    If Left(myF, 1) = ChrW(172) Then
+      myF = Mid(myF, 2)
+      fixCase = False
+    Else
+      fixCase = True
+    End If
+  End If
+  myR = Mid(txt, pPos + 1)
+  If pPos > 1 Then
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .MatchWildcards = goWild
+      .MatchCase = fixCase
+      .Wrap = wdFindStop
+      .Forward = True
+      If myR <> " " And myR <> "" Then
+        .Replacement.Highlight = True
+        .Replacement.Font.Color = myColour
+        If boldx(k) = True Then
+          .Replacement.Font.Bold = True
+        End If
+        If italx(k) = True Then
+          .Replacement.Font.Italic = True
+        End If
+        If doUnderline = True Then
+          .Replacement.Font.Underline = True
+        End If
+        .Replacement.Font.Color = myColour
+      End If
+      .Text = myF
+      .Replacement.Text = myR
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+  DoEvents
+Next k
+
+Set rng = Selection.Range.Duplicate
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "lowercase "
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchCase = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.Delete
+  rng.End = rng.Start + 1
+  rng.Text = LCase(rng.Text)
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+Set rng = Selection.Range.Duplicate
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "uppercase "
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchCase = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.Delete
+  rng.End = rng.Start + 1
+  rng.Text = UCase(rng.Text)
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+Set rng = Selection.Range.Duplicate
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = " ([,.;:\!\?])"
+  .Wrap = False
+  .Replacement.Text = "\1"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^^p"
+  .Wrap = False
+  .Replacement.Text = "^p"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Options.DefaultHighlightColorIndex = oldHighlight
+If doCopy = True Then Selection.Copy
+
+If doingCall = True Then
+  Selection.MoveStart wdWord, 1
+  Select Case leadword
+    Case "google"
+        Call GoogleFetch
+        Exit Sub
+    Case "dictionary"
+        Call OUPFetch
+        Exit Sub
+    Case "translate"
+        Call GoogleTranslate
+        Exit Sub
+    Case "map"
+        Call GoogleMapFetch
+        Exit Sub
+  End Select
+  Selection.MoveStart wdWord, -1
+  Selection.Collapse wdCollapseStart
+  Selection.Expand wdParagraph
+  Set rng = Selection.Range.Duplicate
+  rng.End = rng.End - 1
+  rng.Start = rng.End - 1
+  lastChar = rng.Text
+  Selection.Collapse wdCollapseEnd
+  If lastChar = " " Then
+    Selection.MoveEnd , -1
+  Else
+    Selection.TypeText Text:=" " & vbCr
+    Selection.MoveLeft , 2
+    Selection.MoveStart , -1
+    Selection.Delete
+    Selection.MoveRight , 1
+  End If
+End If
+If doSelectResult = True Then
+  Selection.Start = originalStart
+Else
+  Selection.Collapse wdCollapseEnd
+  If paraSelect = True Then Selection.MoveEnd , -11
+End If
+If doBeep = True Then Beep
+End Sub
+

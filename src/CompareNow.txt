@@ -1,0 +1,134 @@
+Sub CompareNow()
+' Paul Beverley - Version 10.02.20
+' Creates an instant comparison of two open Word files
+
+ignoreFilesWith = "zzS"
+
+showDetail = wdGranularityWordLevel
+showDetail = wdGranularityCharLevel
+
+checkFormatting = False
+' checkFormatting = True
+
+checkSpaces = False
+' checkSpaces = True
+
+' checkCase = False
+checkCase = True
+
+checkTables = True
+' checkTables = False
+
+showMoves = False
+'showMoves = True
+
+CR = vbCr: CR2 = CR & CR
+k = "!": allNames = k
+Dim myDoc(10) As Document
+numDoc = 0
+For Each myWnd In Application.Windows
+  aName = myWnd.Document.Name
+  If InStr(allNames, k & aName & k) = 0 And _
+       Left(aName, Len(ignoreFilesWith)) <> ignoreFilesWith Then
+    numDoc = numDoc + 1
+    Set myDoc(numDoc) = myWnd.Document
+    allNames = allNames & aName & k
+  End If
+Next myWnd
+
+For i = 1 To numDoc
+  myPrompt = myPrompt & Trim(Str(i)) & " - " _
+       & myDoc(i).Name & CR
+Next i
+
+myPrompt = myPrompt & CR & "Compare which files?" & _
+     CR2 & CR & "m - Moves   t - Tables   s - Spaces   c - Case" _
+     & CR & "f - Formatting   w - Word or character"
+
+Do
+  gotOne = True
+  myChoice = InputBox(myPrompt, "CompareNow", "12")
+  If Len(myChoice) = 0 Then Beep: Exit Sub
+  If Len(myChoice) = 1 Or Val(myChoice) < 12 Then
+    Beep
+    MsgBox "Please type two numbers to indicate your file choice."
+    gotOne = False
+  End If
+  befDoc = Val(Left(myChoice, 1))
+  aftDoc = Val(Mid(myChoice, 2, 1))
+  If befDoc > numDoc Or aftDoc > numDoc Then
+    gotOne = False
+    Beep
+    MsgBox "Please type two numbers within the range 1 to " & Str(numDoc)
+  End If
+Loop Until gotOne = True
+
+Set beforeDoc = myDoc(befDoc)
+beforeDoc.Activate
+If Selection.Start <> Selection.End Then
+  beforeTextSelected = True
+  Set rng = Selection.range.Duplicate
+  Documents.Add
+  Set beforeDoc = ActiveDocument
+  Selection.range.FormattedText = rng.FormattedText
+Else
+  beforeTextSelected = False
+End If
+
+myDestination = wdCompareDestinationNew
+Set afterDoc = myDoc(aftDoc)
+afterDoc.Activate
+If Selection.Start <> Selection.End Then
+  afterTextSelected = True
+  Set rng = Selection.range.Duplicate
+  Documents.Add
+  Set afterDoc = ActiveDocument
+  Selection.range.FormattedText = rng.FormattedText
+  myDestination = wdCompareDestinationRevised
+Else
+  afterTextSelected = False
+End If
+
+If beforeTextSelected <> afterTextSelected Then
+  myResponse = MsgBox("Compare selection with whole text?", _
+          vbQuestion + vbYesNoCancel, "CompareNow")
+  If myResponse <> vbYes Then
+    If afterTextSelected = True Then afterDoc.Close SaveChanges:=False
+    If beforeTextSelected = True Then beforeDoc.Close SaveChanges:=False
+    Exit Sub
+  End If
+End If
+
+myChoice = UCase(Mid(myChoice, 2))
+If InStr(myChoice, "M") > 0 Then showMoves = Not (showMoves)
+If InStr(myChoice, "T") > 0 Then checkTables = Not (checkTables)
+If InStr(myChoice, "S") > 0 Then checkSpaces = Not (checkSpaces)
+If InStr(myChoice, "C") > 0 Then checkCase = Not (checkCase)
+If InStr(myChoice, "F") > 0 Then checkFormatting = _
+     Not (checkFormatting)
+If InStr(myChoice, "W") > 0 Then
+  If showDetail = wdGranularityCharLevel Then
+    showDetail = wdGranularityWordLevel
+  Else
+    showDetail = wdGranularityCharLevel
+  End If
+End If
+
+Application.CompareDocuments _
+     OriginalDocument:=beforeDoc, _
+     RevisedDocument:=afterDoc, _
+     Destination:=myDestination, _
+     Granularity:=showDetail, _
+     CompareFormatting:=checkFormatting, _
+     CompareCaseChanges:=checkCase, _
+     CompareWhitespace:=checkSpaces, _
+     Comparetables:=checkTables, _
+     CompareMoves:=showMoves
+Set resultsDoc = ActiveDocument
+
+If beforeTextSelected = True Then
+  beforeDoc.Close SaveChanges:=False
+  resultsDoc.Activate
+End If
+End Sub
+

@@ -1,0 +1,31 @@
+Sub PageNumberChecker()
+' Paul Beverley - Version 09.02.12
+' Check that the text page number = Word's page number
+
+' Is page number at the bottom of the page?
+pageNumberAtBottom = False
+ 
+Application.Browser.Target = wdBrowsePage
+pageNow = Selection.Information(wdActiveEndPageNumber)
+Do
+  pageWas = pageNow
+  Application.Browser.Next
+' Have we moved at all from the line where we started
+  If pageNumberAtBottom = True Then
+    Selection.MoveStart Unit:=wdLine, Count:=-1
+  Else
+    Selection.MoveEnd Unit:=wdLine, Count:=1
+  End If
+  ' move past the non-numeric characters
+  Selection.MoveEndUntil cset:="0123456789", Count:=wdBackward
+  Selection.MoveStartUntil cset:="0123456789", Count:=wdForward
+  myNumber = Val(Selection)
+  pageNow = Selection.Information(wdActiveEndPageNumber)
+Loop Until pageNow <> myNumber Or pageNow = pageWas
+Beep
+If pageNow = pageWas Then
+' Second beep to show end
+  myTime = Timer: Do: Loop Until Timer > myTime + 0.2: Beep
+End If
+End Sub
+

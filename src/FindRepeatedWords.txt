@@ -1,0 +1,65 @@
+Sub FindRepeatedWords()
+' Paul Beverley - Version 03.11.17
+' Finds words that are repeated in a given range
+
+ignoreWords = "their,these,what,that,which"
+rangeWords = 20
+minLength = 4
+
+If Len(Selection) > 1 Then
+  Selection.Collapse wdCollapseEnd
+  Selection.MoveLeft wdWord, 2
+End If
+Set rng = ActiveDocument.range(Selection.End, _
+     ActiveDocument.Content.End)
+ignoreWords = "," & ignoreWords & ","
+wordsLeft = rng.Words.Count
+For i = 1 To wordsLeft
+  nowWord = LCase(Trim(rng.Words(i)))
+  If Len(nowWord) >= minLength And InStr(ignoreWords, _
+       "," & nowWord & ",") = 0 Then
+    For j = 1 To rangeWords
+      If (i + j) < wordsLeft Then
+        newWord = Trim(LCase(rng.Words(i + j)))
+        foundOne = False
+        If nowWord = newWord Then foundOne = True
+        nowStem = nowWord & "!"
+        nowStem = Replace(nowStem, "ing!", "")
+        nowStem = Replace(nowStem, "ed!", "")
+        nowStem = Replace(nowStem, "es!", "")
+        nowStem = Replace(nowStem, "s!", "")
+        nowStem = Replace(nowStem, "!", "")
+        newStem = newWord & "!"
+        newStem = Replace(newStem, "ing!", "")
+        newStem = Replace(newStem, "ed!", "")
+        newStem = Replace(newStem, "es!", "")
+        newStem = Replace(newStem, "s!", "")
+        newStem = Replace(newStem, "!", "")
+        Debug.Print nowStem, newStem
+        If nowStem = newStem Then foundOne = True
+        If nowStem & "e" = newStem Then foundOne = True
+        If nowStem = newStem & "e" Then foundOne = True
+        nowEnd = Right(nowStem, 1)
+        newEnd = Right(newStem, 1)
+        If nowEnd = newEnd Then
+          If Len(nowStem) - Len(newStem) = 1 Then _
+            checkEnd = Replace(nowStem, newStem, "")
+          If Len(newStem) - Len(nowStem) = 1 Then _
+            checkEnd = Replace(newStem, nowStem, "")
+          If checkEnd = newEnd Then foundOne = True
+        End If
+        If foundOne = True Then
+          rng.Words(i).Select
+          startRange = Selection.Start
+          rng.Words(i + j).Select
+          Selection.Start = startRange
+          Exit Sub
+        End If
+      End If
+    Next j
+  End If
+Next i
+Selection.EndKey Unit:=wdStory
+Beep
+End Sub
+

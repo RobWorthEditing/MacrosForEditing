@@ -1,0 +1,32 @@
+Sub OxfordCommaSelectiveDelete()
+' Paul Beverley - Version 07.02.20
+' Moves to next Oxford comma and/or deletes current comma first
+
+myDelete = ""
+myJumpNext = "."
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ", and>"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While Selection.Find.Found = True
+  myResponse = InputBox("Delete?", "Oxford Comma Selective Kill")
+  Select Case myResponse
+    Case myDelete:  Selection.Collapse wdCollapseStart
+                    Selection.MoveEnd , 1
+                    Selection.Delete
+    Case myJumpNext
+    Case Else: Exit Sub
+  End Select
+  Selection.Collapse wdCollapseEnd
+  Selection.Find.Execute
+Loop
+End Sub
+

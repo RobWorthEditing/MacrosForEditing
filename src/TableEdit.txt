@@ -1,0 +1,72 @@
+Sub TableEdit()
+' Paul Beverley - Version 01.10.18
+' Edits items in the cells of some or all tables
+
+stripEnds = True
+stripThese = "^p^t., "
+
+addEmDash = True
+
+doHighlight = True
+myColour = wdGray25
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+stripThese = Replace(stripThese, "^p", vbCr)
+stripThese = Replace(stripThese, "^t", vbTab)
+If Selection.Start = Selection.End Then
+  Set workRange = ActiveDocument.Tables
+  doTheLot = True
+Else
+  Set workRange = Selection.Tables
+End If
+
+For Each myTable In workRange
+  For Each myCell In myTable.range.Cells
+    myText = Left(myCell.range, Len(myCell.range) - 2)
+    newText = ""
+    
+    ' an em dash
+    If addEmDash = True And Trim(myText) = "" Then newText = ChrW(8212): myText = ""
+    If Trim(myText) = ChrW(8211) Then newText = ChrW(8212): myText = ""
+    If Trim(myText) = "-" Then newText = ChrW(8212): myText = ""
+
+    ' en dash with figures to minus sign
+    If Left(myText, 1) = ChrW(8211) And Len(myText) > 1 Then
+      newText = Replace(myText, ChrW(8211), ChrW(8722)): myText = ""
+    End If
+    
+    ' hyphen to minus sign
+    If Left(myText, 1) = "-" And Len(myText) > 2 Then
+      newText = Replace(myText, "-", ChrW(8722))
+    End If
+    
+    ' space-hyphen to minus sign
+    If Left(myText, 2) = " -" Then
+      newText = Replace(myText, " -", ChrW(8722))
+    End If
+    
+    If newText > "" Then
+      myCell.range = newText
+      If doHighlight = True Then myCell.range.HighlightColorIndex = myColour
+    End If
+
+  ' Now strip any trailing tabs or CRs
+    If stripEnds = True Then
+      Set rng = myCell.range
+      rng.MoveEnd , -1
+      rng.Start = rng.End - 1
+
+      ' Strip odd unwanted characters
+      Do While InStr(stripThese, rng.Text) > 0
+        rng.Delete
+        DoEvents
+        rng.MoveStart , -1
+      Loop
+      xdgfhf = 0
+    End If
+  Next myCell
+Next myTable
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

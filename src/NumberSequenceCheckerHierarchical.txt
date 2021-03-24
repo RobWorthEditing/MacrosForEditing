@@ -1,0 +1,212 @@
+Sub NumberSequenceCheckerHierarchical()
+' Paul Beverley - Version 06.02.12
+' Check the sequence of section numbers
+
+allowSingleNumbers = False
+
+highlightError = True
+captionWordsMax = 80
+endAtLastRightItem = True
+
+showProgress = True
+
+Dim numText() As String
+Dim num(9) As Integer
+
+' Select line to be the model
+If Selection.Start = Selection.End Then
+  Selection.Paragraphs(1).Range.Select
+End If
+If Len(Selection) < 10 Then
+  myResponse = MsgBox("Is this the starting line?", vbQuestion + vbYesNo)
+  If myResponse = vbNo Then Exit Sub
+End If
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+' Look at the current heading line
+Set rng = Selection.Range
+If Asc(rng.Text) < 32 Then rng.MoveStart 1
+rng.MoveEnd , -1
+Selection.Collapse
+lineText = rng.Text
+
+' See if there's any text before the number
+Set rng2 = rng.Duplicate
+rng2.MoveStartUntil cset:="123456789", Count:=wdForward
+posStart = InStr(rng.Text, Left(rng2.Text, 3)) - 1
+leftText = Left(lineText, posStart)
+
+' Find what's after the numbers: tab? space?
+rng2.MoveStartWhile cset:="1234567890.", Count:=wdForward
+posEnd = InStr(rng.Text, Left(rng2.Text, 3)) - 1
+stopper = Mid(lineText, posEnd + 1, 1)
+If Asc(stopper) = 9 Then stopper = "^t"
+If AscW(stopper) = 8195 Then stopper = ChrW(8195)
+If stopper = ")" Then stopper = "\)"
+If stopper = "]" Then stopper = "\]"
+startNum = Mid(lineText, posStart + 1, posEnd - posStart)
+If Right(startNum, 1) = "." Then startNum = Left(startNum, Len(startNum) - 1)
+' Analyse the number, splitting it into sections
+numText = Split(startNum, ".")
+startDepth = UBound(numText) + 1
+For i = 1 To startDepth
+  num(i) = numText(i - 1)
+Next i
+Set rng = rng2.Duplicate
+
+leftTextSearch = Replace(leftText, "(", "\(")
+leftTextSearch = Replace(leftTextSearch, "[", "\[")
+Do
+  Set rng2 = rng.Duplicate
+  If allowSingleNumbers = False Then
+    findThis = leftTextSearch & "[0-9.]{3,}" & stopper
+  Else
+    findThis = leftTextSearch & "[0-9.]@" & stopper
+  End If
+  Do
+    rng.Collapse wdCollapseEnd
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = findThis
+      .Wrap = False
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = True
+      .Execute
+    End With
+    Set rng3 = rng.Duplicate
+    rng3.MoveStart , -1
+  If showProgress = True Then rng.Select
+    rng3.End = rng3.Start + 1
+
+    If rng3.Text > "" Then crTest = Asc(rng3.Text)
+    rng3.MoveEnd wdParagraph, 1
+  ' Check if this really is likely to be a heading/caption
+    If rng.Find.Found = False Then
+      lookForAnother = False
+    Else
+      If (rng3.Words.Count) < captionWordsMax And (crTest = 12 _
+           Or crTest = 13) And Right(newNum, 1) <> "." Then
+        lookForAnother = False
+        If InStr(rng.Text, ".") = 0 And allowSingleNumbers = False _
+             Then lookForAnother = True
+      Else
+        lookForAnother = True
+      End If
+    End If
+  Loop Until lookForAnother = False
+  If rng.Find.Found = False Then
+    rng.Move , 1
+    rng.Select
+    Beep
+    endAtLastRightItem = False
+    GoTo theEnd
+  End If
+  rng.MoveEnd , -1
+  If showProgress = True Then rng.Select
+  newNum = rng.Text
+ 
+ 
+ 
+  newNum = Replace(newNum, leftText, "")
+  If Right(newNum, 1) = "." Then newNum = Left(newNum, Len(newNum) - 1)
+  keepGoing = True
+
+  newDepth = Len(newNum) - Len(Replace(newNum, ".", "")) + 1
+  depthChange = newDepth - startDepth
+  Select Case (depthChange)
+    Case Is > 1
+    ' This must be an error!
+      keepGoing = False
+    Case 1:
+    ' Test for, e.g. 3.4.5.6 -> 3.4.5.6.1
+      If newNum <> startNum & ".1" Then keepGoing = False
+      startDepth = startDepth + 1
+      num(startDepth) = 1
+    Case 0:
+    ' Test for, e.g. 3.4.5.6 -> 3.4.5.7
+      keepGoing = False
+      num(startDepth) = num(startDepth) + 1
+      testNum = ""
+      For i = 1 To startDepth
+        testNum = testNum & Trim(Str(num(i))) & "."
+      Next i
+      If Replace(testNum, newNum, "") = "." Then
+        keepGoing = True
+      Else
+        If allowSingleNumbers = False Then
+          If newNum = Trim(Str(num(1) + 1)) & ".1" Then
+            keepGoing = True
+            num(1) = num(1) + 1: num(2) = 1
+          End If
+        End If
+      End If
+    Case Is < 0:
+   
+    ' Test for, e.g. 3.4.5.6 -> 3.4.6 (or 3.5) (or 4)
+      num(newDepth) = num(newDepth) + 1
+      testNum = ""
+      For i = 1 To newDepth
+        testNum = testNum & Trim(Str(num(i))) & "."
+      Next i
+      If Replace(testNum, newNum, "") = "." Then
+        keepGoing = True
+      Else
+        If allowSingleNumbers = False Then
+          If newNum = Trim(Str(num(1) + 1)) & ".1" Then
+            keepGoing = True
+            num(1) = num(1) + 1: num(2) = 1
+          End If
+        End If
+      End If
+  End Select
+  startNum = newNum
+  startDepth = newDepth
+Loop Until keepGoing = False
+Beep
+If highlightError = True Then
+  rng2.HighlightColorIndex = wdTurquoise
+  rng.HighlightColorIndex = wdRed
+End If
+
+' Second beep to show end
+myTime = Timer
+Do
+Loop Until Timer > myTime + 0.2
+Beep
+
+theEnd:
+If endAtLastRightItem = True Then
+  rng2.Collapse
+  rng2.Select
+  startHere = Selection.Start - 1
+  Selection.MoveDown Unit:=wdScreen, Count:=2
+' Make sure that you've not dropped into a footnote ...
+  Do While Selection.Information(wdInFootnote) = True
+    Selection.MoveDown Unit:=wdLine, Count:=2
+  Loop
+Else
+  rng.Collapse
+  rng.Select
+  startHere = Selection.Start - 1
+  Selection.MoveUp Unit:=wdScreen, Count:=2
+' Make sure that you've not dropped into a footnote ...
+  Do While Selection.Information(wdInFootnote) = True
+    Selection.MoveUp Unit:=wdLine, Count:=2
+  Loop
+End If
+
+
+Selection.End = startHere
+Selection.MoveRight Unit:=wdCharacter, Count:=1
+
+With Selection.Find
+  .Text = "^13" & findThis
+  .MatchWildcards = True
+End With
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

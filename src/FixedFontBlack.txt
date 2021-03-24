@@ -1,0 +1,7 @@
+Sub FixedFontBlack()
+' Paul Beverley - Version 13.05.20
+' Sets font to an 'almost' black font colour
+
+Selection.Font.Color = &H111111
+End Sub
+

@@ -1,0 +1,72 @@
+Sub DisplayQuote()
+' Paul Beverley - Version 11.08.11
+' Display a highlighted (or selected) quote
+
+nextParaStyle = "Para-no-indent"
+displayedQuoteStyle = "DisplayQuote"
+ActiveDocument.TrackRevisions = False
+
+Set rng = ActiveDocument.Content
+If Selection.Start = Selection.End Then
+  rng.Start = Selection.Start
+  rng.End = Selection.End
+  ' Find beginning to the nearest word
+  nowCol = rng.HighlightColorIndex
+  Do
+    rng.MoveStart wdWord, -1
+  Loop Until rng.HighlightColorIndex <> nowCol
+  rng.MoveStart wdWord, 1
+  wasEnd = rng.End
+  rng.End = rng.Start + 1
+ 
+  ' Find beginning to the nearest character
+  Do
+    rng.MoveStart , -1
+    rng.MoveEnd , -1
+  Loop Until rng.HighlightColorIndex <> nowCol
+  rng.MoveStart , 1
+  startHere = rng.Start
+ 
+  ' Find end to the nearest word
+  rng.Start = wasEnd
+  rng.End = wasEnd
+  Do
+    rng.MoveEnd wdWord, 1
+  Loop Until rng.HighlightColorIndex <> nowCol
+  rng.Start = rng.End
+  rng.MoveEnd , 1
+  ' Find end to the nearest character
+  Do
+    rng.MoveStart , -1
+    rng.MoveEnd , -1
+  Loop Until rng.HighlightColorIndex = nowCol
+  rng.Start = startHere
+End If
+rng.Select
+sH = Selection.Start
+Selection.Start = Selection.End
+Selection.MoveStart wdCharacter, -1
+Selection.Delete
+Selection.MoveEnd wdCharacter, 1
+
+' If there's a note marker, move past it
+If Asc(Selection) = 2 Then
+  Selection.Start = Selection.End
+Else
+  Selection.End = Selection.Start
+End If
+
+' Is it followed by a space?
+' i.e. does the paragraph continue?
+Selection.MoveEnd wdCharacter, 1
+If Selection = " " Then
+  Selection.TypeParagraph
+  Selection.Style = ActiveDocument.Styles(nextParaStyle)
+End If
+Selection.Start = sH
+Selection.Range.HighlightColorIndex = 0
+Selection.End = Selection.Start + 1
+Selection.TypeParagraph
+Selection.Style = ActiveDocument.Styles(displayedQuoteStyle)
+End Sub
+

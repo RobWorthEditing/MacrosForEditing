@@ -1,0 +1,20 @@
+Sub DIYFormatHeadwords()
+' Paul Beverley - Version 24.11.20
+' Adds a character style to the first word of every para in a given style
+
+  Set rng = ActiveDocument.Content
+'  Set rng = Selection.Range.Duplicate
+
+' For each of the paragraphs in the range
+For Each myPara In rng.Paragraphs
+  If Len(myPara.Range.Text) > 1 Then
+    If myPara.Range.Style = ActiveDocument.Styles("Normal") Then
+      myPara.Range.Words(1).Style = ActiveDocument.Styles("Emphasis")
+    End If
+'    myPara.Range.Select
+  End If
+  DoEvents
+Next myPara
+Beep
+End Sub
+

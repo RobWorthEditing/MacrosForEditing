@@ -1,0 +1,206 @@
+Sub MultiFileWord()
+' Paul Beverley - Version 28.11.20
+' Multiple Word file concatenation
+
+deleteImages = True
+insertNotesWithinText = True
+embedTextboxText = True
+acceptTCs = True
+listOff = True
+
+unAllLinkFields = False
+unLinkFieldsExceptEqns = False
+
+addTitle = True
+myFontSize = 30
+titleHighlightColour = wdYellow
+
+remindAboutCancel = False
+
+Dim allMyFiles(200) As String
+If deleteImages = False Then moreText = "and images "
+
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+CR = vbCr
+CR2 = CR & CR
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  If remindAboutCancel = True Then myResponse = _
+       MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "Multifile Text Collection")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.Count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+  myResponse = MsgBox("Collect formatted text " & moreText & _
+       "from ALL the files in" & " directory:" & dirName & _
+       " ?", vbQuestion + vbYesNoCancel, "Multifile Word")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  myResponse = MsgBox("Collect formatted text " & moreText & _
+       "from the files listed here?", vbQuestion + vbYesNoCancel, _
+       "Multifile Word")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.Range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+' Now pick up formatted text from all the files
+Set allWordDoc = Documents.Add
+Set targetRng = ActiveDocument.Content
+For i = 1 To numFiles
+  thisFile = myFolder & myDelimiter & allMyFiles(i)
+  Set thisDoc = Application.Documents.Open(FileName:=thisFile)
+  Set thisRng = thisDoc.Content
+  StatusBar = allMyFiles(i)
+  DoEvents
+  ActiveDocument.TrackRevisions = False
+  embedTextboxText = True
+  If listOff = True Then ActiveDocument.ConvertNumbersToText
+' Delete all images
+  If ActiveDocument.InlineShapes.Count > 0 _
+         And deleteImages = True Then
+    For Each myFig In ActiveDocument.InlineShapes
+      If myFig.Type = wdInlineShapePicture Then myFig.Delete
+    Next
+  End If
+
+  If insertNotesWithinText = True Then
+    numNotes = ActiveDocument.Footnotes.Count
+    If numNotes > 0 Then
+      thisRng.InsertAfter Text:=CR & "Footnotes:" & CR2
+      thisRng.Font.Bold = True
+      thisRng.Collapse wdCollapseEnd
+      thisRng.FormattedText = _
+           thisDoc.StoryRanges(wdFootnotesStory).FormattedText
+    ' Delete all notes
+      For j = numNotes To 1 Step -1
+        ActiveDocument.Footnotes(j).Delete
+      Next j
+    End If
+    numNotes = ActiveDocument.Endnotes.Count
+    If numNotes > 0 Then
+      thisRng.InsertAfter Text:=CR & "Endnotes:" & CR2
+      thisRng.Font.Bold = True
+      thisRng.Collapse wdCollapseEnd
+      thisRng.FormattedText = _
+           thisDoc.StoryRanges(wdEndnotesStory).FormattedText
+    ' Delete all notes
+      For j = numNotes To 1 Step -1
+        ActiveDocument.Endnotes(j).Delete
+      Next j
+    End If
+  End If
+
+  ' copy all the textbox text into the text itself
+  If embedTextboxText = True And ActiveDocument.Shapes.Count > 0 Then
+    Selection.EndKey Unit:=wdStory
+    For Each shp In ActiveDocument.Shapes
+      If shp.Type <> 24 And shp.Type <> 3 Then
+        If shp.TextFrame.HasText Then
+          Set rng2 = shp.TextFrame.TextRange
+          Selection.TypeText CR2
+          Selection.FormattedText = rng2.FormattedText
+        End If
+      End If
+    Next
+    For sh = ActiveDocument.Shapes.Count To 1 Step -1
+      If ActiveDocument.Shapes(sh).TextFrame.HasText Then
+        ActiveDocument.Shapes(sh).Delete
+      End If
+    Next
+  End If
+
+  If unLinkFieldsExceptEqns = True Then
+    For Each fld In ActiveDocument.Fields
+      If fld.Type <> 58 Then
+        fld.Unlink
+        DoEvents
+      End If
+    Next fld
+  Else
+    If unAllLinkFields = True Then Selection.Fields.Unlink
+  End If
+  ' Accept all track changes
+  If acceptTCs = True Then Selection.Range.Revisions.AcceptAll
+  ' Having closed the file, paste text into combined file
+  If addTitle = True Then
+    Selection.HomeKey Unit:=wdStory
+    fileTitle = allMyFiles(i)
+    fileTitle = Replace(fileTitle, ".DOCX", "")
+    fileTitle = Replace(fileTitle, ".docx", "")
+    fileTitle = Replace(fileTitle, ".doc", "")
+    fileTitle = Replace(fileTitle, ".DOC", "")
+    fileTitle = Replace(fileTitle, ".rtf", "")
+    Selection.TypeText fileTitle & vbCr
+    Selection.HomeKey Unit:=wdStory
+    Selection.Expand wdParagraph
+    Selection.Font.Size = myFontSize
+    Selection.Font.Bold = True
+    Selection.Range.HighlightColorIndex = titleHighlightColour
+    Selection.Start = Selection.End
+  End If
+  DoEvents
+  Set allWordRange = allWordDoc.Content
+  Set thisDocRange = thisDoc.Content
+  allWordRange.Collapse wdCollapseEnd
+  allWordRange.FormattedText = thisDocRange.FormattedText
+  thisDoc.Close SaveChanges:=wdDoNotSaveChanges
+  DoEvents
+  FilesTotal = FilesTotal + 1
+Next i
+Beep
+MsgBox "Please now WAIT until the flashing cursor returns." & vbCr _
+    & vbCr & "Not doing so can cause Word to crash." & vbCr & _
+    vbCr & " If unsure, only try pressing the cursor right key."
+End Sub
+

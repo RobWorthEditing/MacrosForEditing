@@ -1,0 +1,33 @@
+Sub ItalicParaDelete()
+' Paul Beverley - Version 23.03.17
+' Deletes all paragraphs that are mainly in italic
+
+deletionFactor = 6
+' i.e. delete if there are (deletionFactor) times
+' as many italic words as roman words
+
+For Each myPara In ActiveDocument.Paragraphs
+  numWords = myPara.range.Words.Count
+  numItalic = 0
+  For i = 1 To numWords
+    If myPara.range.Words(i).Font.Italic = True Then
+      numItalic = numItalic + 1
+    End If
+  Next i
+  numRoman = numWords - numItalic
+  If numItalic > deletionFactor * numRoman Then
+    myPara.range.Font.DoubleStrikeThrough = True
+  End If
+Next myPara
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.DoubleStrikeThrough = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+

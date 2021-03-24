@@ -1,0 +1,82 @@
+Sub NotesReEmbedByNumber()
+' Paul Beverley - Version 13.01.21
+' Re-embed footnotes or endnotes by number
+
+startNum = 316
+endNum = 351
+
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Selection.TypeText vbCr
+Selection.MoveLeft , 1
+
+'Put a bookmark at the beginning of the footnotes
+ActiveDocument.Bookmarks.Add Name:="PBnotesStart"
+
+Selection.EndKey Unit:=wdStory
+Selection.TypeText Trim(Str(endNum + 1)) & vbCr
+
+For i = startNum To endNum
+  Selection.GoTo what:=wdGoToBookmark, Name:="PBnotesStart"
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^p" & Trim(Str(i))
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  Selection.Collapse wdCollapseEnd
+  Selection.MoveEnd , 1
+  Do While InStr(". " & vbTab, Left(Selection.Text, 1)) > 0
+    Selection.MoveStart , -1
+    DoEvents
+  Loop
+  
+  startNote = Selection.End
+  
+  findThis = "^p" & Trim(Str(i + 1))
+  With Selection.Find
+    .Text = findThis
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  Selection.Collapse wdCollapseStart
+  Selection.Start = startNote
+  Selection.Copy
+  ' Go and look for footnote marker
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = Trim(Str(i))
+    .Font.Superscript = True
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Replacement.Font.Superscript = False
+    .Forward = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceOne
+  End With
+    ' Add a footnote and paste in the text of the footnote
+  With ActiveDocument.Range(Start:=ActiveDocument.Content.Start, End:= _
+    ActiveDocument.Content.End)
+'    With .FootnoteOptions
+'      .Location = wdBottomOfPage
+'      .NumberingRule = wdRestartContinuous
+'      .StartingNumber = 1
+'      .NumberStyle = wdNoteNumberStyleArabic
+'    End With
+    .Footnotes.Add Range:=Selection.Range, Reference:=""
+  End With
+  Selection.Paste
+Next i
+Beep
+MsgBox "Finished!"
+End Sub
+

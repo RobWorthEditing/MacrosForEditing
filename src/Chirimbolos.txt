@@ -1,0 +1,206 @@
+Sub Chirimbolos()
+' Paul Beverley - Version 04.08.20
+' Chirimbolos - WhatChar in SPANISH by Marcela Ronaina
+
+' Muestra el nombre y código ASCII/unicode de un caracter
+' y el formato si es diferente a la plantilla Normal
+' Macro adaptada de Paul Beverley
+
+' To use voice, "uncomment" this line:
+Set speech = New SpVoice
+' And set this as True
+useVoice = True
+' Decidir dónde mostrar el resultado
+showOnStatusbar = False
+showInMessageBox = True
+' No mostrar CD si el caracter es un espacio
+justBeepForSpace = True
+' Mostrar también valor hex del código ANSI
+showHexANSI = True
+' If you also want to use this code in FRedit:
+prepareFReditCode = False
+If showOnStatusbar + showInMessageBox + useVoice = 0 Then _
+     Beep: MsgBox "Alter options in macro code to show results.": _
+     Exit Sub
+
+charSelected = (Selection.Start <> Selection.End)
+If AscW(Selection) = 32 Then Beep: Exit Sub
+
+CR2 = vbCr & vbCr
+' Si no hay nada seleccionado, usar caracter a la derecha
+If Selection.Start = Selection.End Then Selection.MoveEnd wdCharacter, 1
+' aceptar todos los cambios de la selección
+Selection.Range.Revisions.AcceptAll
+
+ansicode = Asc(Selection)
+uCode = Val(Dialogs(wdDialogInsertSymbol).CharNum)
+If Asc(ansicode) = 63 And uCode <> 63 Then
+  ansiBit = "ANSI: ???"
+Else
+  ansiBit = ">>>>>>  ANSI: " & Str(ansicode) & _
+       " (hex " & Hex(ansicode) & ")"
+End If
+
+' expresar uCode en hexadecimal
+hexCode = Replace(Hex(uCode), "FFFF", "")
+ucodeBit = vbCr & "Unicode: " & Str(uCode) & "   (hex " & _
+      hexCode & ")"
+
+'Mostrar fuente/tamaño/color si difiere del estilo Normal
+fntName = Selection.Font.Name
+normalName = ActiveDocument.Styles(wdStyleNormal).Font.Name
+If normalName <> fntName Then
+  fontBit = vbCr & "Fuente: " & fntName
+Else
+  fontBit = ""
+End If
+
+fntSize = Selection.Font.Size
+normalSize = ActiveDocument.Styles(wdStyleNormal).Font.Size
+If normalSize <> fntSize Then _
+     fontBit = fontBit & "           Tamaño: " & Str(fntSize)
+    
+fntColor = Selection.Font.ColorIndex
+normalColor = ActiveDocument.Styles(wdStyleNormal).Font.ColorIndex
+If normalColor <> fntColor Then _
+     fontBit = fontBit & "         Color:  " & Str(fntColor)
+    
+fntNormal = "Normal:" & vbCr & "Fuente: " & normalName & _
+      "        Tamaño: " & Str(normalSize) & _
+      "     Color: " & Str(normalColor)
+
+' Cut the FREditBit to the clipboard, which you can then paste to a script
+HexBit = ""
+If uCode < 0 Then
+  HexBit = CR2 & "For FRedit, use Find: <&H" & hexCode & ">"
+  If prepareFReditCode = True Then
+    Selection.Collapse wdCollapseStart
+    startCode = Selection.Start
+    Selection.TypeText Text:="<&H" & hexCode & ">|"
+    Selection.Start = startCode
+    Selection.Cut
+  End If
+End If
+
+' To correct for Mac codes
+Select Case ansicode
+  Case 2: extraBit = "Remisión a una nota"
+  Case 32: extraBit = "Espacio"
+  Case 34: extraBit = "Comillas rectas (doble)"
+  Case 39: extraBit = "Comilla recta (sencilla) ¡Ojo! No se usa."
+  Case 40: If Selection.Font.Name = "Symbol" Then extraBit = "¡Ni idea qué es esto!"
+  Case 44: extraBit = "Coma"
+  Case 45: extraBit = "Guion"
+  Case 46: extraBit = "Punto"
+  Case 48: extraBit = "0 (número)"
+  Case 49: extraBit = "1 (número)"
+  Case 50: extraBit = "2 (número)"
+  Case 51: extraBit = "3 (número)"
+  Case 58: extraBit = "Dos puntos"
+  Case 59: extraBit = "Punto y coma"
+  Case 60: extraBit = "Paréntesis angulado (apertura)/Menor que (Matem.)"
+  Case 62: extraBit = "Paréntesis angulado (cierre)/Mayor que (Matem.)"
+  Case 63: extraBit = "Horizontal Bar"
+  Case 73: extraBit = "I mayúscula"
+  Case 76: extraBit = "L mayúscula"
+  Case 79: extraBit = "O mayúscula"
+  Case 88: extraBit = "X mayúscula"
+  Case 95: extraBit = "Subraya"
+  Case 96: extraBit = "Acento grave ¡suelto!"
+  Case 105: extraBit = "i minúscula"
+  Case 108: extraBit = "l (ele) minúscula"
+  Case 111: extraBit = "o minúscula"
+  Case 120: extraBit = "x minúscula"
+  Case 139: extraBit = "Comilla angular simple (apertura)"
+  Case 155: extraBit = "Comilla angular simple (cierre)"
+  Case 150: extraBit = "Semirraya "
+  Case 151: extraBit = "Raya"
+  Case 161: extraBit = "Exclamación (apertura)"
+  Case 174: extraBit = "Marca registrada"
+  Case 171: extraBit = "Comillas latinas (apertura)"
+  Case 176: extraBit = "Grado"
+  Case 187: extraBit = "Comillas latinas (cierre)"
+  Case Else: extraBit = ""
+End Select
+
+' The unicode information will overwrite the ANSI
+Select Case uCode
+  Case 9: extraBit = "Marca de tabulación"
+  Case 11: extraBit = "Salto de línea manual"
+  Case 13: extraBit = "Marca de párrafo"
+  Case 30: extraBit = "Guion de no separación"
+  Case 31: extraBit = "Guion opcional"
+  Case 47: extraBit = "Barra"
+  Case 124: extraBit = "Pleca"
+  Case 160: extraBit = "Espacio de no separación"
+  Case 167: extraBit = "Párrafo/Sección"
+  Case 176: extraBit = "Grado"
+  Case 178: extraBit = "Dodgy squared symbol!"
+  Case 179: extraBit = "Dodgy cubed symbol!"
+  Case 180: extraBit = "Acento agudo ¡Tilde suelto!"
+  Case 182: extraBit = "Calderón"
+  Case 183: extraBit = "Punto alto o centrado"
+  Case 186: extraBit = "Ordinal masculino"
+  Case 215: extraBit = "Multiplicación"
+  Case 937: extraBit = "Omega"
+  Case 956: extraBit = "Mu = micro"
+  Case 8194: extraBit = "en-space"
+  Case 8195: extraBit = "em-space"
+  Case 8201: extraBit = "Espacio fino"
+  Case 8216: extraBit = "Comilla simple (apertura)"
+  Case 8217: extraBit = "Comilla simple (cierre) = apóstrofo"
+  Case 8211: extraBit = "Semirraya"
+  Case 8212: extraBit = "Raya"
+  Case 8220: extraBit = "Comillas inglesas (apertura)"
+  Case 8221: extraBit = "Comillas inglesas (cierre)"
+  Case 8222: extraBit = "Comilla alemana (apertura)"
+  Case 8226: extraBit = "Bolo"
+  Case 8230: extraBit = "Puntos suspensivos"
+  Case 8242: extraBit = "Minuto de ángulo >> Unicode: Prima"
+  Case 8243: extraBit = "Segundo de ángulo >> Unicode: Doble prima"
+  Case 8249: extraBit = "Comilla angular simple (apertura)"
+  Case 8250: extraBit = "Comilla angular simple (cierre)"
+  Case 8722: extraBit = "Menos (Mat.)"
+End Select
+
+If extraBit > "" Then extraBit = "      >>>>  " & extraBit
+
+' Revisar superíndice/subíndice,cursiva,negrita y versalitas
+If Selection.Font.Superscript = True Then
+  extraBit = extraBit & "     >>> superíndice"
+Else
+  If Selection.Font.Subscript = True Then
+  extraBit = extraBit & "     >>> subíndice"
+  End If
+End If
+If Selection.Font.Italic = True Then
+  extraBit = extraBit & "     >>> cursiva"
+End If
+If Selection.Font.Bold = True Then
+  extraBit = extraBit & "     >>> negrita"
+End If
+If Selection.Font.SmallCaps = True Then
+  extraBit = extraBit & "     >>> versalitas"
+End If
+
+' This isn't a 'funny' Symbol font, undo the Revisions.AcceptAll
+If uCode > 0 Then WordBasic.EditUndo
+
+' Mostrar en la Barra de estado
+s = "                   "
+If showOnStatusbar = True Then _
+       StatusBar = s & s & s & s & ansiBit & "    " & _
+       extraBit & "    " & _
+       ucodeBit & "    " & fontBit & HexBit
+
+If useVoice And extraBit > "" And charSelected = False Then _
+     speech.Speak extraBit, SVSFPurgeBeforeSpeak
+    
+' Mostrar en un Cuadro de diálogo
+If (useVoice And charSelected) Or showInMessageBox _
+     Or extraBit = "" Or uCode < 0 Then _
+     MsgBox ansiBit & extraBit & vbCr & ucodeBit & vbCr & fontBit _
+     & HexBit & vbCr & fntNormal, , "¿Qué chirimbolo es este?"
+Selection.Collapse wdCollapseStart
+End Sub
+

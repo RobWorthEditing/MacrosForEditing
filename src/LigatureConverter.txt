@@ -1,0 +1,89 @@
+Sub LigatureConverter()
+' Paul Beverley - Version 09.06.17
+' Replaces funny codes for fi/ff/fl/ffi in converted PDF
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = Chr(12)
+  .Wrap = wdFindContinue
+  .Replacement.Text = "fi"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = Chr(14)
+  .Wrap = wdFindContinue
+  .Replacement.Text = "ffi"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = Chr(11)
+  .Wrap = wdFindContinue
+  .Replacement.Text = "ff"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+
+' Each fl has been replaced by chr(13), which
+' is an ordinary newline. Bother!
+' So check all line ends, and see if
+' any of them for a valid word.
+
+Selection.HomeKey Unit:=wdStory
+    myLanguage = Selection.range.LanguageID
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[A-Za-z]@^13[a-z]{1,}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+' Note where the end of the found item is
+  endNow = rng.End
+
+  myWord = Replace(rng.Text, Chr(13), "fl")
+  If Application.CheckSpelling(myWord, MainDictionary:= _
+         Languages(myLanguage).NameLocal) = True Then
+    rng.Select
+    Selection.TypeText Text:=myWord
+  End If
+
+  rng.Start = endNow
+  rng.End = endNow
+  rng.Find.Execute
+Loop
+Beep
+Selection.HomeKey Unit:=wdStory
+End Sub
+

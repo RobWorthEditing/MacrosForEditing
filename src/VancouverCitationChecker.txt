@@ -1,0 +1,75 @@
+Sub VancouverCitationChecker()
+' Paul Beverley - Version 11.04.20
+' Finds all citations and creates a list
+
+' Citations in parenthese
+' myType = 1
+
+' Citations in square brackets
+' myType = 2
+
+' Citations as superscript
+myType = 3
+
+Set rng = ActiveDocument.Content
+allCites = ""
+Select Case myType
+  Case 1
+       mySearch = "\([0-9, \-" & ChrW(8211) & ChrW(8722) & "]@\)"
+  Case 2
+       mySearch = "\[[0-9, \-" & ChrW(8211) & ChrW(8722) & "]@\]"
+  Case 3
+       mySearch = "[0-9,\-" & ChrW(8211) & ChrW(8722) & "]{1,}"
+End Select
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = mySearch
+  .Wrap = wdFindStop
+  If myType = 3 Then .Font.Superscript = True
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  thisOne = rng.Text
+  Set rng2 = ActiveDocument.Range(rng.End, rng.End + 1)
+  If rng.Text <> " " And InStr(" " & vbCr, rng2) > 0 Then
+    rng.Select
+    If thisOne > "" Then
+      If thisOne = "[1]" And allCites > "" Then
+        allCites = allCites & vbCr & vbCr & "References" & vbCr
+      End If
+      allCites = allCites & thisOne & vbCr
+    Else
+      rng.End = rng.Start + 3
+    End If
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+Set thisDoc = ActiveDocument
+Documents.Add
+Selection.TypeText allCites
+Selection.HomeKey Unit:=wdStory
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = wdBrightGreen
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = " "
+  .Replacement.Text = " "
+  .Replacement.Highlight = True
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Go back to main document (for use with FRedit)
+' thisdoc.Activate
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

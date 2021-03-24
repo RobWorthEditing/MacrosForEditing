@@ -1,0 +1,83 @@
+Sub CodeSegmentProtect()
+' Paul Beverley - Version 06.01.18
+' Applies strike-through to computer code sections
+
+ActiveDocument.TrackRevisions = False
+
+styleToHide = "computer_code"
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Style = styleToHide
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Font.StrikeThrough = True
+  .Execute
+End With
+If rng.Find.Found = False Then
+  MsgBox "No such style found: " & styleToHide
+  Exit Sub
+Else
+  rng.Select
+  myResponse = MsgBox("Hide this style?", _
+     vbQuestion + vbYesNoCancel)
+  If myResponse <> vbYes Then Exit Sub
+End If
+rng.Find.Execute Replace:=wdReplaceAll
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\/\/[!^13]{1,}"
+  .MatchWildcards = True
+  .Replacement.Highlight = True
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .Replacement.Font.StrikeThrough = False
+  .Execute Replace:=wdReplaceAll
+End With
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Text = "^p^33"
+  .MatchWildcards = False
+  .Replacement.Text = "^pzczc!"
+  .Execute Replace:=wdReplaceAll
+End With
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Text = "zczc\![!^13]{1,}"
+  .MatchWildcards = True
+  .Replacement.Highlight = True
+  .Replacement.Text = ""
+  .Replacement.Font.StrikeThrough = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zczc"
+  .MatchWildcards = False
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+End With
+ActiveDocument.TrackRevisions = True
+End Sub
+

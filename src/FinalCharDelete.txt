@@ -1,0 +1,13 @@
+Sub FinalCharDelete()
+' Paul Beverley - Version 14.01.21
+' Removes the final character or punct off a word
+
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Selection.Collapse wdCollapseEnd
+Selection.TypeBackspace
+End Sub
+

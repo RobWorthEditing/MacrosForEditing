@@ -1,0 +1,31 @@
+Sub ListHighlightedText()
+' Paul Beverley - Version 08.09.17
+' Lists alphabetically any text that is highlighted
+
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set rng = ActiveDocument.Content
+rng.FormattedText = rngOld.FormattedText
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .Highlight = False
+  .Execute Replace:=wdReplaceAll
+End With
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending
+Selection.EndKey Unit:=wdStory
+Selection.TypeText Text:=vbCr
+Selection.HomeKey Unit:=wdStory
+Selection.Expand wdParagraph
+Do While Len(Selection) = 1
+  Selection.Delete
+  Selection.Expand wdParagraph
+Loop
+Selection.HomeKey Unit:=wdStory
+End Sub
+

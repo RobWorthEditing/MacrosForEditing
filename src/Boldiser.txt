@@ -1,0 +1,36 @@
+Sub Boldiser()
+' Paul Beverley - Version 16.01.21
+' Toggles next character or selected text bold.
+
+Dim charsBold As Long
+
+If Selection.End - Selection.Start < 2 Or _
+     Selection.Information(wdInCommentPane) Or _
+     Selection.Information(wdInFootnote) Or _
+     Selection.Information(wdInEndnote) Then
+  Selection.Font.Bold = Not (Selection.Font.Bold = True)
+Else
+' How many bold/roman chars?
+  For i = Selection.Start To Selection.End
+    If i < ActiveDocument.Range.End Then
+      Set rng = ActiveDocument.Range(Start:=i, End:=i + 1)
+      If rng.Font.Bold = True Then charsBold = charsBold + 1
+    End If
+  Next i
+  charsRoman = Len(Selection) - charsBold
+' Change to bold or roman, accordingly
+  If charsBold > charsRoman Or charsRoman = 0 Then
+    Selection.Font.Bold = False
+  Else
+  ' Don't boldise following space or quote
+    Set rng = Selection
+    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+      rng.MoveEnd , -1
+      DoEvents
+    Loop
+    rng.Font.Bold = True
+    rng.Select
+  End If
+End If
+End Sub
+

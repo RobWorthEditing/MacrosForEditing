@@ -1,0 +1,70 @@
+Sub Dash()
+' Paul Beverley - Version 20.07.20
+' Remove punctuation, add dash and lower case next char
+' Ctrl-Alt-=
+
+mDash = False
+
+newBit = " -- "
+newBit = " " & ChrW(8211) & " "
+
+myPunct = "!?,.:;"
+
+If mDash = True Then
+  myTrack = ActiveDocument.TrackRevisions
+  ActiveDocument.TrackRevisions = False
+End If
+myQuotes = Chr(34) & Chr(39) & ChrW(8220) & ChrW(8216)
+Selection.Collapse wdCollapseEnd
+Do
+  Selection.MoveRight 1
+  DoEvents
+Loop Until (InStr(myPunct, Selection) > 0) Or Selection = " "
+
+myStart = Selection.Start
+If Selection = ChrW(8217) Then myStart = myStart + 1
+Do
+  Selection.MoveRight 1
+  DoEvents
+Loop Until LCase(Selection) <> UCase(Selection) Or Asc(Selection) = 1
+
+myEnd = Selection.Start
+Set rng = ActiveDocument.Content
+rng.End = myEnd
+rng.Start = myStart
+wasMiddle = rng
+lastChar = Right(rng, 1)
+If LCase(Selection) <> Selection Then
+' It needs lowercasing
+  Selection.Start = Selection.Start - 1
+  preChar = Selection
+  Selection.MoveStart 1
+  Selection.MoveEnd 1
+  newLetter = LCase(Selection)
+  If InStr(myQuotes, preChar) > 0 Then
+    Selection.Delete
+    Selection.TypeText newLetter
+    Selection.End = myEnd - 1
+  Else
+    newBit = newBit & newLetter
+  End If
+  Selection.Start = myStart
+Else
+  If lastChar = " " And Len(rng) > 1 Then newBit = Left(newBit, Len(newBit) - 1)
+  Selection.MoveLeft 1
+End If
+Selection.Start = myStart
+Selection.Delete
+If mDash = True Then
+  Selection.TypeText newBit
+  Selection.Start = myStart
+  Selection.End = myStart + 3
+  Selection.Delete
+  ActiveDocument.TrackRevisions = myTrack
+  Selection.TypeText ChrW(8212)
+Else
+  Selection.TypeText newBit
+End If
+Selection.MoveRight Count:=1
+End Sub
+

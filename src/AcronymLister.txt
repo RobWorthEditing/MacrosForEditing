@@ -1,0 +1,197 @@
+Sub AcronymLister()
+' Paul Beverley - Version 17.09.18
+' List all acronyms
+
+createFReditList = False
+doBeeps = True
+
+myResponse = MsgBox("Acronym Lister: Include numbers?", _
+     vbQuestion + vbYesNoCancel)
+If myResponse = vbCancel Then Exit Sub
+
+If Options.DefaultHighlightColorIndex = 0 Then _
+     Options.DefaultHighlightColorIndex = wdYellow
+
+' First create a copy of the existing document
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.TypeParagraph
+Selection.Text = rng.Text
+Selection.HomeKey Unit:=wdStory
+
+' Remove all apostrophes (close single quotes)
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[" & ChrW(8217) & "']"
+  .Replacement.Text = " "
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Add highlight to all words with/without numbers
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  If myResponse = vbYes Then
+    .Text = "<[-0-9A-Za-z]{2,}>"
+  Else
+    .Text = "<[-A-Za-z]{2,}>"
+  End If
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+If doBeeps = True Then Beep
+
+' Remove highlight from words in all lowercase
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[-a-z0-9]@>"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+If doBeeps = True Then Beep
+
+' Remove highlight from initial-cap words
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[A-Z][-a-z]@>"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Remove highlight from words ending in hyphen
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[-A-Za-z]@->"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Remove highlight from words starting in hyphen
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<-[-A-Za-z]@>"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Remove all unhighlighted characters
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = False
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Remove all blank lines
+Do
+  Set rng = ActiveDocument.Content
+  wasEnd = rng.End
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^13{2,}"
+    .Replacement.Text = "^p"
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+Loop Until wasEnd = rng.End
+
+' Create a list of unique abbrevs
+Set dict = CreateObject("Scripting.Dictionary")
+
+'Set comparemode; use vbBinaryCompare
+'for case-sensitive filtering
+dict.comparemode = vbTextCompare
+
+'Iterate through all the paragraphs in the doc.
+For Each myPara In ActiveDocument.Paragraphs
+
+'If we've already encountered this item,
+'then delete the paragraph.
+  If dict.Exists(myPara.range.Text) Then
+    myPara.range.Delete
+  Else
+  'If we haven't already encountered this item,
+  'then add it to the dictionary's keys.
+    dict.Add myPara.range.Text, ""
+  End If
+Next myPara
+Set dict = Nothing
+
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+Selection.range.HighlightColorIndex = 0
+
+Selection.HomeKey Unit:=wdStory
+
+If createFReditList = False Then
+  If doBeeps = True Then Beep
+  Exit Sub
+End If
+' Create a FRedit list
+ActiveDocument.Content.Copy
+
+Set rng = ActiveDocument.Content
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p"
+  .Replacement.Text = "zczc^p"
+  .Replacement.Highlight = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13(*)zczc"
+  .Replacement.Text = "^p\1|^^&"
+  .Replacement.Highlight = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zczc"
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+Selection.range.HighlightColorIndex = wdColorAutomatic
+Selection.InsertAfter Text:=vbCr & "| FRedit list:" & vbCr
+
+Selection.HomeKey Unit:=wdStory
+Selection.Paste
+If doBeeps = True Then Beep
+End Sub
+

@@ -1,0 +1,26 @@
+Sub ReverseList()
+' Paul Beverley - Version 05.09.20
+' Reverses the order of items in a list
+
+If Selection.Start <> Selection.End Then
+  Set rng = Selection.Range.Duplicate
+Else
+  Beep
+  myResponse = MsgBox("Work on the whole file?", _
+       vbQuestion + vbYesNoCancel, "AcceptFormatting365")
+  If myResponse <> vbYes Then Exit Sub
+  Set rng = ActiveDocument.Content
+End If
+
+i = 999
+For Each myPara In rng.Paragraphs
+  myPara.Range.InsertBefore Text:=Trim(Str(i)) & " "
+  i = i - 1
+Next myPara
+rng.Sort SortOrder:=wdSortOrderAscending
+
+For Each myPara In rng.Paragraphs
+  myPara.Range.Words(1).Delete
+Next myPara
+End Sub
+

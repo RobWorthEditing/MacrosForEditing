@@ -1,0 +1,31 @@
+Sub ToCback()
+' Paul Beverley - Version 18.07.10
+' Jump back to table of contents
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+Selection.HomeKey Unit:=wdLine
+Selection.EndKey Unit:=wdLine, Extend:=wdExtend
+thisLine = Selection
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = False
+  .Text = thisLine
+  .Replacement.Text = ""
+  .Execute
+End With
+Selection.MoveUp Unit:=wdLine, Count:=3
+Selection.MoveDown Unit:=wdLine, Count:=3
+Selection.MoveRight Unit:=wdCharacter, Count:=1, Extend:=wdExtend
+
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+End With
+
+End Sub
+

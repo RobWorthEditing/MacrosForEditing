@@ -1,0 +1,92 @@
+Sub TableStripper()
+' Paul Beverley - Version 13.01.21
+' Strips out all tables into a separate file
+
+myFormat = "[xxx near here]"
+
+Set thisDoc = ActiveDocument
+Documents.Add
+Set tabDoc = ActiveDocument
+thisDoc.Activate
+Selection.HomeKey Unit:=wdStory
+thisMany = 0
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Table "
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+Do While Selection.Find.Found = True
+  myCaptionStart = Selection.Start
+  myNumberStart = Selection.End
+  Selection.Expand wdParagraph
+' Only do anything if 'Table' is the first word of the paragraph
+  If Selection.Start = myCaptionStart Then
+    myCaptionEnd = Selection.End
+    tabCaption = Selection
+  
+  ' Move back and pick up, say, 'Table 1.6'
+    Selection.End = myNumberStart
+    Do
+      Selection.MoveEnd , Count:=1
+      DoEvents
+    Loop Until InStr(ChrW(9) & " :", Right(Selection.Text, 1)) > 0
+    tabTitle = Selection
+
+  ' now check for table below
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveDown Unit:=wdParagraph, Count:=2
+    gotOne = False
+    If Selection.Information(wdWithInTable) = True Then
+      gotOne = True
+      Do
+        Selection.MoveDown Unit:=wdParagraph, Count:=1
+      Loop Until Selection.Information(wdWithInTable) = False
+      Selection.MoveUp Unit:=wdParagraph, Count:=1
+      Selection.Start = myCaptionEnd
+      Selection.Cut
+    Else
+      Selection.Start = myCaptionStart
+      Selection.End = myCaptionStart
+      Selection.MoveUp Unit:=wdParagraph, Count:=2
+      If Selection.Information(wdWithInTable) = True Then
+        gotOne = True
+        Do
+          Selection.MoveUp Unit:=wdLine, Count:=1
+        Loop Until Selection.Information(wdWithInTable) = False
+        Selection.MoveDown Unit:=wdParagraph, Count:=1
+        Selection.End = myCaptionStart
+        Selection.Cut
+        Selection.MoveDown Unit:=wdParagraph, Count:=1
+      End If
+    End If
+  ' Paste it into the tables document
+    If gotOne = True Then
+      Selection.InsertAfter Replace(myFormat, "xxx", tabTitle) & vbCr
+      Selection.HomeKey Unit:=wdLine
+      tabDoc.Activate
+      Selection.TypeText tabCaption
+      Selection.Paste
+      Selection.TypeParagraph
+      Selection.TypeParagraph
+      thisMany = thisMany + 1
+      thisDoc.Activate
+      Selection.MoveDown Unit:=wdParagraph, Count:=1
+    Else
+      Selection.MoveDown Unit:=wdParagraph, Count:=2
+    End If
+  Else
+    Selection.Collapse wdCollapseEnd
+  End If
+  Selection.Find.Execute
+Loop
+tabDoc.Activate
+Selection.TypeText Str(thisMany) & " tables extracted" & vbCr
+End Sub
+

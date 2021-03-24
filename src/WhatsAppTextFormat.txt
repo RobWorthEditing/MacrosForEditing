@@ -1,0 +1,67 @@
+Sub WhatsAppTextFormat()
+' Paul Beverley - Version 11.11.20
+' Converts text from Word to WhatsApp formatting
+
+nmlFont = ActiveDocument.Styles(wdStyleNormal).Font.Name
+
+' Are there any existing format codes?
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[_\*`~]"
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute
+End With
+
+If rng.Find.Found = True Then
+' If so, remove them
+  rng.Find.Execute Replace:=wdReplaceAll
+Else
+' Otherwise ADD the WhatsApp formatting commands
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Format = True
+    .Font.Bold = True
+    .Replacement.Text = "*^&*"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Font.Italic = True
+    .Replacement.Text = "_^&_"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Font.StrikeThrough = True
+    .Replacement.Text = "~^&~"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Font.Name = "Courier New"
+    .Replacement.Text = "```^&```"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  Set rng = ActiveDocument.Content
+  rng.Copy
+End If
+End Sub
+

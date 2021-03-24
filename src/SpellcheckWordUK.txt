@@ -1,0 +1,14 @@
+Sub SpellcheckWordUK()
+' Paul Beverley - Version 25.08.11
+' Spellcheck single word UK
+' Alt-`
+Selection.Words(1).Select
+If Application.CheckSpelling(Selection, _
+     MainDictionary:=Languages(wdEnglishUK).NameLocal) = False Then
+  ActiveDocument.CheckSpelling
+Else
+  Selection.Start = Selection.End
+  beep
+End If
+End Sub
+

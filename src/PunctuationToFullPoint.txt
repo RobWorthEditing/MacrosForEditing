@@ -1,0 +1,22 @@
+Sub PunctuationToFullPoint()
+' Paul Beverley - Version 06.04.13
+' Changes the next punctuation item to a full point
+
+trackit = False
+
+myChar = "."
+myTrack = ActiveDocument.TrackRevisions
+If trackit = False Then ActiveDocument.TrackRevisions = False
+
+searchChars = ":;,"
+Selection.End = Selection.Start
+While InStr(searchChars, Selection) = 0
+  Selection.MoveRight , 1
+  DoEvents
+Wend
+Selection.MoveEnd wdCharacter, 1
+Selection.Delete
+Selection.TypeText myChar
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

@@ -1,0 +1,13 @@
+Sub FullFileNameCopy()
+' Paul Beverley - Version 09.05.17
+' Copy the full file name of the current file to the clipboard
+
+myFullName = ActiveDocument.FullName
+Selection.Collapse wdCollapseEnd
+hereNow = Selection.Start
+Selection.TypeText Text:=myFullName
+Selection.Start = hereNow
+Selection.Copy
+WordBasic.EditUndo
+End Sub
+

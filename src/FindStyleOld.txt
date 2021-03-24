@@ -1,0 +1,39 @@
+Sub FindStyleOld()
+' Paul Beverley - Version 17.11.10
+' Find text in this style
+' Alt-O
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+targetStyle = Selection.Range.Style
+Do
+  Selection.MoveDown Unit:=wdParagraph, Count:=1
+  If Selection.Start = 0 Then Beep: Exit Sub
+  thisStyle = Selection.Range.Style
+Loop Until thisStyle <> targetStyle
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = False
+  .Wrap = False
+  .Text = ""
+  .Replacement.Text = ""
+  .Style = targetStyle
+  .Execute
+End With
+
+Selection.Start = Selection.End
+Selection.MoveLeft Unit:=wdCharacter, Count:=1
+
+Selection.MoveUp Unit:=wdLine, Count:=3
+Selection.MoveDown Unit:=wdLine, Count:=3
+
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .Wrap = wdFindContinue
+End With
+End Sub
+

@@ -1,0 +1,45 @@
+Sub FontColourReader()
+' Paul Beverley - Version 14.08.19
+' Reads style font colour + any applied colour
+
+showHex = True
+showDecimal = True
+
+myMix = 9999999
+paraColourIndex = ActiveDocument.Styles(Selection.range.Style).Font.ColorIndex
+paraColour = ActiveDocument.Styles(Selection.range.Style).Font.Color
+
+myColourIndex = Selection.range.Font.ColorIndex
+myColour = Selection.range.Font.Color
+
+If showHex = True Then
+  myMessage = ""
+  myMessage = myMessage & "Style font colour = " & Hex(paraColour) & vbCr
+  If myColour = myMix Then
+    myMessage = myMessage & "Mixed colours" & vbCr
+  Else
+    If paraColour = myColour Then
+      myMessage = myMessage & "No applied colour" & vbCr
+    Else
+      myMessage = myMessage & "Applied colour = " & Hex(myColour) & vbCr
+    End If
+  End If
+  MsgBox myMessage
+End If
+  
+If showDecimal = True Then
+  myMessage = ""
+  myMessage = myMessage & "Style font colour = " & paraColourIndex & vbCr
+  If myColourIndex = myMix Then
+    myMessage = myMessage & "Mixed colours" & vbCr
+  Else
+    If paraColourIndex = myColourIndex Then
+      myMessage = myMessage & "No applied colour" & vbCr
+    Else
+      myMessage = myMessage & "Applied colour = " & myColourIndex & vbCr
+    End If
+  End If
+  MsgBox myMessage
+End If
+End Sub
+

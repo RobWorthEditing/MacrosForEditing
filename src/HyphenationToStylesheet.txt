@@ -1,0 +1,118 @@
+Sub HyphenationToStylesheet()
+' Paul Beverley - Version 27.01.16
+' Create a word list from a HyphenAlyse file
+
+CR = vbCr
+CR2 = CR & CR
+
+' First check if there's any underline
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+useUline = (rng.Find.Found = True)
+
+' Avoid the title line
+Selection.HomeKey Unit:=wdStory
+Selection.MoveDown , 1
+Set rng = ActiveDocument.Content
+rng.Start = Selection.End
+
+' Go and find the highlighted bits
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+myText = ","
+Do While rng.Find.Found = True
+  myBit = rng.Text
+  rng.Expand wdParagraph
+  myCell = rng
+  justWord = Trim(Left(myCell, InStr(myCell, ".") - 1))
+  If Not (Len(myBit) < Len(justWord)) Then
+    myText = myText & "!"
+    myBit = justWord
+  End If
+  myText = myText & myBit & ","
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+myWords = Split(myText, ",")
+
+' Go and find all underlined (or struckthrough) bits
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  If useUline = True Then
+    .Font.Underline = True
+  Else
+    .Font.StrikeThrough = True
+  End If
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+allExcepts = ","
+Do While rng.Find.Found = True
+  rng.Expand wdParagraph
+  myCell = rng.Text
+  justWord = Trim(Left(myCell, InStr(myCell, ".") - 1))
+  allExcepts = allExcepts & justWord & ","
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+Selection.EndKey Unit:=wdStory
+
+' Look at each of the highlighted items in turn
+myExcepts = Split(allExcepts, ",")
+For i = 1 To UBound(myWords) - 1
+  If Left(myWords(i), 1) = "!" Then
+    myText = Mid(myWords(i), 2) & CR
+  Else
+    If Right(myWords(i), 1) = "-" Then
+      myWord = Replace(myWords(i), "-", "")
+      myLink = "ALL"
+    Else
+      myLink = "NONE"
+      myWord = myWords(i)
+    End If
+    myText = myWord & "<word> " & ChrW(8211) & myLink & " are hyphenated"
+    addedExcept = False
+    For j = 1 To UBound(myExcepts) - 1
+      If Left(myExcepts(j), Len(myWords(i))) = myWords(i) Then
+        If addedExcept = False Then
+          addedExcept = True
+          myText = myText & " except ..." & CR
+        End If
+        myText = myText & ChrW(9) & myExcepts(j) & CR
+      End If
+    Next j
+    If addedExcept = False Then myText = myText & CR
+  End If
+  Selection.TypeText Text:=myText
+Next i
+End Sub
+

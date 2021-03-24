@@ -1,0 +1,13 @@
+Sub BorderParaOff()
+' Paul Beverley - Version 06.08.11
+' Remove the borders applied to the paragraph
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Selection.Borders(wdBorderTop).LineStyle = wdLineStyleNone
+Selection.Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+Selection.Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+Selection.Borders(wdBorderRight).LineStyle = wdLineStyleNone
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

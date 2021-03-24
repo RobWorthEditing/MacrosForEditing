@@ -1,0 +1,12 @@
+Sub AutoCorrectItemsList()
+' Paul Beverley - Version 03.01.17
+' Lists all current autocorrect items
+
+Documents.Add
+For i = 1 To Application.AutoCorrect.Entries.Count
+  myReplaceThis = Application.AutoCorrect.Entries(i).Name
+  myWithThis = Application.AutoCorrect.Entries(i).Value
+  Selection.TypeText Text:=myReplaceThis & vbTab & myWithThis & vbCr
+Next i
+End Sub
+

@@ -1,0 +1,23 @@
+Sub BordersPrevious()
+' Paul Beverley - Version 10.10.19
+' Finds previous paragraph with borders
+
+Set rng = ActiveDocument.range(0, Selection.End)
+paraNum = rng.Paragraphs.Count
+totParas = ActiveDocument.Paragraphs.Count
+
+If paraNum < totParas Then
+  For i = paraNum To 1 Step -1
+     If ActiveDocument.Paragraphs(i).range.Font.Borders(1).LineStyle <> _
+          wdLineStyleNone Then Exit For
+  Next i
+  If i > 0 Then
+    ActiveDocument.Paragraphs(i).range.Select
+    Selection.Expand wdParagraph
+  Else
+    Beep
+  End If
+End If
+Selection.Collapse wdCollapseStart
+End Sub
+

@@ -1,0 +1,33 @@
+Sub TrackOnOffVisible()
+' Paul Beverley - Version 19.06.19
+' Switches tracking on/off with visible background
+
+myColNumber = 200
+myColour = RGB(255, 255, myColNumber)
+
+ActiveDocument.TrackRevisions = Not ActiveDocument.TrackRevisions
+With ActiveDocument.Styles(wdStyleNormal).ParagraphFormat
+  If ActiveDocument.TrackRevisions = False Then
+    .Shading.BackgroundPatternColor = myColour
+  Else
+    .Shading.BackgroundPatternColor = wdColorAutomatic
+  End If
+End With
+
+If ActiveDocument.TrackRevisions = False Then _
+     myColNumber = 200 Else myColNumber = 255
+'  ActiveDocument.ActiveWindow.View.DisplayBackgrounds = True
+With ActiveDocument.Background.Fill
+  .ForeColor.RGB = RGB(255, 255, myColNumber)
+  .Visible = msoTrue
+  .Solid
+End With
+Beep
+myTime = Timer
+If ActiveDocument.TrackRevisions = True Then
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+End If
+End Sub
+

@@ -1,0 +1,342 @@
+Sub DocAlyseMedBits()
+Version 28.11.11
+' Thiers Halliwell's medical bits:
+
+' bd, bds, bid b.i.d
+With rng.Find
+  .Text = "[Bb][Dd]>"
+  .Execute Replace:=wdReplaceAll
+End With
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "[Bb][Dd][Ss]>"
+  .Execute Replace:=wdReplaceAll
+End With
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "[Bb][Ii][Dd]>"
+  .Execute Replace:=wdReplaceAll
+End With
+k = ActiveDocument.Range.End - myTot
+If k > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "[Bb].[Ii].[Dd]>"
+  .Execute Replace:=wdReplaceAll
+End With
+l = ActiveDocument.Range.End - myTot
+If l > 0 Then WordBasic.EditUnDo
+
+If i + j + k + l > 0 Then myRslt = myRslt & "bd" & _
+     vbTab & Trim(Str(i)) & CR & "bds" & vbTab & _
+     Trim(Str(J)) & CR & "bid (?word or abbr.)" & _
+     vbTab & Trim(Str(k)) & CR & "b.i.d" & vbTab _
+     & Trim(Str(l)) & CR2
+
+
+'tds, tid, t.i.d
+With rng.Find
+  .Text = "[Tt][Dd][Ss]>"
+  .Execute Replace:=wdReplaceAll
+End With
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "[Tt][Ii][Dd]>"
+  .Execute Replace:=wdReplaceAll
+End With
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "[Tt].[Ii].[Dd]>"
+  .Execute Replace:=wdReplaceAll
+End With
+k = ActiveDocument.Range.End - myTot
+If k > 0 Then WordBasic.EditUnDo
+
+If i + j + k > 0 Then myRslt = myRslt & "tds" & vbTab _
+     & Trim(Str(i)) & CR & "tid" & vbTab & Trim(Str(j)) _
+     & CR & "t.i.d" & vbTab & Trim(Str(k)) & CR2
+
+'qds, qid, q.i.d
+With rng.Find
+  .Text = "[Qq][Dd][Ss]>"
+  .Execute Replace:=wdReplaceAll
+End With
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "[Qq][Ii][Dd]>"
+  .Execute Replace:=wdReplaceAll
+End With
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "[Qq].[Ii].[Dd]>"
+  .Execute Replace:=wdReplaceAll
+End With
+k = ActiveDocument.Range.End - myTot
+If k > 0 Then WordBasic.EditUnDo
+
+If i + j + k > 0 Then myRslt = myRslt & "qds" & vbTab _
+     & Trim(Str(i)) & CR & "qid" & vbTab & Trim(Str(j)) _
+     & CR & "q.i.d" & vbTab & Trim(Str(k)) & CR2
+
+'#hrly
+With rng.Find
+  .Text = "[0-9]hrly>"
+  .Execute Replace:=wdReplaceAll
+End With
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUnDo
+
+'#[ -]hrly
+With rng.Find
+  .Text = "[0-9][ -]hrly>"
+  .Execute Replace:=wdReplaceAll
+End With
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUnDo
+
+'q#h
+With rng.Find
+  .Text = "[Qq][0-9][Hh]>"
+  .Execute Replace:=wdReplaceAll
+End With
+k = ActiveDocument.Range.End - myTot
+If k > 0 Then WordBasic.EditUnDo
+
+'qqh
+With rng.Find
+  .Text = "[Qq][Qq][Hh]>"
+  .Execute Replace:=wdReplaceAll
+End With
+l = ActiveDocument.Range.End - myTot
+If l > 0 Then WordBasic.EditUnDo
+
+If i + j + k + l > 0 Then myRslt = myRslt & "#hrly" _
+     & vbTab & Trim(Str(i)) & CR & "# hrly" & vbTab _
+     & Trim(Str(j)) & CR & "q#h" & vbTab & Trim(Str(k)) & CR _
+     & "qqh" & vbTab & Trim(Str(l)) & CR2
+
+'prn
+With rng.Find
+  .Text = "[Pp][Rr][Nn]>"
+  .Execute Replace:=wdReplaceAll
+End With
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUnDo
+
+'p.r.n
+With rng.Find
+  .Text = "[Pp].[Rr].[Nn]>"
+  .Execute Replace:=wdReplaceAll
+End With
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUnDo
+
+'sos
+With rng.Find
+  .Text = "[Ss][Oo][Ss]>"
+  .Execute Replace:=wdReplaceAll
+End With
+k = ActiveDocument.Range.End - myTot
+If k > 0 Then WordBasic.EditUnDo
+
+'s.o.s
+With rng.Find
+  .Text = "[Ss].[Oo].[Ss]>"
+  .Execute Replace:=wdReplaceAll
+End With
+l = ActiveDocument.Range.End - myTot
+If l > 0 Then WordBasic.EditUnDo
+
+If i + j + k + l > 0 Then myRslt = myRslt & "prn" & vbTab _
+     & Trim(Str(i)) & CR & "p.r.n" & vbTab & Trim(Str(j)) _
+     & CR & "sos" & vbTab & Trim(Str(k)) & CR _
+     & "s.o.s" & vbTab & Trim(Str(l)) & CR2
+
+'IV / i.v.
+With rng.Find
+  .Text = "<iv>"
+  .Execute Replace:=wdReplaceAll
+End With
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "<i.v>"
+  .Execute Replace:=wdReplaceAll
+End With
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "<IV>"
+  .Execute Replace:=wdReplaceAll
+End With
+k = ActiveDocument.Range.End - myTot
+If k > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "<I.V>"
+  .Execute Replace:=wdReplaceAll
+End With
+l = ActiveDocument.Range.End - myTot
+If l > 0 Then WordBasic.EditUnDo
+
+If i + j + k + l > 0 Then myRslt = myRslt & "iv" & vbTab _
+     & Trim(Str(i)) & CR & "i.v." & vbTab & Trim(Str(j)) _
+     & CR & "IV" & vbTab & Trim(Str(k)) & CR _
+     & "I.V." & vbTab & Trim(Str(l)) & CR2
+
+'IM / i.m.
+With rng.Find
+  .Text = "<im>"
+  .Execute Replace:=wdReplaceAll
+End With
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "<i.m>"
+  .Execute Replace:=wdReplaceAll
+End With
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "<IM>"
+  .Execute Replace:=wdReplaceAll
+End With
+k = ActiveDocument.Range.End - myTot
+If k > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "<I.M>"
+  .Execute Replace:=wdReplaceAll
+End With
+l = ActiveDocument.Range.End - myTot
+If l > 0 Then WordBasic.EditUnDo
+
+If i + j + k + l > 0 Then myRslt = myRslt & "im" & vbTab _
+     & Trim(Str(i)) & CR & "i.m." & vbTab & Trim(Str(j)) _
+     & CR & "IM" & vbTab & Trim(Str(k)) & CR _
+     & "I.M." & vbTab & Trim(Str(l)) & CR2
+
+'SC / s.c.
+With rng.Find
+  .Text = "<sc>"
+  .Execute Replace:=wdReplaceAll
+End With
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "<s.c>"
+  .Execute Replace:=wdReplaceAll
+End With
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "<SC>"
+  .Execute Replace:=wdReplaceAll
+End With
+k = ActiveDocument.Range.End - myTot
+If k > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "<S.C>"
+  .Execute Replace:=wdReplaceAll
+End With
+l = ActiveDocument.Range.End - myTot
+If l > 0 Then WordBasic.EditUnDo
+
+If i + j + k + l > 0 Then myRslt = myRslt & "sc" & vbTab _
+     & Trim(Str(i)) & CR & "s.c." & vbTab & Trim(Str(j)) _
+     & CR & "SC" & vbTab & Trim(Str(k)) & CR _
+     & "S.C." & vbTab & Trim(Str(l)) & CR2
+
+'# µ
+With rng.Find
+  .Text = "[0-9]" & Chr(181)
+  .Execute Replace:=wdReplaceAll
+End With
+h = ActiveDocument.Range.End - myTot
+If h > 0 Then WordBasic.EditUnDo
+
+'# µ
+With rng.Find
+  .Text = "[0-9] " & Chr(181)
+  .Execute Replace:=wdReplaceAll
+End With
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUnDo
+
+'#micro
+With rng.Find
+  .Text = "[0-9]micro"
+  .Execute Replace:=wdReplaceAll
+End With
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUnDo
+
+'# micro
+With rng.Find
+  .Text = "[0-9] micro"
+  .Execute Replace:=wdReplaceAll
+End With
+k = ActiveDocument.Range.End - myTot
+If k > 0 Then WordBasic.EditUnDo
+
+If h + i + j + k > 0 Then myRslt = myRslt & "# " _
+     & Chr(181) & vbTab & Trim(Str(h + i)) & CR _
+     & "# " & "micro" & vbTab & Trim(Str(j + k)) & CR2
+
+
+'count/minute
+With rng.Find
+  .Text = "cpm>"
+  .Execute Replace:=wdReplaceAll
+End With
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "c.p.m>"
+  .Execute Replace:=wdReplaceAll
+End With
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUnDo
+
+If i + j > 0 Then myRslt = myRslt & "cpm" & vbTab & Trim(Str(i)) _
+     & CR & "c.p.m." & vbTab & Trim(Str(j)) & CR2
+
+'beats/minute
+With rng.Find
+  .Text = "bpm>"
+  .Execute Replace:=wdReplaceAll
+End With
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUnDo
+
+With rng.Find
+  .Text = "b.p.m>"
+  .Execute Replace:=wdReplaceAll
+End With
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUnDo
+
+If i + j > 0 Then myRslt = myRslt & "bpm" & vbTab & Trim(Str(i)) & CR _
+     & "b.p.m." & vbTab & Trim(Str(j)) & CR2
+End Sub
+

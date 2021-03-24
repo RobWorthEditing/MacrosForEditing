@@ -1,0 +1,16 @@
+Sub AcceptTrackingSelectively()
+' Paul Beverley - Version 10.02.21
+' Accepts track changes of specific author/editor
+
+' acceptName = "Microsoft"
+acceptName = "Paul Beverley"
+
+For Each rv In ActiveDocument.Revisions
+  If InStr(rv.Author, acceptName) > 0 Then
+    rv.Accept
+  End If
+  DoEvents
+Next rv
+Beep
+End Sub
+

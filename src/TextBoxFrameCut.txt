@@ -1,0 +1,42 @@
+Sub TextBoxFrameCut()
+' Paul Beverley - Version 01.06.10
+' Remove textboxes and frames
+' Initial Paul Beverley - Version by richardwalshe@prufrock.co.uk
+Dim sh As Shape
+Dim fr As Frame
+For Each sh In ActiveDocument.Shapes
+    If sh.Type = msoGroup Then sh.Ungroup
+Next sh
+
+For Each sh In ActiveDocument.Shapes
+    If sh.TextFrame.HasText Then
+      ' Leaves images intact
+        sh.TextFrame.TextRange.Copy
+      ' Finds where the anchor for the textbox is
+      ' N.B. This is not necessarily where the textbox
+      '  has ended up
+        sh.Anchor.Paragraphs(1).Range.Select
+        Selection.Collapse
+        sh.Delete
+      ' Marks material so correctness of position
+      '  can be checked
+        Selection.TypeText Text:="<TBX>"
+        Selection.Paste
+        Selection.TypeText Text:="</TBX>"
+    End If
+Next sh
+
+For Each fr In ActiveDocument.Frames
+  ' Removes frames with similar tagging for later checking
+    fr.Select
+    Selection.Collapse
+    Selection.TypeText Text:="<FRM>"
+    fr.Select
+    Selection.Collapse Direction:=wdCollapseEnd
+    Selection.TypeText Text:="</FRM>"
+  ' This is the bit that actually removes the frames
+    fr.Select
+    fr.Delete
+Next fr
+End Sub
+

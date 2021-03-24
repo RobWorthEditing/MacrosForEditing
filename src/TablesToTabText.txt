@@ -1,0 +1,14 @@
+Sub TablesToTabText()
+' Paul Beverley - Version 27.06.17
+' Converts all tables into tab-separated text
+
+For i = ActiveDocument.Tables.Count To 1 Step -1
+   ActiveDocument.Tables(i).range.Select
+   Selection.Cut
+   Selection.InsertBefore Text:=vbCr
+   Selection.range.Style = ActiveDocument.Styles(wdStyleNormal)
+   Selection.Collapse wdCollapseStart
+   Selection.PasteSpecial DataType:=wdPasteText
+Next i
+End Sub
+

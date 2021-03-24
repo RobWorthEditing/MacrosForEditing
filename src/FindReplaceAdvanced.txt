@@ -1,0 +1,7 @@
+Sub FindReplaceAdvanced()
+' Paul Beverley - Version 04.06.11
+' Call up Advanced Find & Replace dialog box
+
+Dialogs(wdDialogEditReplace).Show
+End Sub
+

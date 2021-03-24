@@ -1,0 +1,27 @@
+Sub SwapWords()
+' Paul Beverley - Version 14.01.21
+' Swaps adjacent words
+
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Set rng1 = Selection.Range.Duplicate
+Selection.Collapse wdCollapseEnd
+Selection.MoveRight wdWord, 1
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Set rng2 = Selection.Range.Duplicate
+Selection.Collapse wdCollapseEnd
+Selection.Range.FormattedText = rng1.FormattedText
+rng1.Select
+Selection.Collapse wdCollapseEnd
+Selection.Range.FormattedText = rng2.FormattedText
+rng2.Delete
+rng1.Delete
+End Sub
+

@@ -1,0 +1,18 @@
+Sub ListAllHeadings()
+' Paul Beverley - Version 15.06.19
+' Creates a list of all headings by style name
+
+myStyles = "Heading 1,Heading 2,Heading 3"
+
+Set myFile = ActiveDocument
+Documents.Add
+Set rng = ActiveDocument.Content
+For Each pa In myFile.Paragraphs
+  If InStr(myStyles, pa.range.Style) > 0 Then
+    rng.FormattedText = pa.range.FormattedText
+    rng.Collapse wdCollapseEnd
+    rng.Select
+  End If
+Next pa
+End Sub
+

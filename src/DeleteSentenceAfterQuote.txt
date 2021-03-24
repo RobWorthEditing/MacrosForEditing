@@ -1,0 +1,19 @@
+Sub DeleteSentenceAfterQuote()
+' Paul Beverley - Version 25.09.18
+' Deletes rest of sentence after current quote
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start - 2
+rng.End = Selection.End + 2
+If InStr(rng, ChrW(215)) > 0 Then
+  myTarget = ")"
+Else
+  myTarget = ChrW(8217)
+End If
+Selection.MoveEndUntil cset:=myTarget, Count:=wdForward
+Selection.Collapse wdCollapseEnd
+Selection.MoveRight , 1
+Selection.MoveEndUntil cset:=".", Count:=wdForward
+Selection.Delete
+End Sub
+

@@ -1,0 +1,36 @@
+Sub CommentContextCopier()
+' Paul Beverley - Version 20.01.18
+' Copies paragraphs containing comments into a new file
+
+multiSpace = 4
+showTrackChanges = True
+
+myTrack = ActiveDocument.TrackRevisions
+If showTrackChanges = True Then _
+     ActiveDocument.TrackRevisions = False
+Set chapterText = ActiveDocument
+For i = 1 To multiSpace
+  sp = sp & vbCr
+Next i
+Set rng = ActiveDocument.Content
+Documents.Add
+Set contextDoc = ActiveDocument
+For Each myPara In rng.Paragraphs
+  If myPara.range.Comments.Count > 0 Then
+    myPara.range.Copy
+    Selection.Paste
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=sp
+  End If
+Next myPara
+chapterText.Activate
+ActiveDocument.TrackRevisions = myTrack
+contextDoc.Activate
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Comments context " & _
+     ChrW(8211) & " Chapter " & vbCr & vbCr
+ActiveDocument.Paragraphs(1).range.Style = "Heading 2"
+Selection.MoveLeft , 2
+End Sub
+

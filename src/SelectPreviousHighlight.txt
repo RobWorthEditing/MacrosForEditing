@@ -1,0 +1,20 @@
+Sub SelectPreviousHighlight()
+' Paul Beverley - Version 13.09.19
+' Selects the previous piece of higlighted text
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = ""
+  .Forward = False
+  .Highlight = True
+  .MatchWildcards = False
+  .Execute
+End With
+If Selection.Find.Found = False Then
+  Selection.Collapse wdCollapseEnd
+  Beep
+End If
+End Sub
+

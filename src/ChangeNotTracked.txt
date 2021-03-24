@@ -1,0 +1,14 @@
+Sub ChangeNotTracked()
+' Paul Beverley - Version 03.11.11
+' Change (or add) some text, but don't track the change
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+If Selection.Start <> Selection.End Then Selection.Delete
+newText = InputBox("Change to?")
+Selection.TypeText Text:=newText
+
+ActiveDocument.TrackRevisions = myTrack
+
+End Sub
+

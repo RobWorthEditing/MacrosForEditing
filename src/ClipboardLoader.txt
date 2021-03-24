@@ -1,0 +1,39 @@
+Sub ClipboardLoader()
+' Paul Beverley - Version 06.01.18
+' Puts text in clipboard from a menu
+
+m = "|"
+m = m & "e - email =paul@archivepub.co.uk|"
+m = m & "n - Paul Beverley =Paul Beverley|"
+m = m & "a - Address =46 Nightingale Drive, Norwich NR8 6TR|"
+m = m & "u - UserName =PaulBeverley66|"
+m = m & "p - Password =Collywobble_543|"
+
+myItem = Split(m, "|")
+myFullPrompt = ""
+For i = 1 To UBound(myItem) - 1
+  j = myItem(i)
+  txt = Left(j, InStr(j, "=") - 1)
+  myFullPrompt = myFullPrompt & txt & vbCr
+Next i
+
+myResponse = InputBox(myFullPrompt & vbCr, "ClipboardLoader")
+i = InStr(m, "|" & myResponse)
+If i = 0 Then Beep: Exit Sub
+txt = Mid(m, i)
+i = InStr(txt, "=")
+txt = Mid(txt, i + 1)
+i = InStr(txt, "|")
+txt = Left(txt, i - 1)
+
+Selection.Collapse wdCollapseEnd
+Selection.TypeText Text:=txt
+Selection.MoveStart , -(Len(txt))
+Selection.range.Style = ActiveDocument.Styles(wdStyleNormal)
+Selection.Font.Reset
+Selection.Copy
+WordBasic.EditUndo
+WordBasic.EditUndo
+WordBasic.EditUndo
+End Sub
+

@@ -1,0 +1,114 @@
+Sub ArticleChanger()
+' Paul Beverley - Version 28.10.17
+' Types, deletes or switches article 'the'/'a'/'an'.
+
+If Selection = " " Then Selection.MoveRight , 1
+useA = (Selection.Start <> Selection.End)
+Set wd = Selection.range.Duplicate
+wd.Expand wdWord
+Set prevWd = wd.Duplicate
+prevWd.End = wd.Start - 1
+prevWd.Expand wdWord
+
+If InStr(" a an the ", " " & Trim(wd.Text) & " ") > 0 Then
+  wd.Delete
+  Exit Sub
+End If
+
+If InStr(" A An The ", " " & Trim(wd.Text) & " ") > 0 Then
+  wd.Delete
+  Selection.MoveEnd 1
+  newChar = UCase(Selection)
+  If newChar <> Selection Then
+    Selection.Delete
+    Selection.TypeText Text:=newChar
+  Else
+  Selection.Collapse wdCollapseEnd
+  End If
+  Exit Sub
+End If
+
+If InStr(" a an ", " " & Trim(prevWd.Text) & " ") > 0 Then
+  prevWd.Select
+  Selection.Delete
+  Selection.TypeText Text:="the "
+  Exit Sub
+End If
+
+If prevWd = "the " Then
+  prevWd.Select
+  Selection.Delete
+  nextchar = Left(wd, 1)
+  If InStr("aeiouAEIOU", nextchar) > 0 Then
+    Selection.TypeText Text:="an "
+  Else
+    Selection.TypeText Text:="a "
+  End If
+  Exit Sub
+End If
+
+If InStr(" A An ", " " & Trim(prevWd.Text) & " ") > 0 Then
+  prevWd.Select
+  Selection.Delete
+  Selection.TypeText Text:="The "
+  Exit Sub
+End If
+
+If prevWd = "The " Then
+  prevWd.Select
+  Selection.Delete
+  nextchar = Left(wd, 1)
+  If InStr("aeiouAEIOU", nextchar) > 0 Then
+    Selection.TypeText Text:="An "
+  Else
+    Selection.TypeText Text:="A "
+  End If
+  Exit Sub
+End If
+
+firstChar = Left(wd, 1)
+nextchar = Mid(wd, 2, 1)
+cd = Asc(prevWd)
+isABreak = (cd > 10 And cd < 15)
+If cd = 149 Then isABreak = True
+If InStr(prevWd, ".") > 0 Then isABreak = True
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+
+needCap = False
+If prevWd = ". " Or isABreak = True Then
+  Selection.Expand wdCharacter
+  newInitial = LCase(Selection)
+  If UCase(nextchar) <> nextchar Then
+    If Selection <> newInitial Then
+      Selection.Delete
+      Selection.TypeText Text:=newInitial
+      Selection.MoveLeft , 1
+    End If
+  End If
+  Selection.Collapse wdCollapseStart
+  needCap = True
+End If
+If useA = False Then
+  If needCap = True Then
+    Selection.TypeText Text:="The "
+  Else
+    Selection.TypeText Text:="the "
+  End If
+Else
+  If InStr("aeiouAEIOU", firstChar) > 0 Then
+    If needCap = True Then
+      Selection.TypeText Text:="An "
+    Else
+      Selection.TypeText Text:="an "
+    End If
+  Else
+    If needCap = True Then
+      Selection.TypeText Text:="A "
+    Else
+      Selection.TypeText Text:="a "
+    End If
+  End If
+End If
+End Sub
+

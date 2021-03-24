@@ -1,0 +1,53 @@
+Sub TagDQ()
+' Paul Beverley - Version 03.10.17
+' Add a tag to the current paragraph
+
+startText = "<DQ>"
+'startText = "<DEF>"
+endText = ""
+' endText = "</C>" & vbCr
+endText = "</DQ>"
+'endText = "</DEF>"
+endText = "</DQ>"
+endTextOnSameLine = True
+
+takeOffItalic = False
+
+displayedQuoteStyle = "Displayed Quote"
+changeFormat = False
+
+myQuotes = """'" & ChrW(8216) & ChrW(8217) & ChrW(8220) & ChrW(8221)
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+' Go to start of the paragraph, delete quote and add tag
+Selection.Expand wdParagraph
+If takeOffItalic = True Then Selection.Font.Italic = False
+If changeFormat = True Then
+  Selection.Style = ActiveDocument.Styles(displayedQuoteStyle)
+End If
+
+' Remove quote marks
+Selection.Collapse wdCollapseStart
+Selection.MoveEnd , 1
+If InStr(myQuotes, Selection) > 0 Then Selection.Delete
+Selection.InsertBefore Text:=startText
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseEnd
+Selection.MoveStart , -2
+Selection.MoveEnd , -1
+If InStr(myQuotes, Selection) > 0 Then Selection.Delete
+
+' Add close tag, if there is one
+' Tag on this line or next?
+If endText > "" Then
+  Selection.Expand wdParagraph
+  Selection.Collapse wdCollapseEnd
+  If endTextOnSameLine = True Then
+    Selection.MoveLeft Unit:=wdCharacter, Count:=1
+  End If
+  Selection.TypeText endText
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

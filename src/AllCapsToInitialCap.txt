@@ -1,0 +1,32 @@
+Sub AllCapsToInitialCap()
+' Paul Beverley - Version 14.12.11
+' Initial cap any words in all caps
+
+Set rng = ActiveDocument.Content
+Do
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+' This is the line that sets the min no of letters
+    .Text = "[A-Z]{3,}"
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  If rng.Find.Found = True Then
+' This is a highlight line - delete if you don't want it
+    rng.HighlightColorIndex = wdBrightGreen
+
+    rng.Start = rng.Start + 1
+    rng.Case = wdLowerCase
+    rng.Start = rng.End
+    stopNow = False
+  Else
+    stopNow = True
+  End If
+  Selection.Start = Selection.End
+Loop Until stopNow = True
+End Sub
+

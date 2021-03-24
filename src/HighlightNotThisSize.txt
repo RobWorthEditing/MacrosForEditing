@@ -1,0 +1,47 @@
+Sub HighlightNotThisSize()
+' Paul Beverley - Version 03.10.18
+' Highlights all text NOT the same size as the current text
+
+myColour = wdBrightGreen
+
+If Selection.Start = Selection.End Then
+  myResponse = MsgBox("Highlight the whole file?!", vbQuestion _
+          + vbYesNoCancel, "HighlightNotThisSize")
+  If myResponse <> vbYes Then Exit Sub
+  Set rng = ActiveDocument.Content
+Else
+  Set rng = Selection.range.Duplicate
+End If
+rng.Font.DoubleStrikeThrough = True
+Selection.Collapse wdCollapseStart
+mySize = Selection.range.Font.Size
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Size = mySize
+  .Replacement.Text = ""
+  .Replacement.Font.DoubleStrikeThrough = False
+  .Wrap = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.DoubleStrikeThrough = True
+  .Wrap = False
+  .Replacement.Text = ""
+  .Replacement.Font.DoubleStrikeThrough = False
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceAll
+End With
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

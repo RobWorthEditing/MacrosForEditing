@@ -1,0 +1,16 @@
+Sub ScareQuoteAdd()
+' Paul Beverley - Version 28.11.11
+' Add single quotes round a word
+
+Selection.MoveRight Unit:=wdWord, Count:=1
+Selection.MoveLeft Unit:=wdCharacter, Count:=1
+thisChar = Selection
+If UCase(thisChar) <> thisChar Or LCase(thisChar) <> thisChar Then
+  Selection.MoveRight Unit:=wdCharacter, Count:=1
+End If
+Selection.TypeText ChrW(8217)
+Selection.MoveLeft Unit:=wdWord, Count:=1
+Selection.TypeText ChrW(8216)
+Selection.MoveRight Unit:=wdCharacter, Count:=2
+End Sub
+

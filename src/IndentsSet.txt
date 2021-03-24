@@ -1,0 +1,9 @@
+Sub IndentsSet()
+' Paul Beverley - Version 01.02.13
+' Set indent settings
+
+Selection.ParagraphFormat.LeftIndent = CentimetersToPoints(1.27)
+Selection.ParagraphFormat.FirstLineIndent = CentimetersToPoints(-1.27)
+Selection.ParagraphFormat.RightIndent = CentimetersToPoints(0)
+End Sub
+

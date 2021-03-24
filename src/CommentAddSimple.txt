@@ -1,0 +1,16 @@
+Sub CommentAddSimple()
+' Paul Beverley - Version 18.12.20
+' Adds a new comment with a standard text item added
+
+myText = "PB: "
+keepPaneOpen = False
+
+Set cmt = Selection.Comments.Add(Range:=Selection.Range)
+cmt.Edit
+Selection.TypeText Text:=myText
+If keepPaneOpen = False Then
+  ActiveWindow.ActivePane.Close
+  cmt.Edit
+End If
+End Sub
+

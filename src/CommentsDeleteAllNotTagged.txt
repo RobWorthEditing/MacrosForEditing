@@ -1,0 +1,11 @@
+Sub CommentsDeleteAllNotTagged()
+' Paul Beverley - Version 17.10.19
+' Deletes all comments *not* starting with a specific tag
+
+myTag = "AQ"
+
+For Each cmt In ActiveDocument.Comments
+  If InStr(cmt.range.Text, myTag) = 0 Then cmt.Delete
+Next cmt
+End Sub
+

@@ -1,0 +1,9 @@
+Sub Hyphenate()
+' Paul Beverley - Version 28.01.10
+' Hyphenate two words
+
+Selection.MoveRight Unit:=wdWord, Count:=1
+Selection.TypeBackspace
+Selection.TypeText Text:="-"
+End Sub
+

@@ -1,0 +1,8 @@
+Sub DeleteComments()
+' Paul Beverley - Version 18.06.10
+' Delete all comments
+For Each cmt In ActiveDocument.Comments
+ cmt.Delete
+Next
+End Sub
+

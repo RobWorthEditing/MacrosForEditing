@@ -1,0 +1,110 @@
+Sub ReferencesCollator()
+' Paul Beverley - Version 11.07.18
+' Finds reference lists, and colours, collates and sorts them
+
+myTitle = "References"
+stopWords = "Table ,Figure ,Figures ,[[[[,<CH>"
+
+Dim myCol(10)
+myCol(0) = wdBlack
+myCol(1) = wdBlue
+myCol(2) = wdPink
+myCol(3) = wdRed
+myCol(4) = wdBrightGreen
+myCol(5) = wdDarkBlue
+myCol(6) = wdTurquoise
+
+myColTotal = 7
+
+wd = Split(stopWords, ",")
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.FormattedText = rng.FormattedText
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^m"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+Selection.End = 2
+Selection.Copy
+Selection.Collapse wdCollapseStart
+myIndex = 0
+i = 0
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myTitle & "^p"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+chapNum = 0
+Do While Selection.Find.Found = True
+  chapNum = chapNum + 1
+  Selection.Start = myIndex
+  Selection.Expand wdParagraph
+  Selection.TypeText Text:=vbCr & "Chapter " & chapNum & vbCr
+  gogo = True
+  Do
+    Selection.Expand wdParagraph
+    myLine = Selection.range.Text
+    Selection.Collapse wdCollapseEnd
+    For j = 0 To UBound(wd)
+      If Left(myLine, Len(wd(j))) = wd(j) Then gogo = False
+    Next j
+  Loop Until gogo = False
+  Selection.MoveLeft , 1
+  Selection.Expand wdParagraph
+  Selection.Collapse wdCollapseStart
+  Selection.Start = myIndex
+  Selection.range.Font.ColorIndex = myCol(i)
+  i = (i + 1) Mod 7
+  Selection.Collapse wdCollapseEnd
+  myIndex = Selection.End
+  Selection.Find.Execute
+Loop
+Selection.End = ActiveDocument.Content.End
+Selection.Delete
+Selection.HomeKey Unit:=wdStory
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.FormattedText = rng.FormattedText
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending
+Selection.HomeKey Unit:=wdStory
+Selection.MoveEnd , 1
+Do While InStr(vbCr & Chr(12), Selection.Text) > 0
+  Selection.Delete
+  Selection.MoveEnd , 1
+Loop
+Selection.Collapse wdCollapseStart
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13Chapter [0-9]{1,}>"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+Beep
+End Sub
+

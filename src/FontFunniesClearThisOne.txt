@@ -1,0 +1,42 @@
+Sub FontFunniesClearThisOne()
+' Paul Beverley - Version 08.09.17
+' Makes the selected text into the default font
+
+nmlFont = ActiveDocument.Styles(wdStyleNormal).Font.Name
+If Selection.range.Font.Name = nmlFont Then
+  Selection.Collapse wdCollapseStart
+  hereNow = Selection.End
+  Selection.Find.Execute
+  If Selection.Start = hereNow Then Beep
+  Exit Sub
+End If
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Set rng = Selection.range.Duplicate
+startFont = Selection.range.Characters(1).Font.Name
+For I = 1 To rng.Characters.Count
+  Set ch = rng.Characters(I)
+  If ch.Font.Name <> nmlFont Then
+    myChar = Asc(ch.Text)
+    myCharW = AscW(ch.Text)
+    isSuper = (ch.Font.Superscript = True)
+    isSub = (ch.Font.Subscript = True)
+    ch.Select
+    ch.Delete
+    If myCharW < 0 Then
+      Selection.Text = Chr(myChar)
+    Else
+      Selection.Text = ChrW(myCharW)
+    End If
+    If isSuper = False And isSub = False Then
+      Selection.Font.Superscript = False
+      Selection.Font.Subscript = False
+    End If
+    If isSuper Then Selection.Font.Superscript = True
+    If isSub Then Selection.Font.Subscript = True
+  End If
+Next I
+Selection.Collapse wdCollapseEnd
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

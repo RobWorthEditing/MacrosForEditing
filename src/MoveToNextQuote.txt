@@ -1,0 +1,10 @@
+Sub MoveToNextQuote()
+' Paul Beverley - Version 25.09.18
+' Moves cursor to the next quote pair
+
+Selection.MoveEndUntil cset:=ChrW(8216), Count:=wdForward
+Selection.MoveEnd , 1
+Selection.MoveEndUntil cset:=ChrW(8217), Count:=wdForward
+Selection.Collapse wdCollapseEnd
+End Sub
+

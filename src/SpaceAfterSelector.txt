@@ -1,0 +1,18 @@
+Sub SpaceAfterSelector()
+' Paul Beverley - Version 18.02.13
+' Increase and decrease space after paragraph
+
+myValues = "0,3,6,9,12,0"
+' myValues = "0,12,9,6,3,0"
+' myValues = "0,6,12,0"
+' myValues = "6,9,6"
+
+spNow = Trim(Str(Selection.ParagraphFormat.SpaceAfter))
+myValues = "," & myValues & ","
+myStart = InStr(myValues, "," & spNow & ",")
+If myStart = 0 Then myStart = 0: spNow = ""
+spNext = Mid(myValues, myStart + Len(spNow) + 2)
+spNext = Left(spNext, InStr(spNext, ",") - 1)
+Selection.ParagraphFormat.SpaceAfter = Val(spNext)
+End Sub
+

@@ -1,0 +1,50 @@
+Sub EtAlElision()
+' Paul Beverley - Version 24.08.20
+' Crops multi-authors to a given number before 'et al'
+
+doJustOne = False
+numAuthors = 3
+delimiter = " ("
+etalText = "et al."
+etalItalic = True
+
+Selection.Expand wdParagraph
+Do
+  If Selection.Range.HighlightColorIndex > 0 Or doJustOne = True Then
+    endNames = Selection.Start + InStr(Selection, delimiter)
+    Selection.Collapse wdCollapseStart
+    i = 0
+    numNames = 0
+    numInitials = 0
+    Do
+      Selection.MoveEnd Unit:=wdWord, Count:=1
+      myWord = Selection
+      If LCase(myWord) <> UCase(myWord) Then
+        If UCase(myWord) <> myWord Then
+          numNames = numNames + 1
+        Else
+          numInitials = numInitials + 1
+          If numInitials > numNames + 1 Then numInitials = numNames + 1
+        End If
+      End If
+      DoEvents
+      Debug.Print myWord & " | " & numNames & " | " & numInitials
+      Selection.Collapse wdCollapseEnd
+    Loop Until numNames >= numAuthors And numInitials >= numAuthors
+    Selection.End = endNames
+    If Left(Selection, 1) = "." Then Selection.MoveStart , 1
+    If Right(Selection, 1) = " " Then Selection.MoveEnd , -1
+    Selection.TypeText " " & etalText
+    If etalItalic = True Then
+      Selection.MoveStart , -(Len(etalText))
+      Selection.Font.Italic = True
+    End If
+    Selection.Expand wdParagraph
+  End If
+  Selection.Collapse wdCollapseEnd
+  Selection.Expand wdParagraph
+Loop Until Len(Selection) < 3 Or doJustOne = True
+Selection.MoveRight , 1
+Beep
+End Sub
+

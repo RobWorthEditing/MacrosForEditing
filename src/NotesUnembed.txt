@@ -1,0 +1,52 @@
+Sub NotesUnembed()
+' Paul Beverley - Version 19.02.16
+' Unembeds footnotes or endnotes
+
+doHighlight = False
+
+ActiveDocument.Footnotes.Convert
+Selection.EndKey Unit:=wdStory
+Selection.TypeParagraph
+
+For Each myNote In ActiveDocument.Endnotes
+  If Len(myNote.Range.Text) > 1 Then myNote.Range.Copy
+  myNote.Reference.InsertBefore "zc" & myNote.Index & "cz"
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText myNote.Index & ". "
+  Selection.Paste
+  Selection.TypeText "Blank"
+  Selection.MoveStart , -5
+  Selection.Cut
+  Selection.TypeText vbCr
+  DoEvents
+Next myNote
+
+For Each myNote In ActiveDocument.Endnotes
+  myNote.Delete
+Next myNote
+
+' Remember the existing highlight colour
+oldColour = Options.DefaultHighlightColorIndex
+' Select preferred colour
+Options.DefaultHighlightColorIndex = wdTurquoise
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zc([0-9]{1,})cz"
+  .Replacement.Text = "\1"
+  .Replacement.Font.Superscript = True
+  If doHighlight = True Then .Replacement.Highlight = True
+  .Wrap = wdFindContinue
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' Restore original colour
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

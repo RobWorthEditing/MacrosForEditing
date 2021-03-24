@@ -1,0 +1,52 @@
+Sub FontHighlight()
+' Paul Beverley - Version 03.10.11
+' Highlight all fonts NOT named in the list
+
+myBestColour = wdTurquoise
+
+nonHighlight = 5
+ReDim myFont(nonHighlight) As String
+myFont(1) = "Calibri"
+myFont(2) = "Times New Roman"
+myFont(3) = "Garamond"
+myFont(4) = "Cambria"
+myFont(5) = ""
+
+
+nowColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myBestColour
+Set rng = ActiveDocument.Content
+rng.Font.Shadow = True
+
+For i = 1 To nonHighlight
+  If myFont(i) > "" Then
+    thisFont = myFont(i)
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .MatchWildcards = False
+      .Text = ""
+      .Replacement.Text = ""
+      .Font.Name = thisFont
+      .Wrap = wdFindContinue
+      .Replacement.Font.Shadow = False
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+Next i
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .MatchWildcards = False
+  .Text = ""
+  .Wrap = wdFindContinue
+  .Font.Shadow = True
+  .Replacement.Font.Shadow = False
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceAll
+End With
+Options.DefaultHighlightColorIndex = nowColour
+
+End Sub
+

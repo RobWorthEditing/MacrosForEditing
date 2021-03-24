@@ -1,0 +1,30 @@
+Sub InitialCapItalicInNotes()
+' Paul Beverley - Version 03.12.11
+' Initial caps on significant words in italic text in notes
+
+' List of lowercase words, each surrounded by spaces
+lclist = " a an and at by for from in into is it of "
+lclist = lclist & " on or that the their they to "
+lclist = lclist & " we with "
+
+myColour = wdYellow
+doHighlight = True
+
+If ActiveDocument.Footnotes.Count > 0 Then
+  For Each fn In ActiveDocument.Footnotes
+    For Each wd In fn.Range.Words
+      If wd.Italic = True Then
+        myWord = wd
+        initChar = wd.Characters(1)
+        If UCase(initChar) <> initChar Then
+          If InStr(lclist, myWord) = 0 Then
+            wd.Characters(1) = UCase(initChar)
+            If doHighlight = True Then wd.HighlightColorIndex = myColour
+          End If
+        End If
+      End If
+    Next wd
+  Next
+End If
+End Sub
+

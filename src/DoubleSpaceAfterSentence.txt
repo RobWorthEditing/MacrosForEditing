@@ -1,0 +1,21 @@
+Sub DoubleSpaceAfterSentence()
+' Paul Beverley - Version 28.02.18
+' Ensures that every sentence has TWO spaces after it
+
+For Each sn In ActiveDocument.Sentences
+sn.Select
+  If Len(sn) > 5 Then
+    lastTwo = Right(sn.Text, 2)
+    lastChar = Right(sn.Text, 1)
+    If Right(sn.Text, 2) <> "  " And lastChar <> vbCr And _
+           sn.Information(wdWithInTable) = False And _
+           lastChar <> vbTab Then
+      sn.InsertAfter " "
+      i = i + 1
+      StatusBar = "Sentences done:  " & i
+    End If
+  End If
+Next sn
+Beep
+End Sub
+

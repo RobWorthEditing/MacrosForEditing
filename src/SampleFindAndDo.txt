@@ -1,0 +1,47 @@
+Sub SampleFindAndDo()
+' Paul Beverley - Version 08.02.12
+' Find something specific and do things to each one
+
+
+' Start from the top
+Selection.HomeKey Unit:=wdStory
+
+' Go and find the first occurrence
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "([0-9])-([0-9])"
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While Selection.Find.Found = True
+' If you want to count them...
+  myCount = myCount + 1
+' Note where the end of the found item is
+  endNow = Selection.End
+
+' Move the start of the selection one space right
+' i.e. past the first number and in front of the hyphen
+  Selection.Start = Selection.Start + 1
+' Put the end of the selection one place to the right of this
+' i.e. select the hyphen
+  Selection.End = Selection.Start + 1
+' Type a dash, which will replace the selected hyphen
+  Selection.TypeText Text:=ChrW(8211)
+ 
+  ' Be sure you're past the previous occurrence
+  Selection.End = endNow
+  Selection.Collapse wdCollapseEnd
+
+' Go and find the next occurrence (if there is one)
+  Selection.Find.Execute
+Loop
+MsgBox "Changed: " & myCount
+
+End Sub
+

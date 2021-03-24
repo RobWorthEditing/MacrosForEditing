@@ -1,0 +1,13 @@
+Sub IndentsMeasure()
+' Paul Beverley - Version 01.02.13
+' Measure and display current indent settings
+
+lft = PointsToCentimeters(Selection.ParagraphFormat.LeftIndent)
+fst = PointsToCentimeters(Selection.ParagraphFormat.FirstLineIndent)
+rt = PointsToCentimeters(Selection.ParagraphFormat.RightIndent)
+lft = Int(lft * 100 + 0.5) / 100
+fst = Int(fst * 100 + 0.5) / 100
+rt = Int(rt * 100 + 0.5) / 100
+MsgBox ("Left = " & lft & "    First = " & fst & "    Right = " & rt)
+End Sub
+

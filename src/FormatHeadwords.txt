@@ -1,0 +1,26 @@
+Sub FormatHeadwords()
+' Paul Beverley - Version 22.11.20
+' Adds a character style to the first word of every para in a given style
+
+If Selection.End = Selection.Start Then
+  myResponse = MsgBox("Do this to the WHOLE file?", _
+       vbQuestion + vbYesNo)
+  If myResponse = vbNo Then Exit Sub
+  Set rng = ActiveDocument.Content
+Else
+  Set rng = Selection.Range.Duplicate
+End If
+
+For Each myPara In rng.Paragraphs
+  If Len(myPara.Range) > 1 Then
+    If myPara.Range.Style = ActiveDocument.Styles("Normal,Normal full left") Then
+      ' myPara.Range.Words(1).Font.Bold = True
+      ' myPara.Range.Words(1).Style = ActiveDocument.Styles("EntryBib")
+      myPara.Range.Words(1).Style = ActiveDocument.Styles("Emphasis")
+    End If
+  End If
+  DoEvents
+Next myPara
+Beep
+End Sub
+

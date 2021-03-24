@@ -1,0 +1,63 @@
+Sub PunctuationBoldOff()
+' Paul Beverley - Version 03.07.19
+' Un-bolds all commas, etc. not followed by bold text
+
+' stayBoldColour = wdYellow
+stayBoldColour = wdNoHighlight
+
+changeToRomanColour = wdGray25
+trackit = False
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[,:;.]"
+  .Font.Bold = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myTrack = ActiveDocument.TrackRevisions
+If trackit = False Then ActiveDocument.TrackRevisions = False
+myCount = 0
+Do While rng.Find.Found = True
+' If you want to count them...
+' Note where the end of the found item is
+  EndNow = rng.End
+  rng.Start = rng.End
+  rng.End = rng.End + 1
+  
+  If rng.Text = " " Then
+    rng.Start = rng.End
+    rng.End = rng.End + 1
+  End If
+  
+  makeRoman = (rng.Font.Bold = False)
+  rng.Start = EndNow - 1
+  rng.End = EndNow
+  
+  If makeRoman Then
+    rng.Font.Bold = False
+    rng.HighlightColorIndex = changeToRomanColour
+    myCount = myCount + 1
+  Else
+    If stayBoldColour > 0 Then rng.HighlightColorIndex = stayBoldColour
+  End If
+  
+  
+  ' Be sure you're past the previous occurrence
+  rng.Start = EndNow
+  rng.End = EndNow
+
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+Loop
+MsgBox "Changed bold to roman: " & myCount
+ActiveDocument.TrackRevisions = myTrack
+
+End Sub
+

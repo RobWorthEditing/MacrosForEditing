@@ -1,0 +1,390 @@
+Sub ForumTextFormat()
+' Paul Beverley - Version 29.11.19
+' Converts text from Word to Forum and vice versa
+
+' Are there any existing format codes?
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+' Anything inside [], starting with /
+  .Text = "\[/*\]"
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute
+End With
+
+If rng.Find.Found = True Then
+' If so, restore Word formatting and remove them
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[b\](*)\[/b\]"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Bold = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[i\](*)\[/i\]"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Italic = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[u\](*)\[/u\]"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Underline = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[sub\](*)\[/sub\]"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Subscript = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[sup\](*)\[/sup\]"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Superscript = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[s\](*)\[/s\]"
+    .Wrap = wdFindContinue
+    .Replacement.Font.StrikeThrough = True
+    .Replacement.Text = "\1"
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[color=#FF0000\](*)\[/color\]"
+    .Wrap = wdFindContinue
+    .Replacement.Font.Color = wdColorRed
+    .Replacement.Text = "\1"
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[color=#0000CC\](*)\[/color\]"
+    .Wrap = wdFindContinue
+    .Replacement.Font.Color = wdColorBlue
+    .Replacement.Text = "\1"
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Wrap = wdFindContinue
+    .Format = True
+    .Text = "[code]     [/code]"
+    .Replacement.Text = "^t"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[code\](*)\[/code\]"
+    .Wrap = wdFindContinue
+    .Replacement.Style = "HTML Sample"
+    .Replacement.Text = "\1"
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "&lt;"
+    .Wrap = wdFindContinue
+    .Format = True
+    .Replacement.Text = "<"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "&gt;"
+    .Wrap = wdFindContinue
+    .Format = True
+    .Replacement.Text = ">"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+
+' Remove any stragglers - NOT CURRENTLY USED
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[[/codsbupelr=^0035CF0]{3,}\]"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .MatchWildcards = True
+'                        .Execute Replace:=wdReplaceAll
+  End With
+Else
+' Otherwise ADD the forum commands
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Format = True
+    .Font.Bold = True
+    .Replacement.Text = "[b]^&[/b]"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Format = True
+    .Font.Italic = True
+    .Replacement.Text = "[i]^&[/i]"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Format = True
+    .Font.Subscript = True
+    .Replacement.Text = "[sub]^&[/sub]"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Format = True
+    .Font.Superscript = True
+    .Replacement.Text = "[sup]^&[/sup]"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Format = True
+    .Font.StrikeThrough = True
+    .Replacement.Text = "[s]^&[/s]"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Format = True
+    .Font.Underline = True
+    .Replacement.Text = "[u]^&[/u]"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Format = True
+    .Style = "HTML Sample"
+    .Replacement.Text = "[code]^&[/code]"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Format = True
+    .Font.Color = wdColorBlue
+    .Replacement.Text = "[color=#0000CC]^&[/color]"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Format = True
+    .Font.Color = wdColorRed
+    .Replacement.Text = "[color=#FF0000]^&[/color]"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  normalFont = ActiveDocument.Styles(wdStyleNormal).Font.Name
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "'"
+    .Font.Name = normalFont
+    .Wrap = wdFindContinue
+    .Format = True
+    .Replacement.Text = "'"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = """"
+    .Font.Name = normalFont
+    .Wrap = wdFindContinue
+    .Format = True
+    .Replacement.Text = """"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = " - "
+    .Wrap = wdFindContinue
+    .Format = True
+    .Replacement.Text = " ^= "
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ChrW(8216) & "quote" & ChrW(8217)
+    .Wrap = wdFindContinue
+    .Format = True
+    .Replacement.Text = "^39quote^39"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+ 
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^t"
+    .Wrap = wdFindContinue
+    .Format = True
+    .Replacement.Text = "[code]     [/code]"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "<"
+    .Wrap = wdFindContinue
+    .Format = True
+    .Replacement.Text = "&lt;"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ">"
+    .Wrap = wdFindContinue
+    .Format = True
+    .Replacement.Text = "&gt;"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "&lt;div"
+    .Wrap = wdFindContinue
+    .Format = True
+    .Replacement.Text = "<div"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "&lt;/div&gt;"
+    .Wrap = wdFindContinue
+    .Format = True
+    .Replacement.Text = "</div>"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  Options.AutoFormatAsYouTypeReplaceQuotes = False
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "'&gt;"
+    .Wrap = wdFindContinue
+    .Format = True
+    .Replacement.Text = "'>"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  Options.AutoFormatAsYouTypeReplaceQuotes = True
+
+  Set rng = ActiveDocument.Content
+  rng.Copy
+End If
+End Sub
+

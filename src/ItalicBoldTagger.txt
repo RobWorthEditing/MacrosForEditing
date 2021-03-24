@@ -1,0 +1,95 @@
+Sub ItalicBoldTagger()
+' Paul Beverley - Version 02.05.16
+' Adds red tags to all italic and/or bold text
+
+doItalic = True
+doBold = True
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+myCount = 0
+' Go and find the first italic bit
+If doItalic = True Then
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Italic = True
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  
+  Do While Selection.Find.Found = True
+  ' If you want to count them...
+    myCount = myCount + 1
+  ' Note where the start of the found item is
+    startNow = Selection.Start
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:="</i>"
+    endNow = Selection.End
+    Selection.MoveStart , -4
+    Selection.Font.Color = wdColorRed
+    Selection.End = startNow
+    Selection.TypeText Text:="<i>"
+    Selection.MoveStart , -3
+    Selection.Font.Color = wdColorRed
+    Selection.Start = endNow + 3
+    Selection.Collapse wdCollapseEnd
+  ' Go and find the next occurrence (if there is one)
+    Selection.Find.Execute
+  Loop
+  myItalic = myCount
+End If
+
+' Go and find the first bold bit
+If doBold = True Then
+  Selection.HomeKey Unit:=wdStory
+  myCount = 0
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Bold = True
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  
+  Do While Selection.Find.Found = True
+  ' If you want to count them...
+    myCount = myCount + 1
+  ' Note where the start of the found item is
+    startNow = Selection.Start
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:="</b>"
+    endNow = Selection.End
+    Selection.MoveStart , -4
+    Selection.Font.Color = wdColorRed
+    Selection.End = startNow
+    Selection.TypeText Text:="<b>"
+    Selection.MoveStart , -3
+    Selection.Font.Color = wdColorRed
+    Selection.Start = endNow + 3
+    Selection.Collapse wdCollapseEnd
+  ' Go and find the next occurrence (if there is one)
+    Selection.Find.Execute
+  Loop
+  myBold = myCount
+End If
+myMsg = "Changed: "
+If doItalic = True Then myMsg = myMsg & myItalic & " Italic" & vbCr
+If doBold = True Then myMsg = myMsg & myBold & " Bold"
+MsgBox myMsg
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

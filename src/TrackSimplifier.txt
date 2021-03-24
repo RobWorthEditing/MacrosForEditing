@@ -1,0 +1,88 @@
+Sub TrackSimplifier()
+' Paul Beverley - Version 13.02.20
+' Accepts certain types of tracked features
+
+maxChars = 4
+
+myPunctuation = ",;.?!:'""-" & ChrW(8216) & ChrW(8217) _
+     & ChrW(8220) & ChrW(8221) & ChrW(8211) & ChrW(8212)
+
+myPrompt = "+1 = Formatting" & vbCr
+myPrompt = myPrompt & "+2 = Punctuation" & vbCr
+myPrompt = myPrompt & "+4 = Multiple spaces" & vbCr
+Do
+  myInput = InputBox(myPrompt, "TrackSimplifier")
+  myNumber = Int(Val(myInput))
+  If myNumber = 0 Then Exit Sub
+  If myNumber > 7 Then Beep
+Loop Until myNumber < 8
+
+doFormat = myNumber Mod 2
+myNumber = (myNumber - doFormat) / 2
+doPunct = myNumber Mod 2
+myNumber = (myNumber - doPunct) / 2
+doSpaces = myNumber Mod 2
+
+comshow = ActiveWindow.View.ShowComments
+inkshow = ActiveWindow.View.ShowInkAnnotations
+indelshow = ActiveWindow.View.ShowInsertionsAndDeletions
+formshow = ActiveWindow.View.ShowFormatChanges
+
+If doFormat = 1 Then
+  ' Hide all except formatting TCs
+  With ActiveWindow.View
+    .ShowComments = False
+    .ShowInkAnnotations = False
+    .ShowInsertionsAndDeletions = False
+    .ShowFormatChanges = True
+  End With
+  ActiveDocument.AcceptAllRevisionsShown
+End If
+
+With ActiveWindow.View
+  .ShowComments = True
+  .ShowInkAnnotations = True
+  .ShowInsertionsAndDeletions = True
+  .ShowFormatChanges = True
+End With
+
+If doPunct + doSpaces > 0 Then
+  For Each rv In ActiveDocument.Revisions
+    txt = rv.range.Text
+    myLen = Len(txt)
+    doAccept = False
+    If myLen <= maxChars Then
+      If doPunct = 1 Then
+        For i = 1 To myLen
+          If InStr(myPunctuation, Mid(txt, i, 1)) > 0 Then
+            doAccept = True
+            Exit For
+          End If
+        Next i
+        DoEvents
+      End If
+      If doSpaces = 1 Then
+        numbSpaces = Len(txt) - Len(Replace(txt, " ", ""))
+        If numbSpaces > 1 Then doAccept = True
+        If numbSpaces = 1 And Len(txt) = 1 Then doAccept = True
+        DoEvents
+      End If
+      If doAccept = True Then
+        rv.range.Revisions.AcceptAll
+        DoEvents
+      End If
+    End If
+  Next rv
+End If
+
+' Set things back as they were
+With ActiveWindow.View
+  .ShowComments = comshow
+  .ShowInkAnnotations = inkshow
+  .ShowInsertionsAndDeletions = indelshow
+  .ShowFormatChanges = formshow
+End With
+Selection.EndKey Unit:=wdStory
+Beep
+End Sub
+

@@ -1,0 +1,24 @@
+Sub FootnoteAdd()
+' Paul Beverley - Version 27.08.18
+' Creates a new footnote (in a given style)
+
+addSquares = True
+changeStyle = False
+
+If addSquares = True Then
+  Selection.TypeText Text:="[]"
+  Selection.MoveStart , -2
+  Selection.Font.Superscript = True
+  Selection.Collapse wdCollapseStart
+  Selection.MoveRight , 1
+End If
+
+If changeStyle = True Then
+  ' myNoteStyle = "Heading 2"
+  myNoteStyle = wdStyleHeading2
+  Selection.Style = ActiveDocument.Styles(myNoteStyle)
+End If
+
+Selection.Endnotes.Add range:=Selection.range
+End Sub
+

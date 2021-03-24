@@ -1,0 +1,18 @@
+Sub DuplicatedWordsFind()
+' Paul Beverley - Version 03.02.16
+' Find next consecutive duplicate word (idea from Douglas Vipond)
+
+With Selection.Find
+  .ClearFormatting
+  .Text = "(<[a-zA-Z]{1,})[ .,\!\?:;]{1,}\1[ .,\!\?:;]"
+  .Replacement.Text = ""
+  .Forward = True
+  .Wrap = False
+  .Format = False
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute
+End With
+If Selection.Find.Found = False Then Beep
+End Sub
+

@@ -1,0 +1,18 @@
+Sub BackgroundColourOff()
+' Paul Beverley - Version 11.04.20
+' Remove background colour
+
+If InStr(Selection, Chr(13)) > 0 Then
+  For Each myPara In Selection.Paragraphs
+    Set rng = myPara.Range
+    rng.End = rng.End - 1
+    If rng.Information(wdWithInTable) = False Then
+      rng.Shading.BackgroundPatternColor = wdColorAutomatic
+    End If
+    DoEvents
+  Next myPara
+Else
+  Selection.Shading.BackgroundPatternColor = wdColorAutomatic
+End If
+End Sub
+

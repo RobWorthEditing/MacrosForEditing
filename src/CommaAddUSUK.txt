@@ -1,0 +1,34 @@
+Sub CommaAddUSUK()
+' Paul Beverley - Version 28.11.10
+' Add a comma
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+Selection.End = Selection.Start
+With Selection.Find
+  .ClearFormatting
+  .Text = " "
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+Selection.End = Selection.Start
+If Selection.LanguageID = wdEnglishUS Then
+  Selection.MoveEnd , -1
+  If Selection <> ChrW(8217) And Selection <> ChrW(8221) Then
+    Selection.MoveStart , 1
+  End If
+End If
+Selection.TypeText Text:=","
+Selection.MoveRight Unit:=wdCharacter, Count:=1
+
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchWildcards = False
+End With
+End Sub
+

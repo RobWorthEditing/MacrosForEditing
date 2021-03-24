@@ -1,0 +1,39 @@
+Sub MacroSelect()
+' Paul Beverley - Version 20.01.21
+' Selects the current macro text
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+Selection.Start = Selection.End
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^pEnd S" & "ub"
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+endMacro = Selection.End + 2
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^pSub "
+  .Forward = False
+  .Replacement.Text = ""
+  .Execute
+End With
+Selection.MoveStart , 1
+Selection.End = endMacro
+With Selection.Find
+  .Text = oldFind
+  .Forward = True
+  .Replacement.Text = oldReplace
+  .MatchWildcards = False
+End With
+End Sub
+

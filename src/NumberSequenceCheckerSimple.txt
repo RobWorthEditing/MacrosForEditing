@@ -1,0 +1,24 @@
+Sub NumberSequenceCheckerSimple()
+' Paul Beverley - Version 24.09.18
+' Checks consecutivity of numbering
+
+dateStart = 1800
+
+Selection.MoveStartUntil cset:="0123456789", Count:=wdForward
+Selection.MoveEndWhile cset:="0123456789", Count:=wdForward
+myNumWas = Val(Selection)
+Selection.Collapse wdCollapseEnd
+Do
+  Selection.MoveStartUntil cset:="0123456789", Count:=wdForward
+  Selection.MoveEndWhile cset:="0123456789", Count:=wdForward
+  myNum = Val(Selection)
+  DoEvents
+  If (myNum <> myNumWas + 1) And (myNum < dateStart) Then
+    Beep
+    Exit Sub
+  End If
+  Selection.Collapse wdCollapseEnd
+  If myNum < dateStart Then myNumWas = myNum
+Loop Until 0
+End Sub
+

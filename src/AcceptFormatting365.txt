@@ -1,0 +1,29 @@
+Sub AcceptFormatting365()
+' Paul Beverley - Version 11.05.20
+' Accepts just the formatting track changes
+
+If Selection.Start <> Selection.End Then
+  Set rng = Selection.Range.Duplicate
+Else
+  Beep
+  myResponse = MsgBox("Work on the whole file?", _
+       vbQuestion + vbYesNoCancel, "AcceptFormatting365")
+  If myResponse <> vbYes Then Exit Sub
+  Set rng = ActiveDocument.Content
+End If
+For i = 1 To 30: mySpcs = mySpcs & "   ": Next i
+mySpcs = mySpcs & "(Press Ctrl-Break to escape.)        "
+tot = rng.Revisions.Count
+For i = tot To 1 Step -1
+  If rng.Revisions(i).FormatDescription > "" Then
+    rng.Revisions(i).Range.Select
+    ActiveDocument.Revisions(i).Accept
+    Beep
+  End If
+  If tot > 100 Then
+    StatusBar = mySpcs & "To go: " & Trim(Str(i))
+  End If
+  DoEvents
+Next i
+End Sub
+

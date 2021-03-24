@@ -1,0 +1,6 @@
+Sub TrackOnOff()
+' Paul Beverley - Version 01.01.10
+' Toggle track changes on and off
+  ActiveDocument.TrackRevisions = Not ActiveDocument.TrackRevisions
+End Sub
+

@@ -1,0 +1,11 @@
+Sub ComboBoxAccept()
+' Paul Beverley - Version 14.04.16
+' Find combo boxes and replace with the currently selected text
+' Provided by Howard Silcock of New Zealand
+
+For Each cc In ActiveDocument.ContentControls
+  cc.LockContentControl = False
+  cc.Delete
+Next
+End Sub
+

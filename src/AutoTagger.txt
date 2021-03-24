@@ -1,0 +1,55 @@
+Sub AutoTagger()
+' Paul Beverley - Version 30.09.19
+' Tag/code automatically
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+For Each para In ActiveDocument.Paragraphs
+  Set rng = para.range.Duplicate
+  startText = "": endText = ""
+  styleTitle = rng.Style
+  Select Case styleTitle
+
+' List your styles and tags here
+' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Case "Heading 1"
+      startText = "<A>"
+    Case "Heading 2"
+      startText = "<B>"
+      startText = "<CH>"
+    Case "Heading 3"
+      startText = "<C>"
+      startText = "<Part>"
+    Case "Definition"
+      startText = "<DF>": endText = "</DF>"
+    Case "Caption"
+      startText = "<Cap>"
+    Case "citation"
+      startText = "<Cap>"
+    Case "Table3"
+      startText = "<Cap>"
+    Case "Level A"
+      startText = "<A>"
+  End Select
+
+' For any "funny" styles, select part of the name
+' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  If InStr(styleTitle, "eading4") > 0 Then startText = "<A>"
+  If InStr(styleTitle, "evel4") > 0 Then startText = "<A>"
+  If InStr(styleTitle, "eading 4") > 0 Then startText = "<A>"
+  If InStr(styleTitle, "evel A") > 0 Then startText = "<A>"
+  If InStr(styleTitle, "Heading 5") > 0 Then startText = "<B>"
+  If InStr(styleTitle, "Table") > 0 Then startText = "<Cap>"
+
+  If rng.Characters(1) <> "<" And startText > "" And _
+       rng.Information(wdWithInTable) = False And _
+       Len(rng) > 3 Then
+    rng.InsertBefore startText
+    rng.End = rng.End - 1
+    rng.InsertAfter endText
+  End If
+Next para
+ActiveDocument.TrackRevisions = myTrack
+Beep
+End Sub
+

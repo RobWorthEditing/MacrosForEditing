@@ -1,0 +1,29 @@
+Sub AcceptFormatting()
+' Paul Beverley - Version 20.08.11
+' Accept just the formatting track changes
+' Supplied by Jessica Weissman
+
+' Save the current state of things
+comshow = ActiveWindow.View.ShowComments
+inkshow = ActiveWindow.View.ShowInkAnnotations
+indelshow = ActiveWindow.View.ShowInsertionsAndDeletions
+formshow = ActiveWindow.View.ShowFormatChanges
+
+' Hide all except formatting TCs
+With ActiveWindow.View
+  .ShowComments = False
+  .ShowInkAnnotations = False
+  .ShowInsertionsAndDeletions = False
+  .ShowFormatChanges = True
+End With
+ActiveDocument.AcceptAllRevisionsShown
+
+' Set things back as they were
+With ActiveWindow.View
+  .ShowComments = comshow
+  .ShowInkAnnotations = inkshow
+  .ShowInsertionsAndDeletions = indelshow
+  .ShowFormatChanges = formshow
+End With
+End Sub
+

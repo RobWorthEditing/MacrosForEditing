@@ -1,0 +1,31 @@
+Sub LowercaseGlobal()
+' Paul Beverley - Version 10.02.11
+' Lowercase this phrase throughout text
+
+myHighlight = True
+myHighlightColour = wdTurquoise
+myOldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myHighlightColour
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+myText = Trim(Selection)
+Selection.Start = Selection.End
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myText
+  .Wrap = wdFindContinue
+  .Replacement.Text = LCase(myText)
+  If myHighlight = True Then .Replacement.Highlight = True
+  .Forward = True
+  .MatchCase = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Options.DefaultHighlightColorIndex = myOldColour
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

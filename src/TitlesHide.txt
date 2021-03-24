@@ -1,0 +1,70 @@
+Sub TitlesHide()
+' Paul Beverley - Version 03.09.20
+' Switches all full colour font to light grey font
+
+preBlue = &HF6F6F6
+preRed = &HF4F4F4
+preBlack = &HF5F5F5
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Color = wdColorBlue
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.Color = preBlue
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Font.Color = wdColorRed
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.Color = preRed
+  .Forward = True
+  .Execute Replace:=wdReplaceAll
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Font.Color = wdColorBlack
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.Color = preBlack
+  .Forward = True
+  .Execute Replace:=wdReplaceAll
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Font.Color = wdColorBlack
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.Color = preBlack
+  .Forward = True
+  .Execute Replace:=wdReplaceAll
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(160)
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.Underline = False
+  .Forward = True
+  .Execute Replace:=wdReplaceAll
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.Color = wdColorBlack
+  .Forward = True
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+End With
+End Sub
+

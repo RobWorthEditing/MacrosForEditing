@@ -1,0 +1,357 @@
+Sub CatchPhrase()
+' Paul Beverley - Version 18.05.18
+' Searches for repeated phrases/sentences
+
+group_a = "25, 6(4), 5(8)"
+group_a = "4(4), 3(9)"
+group_b = "6(3), 5(8), 4(10)"
+group_c = "7(3), 6(5), 5(10), 4(15)"
+
+
+' Number of spaces times n
+mySpaces = "     ": n = 20
+
+highlightFinds = False
+highlightFinds = True
+myColour = wdYellow
+
+goExtraFast = True
+goExtraFast = False
+
+giveSpeedWarning = True
+stopAndShowTime = False
+
+myDots = ".... "
+
+If Application.Visible = False Then Application.Visible _
+     = True: Exit Sub
+myLap = 1
+Set rng = ActiveDocument.Content
+rng.End = 200
+If LCase(rng.Text) <> rng.Text Then
+  If giveSpeedWarning = True Then
+    myResponse = MsgBox("Preparing words file.  This may take some time." & vbCr _
+         & vbCr & "Please ignore any ""Not Responding"" warnings." _
+         & vbCr & vbCr & "Click Yes to start.", vbQuestion _
+          + vbYesNo, "WordsPhrasesInContext")
+    If myResponse <> vbYes Then Exit Sub
+  Else
+    StatusBar = "Preparing words file.  This may take some time."
+  End If
+  Set rng = ActiveDocument.Content
+  Documents.Add
+  Selection.Text = LCase(rng.Text)
+  For i = 1 To 6
+    sps = sps & "      "
+  Next i
+  ' Remove all except pure text, hyphens and apostrophes
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "'"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "jqjq"
+    .MatchCase = False
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+    StatusBar = sps & "Preparing words file.  This may take some time. Six..."
+    DoEvents
+ 
+    .Text = "[!a-zA-Z,\- ]"
+    .MatchWildcards = True
+    .Replacement.Text = " "
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+    StatusBar = sps & "Preparing words file.  This may take some time. Five..."
+    DoEvents
+ 
+    .Text = " [ ,-]{1,}"
+    .Replacement.Text = " "
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+    StatusBar = sps & "Preparing words file.  This may take some time. Four..."
+    DoEvents
+   
+    .Text = ","
+    .Replacement.Text = "cmcm"
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+    StatusBar = sps & "Preparing words file.  This may take some time. Three.."
+    DoEvents
+ 
+    .MatchWildcards = True
+    .Text = "-{1,}"
+    .Replacement.Text = "cqcq"
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+    StatusBar = sps & "Preparing words file.  This may take some time. Two..."
+    DoEvents
+ 
+    .Text = " [a-hj-z] "
+    .Replacement.Text = " "
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+    StatusBar = sps & "Preparing words file.  This may take some time. One!"
+    DoEvents
+ 
+    .Text = " {2,}"
+    .Replacement.Text = " "
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+CR = vbCr: CR2 = CR & CR
+For j = 1 To n
+  sps = sps & mySpaces
+Next j
+myPrompt = "a = " & group_a & CR2
+myPrompt = myPrompt & "b = " & group_b & CR2
+myPrompt = myPrompt & "c = " & group_c & CR2 & CR
+myPrompt = myPrompt & "t = Test to estimate the ETA" & CR2
+
+Do
+  myChoice = InputBox(myPrompt, "CatchPhrase", "a")
+  If myChoice = "" Then Beep: Exit Sub
+Loop Until InStr("abct", myChoice) > 0 _
+     Or InStr("123456789", Left(myChoice, 1)) > 0
+
+Set resultsDoc = ActiveDocument
+Set rng0 = ActiveDocument.Content
+Documents.Add
+Set wordsDoc = ActiveDocument
+Set rng = wordsDoc.Content
+rng.Text = LCase(rng0.Text)
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "@@@@@"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute
+End With
+
+If rng.Find.Found Then
+  rng.End = wordsDoc.Content.End
+  rng.Delete
+End If
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = " {2,}"
+  .MatchWildcards = True
+  .Replacement.Text = " "
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.HomeKey Unit:=wdStory
+Dim numWds(20) As Integer
+Dim numShows(20) As Integer
+Dim myList(4) As String
+Dim myCount As Integer
+
+myList(1) = group_a
+myList(2) = group_b
+myList(3) = group_c
+myList(4) = "5,"
+
+If LCase(myChoice) <> UCase(myChoice) Then
+  If myChoice = "t" Then
+    myWdsList = "5,"
+    jumpFwd = 200
+    ActiveDocument.Words(jumpFwd).Select
+    Selection.Collapse wdCollapseStart
+    Selection.TypeText Text:="this is pauljqjqs speed " _
+         & "test rhubarb this is pauljqjqs speed test "
+  Else
+    myWdsList = myList(Asc(myChoice) - 96)
+    myWdsList = Replace(myWdsList, " ", "") & ","
+    myWdsList = Replace(myWdsList, ",,", ",")
+  End If
+Else
+  myWdsList = myChoice & ","
+End If
+myRun = Split(myWdsList, ",")
+numRuns = UBound(myRun) - 1
+
+myOutput = ""
+st0 = Timer
+If goExtraFast = True Then Application.Visible = False
+For j = 0 To numRuns
+  Selection.HomeKey Unit:=wdStory
+  myTask = myRun(j)
+  ' Search for phrases
+  myPhrases = ""
+  shownOne = False
+  totWds = wordsDoc.Words.Count
+  phrLen = Val(myTask)
+  myMinWds = 2
+  bktPos = InStr(myTask, "(")
+  myTask = Mid(myTask, bktPos + 1)
+  If bktPos > 0 Then
+    myMinWds = Val(myTask)
+    ignoreSubPhrases = False
+  Else
+    ignoreSubPhrases = True
+  End If
+  tstPhrase = ""
+  For n = 1 To phrLen
+    tstPhrase = tstPhrase & "dummy "
+  Next n
+  i = 1
+  st = Timer
+  myPrompt = "No duplicate phrases found yet" _
+       & "     Wds: " & phrLen & "(" & myMinWds & ")"
+  displayPhrase = myPrompt
+  For Each wd In wordsDoc.Words
+    spPos = InStr(tstPhrase, " ")
+    tstPhrase = Mid(tstPhrase, spPos + 1) & wd.Text
+    i = i + 1
+    nw = Timer
+    pc = Str(Int(1000 * i / totWds) / 10)
+    If InStr(pc, ".") = 0 Then pc = pc & ".0"
+    StatusBar = sps & pc & "%        " & phrLen & "(" & _
+         myMinWds & ")" & "          ETA " & predictedTime
+    If InStr(myPhrases, tstPhrase & myDots) = 0 Then
+      DoEvents
+      Set rng = wordsDoc.Content
+      ' Find the first one
+      tstLen = Len(tstPhrase)
+      If tstLen > 255 Then tstPhrase = Left(tstPhrase, 254)
+      With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = tstPhrase
+        If ignoreSubPhrases = True Then .Font.Underline = False
+        .Replacement.Text = ""
+        .MatchWildcards = False
+      End With
+      phrFreq = -1
+      Do
+        phrFreq = phrFreq + 1
+        rng.Find.Execute
+        rng.Collapse wdCollapseEnd
+      Loop Until rng.Find.Found = False
+      If phrFreq > 1 Then
+        newPhrase = tstPhrase & myDots & Trim(Str(phrFreq))
+        displayPhrase = Replace(newPhrase, "cmcm", ",")
+        displayPhrase = Replace(displayPhrase, "cqcq", "-")
+        displayPhrase = Replace(displayPhrase, "jqjq", "'")
+        DoEvents
+        ActiveDocument.ActiveWindow.Caption = _
+             sps & "LATEST FIND:  " & displayPhrase & sps & sps
+        myPrompt = "       Wds: " & phrLen & "(" & myMinWds & ")"
+        timeToGo = (nw - st) * (totWds - i) / i
+        myTime = Time
+        myETA = DateAdd("s", timeToGo, myTime)
+        predictedTime = Left(myETA, 5)
+        If myChoice = "t" Then
+          MsgBox "ETA: " & predictedTime & "   = " & _
+               Int(timeToGo / 6) / 10 & " min"
+          wordsDoc.Close SaveChanges:=False
+          Exit Sub
+        End If
+        myPrompt = myPrompt & "          ETA " & predictedTime
+        If i > totWds Then
+           ahfkjhasdkjgf = 0
+        End If
+        pc = Str(Int(1000 * i / totWds) / 10)
+        If InStr(pc, ".") = 0 Then pc = pc & ".0"
+        spd = Str(Int(10 * i / (nw - st)) / 10)
+        If InStr(spd, ".") = 0 Then spd = spd & ".0"
+        Debug.Print spd & "    " & pc & "%  " & myPrompt & _
+             "     " & displayPhrase
+        myPhrases = myPhrases & newPhrase & vbCr
+        If phrFreq > myMinWds - 1 Then
+          myOutput = myOutput & newPhrase & vbCr
+          If highlightFinds Then
+            oldColour = Options.DefaultHighlightColorIndex
+            Options.DefaultHighlightColorIndex = myColour
+            With rng0.Find
+              .ClearFormatting
+              .Replacement.ClearFormatting
+              .Text = tstPhrase
+              .Wrap = wdFindContinue
+              .Replacement.Text = ""
+              .Replacement.Highlight = True
+              .Execute Replace:=wdReplaceAll
+            End With
+            Options.DefaultHighlightColorIndex = oldColour
+          End If
+        End If
+        DoEvents
+      End If
+    End If
+  Next wd
+
+  myOutput = Replace(myOutput, "cqcq", "-")
+  myOutput = Replace(myOutput, "cmcm", ",")
+  myOutput = Replace(myOutput, "jqjq", ChrW(8217))
+  rng0.InsertAfter Text:=vbCr & "@@@@@@@@@@@@@@@@@@@@@ " & _
+       ChrW(8211) & " " & phrLen & vbCr & myOutput & vbCr
+  myPhrases = ""
+  myOutput = ""
+  t = Timer - st
+  If t > 600 Then
+   ttot = Int(t / 6) / 10
+   tText = Str(ttot) & " min"
+  Else
+    ttot = Int(t * 10) / 10
+    tText = Str(ttot) & " sec"
+  End If
+  myResult = "Ave wds/sec: " & Int(10 * i / t) / 10 & vbCr & vbCr
+  myResult = myResult & "Time: " & tText
+  rng0.InsertAfter Text:=vbCr & "================== " & vbCr _
+        & myResult & vbCr
+  If stopAndShowTime = True Then
+    Application.Visible = True
+    MsgBox myResult
+  End If
+Next j
+StatusBar = " "
+
+t = Timer - st0
+If t > 600 Then
+ ttot = Int(t / 6) / 10
+ tText = Str(ttot) & " min"
+Else
+  ttot = Int(t * 10) / 10
+  tText = Str(ttot) & " sec"
+End If
+myResult = "Ave wds/sec: " & Int(10 * i * (numRuns + 1) / t) / 10 _
+     & vbCr & vbCr
+myResult = myResult & "Total time: " & tText
+rng0.InsertAfter Text:=vbCr & "================== " & vbCr _
+     & "================== " & vbCr & myResult & vbCr
+Application.Visible = True
+Beep
+ActiveDocument.ActiveWindow.Caption = ""
+MsgBox myResult
+
+wordsDoc.Close SaveChanges:=False
+resultsDoc.Activate
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "@@@@@"
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+End With
+Set rng = Selection.range
+rng.End = ActiveDocument.Content.End
+rng.HighlightColorIndex = wdNoHighlight
+Selection.Collapse wdCollapseStart
+Application.StatusBar = False
+Beep
+End Sub
+

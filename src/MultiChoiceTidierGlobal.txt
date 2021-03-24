@@ -1,0 +1,45 @@
+Sub MultiChoiceTidierGlobal()
+' Paul Beverley - Version 26.01.12
+' Lower case first word and remove end spaces and punctuation
+
+myCol = wdYellow
+' For no highlighting
+' myCol = 0
+Set rng = ActiveDocument.Content
+Do
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+  ' List here the possible item indicators
+    .Text = "^13[ABCDE].[ " & Chr(9) & "]"
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  wasEnd = rng.End
+  rng.Collapse wdCollapseEnd
+ 
+  If rng.Find.Found = True Then
+    rng.MoveEnd wdCharacter, 1
+    rng.Case = wdLowerCase
+    If myCol > 0 Then rng.HighlightColorIndex = myCol
+    rng.Collapse wdCollapseEnd
+    With rng.Find
+      .Text = "^p"
+      .MatchWildcards = False
+      .Execute
+    End With
+    rng.MoveEnd wdCharacter, -1
+  ' List here possible erroneous characters
+    rng.MoveStartWhile cset:=". :;!?", Count:=wdBackward
+    If rng.Start <> rng.End Then rng.Delete
+    stopNow = False
+  Else
+    stopNow = True
+  End If
+  Selection.Start = Selection.End
+Loop Until stopNow = True
+End Sub
+

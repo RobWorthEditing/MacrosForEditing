@@ -1,0 +1,81 @@
+Sub SerialCommaHighlight()
+' Paul Beverley - Version 18.05.19
+' Highlight or underline text that appears to have a serial comma
+
+maxWords = 7
+doUnderline = False
+doHighlight = False
+doColour = True
+myColour = wdYellow
+myFontColour = wdColorBlue
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[a-zA-Z\-]@, [a-zA-Z\- ]@, and "
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+While rng.Find.Found
+  If rng.Words.Count < maxWords Then
+    If doUnderline = True Then rng.Font.Underline = True
+    If doHighlight = True Then rng.HighlightColorIndex = myColour
+    If doColour = True Then rng.Font.Color = myFontColour
+  End If
+  rng.Start = rng.End
+  rng.Find.Execute
+  DoEvents
+  If rng.End < rng.Start Then
+    rng.End = rng.Start + 2
+    rng.Start = rng.End
+  End If
+Wend
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "[a-zA-Z\-]@, [a-zA-Z\- ]@, or "
+  .Replacement.Text = ""
+  .Execute
+End With
+
+While rng.Find.Found
+  If rng.Words.Count < maxWords Then
+    If doUnderline = True Then rng.Font.Underline = True
+    If doHighlight = True Then rng.HighlightColorIndex = myColour
+    If doColour = True Then rng.Font.Color = myFontColour
+  End If
+  rng.Start = rng.End
+  rng.Find.Execute
+  DoEvents
+  If rng.End < rng.Start Then
+    rng.End = rng.Start + 2
+    rng.Start = rng.End
+  End If
+Wend
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Execute
+End With
+
+If Selection.Find.Found = False Then
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Highlight = True
+    .Execute
+  End With
+End If
+Beep
+End Sub
+

@@ -1,0 +1,11 @@
+Sub FootnoteFiddleStartSpace()
+' Paul Beverley - Version 06.01.18
+' Removes initial space from each footnote
+
+For i = 1 To ActiveDocument.Footnotes.Count
+  Set rng = ActiveDocument.Footnotes(i).range
+  rng.End = rng.Start + 1
+  If rng.Text = " " Then rng.Delete
+Next
+End Sub
+

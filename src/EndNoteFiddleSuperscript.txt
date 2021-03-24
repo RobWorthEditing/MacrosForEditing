@@ -1,0 +1,12 @@
+Sub EndNoteFiddleSuperscript()
+' Paul Beverley - Version 25.07.11
+' Makes changes to superscript on all endnotes
+
+For i = 1 To ActiveDocument.Endnotes.Count
+  Set rng = ActiveDocument.Endnotes(i).Range
+  rng.Start = rng.Start - 2
+  rng.End = rng.Start + 1
+  rng.Font.Superscript = True
+Next
+End Sub
+

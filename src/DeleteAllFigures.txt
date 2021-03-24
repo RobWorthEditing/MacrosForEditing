@@ -1,0 +1,23 @@
+Sub DeleteAllFigures()
+' Paul Beverley - Version 31.08.16
+' Delete all images from a file that have a caption
+
+For Each myPic In ActiveDocument.InlineShapes
+  Set rng = myPic.range
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd wdCharacter, 1
+  rng.Select
+  If Asc(rng) = 13 Then rng.Delete
+  rng.MoveEnd wdCharacter, 1
+  If Asc(rng) = 13 Then rng.Delete
+  rng.MoveEnd wdCharacter, 3
+  gotOne = (rng = "(a)" Or rng = "(b)" Or rng = "(c)")
+  rng.MoveEnd wdCharacter, 15
+  If InStr(rng, "Fig") > 0 Or gotOne = True Then
+    myPic.Delete
+    i = i + 1
+  End If
+Next myPic
+MsgBox "Deleted:" & i & " figures"
+End Sub
+

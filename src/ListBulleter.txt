@@ -1,0 +1,36 @@
+Sub ListBulleter()
+' Paul Beverley - Version 09.06.12
+' Add a bullet to every paragraph in a list
+
+funnyFont = "Wingdings 2"
+' If you don't want a funny font, use:
+' funnyFont = ""
+
+mySeparator = " "
+' If you prefer a tab, use:
+' mySeparator = Chr(9)
+
+theEnd = Selection.End
+Selection.End = Selection.Start
+
+Do
+  ' Select the current paragraph
+  Selection.Paragraphs(1).Range.Select
+  Selection.InsertBefore "zczc" & mySeparator
+  Selection.Start = Selection.End
+Loop Until Selection.End > theEnd
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zczc"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ChrW(8226)
+  If Len(funnyFont) > 2 Then .Replacement.Font.Name = funnyFont
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+
