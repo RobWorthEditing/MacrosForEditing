@@ -1,5 +1,5 @@
 Sub MultiFileText()
-' Paul Beverley - Version 08.11.20
+' Paul Beverley - Version 18.03.21
 ' Collects text plus simple formatting from multiple files
 
 spaceEquations = True
@@ -27,7 +27,9 @@ Else
 End If
 
 If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
-If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+If InStr(LCase(rng.Text), ".doc") = 0 _
+     And InStr(LCase(rng.Text), ".rtf") = 0 _
+     And InStr(LCase(rng.Text), ".pdf") = 0 Then
 ' If not a file list then navigate to the required folder
   If remindAboutCancel = True Then myResponse = _
        MsgBox("Navigate to the required folder; then press 'Cancel'" _
@@ -42,7 +44,9 @@ If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 The
   Documents.Add
   numFiles = 0
   Do While myFile <> ""
-    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+    If InStr(LCase(myFile), ".doc") > 0 Or _
+         InStr(LCase(myFile), ".rtf") > 0 Or _
+         InStr(LCase(myFile), ".pdf") > 0 Then
       Selection.TypeText myFile & vbCr
       numFiles = numFiles + 1
     End If

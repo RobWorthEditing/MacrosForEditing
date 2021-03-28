@@ -1,5 +1,5 @@
 Sub CommentAdder()
-' Paul Beverley - Version 16.01.21
+' Paul Beverley - Version 10.03.21
 ' Adds a comment off a menu
 
 ' myDefaultSelect = "sentence"
@@ -10,6 +10,8 @@ useDoubleQuotes = True
 
 addJustPageNum = True
 addPageAndLineNum = False
+
+maxLen = 500
 
 cm = "Start\"
 cm = cm & ",Dummy\"
@@ -134,9 +136,9 @@ If cursorPos > 0 Then
     Selection.MoveLeft , 1
     i = i + 1
     DoEvents
-  Loop Until Selection = "|" Or i > 100
-  If i > 100 Then
-    MsgBox ("Error in placing cursor. Please inform Paul.")
+  Loop Until Selection = "|" Or i > maxLen
+  If i > maxLen Then
+    MsgBox ("You might need to increase the value of ""maxLen"" in the macro.")
     Exit Sub
   End If
   Selection.MoveEnd , 1

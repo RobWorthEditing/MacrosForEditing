@@ -1,0 +1,366 @@
+Sub SpellAlyse()
+' Paul Beverley - Version 26.03.21
+' Complete spellchecking system
+
+ignoreNumbers = True
+
+spellingListName = "SpellAlyse"
+spellingFreqName = "SpellAlyseFrequencies"
+ignoreDoc = "zzSwitchList"
+
+myFind = "´a,´e,¨a,¨e,¨o,¨u,ˆo,"
+myReplace = "á,é,ä,ë,ö,ü,ô,"
+
+CR = vbCr
+CR2 = CR & CR
+sp = " "
+sp2 = sp & sp
+
+Dim lossLen As Long
+Dim newLen As Long
+
+Set FUT = ActiveDocument
+doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
+
+numParas = FUT.Paragraphs.Count
+numWords = FUT.Content.ComputeStatistics(wdStatisticWords)
+myProfile = numWords / numParas
+
+If myProfile < 1.1 Then GoTo autoCorrect
+
+' List possible spelling errors
+thisLanguage = Selection.LanguageID
+langText = Languages(Selection.LanguageID).NameLocal
+
+langPrompt = "Spellcheck with " & langText & " dictionary. OK?"
+If doingSeveralMacros = False Then
+  myResponse = MsgBox(langPrompt, vbQuestion + vbYesNoCancel, _
+       "SpellAlyse")
+  If myResponse <> vbYes Then Exit Sub
+End If
+timeStart = Timer
+
+allExcepts = CR
+'Collect all words from all word lists
+For Each myDoc In Documents
+  If InStr(myDoc.Name, ignoreDoc) = 0 Then
+    numParas = myDoc.Paragraphs.Count
+    numWords = myDoc.Content.ComputeStatistics(wdStatisticWords)
+    myProfile = numWords / numParas
+    If myProfile < 1.01 Then
+      myWds = myDoc.Content.Text
+      If InStr(myWds, "|") = 0 Then
+        ' This is a list
+        docWds = Replace(myDoc.Content.Text, CR2, CR)
+        docWds = Replace(docWds, CR2, CR)
+        allExcepts = allExcepts & docWds
+      End If
+    End If
+  End If
+Next myDoc
+
+' Create a text-only copy in another file
+Set rngOld = FUT.Content
+Documents.Add
+Set erList = ActiveDocument
+Set rng = ActiveDocument.Content
+rng.LanguageID = thisLanguage
+rng.Text = rngOld.Text
+
+numNotes = FUT.Endnotes.Count
+If numNotes > 0 Then
+  rng.Collapse wdCollapseEnd
+  rng.Text = FUT.StoryRanges(wdEndnotesStory).FormattedText
+End If
+
+numNotes = FUT.Footnotes.Count
+If numNotes > 0 Then
+  rng.Collapse wdCollapseEnd
+  rng.Text = FUT.StoryRanges(wdFootnotesStory).FormattedText
+End If
+
+' copy all the textboxes to the end of the text
+shCount = FUT.Shapes.Count
+If shCount > 0 Then
+  Selection.EndKey Unit:=wdStory
+  For j = 1 To shCount
+    Set shp = FUT.Shapes(j)
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.HasText Then
+        Set rng = shp.TextFrame.TextRange
+        If Len(rng.Text) > 1 Then
+          Selection.Text = rng.Text
+          Selection.EndKey Unit:=wdStory
+        End If
+      End If
+    End If
+    DoEvents
+  Next
+End If
+
+' Add a newline for safety
+Selection.TypeText vbCr
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^2"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Change ligature characters into character pairs
+myFind = myFind & "," & ChrW(-1280) & "," & ChrW(-1279) & _
+     "," & ChrW(-1278) & "," & ChrW(-1277) & "," _
+     & ChrW(-1276) & "'"
+myReplace = myReplace & ",ff,fi,fl,ffi,ffl,'"
+fnd = Split(myFind, ",")
+rpl = Split(myReplace, ",")
+
+For i = 0 To UBound(fnd)
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = fnd(i)
+    .Wrap = wdFindContinue
+    .Replacement.Text = rpl(i)
+    .MatchCase = False
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Next i
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Preparing file for spellchecking" & CR2
+ActiveDocument.Paragraphs(1).Style = _
+     ActiveDocument.Styles(wdStyleHeading1)
+DoEvents
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  If ignoreNumbers = True Then
+    .Text = "([a-zA-Z])[" & ChrW(8217) & "'][!a-zA-Z]"
+  Else
+    .Text = "([a-zA-Z0-9])[" & ChrW(8217) & "'][!a-zA-Z]"
+  End If
+  .Replacement.Text = "\1" & sp & sp
+  .Wrap = wdFindContinue
+  .Forward = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+  If ignoreNumbers = True Then
+    .Text = "[!a-zA-Z'" & ChrW(8217) & "]"
+  Else
+    .Text = "[!a-zA-Z0-9'" & ChrW(8217) & "]"
+  End If
+  .Replacement.Text = sp
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "^t"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+  .Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' Create spelling error list
+Set rng = ActiveDocument.Content
+
+txt = rng.Text
+' Ensure a single space between words
+Do
+  nowLen = Len(txt)
+  txt = Replace(txt, sp2, sp)
+  DoEvents
+Loop Until Len(txt) = nowLen
+
+erList1 = ""
+erListFreq1 = ""
+erList2 = ""
+erListFreq2 = ""
+
+If Left(txt, 1) <> sp Then txt = sp & txt
+Do
+  spPos = InStr(Mid(txt, 2), " ")
+  wd = Trim(Left(txt, spPos))
+  spOK = Application.CheckSpelling(wd, MainDictionary:=langText)
+  spEX = InStr(allExcepts, CR & wd & CR)
+  nowLen = Len(txt)
+  txt = Replace(txt, sp & wd & sp, sp)
+  txt = Replace(txt, sp & wd & sp, sp)
+  lossLen = Len(txt)
+  If spOK = False And spEX = False And Len(wd) > 2 Then
+  ' record it as a spelling error
+    numErrs = Int((nowLen - lossLen) / Len(wd))
+    numText = " . . . " & Trim(Str(numErrs))
+    If LCase(wd) = wd Then
+      erList2 = erList2 & wd & CR
+      erListFreq2 = erListFreq2 & wd & numText & CR
+    Else
+      erList1 = erList1 & wd & CR
+      erListFreq1 = erListFreq1 & wd & numText & CR
+    End If
+    StatusBar = wd & numText
+    Debug.Print wd & numText
+  End If
+Loop Until Len(txt) < 5
+
+Selection.WholeStory
+Selection.Delete
+Selection.TypeText Replace(erList2, CR2, CR)
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+
+Selection.EndKey Unit:=wdStory
+Selection.TypeText CR
+listStart = Selection.Start
+Selection.TypeText CR & Replace(erList1, CR2, CR)
+Selection.Start = listStart
+Selection.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+
+Selection.WholeStory
+Selection.LanguageID = thisLanguage
+Selection.Style = wdStyleNormal
+Selection.Collapse wdCollapseStart
+Selection.TypeText spellingListName & vbCr
+ActiveDocument.Paragraphs(1).Style = ActiveDocument.Styles(wdStyleHeading1)
+
+Documents.Add
+Selection.TypeText Replace(erListFreq2, CR2, CR)
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+
+Selection.EndKey Unit:=wdStory
+Selection.TypeText CR
+listStart = Selection.Start
+Selection.TypeText CR & Replace(erListFreq1, CR2, CR)
+Selection.Start = listStart
+Selection.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+
+Selection.WholeStory
+Selection.LanguageID = thisLanguage
+Selection.Style = wdStyleNormal
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText spellingFreqName & vbCr
+ActiveDocument.Paragraphs(1).Style = ActiveDocument.Styles(wdStyleHeading1)
+Selection.Collapse wdCollapseStart
+
+erList.Activate
+StatusBar = ""
+If doingSeveralMacros = False Then
+  totTime = Int(10 * (Timer - timeStart) / 60) / 10
+  If totTime > 2 Then myResponse = MsgBox((totTime & "  minutes"), _
+  vbOKOnly, "SpellAlyse")
+  Beep
+Else
+  FUT.Activate
+End If
+Exit Sub
+
+autoCorrect:
+allText = FUT.Content.Text
+If InStr(allText, "|") > 0 Then GoTo createListPair
+
+myResponse = MsgBox("Auto-create FRedit list items?", _
+     vbQuestion + vbYesNoCancel, "SpellAlyse")
+If myResponse <> vbYes Then Exit Sub
+Beep
+myResponse = MsgBox("Turn track changes on?", _
+     vbQuestion + vbYesNoCancel, "SpellAlyse")
+If myResponse = vbCancel Then Exit Sub
+myRev = (myResponse = vbYes)
+If myRev Then ActiveDocument.TrackRevisions = True
+
+' Add auto-created FRedit items
+Set rng = ActiveDocument.Content
+
+' (only first character, in case of split language)
+rng.End = rng.Start + 1
+langName = Languages(rng.LanguageID).NameLocal
+
+i = 0
+Do
+  i = i + 1
+  Set myPara = FUT.Paragraphs(i)
+  wd = Replace(myPara.Range.Text, CR, "")
+  If LCase(wd) = wd And wd <> "" Then
+    spellOK = Application.CheckSpelling(wd, _
+         MainDictionary:=langName)
+    Set suggList = Application.GetSpellingSuggestions(wd, _
+         MainDictionary:=langName)
+    newWord = ""
+    If suggList.Count > 0 And Not (spellOK) Then
+      newWord = suggList.Item(1).Name
+      If myRev = True Then
+        Set rng = myPara.Range.Duplicate
+        rng.MoveEnd , -1
+        myFR = "~<" & wd & ">|" & newWord
+        rng.Text = myFR
+      Else
+        myPara.Range.Text = "~<" & wd & ">|" & newWord & CR
+      End If
+      myPara.Range.Select
+      Selection.Collapse wdCollapseEnd
+    End If
+  End If
+  DoEvents
+Loop Until i > 3 And myPara = CR
+ActiveDocument.TrackRevisions = False
+Exit Sub
+
+createListPair:
+myResponse = MsgBox("Create exceptions and FRedit lists?", _
+     vbQuestion + vbYesNoCancel, "SpellAlyse")
+If myResponse <> vbYes Then Exit Sub
+
+Documents.Add
+Set eList = ActiveDocument
+Set eRng = ActiveDocument.Content
+Documents.Add
+Set fList = ActiveDocument
+Set fRng = ActiveDocument.Content
+For i = 1 To FUT.Paragraphs.Count
+  Set pRng = FUT.Paragraphs(i).Range
+  If InStr(pRng.Text, spellingListName) = 0 _
+       And Len(pRng.Text) > 3 Then
+    If InStr(pRng.Text, "|") > 0 Then
+      fRng.Collapse wdCollapseEnd
+      fRng.FormattedText = pRng.FormattedText
+    Else
+      myFontCol = pRng.Font.Color
+      myHiCol = pRng.HighlightColorIndex
+      If myFontCol > 0 Or myHiCol > 0 Then
+        fRng.Collapse wdCollapseEnd
+        fRng.Text = "~<" & Replace(pRng.Text, CR, _
+             "") & ">" & CR
+        fRng.Expand wdParagraph
+        If myFontCol > 0 Then fRng.Font.Color = myFontCol
+        If myHiCol > 0 Then fRng.HighlightColorIndex = myHiCol
+        fRng.Collapse wdCollapseEnd
+      Else
+        eRng.Collapse wdCollapseEnd
+        eRng.Text = pRng.Text
+      End If
+    End If
+  End If
+  DoEvents
+Next i
+End Sub
+
+
+

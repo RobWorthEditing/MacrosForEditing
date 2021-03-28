@@ -1,6 +1,10 @@
 Sub SpellingSuggest()
-' Paul Beverley - Version 17.03.21
-' Checks/corrects spellings or, for FRedit list, adds suggested change
+' Paul Beverley - Version 25.03.21
+' Checks/corrects spellings or adds/subtracts FRedit suggested change
+' #1002
+
+thisLanguage = Selection.LanguageID
+langText = Languages(Selection.LanguageID).NameLocal
 
 ' If you're off the end of the word, move back one space
 If LCase(Selection) = UCase(Selection) Then Selection.MoveLeft , 1
@@ -21,127 +25,58 @@ Set rng = Selection.Range.Duplicate
 rng.Expand wdParagraph
 wdsInPara = rng.Words.Count
 myPara = rng
-
-
-If Selection.LanguageID = wdEnglishUK Then
-  checkLang = wdEnglishUS
-Else
-  checkLang = wdEnglishUK
-End If
-
 initChar = Left(myWord, 1)
 lastChar = Right(myWord, 1)
 
-usLang = "English (United States)"
-ukLang = "English (United Kingdom)"
-'                 usLang = "French (Canada)"
-'               ukLang = "French (Canada)"
-spellUKOK = Application.CheckSpelling(myWord, MainDictionary:=ukLang)
-spellUSOK = Application.CheckSpelling(myWord, MainDictionary:=usLang)
-spellOK = Application.CheckSpelling(myWord, MainDictionary:=langName)
-Set suggList = Application.GetSpellingSuggestions(myWord, MainDictionary:=langName)
+spellOK = Application.CheckSpelling(myWord, MainDictionary:=langText)
+Set suggList = Application.GetSpellingSuggestions(myWord, _
+     MainDictionary:=langName)
 
-If suggList.Count > 0 And Not (spellOK) Then
-  newWord = suggList.Item(1).Name
-Else
-' If there's a spelling difference between US and UK...
-  If spellUSOK <> spellUKOK Then
-    If langName = usLang Then
-      newWord = myWord & "zczc"
-      newWord = Replace(newWord, "rezczc", "er")
-      newWord = Replace(newWord, "reszczc", "ers")
-      newWord = Replace(newWord, "encezczc", "ense")
-      newWord = Replace(newWord, "enceszczc", "enses")
-      newWord = Replace(newWord, "ourzczc", "or")
-      newWord = Replace(newWord, "ouredzczc", "ored")
-      newWord = Replace(newWord, "ouringzczc", "oring")
-      newWord = Replace(newWord, "ouritezczc", "orite")
-      newWord = Replace(newWord, "llingzczc", "ling")
-      newWord = Replace(newWord, "lledzczc", "led")
-      newWord = Replace(newWord, "ys", "yz")
-      newWord = Replace(newWord, "isezczc", "ize")
-      newWord = Replace(newWord, "isedzczc", "ized")
-      newWord = Replace(newWord, "isingzczc", "izing")
-      newWord = Replace(newWord, "zczc", "")
-    Else
-      newWord = myWord & "zczc"
-      newWord = Replace(newWord, "erzczc", "re")
-      newWord = Replace(newWord, "erszczc", "res")
-      newWord = Replace(newWord, "ensezczc", "ence")
-      newWord = Replace(newWord, "enseszczc", "ences")
-      newWord = Replace(newWord, "orzczc", "our")
-      newWord = Replace(newWord, "oringzczc", "ouring")
-      newWord = Replace(newWord, "oredzczc", "oured")
-      newWord = Replace(newWord, "orszczc", "ours")
-      newWord = Replace(newWord, "oritezczc", "ourite")
-      newWord = Replace(newWord, "lingzczc", "lling")
-      newWord = Replace(newWord, "lingzczc", "lling")
-      newWord = Replace(newWord, "ledzczc", "lled")
-      newWord = Replace(newWord, "yz", "ys")
-      newWord = Replace(newWord, "zczc", "")
-    End If
-    ' If the concocted new word is a spelling error, ignore it
-    If Application.CheckSpelling(newWord, MainDictionary:=langName) _
-         = False Then newWord = myWord
-  Else
-    newWord = myWord
-  End If
-End If
-' To allow the user to cycle between different suggested alternative words
-If secondTry = True Then
-  Selection.Expand wdParagraph
-  Selection.Collapse wdCollapseEnd
-  Selection.MoveLeft , 1
-  If suggList.Count > 1 Then
-    Selection.TypeText "|" & suggList.Item(2).Name
-  End If
-  If suggList.Count > 2 Then
-    Selection.TypeText "|" & suggList.Item(3).Name
-  End If
-  If suggList.Count > 3 Then
-    Selection.TypeText "|" & suggList.Item(4).Name
-  End If
-  If suggList.Count > 4 Then
-    Selection.TypeText "|" & suggList.Item(5).Name
-  End If
-Else
+If suggList.Count > 0 And Not (spellOK) Then _
+     newWord = suggList.Item(1).Name
+
 ' If initial letter is a capital keep the capital
-  If LCase(initChar) <> initChar Then
-    newWord = UCase(Left(newWord, 1)) & Mid(newWord, 2)
-  End If
+If LCase(initChar) <> initChar Then _
+     newWord = UCase(Left(newWord, 1)) & Mid(newWord, 2)
+  
 ' If final letter is a capital, make it all caps
-  If LCase(lastChar) <> lastChar Then
-    newWord = UCase(newWord)
-  End If
-'
-  If wdsInPara < 3 Then
-    Selection.Collapse wdCollapseEnd
-    If Asc(Selection) = 32 Then
-      Selection.MoveEnd , 1
-      Selection.TypeText "^32"
-    End If
-    Selection.TypeText "|" & newWord
-    Selection.MoveRight , 1
-    If newWord = myWord Then Beep
-  Else
-    If newWord <> myWord Then
-      Beep
-      myTime = Timer
-      Do
-      Loop Until Timer > myTime + 0.2
-      Beep
-      Selection.TypeText newWord
+If LCase(lastChar) <> lastChar Then _
+     newWord = UCase(newWord)
+
+' If it's the only word in the para (a FRedit list)
+If wdsInPara < 3 Then
+  oldWord = Selection.Text
+  Selection.Collapse wdCollapseEnd
+  If Asc(Selection) = 32 Then
+    Selection.MoveEnd , 1
+    oldWord = oldWord & "^32"
+    newWord = newWord & "^32"
     Else
-      spellOK = Application.CheckSpelling(myWord, MainDictionary:=langName)
-      If spellOK Then
-        Selection.Collapse wdCollapseEnd
-      Else
-        If newWord = myWord And beepIfNoSuggestion Then Beep
-        MsgBox ("Word offers no suggestion")
-      End If
-    End If
-    Beep
+    oldWord = oldWord & ">"
   End If
+  Selection.Expand wdParagraph
+  Selection.TypeText "~<" & oldWord & "|" & newWord & CR
+  Selection.MoveRight , 1
+  If newWord = myWord Then Beep
+Else
+  If newWord <> myWord Then
+    Beep
+    myTime = Timer
+    Do
+    Loop Until Timer > myTime + 0.2
+    Beep
+    Selection.TypeText newWord
+  Else
+    spellOK = Application.CheckSpelling(myWord, _
+         MainDictionary:=langText)
+    If spellOK Then
+      Selection.Collapse wdCollapseEnd
+    Else
+      If newWord = myWord And beepIfNoSuggestion Then Beep
+      MsgBox ("Word offers no suggestion")
+    End If
+  End If
+  Beep
 End If
 End Sub
 

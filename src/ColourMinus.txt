@@ -1,5 +1,5 @@
 Sub ColourMinus()
-' Paul Beverley - Version 23.07.18
+' Paul Beverley - Version 24.03.21
 ' Remove or add font colour in a choice of colours
 
 removeUnderline = True
@@ -40,6 +40,7 @@ wasCol = ActiveDocument.Variables("colNum")
 
 ' If no text is selected ...
 If Selection.Start = Selection.End Then
+  If Selection.Text = vbCr Then Selection.MoveLeft , 1
   ' If the cursor is outside the area, give up
   If Selection.Start < wasStart Or Selection.End > wasEnd Then GoTo LineClear
   ' Otherwise check the font colour

@@ -1,9 +1,9 @@
 Sub DocAlyse()
-' Paul Beverley - Version 16.03.21
+' Paul Beverley - Version 25.03.21
 ' Analyses various aspects of a document
 
 ' prompts to count number of tests
-cc = 52
+cc = 53
 
 Set FUT = ActiveDocument
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
@@ -13,10 +13,6 @@ If doingSeveralMacros = False Then
        + vbYesNoCancel, "DocAlyse")
   If myResponse <> vbYes Then Exit Sub
 End If
-
-For i = 1 To 15
-  spcs = "       " & spcs
-Next i
 
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
@@ -620,8 +616,8 @@ DoEvents
 newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[bpiv]our[ ,.s]"
 rng.Find.Execute Replace:=wdReplaceAll
-A = ActiveDocument.Range.End - myTot
-If A > 0 Then WordBasic.EditUndo
+a = ActiveDocument.Range.End - myTot
+If a > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = "[a-z]{3,}elling>"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -657,9 +653,9 @@ rng.Find.Execute Replace:=wdReplaceAll
 k = ActiveDocument.Range.End - myTot
 If k > 0 Then WordBasic.EditUndo
 
-If A + g + f + i + q + v + k > 0 Then myRslt = _
+If a + g + f + i + q + v + k > 0 Then myRslt = _
      myRslt & "UK spelling (appx)" & vbTab & _
-     Trim(Str(A + g + f)) & CR & _
+     Trim(Str(a + g + f)) & CR & _
      "US spelling (appx)" & vbTab & _
      Trim(Str(i - q + v + k)) & CR & _
      "(For a more accurate count, please use UKUScount.)" & CR2
@@ -731,8 +727,8 @@ If k > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = "isation"
 rng.Find.Execute Replace:=wdReplaceAll
-L = ActiveDocument.Range.End - myTot
-If L > 0 Then WordBasic.EditUndo
+l = ActiveDocument.Range.End - myTot
+If l > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = "[armvt]ising"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -749,7 +745,7 @@ rng.Find.Execute Replace:=wdReplaceAll
 r = ActiveDocument.Range.End - myTot
 If r > 0 Then WordBasic.EditUndo
 myRslt = myRslt & "-is- (very appx)" & vbTab & _
-     Trim(Str(i + g + k + L - p - q - r)) & CR
+     Trim(Str(i + g + k + l - p - q - r)) & CR
 
 
 
@@ -773,8 +769,8 @@ If k > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = "ization"
 rng.Find.Execute Replace:=wdReplaceAll
-L = ActiveDocument.Range.End - myTot
-If L > 0 Then WordBasic.EditUndo
+l = ActiveDocument.Range.End - myTot
+If l > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = "[Pp]riz[ie]"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -787,7 +783,7 @@ q = ActiveDocument.Range.End - myTot
 If q > 0 Then WordBasic.EditUndo
 
 myRslt = myRslt & "-iz- (very appx)" & vbTab _
-     & Trim(Str(i + g + k + L - p - q)) & CR & _
+     & Trim(Str(i + g + k + l - p - q)) & CR & _
      "(For a more accurate count, please use IZIScount.)" _
      & CR2
 
@@ -818,7 +814,7 @@ rng.Find.Execute Replace:=wdReplaceAll
 k = ActiveDocument.Range.End - myTot
 If k > 0 Then WordBasic.EditUndo
 myRslt = myRslt
-L = i + g + h + k
+l = i + g + h + k
 
 cc = cc - 1
 DoEvents
@@ -843,10 +839,54 @@ rng.Find.Text = "<[Tt]hese data>"
 rng.Find.Execute Replace:=wdReplaceAll
 k = ActiveDocument.Range.End - myTot
 If k > 0 Then WordBasic.EditUndo
-If L + i + h + g + k > 0 Then myRslt = myRslt & _
+If l + i + h + g + k > 0 Then myRslt = myRslt & _
      "data singular" & _
-     vbTab & Trim(Str(L)) & CR & "data plural" & _
+     vbTab & Trim(Str(l)) & CR & "data plural" & _
      vbTab & Trim(Str(i + g + h + k)) & CR2
+
+
+' Is "first order" hyphenated?
+cc = cc - 1
+DoEvents
+newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+rng.Find.Text = "[snrt][tdh] order"
+rng.Find.Execute Replace:=wdReplaceAll
+dfgsdfg = ActiveDocument.Range.End
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUndo
+
+rng.Find.Text = "[snrt][tdh]-order"
+rng.Find.Execute Replace:=wdReplaceAll
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUndo
+
+If i + j > 0 Then myRslt = myRslt & _
+     "'xxx order' with space" & vbTab & _
+     Trim(Str(i)) & CR & "'xxx-order' with hyphen" _
+     & vbTab & Trim(Str(j)) & CR2
+
+
+
+' Is "three dimensional" hyphenated?
+cc = cc - 1
+DoEvents
+newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+rng.Find.Text = "[oweunvt ][eonrN1-4i] dimensional"
+rng.Find.Execute Replace:=wdReplaceAll
+dfgsdfg = ActiveDocument.Range.End
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUndo
+
+rng.Find.Text = "[oweunvt ][eonrN1-4i]-dimensional"
+rng.Find.Execute Replace:=wdReplaceAll
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUndo
+
+If i + j > 0 Then myRslt = myRslt & _
+     "'xxx dimensional' with space" & vbTab & _
+     Trim(Str(i)) & CR & "'xxx-dimensional' with hyphen" _
+     & vbTab & Trim(Str(j)) & CR2
+
 
 
 
@@ -1098,20 +1138,20 @@ If k > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = " No[0-9]"
 rng.Find.Execute Replace:=wdReplaceAll
-L = ActiveDocument.Range.End - myTot
-If L > 0 Then WordBasic.EditUndo
+l = ActiveDocument.Range.End - myTot
+If l > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = " no.[0-9]"
 rng.Find.Execute Replace:=wdReplaceAll
 m = ActiveDocument.Range.End - myTot
 If m > 0 Then WordBasic.EditUndo
 
-If i + j + g + k + L + m > 0 Then
+If i + j + g + k + l + m > 0 Then
   myRslt = myRslt & "No (number)" & vbTab & Trim(Str(i)) _
      & CR & "No. (number)" & vbTab & Trim(Str(j)) & CR _
      & "no. (number)" & vbTab & Trim(Str(g)) & CR
   myRslt = myRslt & "No(number)" & vbTab & Trim(Str(k)) _
-     & CR & "No.(number)" & vbTab & Trim(Str(L)) & CR _
+     & CR & "No.(number)" & vbTab & Trim(Str(l)) & CR _
      & "no.(number)" & vbTab & Trim(Str(m)) & CR2
 End If
 
@@ -1140,20 +1180,20 @@ If k > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = " Vol[0-9]"
 rng.Find.Execute Replace:=wdReplaceAll
-L = ActiveDocument.Range.End - myTot
-If L > 0 Then WordBasic.EditUndo
+l = ActiveDocument.Range.End - myTot
+If l > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = " vol.[0-9]"
 rng.Find.Execute Replace:=wdReplaceAll
 m = ActiveDocument.Range.End - myTot
 If m > 0 Then WordBasic.EditUndo
 
-If i + j + g + k + L + m > 0 Then
+If i + j + g + k + l + m > 0 Then
   myRslt = myRslt & "Vol (number)" & vbTab & Trim(Str(i)) _
       & CR & "Vol. (number)" & vbTab & Trim(Str(j)) & CR _
      & "vol. (number)" & vbTab & Trim(Str(g)) & CR
   myRslt = myRslt & "Vol(number)" & vbTab & Trim(Str(k)) _
-     & CR & "Vol.(number)" & vbTab & Trim(Str(L)) & CR _
+     & CR & "Vol.(number)" & vbTab & Trim(Str(l)) & CR _
      & "vol.(number)" & vbTab & Trim(Str(m)) & CR
   myRslt = myRslt & CR
 End If
@@ -1821,9 +1861,6 @@ If pageBreaks > 0 Then
   myRslt = myRslt & "page breaks" _
       & vbTab & Trim(Str(i + pageBreaks)) & CR2
 End If
-
-
-' Medical bits go in here
 
 
 myRslt = myRslt & CR
