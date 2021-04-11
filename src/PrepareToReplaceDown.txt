@@ -1,5 +1,5 @@
 Sub PrepareToReplaceDown()
-' Paul Beverley - Version 13.01.21
+' Paul Beverley - Version 10.04.21
 ' Copies selected text into the F&R box
 
 If Selection.Start = Selection.End Then
@@ -25,6 +25,7 @@ With Selection.Find
   .MatchCase = True
 End With
 Selection.End = Selection.Start
-CommandBars("Menu Bar").Controls("Edit").Controls("Replace...").Execute
+On Error Resume Next
+Application.Run MacroName:="EditReplace"
 End Sub
 

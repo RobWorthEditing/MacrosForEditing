@@ -1,0 +1,130 @@
+Sub CitationListCheckerChecker()
+' Paul Beverley - Version 09.04.21
+' Rechecks citations against references, esp. Chicago-type
+
+Selection.Expand wdParagraph
+If Selection.Range.Words.Count > 6 Then
+  myResponse = MsgBox("Is this the first citation?", _
+          vbQuestion + vbYesNoCancel, "CitationCheckerTidyUp")
+  If myResponse <> vbYes Then Exit Sub
+End If
+Set rng = ActiveDocument.Range(0, Selection.End)
+paraNumCites = rng.Paragraphs.Count
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set rng = ActiveDocument.Content
+rng.FormattedText = rngOld.FormattedText
+
+Dim myRefs(500) As String
+Dim myCites(500) As String
+Dim tstWd(100) As String
+For i = 1 To ActiveDocument.Paragraphs.Count
+  Set myPara = ActiveDocument.Paragraphs(i).Range
+  If i < paraNumCites Then
+    For Each myWord In myPara.Words
+      If Trim(myWord) Like "####" Then
+        myLen = InStr(myPara, myWord) + 4
+        refOK = (myPara.HighlightColorIndex = 0)
+        myRefs(i) = Left(myPara, myLen)
+        If refOK Then myRefs(i) = "OK" & myRefs(i)
+        Exit For
+      End If
+      DoEvents
+    Next myWord
+  Else
+    For Each myWord In myPara.Words
+      If Trim(myWord) Like "####" Then
+        myLen = InStr(myPara, myWord) + 4
+        refOK = (myPara.HighlightColorIndex = 0)
+        myCites(i) = Left(myPara, myLen)
+        If refOK Then myCites(i) = "OK" & myCites(i)
+        Exit For
+      End If
+      DoEvents
+    Next myWord
+  End If
+  DoEvents
+Next i
+
+' Locate any Chicago citations
+For citeParaNum = paraNumCites To ActiveDocument.Paragraphs.Count
+  Set citeRng = ActiveDocument.Paragraphs(citeParaNum).Range
+  If Len(citeRng) > 4 And Left(myCites(citeParaNum), 2) <> "OK" Then
+    If InStr(citeRng, " and ") > 0 Then
+      numWds = citeRng.Words.Count - 1
+      myDate = citeRng.Words(numWds)
+      wds = 0
+      For refParaNum = 1 To numWds - 1
+        myTest = Trim(citeRng.Words(refParaNum).Text)
+        If Len(myTest) > 2 And myTest <> "and" Then
+          wds = wds + 1
+          tstWd(wds) = myTest
+        End If
+        DoEvents
+      Next refParaNum
+      numTestWds = wds
+      For refParaNum = 1 To paraNumCites - 1
+        gotMatch = False
+        If InStr(myRefs(refParaNum), myDate) > 0 Then
+          gotMatch = True
+          For k = 1 To numTestWds
+            If InStr(myRefs(refParaNum), tstWd(k) & ".") = 0 And _
+                 InStr(myRefs(refParaNum), tstWd(k) & " ") = 0 And _
+                 InStr(myRefs(refParaNum), tstWd(k) & "-") = 0 And _
+                 InStr(myRefs(refParaNum), tstWd(k) & ",") = 0 Then _
+                 gotMatch = False
+          Next k
+        End If
+        If gotMatch = True Then
+          Set citeRng = ActiveDocument.Paragraphs(citeParaNum).Range
+          Set refRange = ActiveDocument.Paragraphs(refParaNum).Range
+          citeRng.HighlightColorIndex = wdNoHighlight
+          refRange.HighlightColorIndex = wdNoHighlight
+          linkRef = Trim(Str(refParaNum)) & "chic" & _
+               Trim(Str(citeParaNum)) & "   "
+          citeRng.InsertBefore Text:=linkRef
+          refRange.InsertBefore Text:=linkRef
+        End If
+        DoEvents
+      Next refParaNum
+    End If
+  End If
+Next citeParaNum
+
+' Clear any long "et al"s
+For citeParaNum = paraNumCites To ActiveDocument.Paragraphs.Count
+  Set citeRng = ActiveDocument.Paragraphs(citeParaNum).Range
+  If citeRng.HighlightColorIndex = wdYellow Then
+    Set rng = ActiveDocument.Content
+    srch = Replace(citeRng.Text, vbCr, "")
+    srch = "[" & srch & "]"
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = srch
+      .Wrap = wdFindContinue
+      .Forward = True
+      .Replacement.Text = "^p"
+      .MatchWildcards = False
+      .Execute
+      DoEvents
+    End With
+    If rng.Find.Found Then
+      rng.Expand wdParagraph
+      Set rng2 = ActiveDocument.Range(0, rng.End)
+      refParaNum = rng2.Paragraphs.Count
+      Set citeRng = ActiveDocument.Paragraphs(citeParaNum).Range
+      citeRng.HighlightColorIndex = wdNoHighlight
+      rng.HighlightColorIndex = wdNoHighlight
+      linkRef = Trim(Str(refParaNum)) & "etal" & _
+           Trim(Str(citeParaNum)) & "   "
+      citeRng.InsertBefore Text:=linkRef
+      rng.InsertBefore Text:=linkRef
+    End If
+    DoEvents
+  End If
+Next citeParaNum
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

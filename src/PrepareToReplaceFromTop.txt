@@ -1,5 +1,5 @@
 Sub PrepareToReplaceFromTop()
-' Paul Beverley - Version 09.12.10
+' Paul Beverley - Version 10.04.21
 ' Copy text into the F&R box from top
 
 myText = Selection
@@ -13,6 +13,9 @@ With Selection.Find
   .MatchWholeWord = False
 End With
 Selection.HomeKey Unit:=wdStory
-CommandBars("Menu Bar").Controls("Edit").Controls("Replace...").Execute
+On Error Resume Next
+Application.Run MacroName:="EditReplace"
 End Sub
+
+
 

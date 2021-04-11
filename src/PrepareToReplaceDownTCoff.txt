@@ -1,5 +1,5 @@
 Sub PrepareToReplaceDownTCoff()
-' Paul Beverley - Version 13.01.21
+' Paul Beverley - Version 10.04.21
 ' Copy text into the F&R box
 
 tcColour = True
@@ -36,6 +36,7 @@ If tcColour = True Then
     .Solid
   End With
 End If
-CommandBars("Menu Bar").Controls("Edit").Controls("Replace...").Execute
+On Error Resume Next
+Application.Run MacroName:="EditReplace"
 End Sub
 

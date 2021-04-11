@@ -1,0 +1,54 @@
+Sub CountChapterPages()
+' Paul Beverley - Version 03.04.21
+' Counts words in sections of text between headings
+
+'Chapter heading style:
+myStyle = "Heading 1"
+
+Dim myTitle(100) As String
+Dim myPage(100) As Long
+
+i = 0
+For Each myPar In ActiveDocument.Paragraphs
+  If myPar.Style = myStyle And Len(myPar.Range.Text) > 2 Then
+    i = i + 1
+    myTitle(i) = Replace(myPar.Range.Text, vbCr, "")
+    myPar.Range.Collapse wdCollapseStart
+    myPage(i) = myPar.Range.Information(wdActiveEndPageNumber)
+    Debug.Print myTitle(i), myPage(i)
+  End If
+Next myPar
+iMax = i
+Set rng = ActiveDocument.Content
+myPage(i + 1) = rng.Information(wdActiveEndPageNumber) + 1
+
+Documents.Add
+For i = 1 To iMax
+  chStart = myPage(i)
+  chEnd = myPage(i + 1)
+  myText = Trim(myTitle(i))
+  numPages = chEnd - chStart
+  If numPages > 0 Then
+    myText = myText & vbTab & Trim(numPages) & vbCr
+  Else
+    myText = myText & vbTab & "" & vbCr
+  End If
+  Selection.TypeText Text:=myText
+Next i
+Set rng = ActiveDocument.Content
+rng.ConvertToTable Separator:=wdSeparateByTabs
+Set tb = ActiveDocument.Tables(1)
+tb.Style = "Table Grid"
+tb.AutoFitBehavior (wdAutoFitContent)
+tb.Borders(wdBorderTop).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderRight).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+End Sub
+
+
+
+
+

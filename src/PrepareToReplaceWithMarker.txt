@@ -1,22 +1,30 @@
 Sub PrepareToReplaceWithMarker()
-' Paul Beverley - Version 09.12.10
+' Paul Beverley - Version 10.04.21
 ' Copy text into the F&R box from top leaving marker
 
 myText = Selection
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+End If
 If Asc(myText) <> 32 Then myText = Trim(myText)
 Selection.Start = Selection.End
-Selection.TypeText Text:="[[["
-
-
+Selection.TypeText "[[["
+  
 With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = myText
+  .Forward = True
   .Replacement.Text = myText
   .MatchWildcards = False
   .MatchWholeWord = False
 End With
 Selection.HomeKey Unit:=wdStory
-CommandBars("Menu Bar").Controls("Edit").Controls("Replace...").Execute
+On Error Resume Next
+Application.Run MacroName:="EditReplace"
 End Sub
 

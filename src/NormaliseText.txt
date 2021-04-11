@@ -1,11 +1,11 @@
-
 Sub NormaliseText()
-' Paul Beverley - Version 17.03.21
-' Sest Normal style and removes formatting
+' Paul Beverley - Version 03.04.21
+' Sets Normal style and removes (some) formatting
 
 removeHighlight = True
+removeColour = True
 
-' For part paragraph:
+' Toe reset some features, not all, set to False:
 resetAllFormat = False
 
 ' which, if true, makes these redundant
@@ -30,6 +30,8 @@ rng.Select
 If resetAllFormat = False Then
   If removeHighlight = True Then rng.HighlightColorIndex = wdNoHighlight
   
+  If removeColour = True Then rng.Font.Color = wdAuto
+
   If resetSubSuper = True Then
     rng.Font.Superscript = False
     rng.Font.Subscript = False
@@ -46,11 +48,11 @@ If resetAllFormat = False Then
   End If
   
   If resetFontSize = True Then
-    myFont = ActiveDocument.Styles(wdStyleNormal).Font.Size
-    rng.Font.Name = myFont
+    mySize = ActiveDocument.Styles(wdStyleNormal).Font.Size
+    rng.Font.Size = mySize
   End If
 Else
-  rng.Style = ActiveDocument.Styles(wdStyleNormal)
+  rng.Style = wdStyleNormal
   On Error GoTo ReportIt
   rng.Font.Reset
 End If
@@ -60,5 +62,4 @@ Exit Sub
 ReportIt:
 Beep
 End Sub
-
 
