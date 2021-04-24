@@ -1,14 +1,14 @@
 Sub FindSamePlaceBack()
-' Paul Beverley - Version 11.02.21
+' Paul Beverley - Version 16.01.21
 ' Finds the same place in another file
 
-selectCurrentWord = False
 ' selectCurrentWord = True
+selectCurrentWord = False
 
 notThisFile = "zzSwitchList"
 
-' alphaOrderUp = True
 alphaOrderUp = False
+' alphaOrderUp = True
 
 preserveOriginalFind = False
 
@@ -139,10 +139,8 @@ For i = 1 To totWnds - 1
       numFoots = myDoc.Footnotes.Count
       numEnds = myDoc.Endnotes.Count
       If numFoots + numEnds > 0 Then
-        If numFoots > 0 Then Set rng = _
-             ActiveDocument.StoryRanges(wdFootnotesStory)
-        If numEnds > 0 Then Set rng = _
-             ActiveDocument.StoryRanges(wdEndnotesStory)
+        If numFoots > 0 Then Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+        If numEnds > 0 Then Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
         With rng.Find
           .ClearFormatting
           .Replacement.ClearFormatting
@@ -217,10 +215,8 @@ If tryThisName > "" Then
       numFoots = myDoc.Footnotes.Count
       numEnds = myDoc.Endnotes.Count
       If numFoots + numEnds > 0 Then
-        If numFoots > 0 Then Set rng = _
-            ActiveDocument.StoryRanges(wdFootnotesStory)
-        If numEnds > 0 Then Set rng = _
-            ActiveDocument.StoryRanges(wdEndnotesStory)
+        If numFoots > 0 Then Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+        If numEnds > 0 Then Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
         With rng.Find
           .ClearFormatting
           .Replacement.ClearFormatting

@@ -1,14 +1,16 @@
 Sub SaveAsWithIndex()
-' Paul Beverley - Version 21.05.20
+' Paul Beverley - Version 13.04.21
 ' Saves the current file, adding a postfix
 
 switchTC_ON = True
-myPostFix = "_PB_01.doc"
+myPostFix = "_PB_01"
 
 myName = ActiveDocument.FullName
-dotPos = InStr(myName, ".")
+dotPos = InStr(myName, ".do")
 fType = Mid(myName, dotPos)
 myNm = Replace(myName, fType, "")
+myPostFix = myPostFix & ".doc"
+
 num = Val(Right(myNm, 2))
 If InStr(myNm, Left(myPostFix, 3)) = 0 Then
   myResponse = MsgBox("Save the current file, adding a postfix?", _

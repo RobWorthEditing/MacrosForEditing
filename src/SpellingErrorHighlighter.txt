@@ -1,11 +1,12 @@
 Sub SpellingErrorHighlighter()
-' Paul Beverley - Version 30.10.20
+' Paul Beverley - Version 24.03.21
 ' Highlights all spelling errors
 
 spellingListName = "SpellingErrors"
+spellingListName2 = "SpellAlyse"
 
 CR = vbCr
-cr2 = CR & CR
+CR2 = CR & CR
 sp = "__________________________"
 
 ' Find errors list
@@ -13,7 +14,8 @@ Set mainDoc = ActiveDocument
 gottaList = False
 For Each myDoc In Documents
   myFirstLine = myDoc.Paragraphs(1).Range.Text
-  If InStr(myFirstLine, spellingListName) > 0 Then
+  If InStr(myFirstLine, spellingListName & CR) > 0 _
+   Or InStr(myFirstLine, spellingListName2 & CR) > 0 Then
     myDoc.Activate
     gottaList = True
     Exit For
@@ -29,8 +31,8 @@ End If
 ' Create list of words needing highlighting in each colour
 Dim myWordHighlightList(16) As String
 myCount = 0
-For Each myPara In ActiveDocument.Paragraphs
-  Set rng = myPara.Range.Duplicate
+For Each myPar In ActiveDocument.Paragraphs
+  Set rng = myPar.Range.Duplicate
   If Len(rng) > 2 Then
     thisWord = Replace(rng.Text, CR, "")
     myCol = rng.HighlightColorIndex
@@ -41,7 +43,7 @@ For Each myPara In ActiveDocument.Paragraphs
       StatusBar = sp & sp & sp & myCount
     End If
   End If
-Next myPara
+Next myPar
 totCount = myCount
 
 If myCount = 0 Then

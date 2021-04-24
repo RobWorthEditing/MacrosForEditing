@@ -1,5 +1,5 @@
 Sub LanguageSetUK()
-' Paul Beverley - Version 20.05.20
+' Paul Beverley - Version 02.02.21
 ' Sets language as UK English
 
 myLanguage = wdEnglishUK
@@ -13,7 +13,7 @@ Next aStory
 If ActiveDocument.Shapes.Count > 0 Then
   For Each shp In ActiveDocument.Shapes
     If shp.Type <> 24 And shp.Type <> 3 Then
-      If shp.TextFrame.hasText Then
+      If shp.TextFrame.HasText Then
         shp.TextFrame.TextRange.LanguageID = myLanguage
       End If
     End If

@@ -1,5 +1,5 @@
 Sub DeleteWord()
-' Paul Beverley - Version 13.01.21
+' Paul Beverley - Version 27.03.21
 ' Deletes current word, but no punctuation
 
 ' This first one is aimed at use with Dictate
@@ -8,6 +8,8 @@ If Asc(Selection) = 13 Then
   Selection.Delete
   Exit Sub
 End If
+
+If Asc(Selection) = 32 Then Selection.MoveRight , 1
 
 ' Now just as normal
 If InStr(" ,.!;:", Selection) > 0 Then Selection.MoveLeft , 1

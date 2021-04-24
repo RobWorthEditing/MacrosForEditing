@@ -1,4 +1,3 @@
-
 Sub IStoIZ()
 ' Paul Beverley - Version 06.02.21
 ' Corrects text to give -iz-, -yz- spellings
@@ -13,9 +12,9 @@ szExceptions = szExceptions & "electrolys,paralys,hydrolys"
 textColour = 0
 
 highlightColour = 0
-' highlightColour = wdYellow
+highlightColour = wdYellow
 
-bothTCandHighlight = False
+bothTCandHighlight = True
 
 nonoStyles = "DisplayQuote,ReferenceList"
 
@@ -27,6 +26,10 @@ mySFile = "C:\Documents and Settings\Paul\My Documents\IS_words.docx"
 
 ' On a Mac, it will need to be something like:
 ' mySFile = "/Users/Paul/My Documents/Macro stuff/IS_words.docx"
+
+
+
+mySFile = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\aaaStarterMacros\IS_words.docx"
 
 ExceptionSFile = "IS_words"
 
@@ -228,5 +231,4 @@ If promptForConfirmation = True Then
   End If
 End If
 End Sub
-
 

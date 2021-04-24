@@ -1,23 +1,15 @@
 Sub MultiSwitch()
-' Paul Beverley - Version 06.02.21
+' Paul Beverley - Version 20.04.21
 ' Scripted word/phrase switching
 
 maxWords = 6
-listName = "zzSwitchList.docx"
-
-' On Windows, it will need to be something like:
-myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff"
-
-' On a Mac, it will need to be something like:
-myFolder = "/Users/Paul/My Documents/Macro stuff"
-
+myListName = "zzSwitchList"
 
 ' Set min number of chars for an abbreviation
 minChars = 3
 includeApostrophe = True
 useSpike = True
 
-defaultList = myFolder & listName
 CR = vbCr
 CR2 = CR & CR
 ReDim myStr(maxWords) As String
@@ -97,32 +89,23 @@ Selection.Start = startNow
 ' Find the zzSwitchList file
 Set thisDoc = ActiveDocument
 
-' Go and look for the list file
+' Go and look for a list file
 gottaList = False
 For i = 1 To Documents.Count
   Set dcu = Documents(i)
-  If InStr(dcu.Name, listName) > 0 Then
+  If InStr(dcu.Name, myListName) > 0 Then
     Set listDoc = dcu
     gottaList = True
+    Exit For
   End If
 Next i
 If gottaList = False Then
-  On Error Resume Next
-  Documents.Open myFolder & "\" & listName
-  If Err.Number = 5174 Then
-    Err.Clear
-    Beep
-    myResponse = MsgBox("Can't find a zzSwitchList file!", _
-          vbOKOnly, "MultiSwitch")
-    Exit Sub
-  Else
-    On Error GoTo 0
-  End If
-Else
-  listDoc.Activate
+  Beep
+  myResponse = MsgBox("Please open the " & myListName & _
+       " file.", vbOKOnly, "MultiSwitch")
+  Exit Sub
 End If
-
-If Documents.Count = 1 Then Beep: Exit Sub
+listDoc.Activate
 
 ' Just in case the switch list has any URLs
 Set rng = ActiveDocument.Content
@@ -135,6 +118,7 @@ If UCase(Selection) <> LCase(Selection) Then
   Selection.TypeText Text:=CR2
 End If
 Selection.Collapse wdCollapseStart
+
 ' Try to locate the selected text in the switch list
 Set rng = ActiveDocument.Content
 allWords = rng.Text
@@ -187,7 +171,7 @@ If gottaMatch = False Then
       .Execute
       .MatchCase = False
     End With
-    myWd = Left(myWd, Len(myWd) - 1)
+    If Len(myWd) > 1 Then myWd = Left(myWd, Len(myWd) - 1)
   Loop Until Selection.Find.Found = True Or Len(myWd) = 1
   Selection.Collapse wdCollapseStart
   thisDoc.Activate
@@ -251,7 +235,7 @@ If noTrack Then ActiveDocument.TrackRevisions = False
 If useFormat = True Then
   If useSpike = True Then
     With NormalTemplate.AutoTextEntries("Spike")
-      .Insert Where:=Selection.Range, RichText:=True
+      .Insert where:=Selection.Range, RichText:=True
       .Delete
     End With
     Selection.MoveStart , -1

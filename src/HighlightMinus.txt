@@ -5,7 +5,11 @@ Sub HighlightMinus()
 colourOffToo = True
 uLineOffToo = True
 strikeThroughToo = True
-removeShadingToo = True
+
+colourOffToo = True
+uLineOffToo = True
+strikeThroughToo = True
+removeShadingToo = False
 
 Dim myCol(9)
 myCol(0) = wdNoHighlight
@@ -49,7 +53,7 @@ If Selection.Start = Selection.End Then
   ' Otherwise check the highlight colour
   Selection.Start = wasStart
   Selection.End = wasStart + 1
-  nowColour = Selection.range.HighlightColorIndex
+  nowColour = Selection.Range.HighlightColorIndex
   If nowColour <> myCol(wasCol) Then
     ' colour has changed, so go back to colour 1
     nowCol = 0
@@ -65,22 +69,22 @@ Else
   ' record the current selection range
   If colourOffToo = True Then
   ' If all text is selected, take off colouration AND patterning
-    If Selection.range.Words.Count = ActiveDocument.Words.Count Then
+    If Selection.Range.Words.Count = ActiveDocument.Words.Count Then
       If strikeThroughToo = True Then
-        Selection.range.Font.StrikeThrough = False
+        Selection.Range.Font.StrikeThrough = False
       End If
       If uLineOffToo = True Then
-        Selection.range.Font.Underline = True
-        Selection.range.Font.Underline = False
+'        Selection.range.Font.Underline = True
+        Selection.Range.Font.Underline = False
       End If
-      Selection.range.Font.Color = wdColorAutomatic
-      Selection.range.HighlightColorIndex = wdNoHighlight
+      Selection.Range.Font.Color = wdColorAutomatic
+      Selection.Range.HighlightColorIndex = wdNoHighlight
       If removeShadingToo = True Then Selection.Shading.BackgroundPatternColor _
            = wdColorAutomatic
     End If
   End If
   If Not (Selection.Start = 0 And Selection.End = _
-       ActiveDocument.range.End) Then
+       ActiveDocument.Range.End) Then
     ActiveDocument.Variables("selStart") = Selection.Start
     ActiveDocument.Variables("selEnd") = Selection.End
   End If
@@ -90,10 +94,10 @@ ActiveDocument.Variables("colNum") = nowCol
 '    This following line solves the problem where text
 '    is highlighted, yet its colour is apparently 0(!)
 '    so force it to turquoise, then back to 0.
-If nowCol = 0 And Selection.range.HighlightColorIndex = 0 Then
-  Selection.range.HighlightColorIndex = 3
+If nowCol = 0 And Selection.Range.HighlightColorIndex = 0 Then
+  Selection.Range.HighlightColorIndex = 3
 End If
-Selection.range.HighlightColorIndex = myCol(nowCol)
+Selection.Range.HighlightColorIndex = myCol(nowCol)
 Selection.End = Selection.Start
 ActiveDocument.TrackRevisions = myTrack
 Exit Sub
@@ -103,7 +107,7 @@ Selection.HomeKey Unit:=wdLine
 clearStart = Selection.Start
 Selection.MoveDown Unit:=wdLine, Count:=1
 Selection.HomeKey Unit:=wdLine
-Set rng = Selection.range
+Set rng = Selection.Range
 rng.Start = clearStart
 ActiveDocument.Variables("selStart") = clearStart
 ActiveDocument.Variables("selEnd") = Selection.End

@@ -1,5 +1,5 @@
 Sub ListOfFound()
-' Paul Beverley - Version 27.10.17
+' Paul Beverley - Version 16.01.21
 ' Lists all occurrences of selected text
 
 charsBefore = 50
@@ -15,6 +15,7 @@ allowStartOfLine = True
 crSymbol = "|"
 tabSymbol = "~"
 pgSymbol = ""
+
 
 Set myDoc = ActiveDocument
 myDocName = ActiveDocument.Name
@@ -37,7 +38,10 @@ If varExists Then GoTo jumpBack
 
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord
-  Selection.MoveEndWhile cset:=ChrW(8217) & " '", Count:=wdBackward
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
 End If
 
 ' In the main text, find the search word(s) then create the list
@@ -75,8 +79,8 @@ Else
 End If
 
 ' Prepare list document
-Selection.TypeText Text:="ListOfFound: " & findString & vbCr & vbCr
-ActiveDocument.Paragraphs(1).range.Font.Bold = True
+Selection.TypeText "ListOfFound: " & findString & vbCr & vbCr
+ActiveDocument.Paragraphs(1).Range.Font.Bold = True
 ActiveDocument.Words(1).Font.Bold = False
 ActiveDocument.Words(2).Font.Bold = False
 
@@ -139,7 +143,7 @@ Do While rng.Find.Found = True
   If startOfLine = True Then rng.Start = rng.Start + 1
   inAtable = rng.Information(wdWithInTable)
 Loop
-Selection.TypeText Text:=myResults
+Selection.TypeText myResults
 Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
@@ -178,7 +182,7 @@ Options.DefaultHighlightColorIndex = oldColour
 
 Selection.HomeKey Unit:=wdStory
 Selection.MoveDown , 1
-Selection.TypeText Text:=vbCr & "Found: " & Str(myCount) & vbCr
+Selection.TypeText vbCr & "Found: " & Str(myCount) & vbCr
 Selection.MoveLeft , 2
 Selection.Expand wdWord
 Selection.Font.Bold = True
@@ -193,7 +197,7 @@ If findWhole Then
   Selection.Expand wdParagraph
   Selection.MoveEnd , -1
   myText = Selection
-  isSomeHighlight = Selection.range.HighlightColorIndex
+  isSomeHighlight = Selection.Range.HighlightColorIndex
   If isSomeHighlight > 0 Then
     Selection.Collapse wdCollapseStart
     Selection.MoveEnd , 1
@@ -202,13 +206,13 @@ If findWhole Then
       myOffset = myOffset + 1
       Selection.MoveStart , 1
       Selection.MoveEnd , 1
-    Loop Until Selection.range.Font.Underline = 1
+    Loop Until Selection.Range.Font.Underline = 1
      myLen = 0
     Do
       myLen = myLen + 1
       Selection.MoveStart , 1
       Selection.MoveEnd , 1
-    Loop Until Selection.range.Font.Underline = 0
+    Loop Until Selection.Range.Font.Underline = 0
     myOffset = myOffset - 1
   Else
     myOffset = 0
@@ -250,7 +254,7 @@ With Selection.Find
 End With
 Selection.Collapse wdCollapseStart
 
-Set wasSelected = Selection.range
+Set wasSelected = Selection.Range
 Application.ScreenUpdating = False
 
 Selection.EndKey Unit:=wdStory

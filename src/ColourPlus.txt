@@ -2,15 +2,16 @@ Sub ColourPlus()
 ' Paul Beverley - Version 24.03.21
 ' Adds font colour in a choice of colours
 
+Dim myCol(10)
 myCol(0) = wdColorBlack
 myCol(1) = wdColorBlue
 myCol(2) = wdColorRed
 myCol(3) = wdColorPink
 myCol(4) = wdColorBrightGreen
-myCol(5) = wdColorGray25
-myColTotal = 5
+myCol(5) = wdColorGray50
+myCol(6) = wdColorGray25
+myColTotal = 6
 
-' OldColour = Options.DefaultHighlightColorIndex
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 

@@ -1,6 +1,6 @@
 Sub HighlightPlus()
 ' Paul Beverley - Version 24.03.21
-' Add highlight in a choice of colours
+' Adds highlight in a choice of colours
 
 Dim myCol(20)
 myCol(0) = wdNoHighlight
@@ -47,7 +47,7 @@ If Selection.Start = Selection.End Then
     ' Otherwise check the highlight colour
     Selection.Start = wasStart
     Selection.End = wasStart + 1
-    nowColour = Selection.range.HighlightColorIndex
+    nowColour = Selection.Range.HighlightColorIndex
     If nowColour <> myCol(wasCol) Then
       ' colour has changed, so go back to colour 1
       nowCol = 1
@@ -65,7 +65,7 @@ Else:  ' if some text is selected ...
   nowCol = 1
 End If
 ActiveDocument.Variables("colNum") = nowCol
-Selection.range.HighlightColorIndex = myCol(nowCol)
+Selection.Range.HighlightColorIndex = myCol(nowCol)
 Selection.End = Selection.Start
 
 theEnd:

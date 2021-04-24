@@ -1,5 +1,5 @@
 Sub CopyAllEditedSentences()
-' Paul Beverley - Version 30.06.20
+' Paul Beverley - Version 20.04.21
 ' Copies all sentences that have tracked edits in them
 
 ActiveDocument.TrackRevisions = False
@@ -29,17 +29,19 @@ End If
 snCount = ActiveDocument.Sentences.Count
 For i = snCount To 1 Step -1
   Set sn = ActiveDocument.Sentences(i)
-    sn.Select
   snWas = sn.Text
   sn.Revisions.RejectAll
   If sn.Text = snWas Then
     sn.Delete
   Else
-  dcvsd = 0
     WordBasic.EditUndo
-    Selection.Collapse wdCollapseEnd
-    Selection.TypeText Text:=vbCr
+    sn.InsertBefore Text:=vbCr & vbCr
   End If
+  DoEvents
 Next i
+Selection.HomeKey Unit:=wdStory
+Beep
 End Sub
+
+
 

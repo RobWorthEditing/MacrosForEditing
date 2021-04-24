@@ -1,5 +1,5 @@
 Sub TitlesShow()
-' Paul Beverley - Version 03.09.20
+' Paul Beverley - Version 09.09.20
 ' Switches all the light grey font colour text to full colour
 
 preBlue = &HF6F6F6

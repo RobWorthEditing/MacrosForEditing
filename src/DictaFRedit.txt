@@ -1,5 +1,5 @@
 Sub DictaFRedit()
-' Paul Beverley - Version 02.05.20
+' Paul Beverley - Version 06.02.21
 ' Adds features to Word 365 Dictate, and cleans up it errors
 
 doShowChanges = True
@@ -28,6 +28,11 @@ myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff"
 ' On a Mac, it will need to be something like:
 myFolder = "/Users/Paul/My Documents/Macro stuff"
 
+
+
+
+myFolder = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook"
+
 If doShowChanges = False Then
   myColour = 0
   myHighlight = 0
@@ -35,7 +40,6 @@ If doShowChanges = False Then
 End If
 
 listName = "zzDictateBox.docx"
-
 CR = vbCr: CR2 = CR & CR
 
 ' Decide what range of text to process
@@ -84,14 +88,14 @@ originalStart = Selection.Start
 
 ' Postcode wording error correction
 myPostcodeDebug = False
-A = ""
-A = A & ";are|R;zero|0;one|1;"
-A = A & ";two|2;three|3;for|4;"
-A = A & ";four|4;five|5;six|6;oh|O;"
-A = A & ";seven|7;eight|8;nine|9;ten|10;"
-A = A & "es|S;ke|K;-|;to|2;be|B;a |A ;"
-A = A & ";Zedd|Z;November|;|;|;"
-A = A & ";|;|;|;|;"
+a = ""
+a = a & ";are|R;zero|0;one|1;"
+a = a & ";two|2;three|3;for|4;"
+a = a & ";four|4;five|5;six|6;oh|O;"
+a = a & ";seven|7;eight|8;nine|9;ten|10;"
+a = a & "es|S;ke|K;-|;to|2;be|B;a |A ;"
+a = a & ";Zedd|Z;November|;|;|;"
+a = a & ";|;|;|;|;"
 
 ' Correct postcodes
 testLength = 26
@@ -136,8 +140,8 @@ Do While testRng.Find.Found = True
     myText = rng.Text
     myTextWas = myText
     If myPostcodeDebug = True Then rng.Font.StrikeThrough = True
-    A = Replace(A, ";;", ";")
-    myFR = Split(Trim(A), ";")
+    a = Replace(a, ";;", ";")
+    myFR = Split(Trim(a), ";")
     For i = 0 To UBound(myFR) - 1
       txt = myFR(i)
       pPos = InStr(txt, "|")
@@ -325,7 +329,7 @@ Else
   End If
 End If
 
-A = "": x = "": b = "|"
+a = "": x = "": b = "|"
 
 ' Create the initial F&R list
 i = 0: j = 0
@@ -334,12 +338,12 @@ Dim boldx(500) As Boolean
 Dim itala(500) As Boolean
 Dim italx(500) As Boolean
  
-For Each myPara In ActiveDocument.Paragraphs
-  myLine = myPara.Range.Text
+For Each myPar In ActiveDocument.Paragraphs
+  myLine = myPar.Range.Text
   If Left(myLine, 1) = "#" Then Exit For
   If InStr(myLine, "/") > 0 And _
        Left(myLine, 1) <> "/" Then
-    Set myTest = myPara.Range.Characters(2)
+    Set myTest = myPar.Range.Characters(2)
     isBold = (myTest.Font.Bold = True)
     isItalic = (myTest.Font.Italic = True)
     myLine = Replace(myLine, vbCr, "")
@@ -354,14 +358,14 @@ For Each myPara In ActiveDocument.Paragraphs
       boldx(j) = isBold
       italx(j) = isItalic
     Else
-      A = A & myF & myR & b
+      a = a & myF & myR & b
       i = i + 1
       bolda(i) = isBold
       itala(i) = isItalic
     End If
   End If
   DoEvents
-Next myPara
+Next myPar
 
 If useThisList = False Then workDoc.Activate
 ' Execute the initial F&R list
@@ -369,7 +373,7 @@ oldHighlight = Options.DefaultHighlightColorIndex
 Options.DefaultHighlightColorIndex = myHighlight
 
 Set rng = Selection.Range.Duplicate
-myFR = Split(Trim(A), "|")
+myFR = Split(Trim(a), "|")
 For k = 0 To UBound(myFR) - 1
   txt = myFR(k)
   pPos = InStr(txt, "/")
