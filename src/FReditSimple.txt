@@ -29,9 +29,10 @@ For Each myPara In myWnd.Document.Paragraphs
     myFind = Left(myText, padPos - 1)
     myRepl = Mid(myText, padPos + 1)
     doWC = (Asc(myFind) = Asc("~"))
-    doAllCase = (Asc(myFind) = Asc("¬"))
+    doAllCase = (Asc(myFind) = 172)
     If doWC Or doAllCase Then myFind = Mid(myFind, 2)
-    ActiveDocument.TrackRevisions = nowTrack And Not myPara.range.Font.StrikeThrough
+    ActiveDocument.TrackRevisions = nowTrack And _
+         Not myPara.range.Font.StrikeThrough
     With rng.Find
       .ClearFormatting
       .Replacement.ClearFormatting

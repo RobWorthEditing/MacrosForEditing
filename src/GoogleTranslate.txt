@@ -1,11 +1,11 @@
 Sub GoogleTranslate()
-' Paul Beverley - Version 08.08.20
+' Paul Beverley - Version 08.05.21
 ' Launches selected text to GoogleTranslate
 
 myLanguage = "fr"
 ' myLanguage = "es"
 
-mySite = "https://translate.google.co.uk/?oe=utf-8&hl=en"
+mySite = "https://translate.google.co.uk/?oe=utf-8&hl=<LANG>&sl=auto&tl=la&text=<TEXT>&op=translate"
 
 If Len(Selection) = 1 Then
   Selection.Expand wdParagraph
@@ -27,7 +27,11 @@ If Selection.Words.Count > 1 Then
 End If
 mySubject = Trim(Selection)
 mySubject = Replace(mySubject, " ", "+")
-mySubject = "#auto/" & myLanguage & "/" & mySubject
-ActiveDocument.FollowHyperlink Address:=mySite & mySubject
+myURL = Replace(mySite, "<LANG>", myLanguage)
+myURL = Replace(myURL, "<TEXT>", mySubject)
+
+Debug.Print myURL
+ActiveDocument.FollowHyperlink Address:=myURL
 Selection.Collapse wdCollapseEnd
 End Sub
+

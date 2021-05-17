@@ -1,8 +1,8 @@
 Sub FRedit()
-' Paul Beverley - Version 23.03.21
+' Paul Beverley - Version 03.05.21
 ' Scripted find and replace
 ' ©2009-2021 Paul Beverley
-' #1002
+' #1003
 
 useReverseStrikeFeature = False
 
@@ -478,9 +478,9 @@ For FRitem = 1 To lastItem
     Application.Run MacroName:=rText
   Else
     ' funnyCode means fText should be blank
-    If fText = funnyCode Then fText = ""
+    If InStr(fText, funnyCode) > 0 Then fText = ""
     BlankIt = False
-    If rText = funnyCode Then rText = "": BlankIt = True
+    If InStr(rText, funnyCode) > 0 Then rText = "": BlankIt = True
     If fText = "<Symbol>" Then
       fText = "": BlankIt = True
       fFont = "Symbol"

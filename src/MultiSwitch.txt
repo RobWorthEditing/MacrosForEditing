@@ -1,5 +1,5 @@
 Sub MultiSwitch()
-' Paul Beverley - Version 20.04.21
+' Paul Beverley - Version 09.05.21
 ' Scripted word/phrase switching
 
 maxWords = 6
@@ -45,10 +45,14 @@ isAbbrev = Not (Len(Selection) > minChars)
 
 textStart = Selection.Start
 endNow = Selection.End
+Set startRng = Selection.Range.Duplicate
+
+inComments = Selection.Range.Information(wdInCommentPane)
 Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
   Selection.MoveEnd , -1
   DoEvents
 Loop
+
 endStr(1) = Selection.End
 myStr(1) = Selection
 
@@ -228,7 +232,11 @@ If AscW(Selection) = 172 Or gotFormat Then
 End If
 noTrack = (Selection.Font.StrikeThrough)
 thisDoc.Activate
+Debug.Print inComments
+If inComments = True Then startRng.Select
+Selection.Start = textStart
 Selection.End = endStr(numWords)
+
 myTrack = ActiveDocument.TrackRevisions
 myState = ActiveWindow.View.ShowInsertionsAndDeletions
 If noTrack Then ActiveDocument.TrackRevisions = False

@@ -1,6 +1,9 @@
 Sub CommentAdd()
-' Paul Beverley - Version 13.01.21
+' Paul Beverley - Version 11.05.21
 ' Adds a comment
+
+useCommentPane = False
+paneZoom = 240
 
 copySelectedText = True
 attrib1 = ""
@@ -17,8 +20,6 @@ textHighlightColour = wdYellow
 colourTheText = False
 textColour = wdColorBlue
 removeHighlight = True
-
-keepPaneOpen = False
 
 myStart = Selection.Start
 wasEnd = Selection.End
@@ -107,10 +108,12 @@ Else
   Selection.HomeKey Unit:=wdLine
   Selection.Fields.Unlink
 End If
-If keepPaneOpen = False Then ActiveWindow.ActivePane.Close
-cmt.Edit
-Selection.TypeText Text:=" "
-Selection.MoveStart , -1
-Selection.Cut
+If useCommentPane = False Then
+  ActiveWindow.ActivePane.Close
+  cmt.Edit
+Else
+  cmt.Edit
+  Application.ActiveWindow.View.Zoom.Percentage = paneZoom
+End If
 End Sub
 

@@ -1,12 +1,40 @@
 Sub CommentsPane()
-' Paul Beverley - Version 08.11.17
-' Opens the comments pane
+' Paul Beverley - Version 11.05.21
+' Opens and closes the Comments pane
 
-If (ActiveDocument.Comments.Count > 0) Then
-  ActiveDocument.ActiveWindow.View.SplitSpecial = wdPaneComments
-Else
+pCentPane = 30
+paneZoom = 240
+
+numCmts = ActiveDocument.Comments.Count
+nowPane = ActiveDocument.ActiveWindow.View.SplitSpecial
+On Error GoTo ReportIt
+If numCmts = 0 Then
   Beep
   MsgBox "No comments in this file."
+  Exit Sub
+End If
+
+If nowPane <> 15 Then
+  ActiveDocument.ActiveWindow.View.SplitSpecial = wdPaneComments
+  ActiveWindow.SplitVertical = 100 - pCentPane
+  Application.ActiveWindow.View.Zoom.Percentage = paneZoom
+
+Else
+  ActiveDocument.ActiveWindow.View.SplitSpecial = wdPaneNone
+End If
+CommandBars("Comments").Visible = True
+Exit Sub
+
+ReportIt:
+errNum = Err.Number
+Beep
+Debug.Print "Error number = " & errNum
+If Err.Number = 4605 Then
+  MsgBox ("Place the cursor in the text first." _
+       & vbCr & vbCr & "Then rerun CommentsPane macro.")
+Else
+  On Error GoTo 0
+  Resume
 End If
 End Sub
 

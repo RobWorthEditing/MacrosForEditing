@@ -15,8 +15,8 @@ Documents.Add
 Set rng = ActiveDocument.Content
 rng.FormattedText = rngOld.FormattedText
 
-Dim myRefs(500) As String
-Dim myCites(500) As String
+Dim myRefs(1000) As String
+Dim myCites(1000) As String
 Dim tstWd(100) As String
 For i = 1 To ActiveDocument.Paragraphs.Count
   Set myPara = ActiveDocument.Paragraphs(i).Range

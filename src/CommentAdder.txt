@@ -1,6 +1,11 @@
 Sub CommentAdder()
-' Paul Beverley - Version 10.03.21
+' Paul Beverley - Version 14.05.21
 ' Adds a comment off a menu
+
+useCommentPane = True
+useCommentPane = False
+paneZoom = 240
+
 
 ' myDefaultSelect = "sentence"
 myDefaultSelect = "word"
@@ -11,19 +16,19 @@ useDoubleQuotes = True
 addJustPageNum = True
 addPageAndLineNum = False
 
-maxLen = 500
+maxLen = 100
 
 cm = "Start\"
 cm = cm & ",Dummy\"
-cm = cm & "l,'[]' is not in the references-list.\"
-cm = cm & "L,'[]' is not in the references list. (But '[]|', is.)\"
-cm = cm & "c,'[]' - Not cited in the text.\"
-cm = cm & "h,'[]' - Have I caught the intended meaning?\"
-cm = cm & "r,'[]' - Will the readers know what this means? If so, fine.\"
-cm = cm & "R,'[]' - Will readers know what '|' refers to? If so, that's fine.\"
-cm = cm & "s,'[]' - Sorry, but I can't work out the intended meaning here. Is it something like []?\"
+cm = cm & "l '[]' is not in the references list.\"
+cm = cm & "L '[]' is not in the references list. (But '[]|', is.)\"
+cm = cm & "c '[]' - Not cited in the text.\"
+cm = cm & "h '[]' - Have I caught the intended meaning?\"
+cm = cm & "r '[]' - Will the readers know what this means? If so, fine.\"
+cm = cm & "R '[]' - Will readers know what '|' refers to? If so, that's fine.\"
+cm = cm & "s '[]' - Sorry, but I can't work out the intended meaning here. Is it something like '[]|'?\"
 
-maxLenPrompt = 50
+maxLenPrompt = 100
 
 If Selection.Start = Selection.End Then
   If InStr(myDefaultSelect, "nten") > 0 Then
@@ -90,6 +95,8 @@ Selection.Copy
 Application.ScreenUpdating = False
 Set myComment = Selection.Comments.Add(Range:=Selection.Range)
 myComment.Edit
+myFontSize = myComment.Range.Font.Size
+
 myStart = Selection.Start
 myPLtext = ""
 If addPageAndLineNum = True Then
@@ -98,6 +105,7 @@ Else
   If addJustPageNum = True Then myPLtext = myPLtext & "(p. " & _
      pageNum & ") "
 End If
+Debug.Print myPLtext
 Selection.TypeText Text:=cmt(n)
 txtPos = InStr(cmt(n), "[]")
 txtPos2 = 0
@@ -113,9 +121,7 @@ If txtPos > 0 Then
   Selection.End = myStart + txtPos + 1
   Selection.Paste
 End If
-ActiveWindow.ActivePane.Close
 Application.ScreenUpdating = True
-
 
 Set rng = Selection.Range.Duplicate
 If highlightColour > 0 Or fontColour > 0 Or isUL Then
@@ -123,11 +129,14 @@ If highlightColour > 0 Or fontColour > 0 Or isUL Then
   Selection.MoveEnd , 1
 End If
 
-myComment.Edit
 Selection.Expand wdParagraph
+If Asc(Selection) = 5 Then
+  Selection.MoveStart , 1
+End If
 Selection.Collapse wdCollapseStart
 Selection.TypeText Text:=myPLtext
 Selection.Expand wdParagraph
+Selection.Range.Font.Size = myFontSize
 cursorPos = InStr(Selection, "|")
 If cursorPos > 0 Then
   Selection.Collapse wdCollapseEnd
@@ -144,8 +153,17 @@ If cursorPos > 0 Then
   Selection.MoveEnd , 1
   Selection.Delete
 Else
-Selection.MoveEnd , -1
- Selection.Collapse wdCollapseEnd
+  Selection.MoveEnd , -1
+  Selection.Collapse wdCollapseEnd
+End If
+If useCommentPane = False Then
+  ActiveWindow.ActivePane.Close
+Else
+  Application.ActiveWindow.View.Zoom.Percentage = paneZoom
 End If
 End Sub
+
+
+
+
 

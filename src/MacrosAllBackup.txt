@@ -59,4 +59,28 @@ Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "End Sub"
+  .Text = "End" & " Sub"
+  .Replacement.Text = "^&!"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+numMacros = ActiveDocument.range.End - myTot
+If numMacros > 0 Then WordBasic.EditUndo
+
+Beep
+MsgBox "Macro key assignments saved: " & numKeys & CR
+
+Selection.HomeKey Unit:=wdStory
+m = Month(Now)
+mn = Trim(Str(m))
+If m < 10 Then mn = "0" & mn
+d = Day(Now)
+dt = Trim(Str(d))
+If d < 10 Then dt = "0" & dt
+myPrompt = "' Macro backup " & Year(Date) & " " & mn _
+     & " " & dt & CR2
+myPrompt = myPrompt & "' Macros saved: " & numMacros & CR
+myPrompt = myPrompt & "' Keybindings saved: " & numKeys & CR2
+Selection.TypeText Text:=myPrompt
+End Sub
+

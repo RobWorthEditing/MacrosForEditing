@@ -1,13 +1,15 @@
 Sub CommentAddMenu()
-' Paul Beverley - Version 06.02.21
+' Paul Beverley - Version 11.05.21
 ' Adds a comment off a menu
+
+useCommentPane = False
+paneZoom = 240
 
 myPrefix = "PB: "
 myPrefix = ""
 
 addPageNum = False
 addLineNum = False
-keepPaneOpen = False
 
 copyAsPureText = False
 keepTextFont = True
@@ -19,6 +21,9 @@ myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff"
 
 ' On a Mac, it will need to be something like:
 myFolder = "/Users/Paul/My Documents/Macro stuff"
+
+
+myFolder = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\"
 
 defaultList = myFolder & listName
 Set textDoc = ActiveDocument
@@ -153,7 +158,6 @@ Selection.MoveStart , sqPos + 1
 lenCopy = Len(Selection)
 If lenCopy > 1 Then Selection.Copy
 
-
 ' Add comment bubble + comment
 textDoc.Activate
 
@@ -175,6 +179,12 @@ End If
 ' Now create the comment
 Set cmt = Selection.Comments.Add(Range:=Selection.Range)
 cmt.Edit
+If useCommentPane = False Then
+  ActiveWindow.ActivePane.Close
+Else
+  Application.ActiveWindow.View.Zoom.Percentage = paneZoom
+End If
+
 myPLtext = ""
 If addPageNum = True Then myPLtext = myPLtext & "(p. " & _
      pageNum
@@ -190,12 +200,6 @@ If lenCopy > 1 Then Selection.Paste
 For i = 1 To 20
   DoEvents
 Next
-
-'k = Timer
-'Do
-'  DoEvents
-'Loop Until Timer > k + 0.5
-
 
 ' Replace the <> with the quote
 cmt.Range.Select
@@ -252,7 +256,6 @@ If cursorPos > 0 Then
   Selection.End = Selection.Start + 2
   Selection.Delete
 End If
-If keepPaneOpen = False Then ActiveWindow.ActivePane.Close
 If cursorPos > 0 Then
   cmt.Edit
   Selection.MoveLeft , (myLen - cursorPos - 1)

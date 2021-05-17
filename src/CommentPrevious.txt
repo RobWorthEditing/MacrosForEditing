@@ -1,40 +1,13 @@
 Sub CommentPrevious()
-' Paul Beverley - Version 05.03.20
+' Paul Beverley - Version 10.05.21
 ' Goes to previous comment
 
-If ActiveDocument.Comments.Count = 0 Then
-  Beep
-  Exit Sub
-End If
+hereNow = Selection.Start
 
-inCommentBox = Selection.Range.Information(wdInCommentPane)
-If inCommentBox Then
-  cmtNowPosn = Selection.Start
-  For i = 1 To ActiveDocument.Comments.Count
-    ActiveDocument.Comments(i).Edit
-    If Selection.End > cmtNowPosn - 1 Then Exit For
-  Next i
-  If i = 1 Then
-    Beep
-  Else
-    ActiveDocument.Comments(i - 1).Range.Select
-    Selection.Collapse wdCollapseStart
-    Selection.MoveRight , 1
-    Selection.MoveLeft , 1
-  End If
-  Exit Sub
-  Selection.Collapse wdCollapseStart
-Else
-  Set rng = ActiveDocument.Range(0, Selection.End)
-  cmtNum = rng.Comments.Count + 1
-  If cmtNum > ActiveDocument.Comments.Count Then
-    cmtNum = ActiveDocument.Comments.Count
-  End If
-  If cmtNum > 1 Then
-    ActiveDocument.Comments(cmtNum - 1).Edit
-  Else
-    Beep
-  End If
+WordBasic.GoToPreviousComment
+If Selection.Start = hereNow Then
+  Beep
 End If
 End Sub
+
 
