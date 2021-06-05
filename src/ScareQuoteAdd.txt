@@ -1,16 +1,19 @@
 Sub ScareQuoteAdd()
-' Paul Beverley - Version 28.11.11
+' Paul Beverley - Version 29.05.21
 ' Add single quotes round a word
 
-Selection.MoveRight Unit:=wdWord, Count:=1
-Selection.MoveLeft Unit:=wdCharacter, Count:=1
-thisChar = Selection
-If UCase(thisChar) <> thisChar Or LCase(thisChar) <> thisChar Then
-  Selection.MoveRight Unit:=wdCharacter, Count:=1
+useGermanQuotes = False
+
+Selection.Expand wdWord
+If Right(Selection, 1) = " " Then Selection.MoveEnd , -1
+If useGermanQuotes = True Then
+  Selection.InsertAfter Text:=ChrW(8216)
+  Selection.InsertBefore ChrW(8218)
+Else
+  Selection.InsertBefore Text:=ChrW(8216)
+  Selection.InsertAfter Text:=ChrW(8217)
 End If
-Selection.TypeText ChrW(8217)
-Selection.MoveLeft Unit:=wdWord, Count:=1
-Selection.TypeText ChrW(8216)
-Selection.MoveRight Unit:=wdCharacter, Count:=2
+Selection.Collapse wdCollapseEnd
 End Sub
+
 

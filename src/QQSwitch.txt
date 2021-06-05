@@ -1,0 +1,125 @@
+
+Sub QQSwitch()
+' Paul Beverley - Version 28.05.21
+' Jumps between QQ comment and comment marker
+
+Set wasHere = Selection.Range.Duplicate
+If ActiveDocument.Bookmarks.Exists("qqStart") Then _
+     qqStart = ActiveDocument.Bookmarks("qqStart").Start
+myFileName = ActiveDocument.Name
+dotPos = InStr(myFileName, ".")
+myFileName = Left(myFileName, dotPos - 1)
+
+If Selection.Start > qqStart Then
+' We're in the comments, so find the comment index number
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "[qq"
+    .Wrap = wdFindStop
+    .Forward = False
+    .Replacement.Text = ""
+    .MatchWildcards = False
+    .Execute
+    ' restore normal direction
+    .Forward = True
+  End With
+  Selection.MoveEnd , 4
+  qqString = Selection
+  numBit = Replace(ActiveWindow.Caption, myFileName, "")
+  If numBit > "" Then
+    winNum = Val(Right(numBit, 1))
+    If winNum = 1 Then
+      Windows(myFileName & "  -  2").Activate
+    Else
+      Windows(myFileName & "  -  1").Activate
+    End If
+  End If
+  If ActiveWindow.Panes.Count = 2 Then
+    If ActiveWindow.ActivePane.Index = 3 Then
+      ActiveWindow.Panes(1).Activate
+    Else
+      ActiveWindow.Panes(3).Activate
+    End If
+  End If
+  ActiveDocument.ActiveWindow.View.SeekView = wdSeekEndnotes
+    With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = qqString
+    .Wrap = wdFindContinue
+    .Forward = True
+    .Replacement.Text = ""
+    .MatchWildcards = False
+    .Execute
+  End With
+  ActiveWindow.View.SeekView = wdSeekMainDocument
+  Selection.MoveUp , 1
+  Selection.MoveDown , 1
+Else
+' We're in the main text
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^e"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  Set hereNow = Selection.Range.Duplicate
+  numBit = Replace(ActiveWindow.Caption, myFileName, "")
+  If numBit > "" Then
+    winNum = Val(Right(numBit, 1))
+    If winNum = 1 Then
+      Windows(myFileName & "  -  2").Activate
+    Else
+      Windows(myFileName & "  -  1").Activate
+    End If
+  End If
+  
+  ' Switch panes
+  If ActiveWindow.Panes.Count = 2 Then
+  If ActiveWindow.ActivePane.Index = 3 Then
+    ActiveWindow.Panes(1).Activate
+  Else
+    ActiveWindow.Panes(3).Activate
+  End If
+End If
+' In the other window, go to the same place
+  hereNow.Select
+  ActiveDocument.ActiveWindow.View.SeekView = wdSeekEndnotes
+  ' In the endnotes, find the qq index code
+  Selection.MoveUntil cset:="[", Count:=wdForward
+  Selection.MoveEnd , 7
+  qqNumText = Selection
+  ' Go to main text again and find that index code
+  ActiveWindow.View.SeekView = wdSeekMainDocument
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = qqNumText
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute
+  End With
+  If Selection.Find.Found = True Then
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveUp , 1
+    Selection.MoveDown , 1
+  Else
+    ActiveDocument.ActiveWindow.View.SeekView = wdSeekEndnotes
+   Selection.Expand wdParagraph
+    Beep
+    MsgBox "Comment text missing?", , "QQswitch"
+    Exit Sub
+  End If
+End If
+End Sub
+
+

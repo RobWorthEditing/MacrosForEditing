@@ -1,0 +1,149 @@
+
+Sub QQAddSimple()
+' Paul Beverley - Version 28.05.21
+' Adds a QQ comment, with various features
+
+qqBold = True
+qqColour = wdBrightGreen
+' qqColour = wdNoHighlight
+qqSizeAdd = 4
+' qqSizeAdd = 0
+
+qqTitle = "QQcomments"
+
+If Selection.Information(wdInEndnote) Then
+  Beep
+  MsgBox "Place cursor in text.", , "QQAddSimple"
+  Exit Sub
+End If
+CR = vbCr
+CR2 = CR & CR
+' Record present cursor position
+Set wasHere = Selection.Range.Duplicate
+
+myFileName = ActiveDocument.Name
+dotPos = InStr(myFileName, ".")
+myFileName = Left(myFileName, dotPos - 1)
+
+' If this is the first ever QQcomment, set things up
+If ActiveDocument.Endnotes.Count = 0 Then
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText Text:=CR2
+  ' Place bookmark just in front of "QQcomments"
+  ActiveDocument.Bookmarks.Add Name:="qqStart"
+  Selection.TypeText Text:=qqTitle & CR2 & CR2
+  Selection.MoveStart , -14
+  Selection.Range.Style = ActiveDocument.Styles(wdStyleNormal)
+  Selection.Font.Reset
+  ' Set up endnotes style as numeric
+  With Selection.EndnoteOptions
+    .Location = wdEndOfDocument
+    .NumberingRule = wdRestartContinuous
+    .StartingNumber = 1
+    .NumberStyle = wdNoteNumberStyleArabic
+  End With
+  wasHere.Select
+End If
+
+' Is the cursor above the comments?
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+rng.End = ActiveDocument.Content.End
+If InStr(rng.Text, qqTitle) = 0 Then
+  Beep
+  MsgBox "Place cursor in main text," & CR & _
+       "not in QQcomments area.", , "QQAddSimple"
+  Exit Sub
+End If
+
+' Locate previous endnote
+Set rng = Selection.Range.Duplicate
+rng.Start = 0
+enNum = rng.Endnotes.Count
+If enNum > 0 Then
+  ' Get the previous note text
+  prevNumText = ActiveDocument.Endnotes(enNum).Range.Text
+Else
+  ' The cursor must be above the first QQcomment
+  prevNumText = qqTitle
+End If
+
+' At the input point and add an endnote
+Selection.Endnotes.Add Range:=Selection.Range
+
+' Find what is the max number used so far
+newNum = 0
+For i = 1 To ActiveDocument.Endnotes.Count
+  eText = ActiveDocument.Endnotes(i).Range.Text
+  qqPos = InStr(eText, "[qq")
+  thisNum = Val(Mid(eText, qqPos + 3))
+  If thisNum > newNum Then newNum = thisNum
+  DoEvents
+Next i
+' Build up the new qq index number text
+newNum = newNum + 1
+numString = Right(Trim(Str(1000 + newNum)), 3)
+qqString = "[qq" & numString & "]"
+
+' Type it into the endnote
+Selection.InsertAfter Text:=qqString
+wasHere.Select
+Selection.Collapse wdCollapseEnd
+Selection.MoveEnd , 1
+Selection.Range.HighlightColorIndex = qqColour
+If qqBold Then Selection.Range.Bold = True
+nowSize = Selection.Range.Font.Size
+If qqSizeAdd > 0 Then
+  Selection.Range.Font.Size = nowSize + qqSizeAdd
+End If
+Selection.Collapse wdCollapseStart
+
+' Switch windows or splits
+' Are the multiple windows open on the file?
+numBit = Replace(ActiveWindow.Caption, myFileName, "")
+' If so then switch to the alternate window
+' i.e. the window showing the main text
+If numBit > "" Then
+  winNum = Val(Right(numBit, 1))
+  If winNum = 1 Then
+    Windows(myFileName & "  -  2").Activate
+  Else
+    Windows(myFileName & "  -  1").Activate
+  End If
+End If
+If ActiveWindow.Panes.Count = 2 Then
+  If ActiveWindow.ActivePane.Index = 3 Then
+    ActiveWindow.Panes(1).Activate
+  Else
+    ActiveWindow.Panes(3).Activate
+  End If
+End If
+
+wasHere.Select
+Selection.Collapse wdCollapseEnd
+' In the QQcomments area, looking for previous comment
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = prevNumText
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+End With
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .Text = "[qq"
+  .Execute
+End With
+Selection.Collapse wdCollapseStart
+If Selection.Find.Found = False Then
+  Selection.EndKey Unit:=wdStory
+  Selection.MoveLeft , 2
+End If
+Selection.TypeText Text:=qqString & " " & CR2
+Selection.MoveLeft , 2
+End Sub
+
+

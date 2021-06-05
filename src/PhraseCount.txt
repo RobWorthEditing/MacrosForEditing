@@ -1,104 +1,92 @@
 Sub PhraseCount()
-' Paul Beverley - Version 06.07.16
-' Count each of a list of words/phrases
+' Paul Beverley - Version 19.05.21
+' Counts each of a list of words/phrases
 
-CaseSensitive = True
+ignoreDoc = "zzSwitchList"
 
-Selection.HomeKey Unit:=wdStory
-' Hide the hyphens
-Dim rng As range
-Set rng = ActiveDocument.range
-With rng.Find
-  .ClearFormatting
-  .MatchCase = False
-  .MatchWildcards = False
-  .MatchWholeWord = False
-  .MatchSoundsLike = False
-  .Text = "-"
-  .Replacement.Text = "zczc"
-  .Execute Replace:=wdReplaceAll
-End With
+Set testDoc = ActiveDocument
+testName = testDoc.Name
+allText = testDoc.Content.Text
+allTextLC = LCase(allText)
 
-' Find beginning of phrase list
-Selection.HomeKey Unit:=wdStory
-With Selection.Find
-  .ClearFormatting
-  .Text = "......^p"
-  .MatchWildcards = False
-  .Execute
-End With
-Selection.Collapse wdCollapseEnd
-listStart = Selection.End
-
-Set rng = ActiveDocument.Content
-rng.Start = listStart
-listText = rng.Text
-numItems = Len(listText) - Len(Replace(listText, vbCr, ""))
-
-totaltotal = 0
-diffWords = 0
-myPhrase = "something"
-i = numItems
-Do While Asc(myPhrase) > 13
-  ' Select the next phrase
-  With Selection.Find
-    .ClearFormatting
-    .MatchWildcards = True
-    .Text = "*^13"
-    .Execute
-  End With
-
-  Selection.End = Selection.End - 1
-  myPhrase = Selection
-
-  If Asc(myPhrase) > 13 Then
-    ' Prepare to find the phrase
-    Set rng = ActiveDocument.range
-    With rng.Find
-      .ClearFormatting
-      If CaseSensitive = False Then
-        .MatchCase = False
-      Else
-        .MatchCase = True
+' Find the word list
+For Each myDoc In Documents
+  If InStr(myDoc.Name, ignoreDoc) = 0 _
+       And InStr(myDoc.Name, testName) = 0 Then
+    numParas = myDoc.Paragraphs.Count + 1
+    numWords = myDoc.Content.ComputeStatistics(wdStatisticWords)
+    myProfile = numWords / numParas
+    If myProfile < 1.01 Then
+      Set listDoc = myDoc
+      listDoc.Activate
+      myResponse = MsgBox("Count items in this list?", vbQuestion _
+       + vbYesNoCancel, "PhraseCount")
+      If myResponse <> vbYes Then
+        If myResponse = vbNo Then
+          myResponse = MsgBox("Sorry! This looked list a phrase list." _
+          & vbCr & vbCr & _
+          "Please close this file and run the macro again.", _
+          vbQuestion + vbOKCancel, "PhraseCount")
+        End If
+        Exit Sub
       End If
-      .MatchWholeWord = True
-      .MatchWildcards = False
-      .Text = myPhrase
-      .Execute
-    End With
-
-    ' Count the no. of occurrences
-    wordsTotal = 0
-    Do
-      wordsTotal = wordsTotal + 1
-      rng.Find.Execute
-    Loop Until rng.End > listStart
-    ' Type frequency figure next to the phrase
-    Selection.Collapse wdCollapseEnd
-    Selection.TypeText Text:=". . . . " & Str(wordsTotal)
-    Selection.MoveRight Unit:=wdCharacter, Count:=1
-    ' Update totals
-    totaltotal = totaltotal + wordsTotal
-    diffWords = diffWords + 1
+      Exit For
+    End If
   End If
-  DoEvents
-  StatusBar = "               To go: " & Str(i)
-  i = i - 1
-Loop
+Next myDoc
 
-' Restore the hyphens
-Set rng = ActiveDocument.range
-With rng.Find
-  .ClearFormatting
-  .MatchCase = False
-  .MatchWildcards = False
-  .Text = "zczc"
-  .Replacement.Text = "-"
-  .Execute Replace:=wdReplaceAll
-End With
-
-Selection.TypeText Text:=vbCr & _
-     "Words counted = " & Str(totaltotal) & _
-     vbCr & "Different words =" & Str(diffWords)
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set rng = ActiveDocument.Content
+rng.Text = rngOld.Text
+Set resultsDoc = ActiveDocument
+myTot = Len(allText)
+testDoc.Activate
+For Each myPar In resultsDoc.Paragraphs
+  testText = Replace(myPar.Range.Text, vbCr, "")
+  If Len(testText) > 1 Then
+    Set rngTest = testDoc.Content
+    myTextTot = rngTest.End
+    With rngTest.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "<" & testText & ">"
+      .Replacement.Text = "^&!"
+      .MatchWildcards = True
+      .Execute Replace:=wdReplaceAll
+    End With
+    numWholeWds = rngTest.End - myTextTot
+    If numWholeWds > 0 Then WordBasic.EditUndo
+    itemCount = Len(Replace(allText, testText, testText & "!")) - myTot
+    testTextLC = LCase(testText)
+    itemCountLC = Len(Replace(allTextLC, testTextLC, _
+         testTextLC & "!")) - myTot
+    Set rng = myPar.Range
+    rng.End = rng.End - 1
+    rng.InsertAfter Text:=vbTab & Trim(Str(itemCountLC)) _
+         & vbTab & Trim(Str(itemCount)) & vbTab & _
+         Trim(Str(numWholeWds))
+  End If
+Next myPar
+resultsDoc.Activate
+Selection.TypeText Text:=vbTab & "Insens" & vbTab & "Sens" & _
+     vbTab & "Whole" & vbCr
+Selection.WholeStory
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+Set tb = ActiveDocument.Tables(1)
+tb.Style = "Table Grid"
+tb.AutoFitBehavior (wdAutoFitContent)
+tb.Borders(wdBorderTop).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderRight).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+tb.Rows(1).Range.Bold = True
+For i = 2 To 4
+  tb.Columns(i).Select
+  Selection.ParagraphFormat.Alignment = wdAlignParagraphCenter
+Next i
+Selection.HomeKey Unit:=wdStory
 End Sub
 

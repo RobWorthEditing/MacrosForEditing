@@ -1,0 +1,23 @@
+Sub PunctuationToHardSpace()
+' Paul Beverley - Version 27.05.21
+' Changes the next punctuation item to a space
+
+trackIt = True
+
+myChar = ChrW(160)
+searchChars = "-" & ChrW(8201) & " " & ChrW(8211) & ChrW(8212) _
+     & ChrW(8722) & Chr(30)
+
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+
+Selection.End = Selection.Start
+While InStr(searchChars, Selection) = 0
+  Selection.MoveRight , 1
+Wend
+Selection.MoveEnd wdCharacter, 1
+Selection.Delete
+Selection.TypeText Text:=myChar
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

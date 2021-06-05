@@ -1,0 +1,16 @@
+Sub SplitScreen()
+' Paul Beverley - Version 28.05.21
+' Splits the screen
+  
+perCent = 60
+
+If ActiveWindow.SplitVertical = perCent Then
+  ActiveWindow.SplitVertical = 100
+Else
+  ActiveWindow.SplitVertical = perCent
+End If
+ActiveWindow.Panes(1).Activate
+End Sub
+
+
+

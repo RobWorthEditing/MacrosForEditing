@@ -1,0 +1,39 @@
+
+Sub QQUpdate()
+' Paul Beverley - Version 28.05.21
+' Renumbers QQ comments
+
+Dim qqTag(999) As String
+
+allText = ActiveDocument.Content
+
+For i = ActiveDocument.Endnotes.Count To 1 Step -1
+  thisTag = ActiveDocument.Endnotes(i).Range.Text
+  If InStr(allText, thisTag) = 0 Then _
+       ActiveDocument.Endnotes(i).Delete
+Next i
+
+For i = 1 To ActiveDocument.Endnotes.Count
+  qqTag(i) = ActiveDocument.Endnotes(i).Range.Text
+Next i
+
+Set rng = ActiveDocument.Content
+For i = 1 To ActiveDocument.Endnotes.Count
+  tagText = "[qq" & Right(Trim(Str(1000 + i)), 3) & "]"
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = qqTag(i)
+    .Wrap = wdFindContinue
+    .Forward = True
+    .Replacement.Text = tagText
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceOne
+    DoEvents
+  End With
+  ActiveDocument.Endnotes(i).Range.Text = tagText
+  DoEvents
+Next i
+End Sub
+
+

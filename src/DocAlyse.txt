@@ -1,5 +1,5 @@
 Sub DocAlyse()
-' Paul Beverley - Version 25.03.21
+' Paul Beverley - Version 26.05.21
 ' Analyses various aspects of a document
 
 ' prompts to count number of tests
@@ -997,6 +997,7 @@ myRslt = myRslt & "line breaks" & vbTab & Trim(Str(i)) _
 ' fig/figure
 aBit = ""
 rng.Find.Text = "<fig>[!.]"
+rng.Find.MatchWildcards = True
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
 If i > 0 Then
