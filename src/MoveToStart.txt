@@ -1,0 +1,31 @@
+Sub MoveToStart()
+' Paul Beverley - Version 20.07.15
+' Move the selected text to the beginning of the sentence
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Selection.MoveEndUntil cset:=" ", Count:=wdForward
+  Selection.MoveEnd , 1
+End If
+endNow = Selection.End
+cutLength = Len(Selection)
+Selection.Cut
+Selection.Expand wdSentence
+Selection.Collapse wdCollapseStart
+Selection.MoveEnd , 1
+newChar = LCase(Selection)
+Selection.TypeText newChar
+Selection.MoveLeft , 1
+Selection.Collapse wdCollapseStart
+Selection.Paste
+Selection.Start = Selection.Start - cutLength
+Selection.End = Selection.Start + 1
+Selection.Range.Case = wdUpperCase
+Selection.Start = endNow - 2
+If ActiveDocument.TrackRevisions = True Then
+  Selection.MoveEndUntil cset:=",", Count:=wdForward
+  Selection.Collapse wdCollapseEnd
+End If
+End Sub
+
+

@@ -1,6 +1,6 @@
 Sub UKUScount()
-' Paul Beverley - Version 04.01.13
-' Count relative spellings between UK and US English
+' Paul Beverley - Version 15.06.21
+' Counts relative spellings between UK and US English
 
 minLengthSpell = 5
 countIt = True
@@ -9,16 +9,17 @@ timeStart = Timer
 UKcount = 0
 UScount = 0
 i = ActiveDocument.Words.Count
-istart = i
+iStart = i
 StatusBar = "Spellchecking. To go:   100%"
+On Error GoTo ReportIt
+Application.ScreenUpdating = False
 For Each wd In ActiveDocument.Words
+  DoEvents
   If Len(wd) >= minLengthSpell And wd.Font.StrikeThrough = False Then
-    DoEvents
     UKok = Application.CheckSpelling(wd, _
          MainDictionary:=Languages(wdEnglishUK).NameLocal)
     USok = Application.CheckSpelling(wd, _
          MainDictionary:=Languages(wdEnglishUS).NameLocal)
-    DoEvents
     If UKok <> USok Then
       If UKok Then
         UKcount = UKcount + 1
@@ -26,23 +27,35 @@ For Each wd In ActiveDocument.Words
         UScount = UScount + 1
       End If
       wd.Select
-      StatusBar = "Spellchecking. To go:   " & Trim(Str(Int((i / istart) _
+      StatusBar = "Spellchecking. To go:   " & Trim(Str(Int((i / iStart) _
            * 100))) & "%                           UK:  " & UKcount & _
            "      US:  " & UScount
+      Debug.Print "Spellchecking. To go:   " & Trim(Str(Int((i / iStart) _
+      * 100))) & "%                           UK:  " & UKcount & _
+      "      US:  " & UScount
     End If
   End If
   i = i - 1
   If i Mod 1000 = 0 Then StatusBar = "Spellchecking. To go:   " & _
-       Trim(Str(Int((i / istart) * 100))) & _
-       "%                           UK:  " & UKcount & "      US:  " & UScount
+       Trim(Str(Int((i / iStart) * 100))) & _
+       "%                           UK:  " & _
+       UKcount & "      US:  " & UScount
 Next wd
+Application.ScreenUpdating = True
 endTime = Timer
-MsgBox "UK: " & UKcount & vbCrLf & vbCrLf & "US: " & UScount
+MsgBox "UK: " & UKcount & vbCr & vbCr & "US: " & UScount
 totTime = endTime - timeStart
 If countIt = True Then
    If totTime > 60 Then MsgBox ((Int(10 * totTime / 60) / 10) & _
      "  minutes")
 End If
 Selection.HomeKey Unit:=wdStory
+Beep
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
 

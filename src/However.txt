@@ -1,0 +1,18 @@
+Sub However()
+' Paul Beverley - Version 24.02.20
+' Starts a sentence with 'However', and removes the later "however"
+
+Selection.MoveLeft wdWord, 1
+Selection.TypeText Text:="However, "
+Selection.MoveRight Unit:=wdCharacter, Count:=1, Extend:=wdExtend
+Selection.Text = LCase(Selection.Text)
+Selection.MoveRight Unit:=wdWord, Count:=10, Extend:=wdExtend
+hPosn = InStr(Selection, "however")
+If hPosn > 0 Then
+  Selection.MoveStart , hPosn - 1
+  Selection.End = Selection.Start + 8
+  Selection.Delete
+End If
+End Sub
+
+

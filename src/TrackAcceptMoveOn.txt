@@ -1,0 +1,14 @@
+Sub TrackAcceptMoveOn()
+' Paul Beverley - Version 15.06.21
+' Accepts change and moves to the next
+
+On Error GoTo ReportIt
+Application.Run MacroName:="AcceptChangesSelected"
+Application.Run MacroName:="NextChangeOrComment"
+Exit Sub
+ReportIt:
+Beep
+End Sub
+
+
+

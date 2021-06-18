@@ -1,5 +1,5 @@
 Sub FindInContext()
-' Paul Beverley - Version 02.03.21
+' Paul Beverley - Version 16.06.21
 ' Finds certain words within a given word range
 
 mainWord = "diff"
@@ -15,31 +15,31 @@ For Each myWnd In Application.Windows
     myWnd.Activate
     allText = ActiveDocument.Content
   ' First variable
-    myVariable = "main = "
+    myVariable = "mainword = "
     myPos = InStr(LCase(allText), myVariable)
     If myPos > 0 Then
-      MyData = Mid(allText, myPos + Len(myVariable) + 1)
-      endPos = InStr(MyData, Chr(34)) - 1
-      If endPos >= 0 Then MyData = Left(MyData, endPos)
-      mainWord = MyData
+      myData = Mid(allText, myPos + Len(myVariable) + 1)
+      endPos = InStr(myData, Chr(34)) - 1
+      If endPos >= 0 Then myData = Left(myData, endPos)
+      mainWord = myData
     End If
   ' Second variable
-    myVariable = "near1 = "
+    myVariable = "nearword1 = "
     myPos = InStr(LCase(allText), myVariable)
     If myPos > 0 Then
-      MyData = Mid(LCase(allText), myPos + Len(myVariable) + 1)
-      endPos = InStr(MyData, Chr(34)) - 1
-      If endPos >= 0 Then MyData = Left(MyData, endPos)
-      nearWord1 = MyData
+      myData = Mid(LCase(allText), myPos + Len(myVariable) + 1)
+      endPos = InStr(myData, Chr(34)) - 1
+      If endPos >= 0 Then myData = Left(myData, endPos)
+      nearWord1 = myData
     End If
   ' Third variable
-    myVariable = "near = "
+    myVariable = "nearword2 = "
     myPos = InStr(LCase(allText), myVariable)
     If myPos > 0 Then
-      MyData = Mid(allText, myPos + Len(myVariable) + 1)
-      endPos = InStr(MyData, Chr(34)) - 1
-      If endPos >= 0 Then MyData = Left(MyData, endPos)
-      nearWord2 = MyData
+      myData = Mid(allText, myPos + Len(myVariable) + 1)
+      endPos = InStr(myData, Chr(34)) - 1
+      If endPos >= 0 Then myData = Left(myData, endPos)
+      nearWord2 = myData
     End If
   ' Fourth (number) variable
     myVariable = "distance = "

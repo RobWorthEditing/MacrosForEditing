@@ -1,5 +1,6 @@
+
 Sub ParagraphEndChecker()
-' Paul Beverley - Version 29.12.20
+' Paul Beverley - Version 15.06.21
 ' Highlights the end of all possibly punctuation-less paragraphs
 
 myMainHighlight = wdBrightGreen
@@ -14,11 +15,10 @@ myLightColour = wdGray25
 underlineLineFeeds = True
 underlineQuoteNoPunct = False
 
-minWords = 5
-' to limit to longer paragraphs
-' use minWords = 10, say
+minWords = 8
+' To not highlight heading ends, ignore short "paragraphs".
 
-myOKChars = ".!?:..." & ChrW(8221) & ChrW(8217)
+myOKChars = ".!?:…" & ChrW(8221) & ChrW(8217)
 Dim i As Long
 Dim j As Long
 
@@ -85,22 +85,32 @@ If Selection.Start <> Selection.End Then
           + vbYesNoCancel, "ParagraphEndChecker")
   If myResponse <> vbYes Then Exit Sub
   Set rng = ActiveDocument.Content
-  For Each myPara In ActiveDocument.Paragraphs
-    rng.Start = myPara.Range.End - 3
-    rng.End = myPara.Range.End - 1
+  For Each myPar In ActiveDocument.Paragraphs
+    rng.Start = myPar.Range.End - 3
+    rng.End = myPar.Range.End - 1
     rng.Font.Color = wdColorAutomatic
     rng.HighlightColorIndex = wdNoHighlight
     DoEvents
-  Next myPara
+  Next myPar
 Else
   Set rng = ActiveDocument.Content
   i = ActiveDocument.Paragraphs.Count
-  For Each myPara In ActiveDocument.Paragraphs
-    If myPara.Range.Words.Count > minWords + 2 Then
-      rng.Start = myPara.Range.End - 2
-      rng.End = myPara.Range.End - 1
+  For Each myPar In ActiveDocument.Paragraphs
+    If myPar.Range.Words.Count > minWords + 2 Then
+      rng.Start = myPar.Range.End - 2
+      rng.End = myPar.Range.End - 1
       If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
-      If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
+      If rng = " " Then rng.Delete:  ng.Start = rng.Start - 1
+      Debug.Print Asc(rng.Text)
+      If rng.Text = ChrW(2) Then
+         rng.Start = rng.Start - 1
+         rng.End = rng.End - 1
+      End If
+      Do While rng.Font.Superscript <> 0
+         rng.Start = rng.Start - 1
+         rng.End = rng.End - 1
+      Loop
+
       If InStr(myOKChars, rng) = 0 Then
         If rng = " " Then rng.Delete
         If rng.Font.Bold = False Then
@@ -116,25 +126,23 @@ Else
     j = i / 10
     StatusBar = sps & j & "0"
     DoEvents
-  Next myPara
+  Next myPar
   If ActiveDocument.Footnotes.Count > 0 Then
     Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
     Set nts = ActiveDocument.StoryRanges(wdFootnotesStory)
     i = nts.Paragraphs.Count
-    For Each myPara In nts.Paragraphs
-      If myPara.Range.Words.Count > minWords + 2 Then
-        rng.Start = myPara.Range.End - 2
-        rng.End = myPara.Range.End - 1
-        If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
-        If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
-        If InStr(myOKChars, rng) = 0 Then
-          If rng = " " Then rng.Delete
-          If rng.Font.Bold = False Then
-            If rng.Information(wdWithInTable) = True Then
-              rng.Font.Color = mySoftColour
-            Else
-              rng.HighlightColorIndex = myMainHighlight
-            End If
+    For Each myPar In nts.Paragraphs
+      rng.Start = myPar.Range.End - 2
+      rng.End = myPar.Range.End - 1
+      If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
+      If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
+      If InStr(myOKChars, rng) = 0 Then
+        If rng = " " Then rng.Delete
+        If rng.Font.Bold = False Then
+          If rng.Information(wdWithInTable) = True Then
+            rng.Font.Color = mySoftColour
+          Else
+            rng.HighlightColorIndex = myMainHighlight
           End If
         End If
       End If
@@ -142,26 +150,24 @@ Else
       i = i - 1
       j = i / 10
       StatusBar = sps & j & "0"
-    Next myPara
+    Next myPar
   End If
   If ActiveDocument.Endnotes.Count > 0 Then
     Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
     Set nts = ActiveDocument.StoryRanges(wdEndnotesStory)
     i = nts.Paragraphs.Count
-    For Each myPara In nts.Paragraphs
-      If myPara.Range.Words.Count > minWords + 2 Then
-        rng.Start = myPara.Range.End - 2
-        rng.End = myPara.Range.End - 1
-        If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
-        If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
-        If InStr(myOKChars, rng) = 0 Then
-          If rng = " " Then rng.Delete
-          If rng.Font.Bold = False Then
-            If rng.Information(wdWithInTable) = True Then
-              rng.Font.Color = mySoftColour
-            Else
-              rng.HighlightColorIndex = myMainHighlight
-            End If
+    For Each myPar In nts.Paragraphs
+      rng.Start = myPar.Range.End - 2
+      rng.End = myPar.Range.End - 1
+      If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
+      If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
+      If InStr(myOKChars, rng) = 0 Then
+        If rng = " " Then rng.Delete
+        If rng.Font.Bold = False Then
+          If rng.Information(wdWithInTable) = True Then
+            rng.Font.Color = mySoftColour
+          Else
+            rng.HighlightColorIndex = myMainHighlight
           End If
         End If
       End If
@@ -169,7 +175,7 @@ Else
       i = i - 1
       j = i / 10
       StatusBar = sps & j & "0"
-    Next myPara
+    Next myPar
   End If
 End If
 If underlineLineFeeds = True Then
@@ -206,4 +212,6 @@ End If
 ActiveDocument.TrackRevisions = myTrack
 Beep
 End Sub
+
+
 

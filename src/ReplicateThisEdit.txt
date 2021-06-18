@@ -1,0 +1,77 @@
+Sub ReplicateThisEdit()
+' Paul Beverley - Version 07.01.17
+' Replicates the change just made, through the rest of the file
+
+killItalic = True
+myColour = wdYellow
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+myReplace = Selection
+myFind = ""
+
+' thin spaces for spaces
+If InStr(myReplace, ChrW(8201)) > 0 Then myFind = Replace(myReplace, ChrW(8201), " ")
+
+' en dashes for hyphen
+If InStr(myReplace, ChrW(8211)) > 0 Then myFind = Replace(myReplace, ChrW(8211), "-")
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+
+If myFind = "" Then
+  Selection.Range.Revisions.RejectAll
+  myFind = Selection
+  WordBasic.EditUndo
+  If myFind <> myReplace Then
+    ActiveDocument.TrackRevisions = True
+    killItalic = False
+  End If
+End If
+
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Wrap = False
+  .Replacement.Text = myReplace
+  If ActiveDocument.TrackRevisions = False Then .Replacement.Highlight = True
+  If killItalic Then .Replacement.Font.Italic = False
+  .Forward = True
+  .MatchCase = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Options.DefaultHighlightColorIndex = oldColour
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myReplace
+  .Wrap = False
+  .Forward = True
+  .MatchCase = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+If Selection.Find.Found = False Then
+  Beep
+Else
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myReplace
+    .Wrap = False
+    .Forward = False
+    .MatchCase = True
+    .MatchWildcards = False
+    .Execute
+  End With
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+
+

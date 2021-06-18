@@ -1,0 +1,12 @@
+
+Sub SmallCapWord()
+' Paul Beverley - Version 15.06.21
+' Make the current word smallcaps
+
+If Selection.Start = Selection.End Then _
+     Selection.Words(1).Select
+Selection.Text = LCase(Selection.Text)
+Selection.Font.SmallCaps = True
+End Sub
+
+

@@ -7,9 +7,7 @@ myAlyses = "DocAlyse, HyphenAlyse, ProperNounAlyse, FullNameAlyse, SpellingError
 
 saveResultsFiles = False
 
-myDir = "C:\Users\User\Documents\"
-
-myDir = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\111111\"
+myFolder = "C:\Users\User\Documents\"
 
 myResponse = MsgBox("MegAlyse" & vbCr & vbCr & _
      "Run:      " & myAlyses & "?", vbQuestion _
@@ -17,7 +15,7 @@ myResponse = MsgBox("MegAlyse" & vbCr & vbCr & _
 If myResponse <> vbYes Then Exit Sub
 
 ' Don't change this filename
-tempFile = myDir & "zzTestFile"
+tempFile = myFolder & "zzTestFile"
 stTime = Time
 thisLanguage = Selection.LanguageID
 
@@ -90,7 +88,7 @@ If saveResultsFiles Then
       If crPos > 3 Then
         newName = Left(newName, crPos - 1)
         myDoc.Activate
-        myFullFilename = myDir & newName
+        myFullFilename = myFolder & newName
         ActiveDocument.SaveAs FileName:=myFullFilename
       End If
     End If

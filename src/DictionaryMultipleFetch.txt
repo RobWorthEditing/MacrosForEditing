@@ -1,0 +1,23 @@
+Sub DictionaryMultipleFetch()
+' Paul Beverley - Version 17.06.21
+' Launches selected text to dictionary.com and other dictionaries
+
+numSites = 3
+ReDim mySite(numSites) As String
+mySite(1) = "http://dictionary.com/browse/"
+mySite(2) = "https://en.oxforddictionaries.com/definition/"
+mySite(3) = "https://www.collinsdictionary.com/dictionary/english/"
+
+If Len(Selection) = 1 Then Selection.Expand wdWord
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubject, ChrW(8217), "'")
+
+For i = 1 To numSites
+  ActiveDocument.FollowHyperlink Address:=mySite(i) & mySubject
+  Selection.Collapse wdCollapseEnd
+Next i
+End Sub
+
+
