@@ -1,5 +1,5 @@
 Sub SpellAlyse()
-' Paul Beverley - Version 26.03.21
+' Paul Beverley - Version 23.06.21
 ' Complete spellchecking system
 
 ignoreNumbers = True
@@ -28,9 +28,11 @@ myProfile = numWords / numParas
 
 If myProfile < 1.1 Then GoTo autoCorrect
 
-' List possible spelling errors
-thisLanguage = Selection.LanguageID
-langText = Languages(Selection.LanguageID).NameLocal
+' List all possible spelling errors
+Set rng = ActiveDocument.Content
+rng.End = 2
+thisLanguage = rng.LanguageID
+langText = Languages(rng.LanguageID).NameLocal
 
 langPrompt = "Spellcheck with " & langText & " dictionary. OK?"
 If doingSeveralMacros = False Then
@@ -142,14 +144,19 @@ Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  If ignoreNumbers = True Then
-    .Text = "([a-zA-Z])[" & ChrW(8217) & "'][!a-zA-Z]"
-  Else
-    .Text = "([a-zA-Z0-9])[" & ChrW(8217) & "'][!a-zA-Z]"
-  End If
-  .Replacement.Text = "\1" & sp & sp
+   If ignoreNumbers = True Then
+     .Text = "[!a-zA-Z'" & ChrW(8217) _
+     & ChrW(248) & "-" & ChrW(591) _
+     & ChrW(697) & "-" & ChrW(703) _
+     & ChrW(7680) & "-" & ChrW(7935) & "]"
+   Else
+     .Text = "[!a-zA-Z0-9'" & ChrW(8217) _
+     & ChrW(248) & "-" & ChrW(591) _
+     & ChrW(697) & "-" & ChrW(703) _
+     & ChrW(7680) & "-" & ChrW(7935) & "]"
+   End If
+  .Replacement.Text = sp
   .Wrap = wdFindContinue
-  .Forward = True
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
   DoEvents
@@ -304,6 +311,7 @@ Do
     Set suggList = Application.GetSpellingSuggestions(wd, _
          MainDictionary:=langName)
     newWord = ""
+    DoEvents
     If suggList.Count > 0 And Not (spellOK) Then
       newWord = suggList.Item(1).Name
       If myRev = True Then
@@ -361,6 +369,4 @@ For i = 1 To FUT.Paragraphs.Count
   DoEvents
 Next i
 End Sub
-
-
 

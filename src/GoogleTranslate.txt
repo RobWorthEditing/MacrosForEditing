@@ -1,11 +1,11 @@
 Sub GoogleTranslate()
-' Paul Beverley - Version 08.05.21
+' Paul Beverley - Version 11.07.21
 ' Launches selected text to GoogleTranslate
 
-myLanguage = "fr"
-' myLanguage = "es"
+myLanguage = "de"
+myLanguage = "es"
 
-mySite = "https://translate.google.co.uk/?oe=utf-8&hl=<LANG>&sl=auto&tl=la&text=<TEXT>&op=translate"
+mySite = "https://translate.google.co.uk/?oe=utf-8&hl=en&sl=auto&tl=<LANG>&text=<TEXT>&op=translate"
 
 If Len(Selection) = 1 Then
   Selection.Expand wdParagraph

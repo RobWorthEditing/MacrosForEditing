@@ -1,6 +1,6 @@
 Sub MultiFileFRedit()
-' Paul Beverley - Version 13.12.17
-' Multi-file Paul Beverley - Version of FRedit
+' Paul Beverley - Version 10.07.21
+' Multi-file version of FRedit
 
 acceptAllRevs = True
 
@@ -56,7 +56,7 @@ End If
 numFiles = 0
 myFolder = ""
 For Each myPara In ActiveDocument.Paragraphs
-  myPara.range.Select
+  myPara.Range.Select
   Selection.MoveEnd , -1
   lineText = Selection
   If myFolder = "" Then
@@ -86,7 +86,7 @@ For i = 1 To numFiles
   StatusBar = allMyFiles(i)
   DoEvents
   If acceptAllRevs = True Then ActiveDocument.AcceptAllRevisions
-  Application.Run MacroName:="Normal.NewMacros.FRedit"
+  Application.Run MacroName:="FRedit"
   myDoc.Save
   ActiveWindow.Close
 Next

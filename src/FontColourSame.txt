@@ -1,6 +1,6 @@
 Sub FontColourSame()
-' Paul Beverley - Version 13.01.21
-' Highlights all occurrences of this text in this colour
+' Paul Beverley - Version 18.06.21
+' Colours all occurrences of this text in this colour
 
 textColour = wdColorBlue
 
@@ -9,6 +9,7 @@ oldFind = Selection.Find.Text
 oldReplace = Selection.Find.Replacement.Text
 nowTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
+searchChars = " " & ChrW(8217)
 
 Dim v As Variable, nowColour As Long
 nowColour = Selection.Font.Color
@@ -53,7 +54,7 @@ If Selection.End = Selection.Start Then
       End If
     End If
     Selection.Expand wdWord
-    Do While InStr(searchChars, Left(Selection.Text, 1)) = 0
+    Do While InStr(searchChars, Right(Selection.Text, 1)) > 0
       Selection.MoveEnd , -1
       DoEvents
     Loop

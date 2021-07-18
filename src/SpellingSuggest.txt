@@ -1,12 +1,7 @@
 Sub SpellingSuggest()
-' Paul Beverley - Version 25.03.21
+' Paul Beverley - Version 19.06.21
 ' Checks/corrects spellings or adds/subtracts FRedit suggested change
-' #1002
 
-thisLanguage = Selection.LanguageID
-langText = Languages(Selection.LanguageID).NameLocal
-
-' If you're off the end of the word, move back one space
 If LCase(Selection) = UCase(Selection) Then Selection.MoveLeft , 1
 Selection.Expand wdWord
 Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
@@ -14,6 +9,7 @@ Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
   DoEvents
 Loop
 myWord = Selection
+newWord = myWord
 
 ' Check spelling language
 Set rng = ActiveDocument.Content
@@ -28,7 +24,7 @@ myPara = rng
 initChar = Left(myWord, 1)
 lastChar = Right(myWord, 1)
 
-spellOK = Application.CheckSpelling(myWord, MainDictionary:=langText)
+spellOK = Application.CheckSpelling(myWord, MainDictionary:=langName)
 Set suggList = Application.GetSpellingSuggestions(myWord, _
      MainDictionary:=langName)
 
@@ -68,15 +64,28 @@ Else
     Selection.TypeText newWord
   Else
     spellOK = Application.CheckSpelling(myWord, _
-         MainDictionary:=langText)
+         MainDictionary:=langName)
     If spellOK Then
       Selection.Collapse wdCollapseEnd
+      Beep
     Else
-      If newWord = myWord And beepIfNoSuggestion Then Beep
-      MsgBox ("Word offers no suggestion")
+      If newWord = myWord Then
+        Beep
+        myTime = Timer
+        Do
+        Loop Until Timer > myTime + 0.2
+        Beep
+        If langName = "English (United States)" _
+             And Application.CheckSpelling(myWord, _
+             MainDictionary:="English (United Kingdom)") Then
+          MsgBox ("Word's spellcheck is playing sillies!")
+          Exit Sub
+        Else
+          MsgBox ("Word offers no suggestion")
+        End If
+      End If
     End If
   End If
-  Beep
 End If
 End Sub
 
