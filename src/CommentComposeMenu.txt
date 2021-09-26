@@ -1,0 +1,255 @@
+Sub CommentComposeMenu()
+' Paul Beverley - Version 06.08.21
+' Adds a comment off a menu
+
+stdName = "Document"
+
+' myPrefix = ""
+myPrefix = "PB:  "
+prefixBold = True
+
+' refText = ""
+' refText = "p <p> "
+refText = "p <p>, ln <l>.  "
+refBold = True
+
+listName = "zzSwitchList"
+
+' On Windows, it will need to be something like:
+myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff"
+
+' On a Mac, it will need to be something like:
+myFolder = "/Users/Paul/My Documents/Macro stuff"
+
+defaultList = myFolder & listName
+
+Set startDoc = ActiveDocument
+docName = ActiveDocument.Name
+dotPos = InStr(docName, ".")
+If dotPos > 1 Then
+  justName = Left(docName, dotPos - 1)
+Else
+  justName = docName
+End If
+If Left(docName, Len(stdName)) = stdName Then GoTo insertComment
+
+' Register the page and line number
+Set rng = Selection.Range.Duplicate
+rng.End = rng.Start + 1
+pNum = rng.Information(wdActiveEndAdjustedPageNumber)
+lNum = rng.Information(wdFirstCharacterLineNumber)
+
+' Begin to compose menu-based comment
+On Error GoTo ReportIt
+Set myDoc = Application.Documents.Open(FileName:=defaultList & ".docx")
+On Error GoTo 0
+Set menuDoc = ActiveDocument
+
+' Find first comment line
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "]]^p"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+CR = vbCr
+Selection.Collapse wdCollapseEnd
+Selection.End = ActiveDocument.Content.End
+myPrompts = Selection
+sqPos = InStr(myPrompts, "[")
+myFullPrompt = ""
+Do While sqPos > 0
+  myPrompts = Mid(myPrompts, sqPos + 1)
+  endPos = InStr(myPrompts, "]")
+  myFullPrompt = myFullPrompt & Left(myPrompts, endPos - 1) & CR
+  sqPos = InStr(myPrompts, "[")
+  DoEvents
+Loop
+
+' Choose the comment
+codePos = 0
+Do While codePos = 0
+  startDoc.Activate
+  myText = InputBox(myFullPrompt, "CommentComposeMenu")
+  menuDoc.Activate
+  If myText = "" Then
+    Beep
+    startDoc.Activate
+    Exit Sub
+  End If
+  myCode = UCase(myText)
+  codePos = InStr(Selection, "[" & myCode & " ")
+Loop
+
+Selection.End = Selection.Start + codePos
+Selection.Collapse wdCollapseEnd
+Selection.Expand wdParagraph
+sqPos = InStr(Selection, "[")
+Selection.End = Selection.Start + sqPos - 2
+Selection.Copy
+
+gottaCompo = False
+For Each myDoc In Documents
+  thisName = myDoc.Name
+  If Left(thisName, Len(stdName)) = stdName And _
+      InStr(myDoc.Paragraphs(1).Range.Text, justName) > 0 Then
+    myDoc.Activate
+    gottaCompo = True
+    Exit For
+  End If
+  DoEvents
+Next myDoc
+Set myWnd = ActiveDocument.ActiveWindow
+If myWnd.WindowState = 2 Then myWnd.WindowState = wdWindowStateNormal
+
+If gottaCompo = False Then
+  startDoc.Activate
+  Documents.Add
+  Selection.TypeText Text:=docName & vbCr & vbCr
+Else
+  If ActiveDocument.Paragraphs.Count > 2 Then
+    ActiveDocument.Paragraphs(3).Range.Select
+    Selection.End = ActiveDocument.Content.End
+    Selection.Delete
+    Selection.TypeText Text:=vbCr
+  Else
+    Selection.EndKey Unit:=wdStory
+  End If
+End If
+Selection.Paste
+
+' Go back and get text range to quote
+Set compoDoc = ActiveDocument
+startDoc.Activate
+If Selection.Start <> Selection.End Then Selection.Copy
+compoDoc.Activate
+
+' Replace the <> with the quote
+quotePos = InStr(ActiveDocument.Content, "<>")
+If quotePos > 0 Then
+  Selection.Start = quotePos - 1
+  Selection.End = Selection.Start + 2
+  Selection.Delete
+  Selection.Paste
+End If
+
+quotePos = InStr(ActiveDocument.Content, "{}")
+If quotePos > 0 Then
+  Selection.Start = quotePos - 1
+  Selection.End = Selection.Start + 2
+  Selection.Delete
+  Selection.PasteSpecial DataType:=wdPasteText
+End If
+
+' And again, in case there are two!
+quotePos = InStr(ActiveDocument.Content, "<>")
+If quotePos > 0 Then
+  Selection.Start = quotePos - 1
+  Selection.End = Selection.Start + 2
+  Selection.Delete
+  Selection.Paste
+End If
+
+quotePos = InStr(ActiveDocument.Content, "{}")
+If quotePos > 0 Then
+  Selection.Start = quotePos - 1
+  Selection.End = Selection.Start + 2
+  Selection.Delete
+  Selection.PasteSpecial DataType:=wdPasteText
+End If
+
+If refText > "" Then
+  refText = Replace(refText, "<p>", Trim(Str$(pNum)))
+  refText = Replace(refText, "<l>", Trim(Str$(lNum)))
+  ActiveDocument.Paragraphs(3).Range.Select
+  Selection.Collapse wdCollapseStart
+  myStart = Selection.Start
+  Selection.InsertBefore Text:=refText
+  Selection.Start = myStart
+  If refBold = True Then Selection.Font.Bold = True
+  Selection.EndKey Unit:=wdStory
+End If
+
+If myPrefix > "" Then
+  ActiveDocument.Paragraphs(3).Range.Select
+  Selection.Collapse wdCollapseStart
+  myStart = Selection.Start
+  Selection.InsertBefore Text:=myPrefix
+  Selection.Start = myStart
+  If prefixBold = True Then Selection.Font.Bold = True
+  Selection.EndKey Unit:=wdStory
+End If
+
+cursorPos = InStr(ActiveDocument.Content, "|")
+If cursorPos > 0 Then
+  Selection.End = cursorPos
+  Selection.Start = Selection.End - 1
+  Selection.Delete
+End If
+Selection.Collapse wdCollapseEnd
+Exit Sub
+' ---------------------------------
+
+insertComment:
+Set rng = ActiveDocument.Paragraphs(1).Range
+rng.End = rng.End - 1
+docName = rng.Text
+If ActiveDocument.Paragraphs.Count > 2 Then
+  ActiveDocument.Paragraphs(3).Range.Select
+  Selection.End = ActiveDocument.Content.End
+Else
+  myResponse = MsgBox("Please type your comment in here", vbQuestion _
+     + vbOKOnly, "CommentCompose")
+  Exit Sub
+End If
+Selection.Copy
+For Each myDoc In Documents
+  thisName = myDoc.Name
+  If thisName = docName Then
+    myDoc.Activate
+    Exit For
+  End If
+  DoEvents
+Next myDoc
+Set myWnd = ActiveDocument.ActiveWindow
+If myWnd.WindowState = 2 Then myWnd.WindowState = wdWindowStateNormal
+
+' If no text selected,  select the current sentence
+If Selection.Start = Selection.End And sentenceSelect = True Then
+  Selection.Expand wdSentence
+  If Right(Selection, 4) = "al. " Or Right(Selection, 5) = "al., " _
+       Or Right(Selection, 5) = "e.g. " Or Right(Selection, 5) = "i.e. " _
+       Or Right(Selection, 6) = "e.g., " Or Right(Selection, 6) = "i.e., " Then
+    Selection.MoveRight Unit:=wdSentence, Count:=1, Extend:=wdExtend
+  End If
+  Do While InStr(" " & vbCr, Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+End If
+
+Set cmt = Selection.Comments.Add(Range:=Selection.Range)
+Selection.Paste
+ActiveWindow.ActivePane.Close
+Exit Sub
+' ---------------------------------
+
+ReportIt:
+If Err.Number = 5174 Then
+  MsgBox ("Couldn't find file: " & listName)
+Else
+  On Error GoTo 0
+  Resume
+End If
+
+End Sub
+
+
+

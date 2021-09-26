@@ -1,5 +1,5 @@
 Sub CapitAlyse()
-' Paul Beverley - Version 02.08.20
+' Paul Beverley - Version 07.09.21
 ' Analyses capitalised words
 
 ignoreWords = ",After,All,Although,Also,An,And,As,At,By,For,From,If,In,It,"
@@ -10,6 +10,34 @@ showTime = True
 
 Set FUT = ActiveDocument
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
+
+' Count case after hyphenation
+myTot = ActiveDocument.Range.End
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "([A-Z][a-z]{1,}-[A-Z][a-z]{1,})"
+  .Replacement.Text = "^&!"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+numCaps = ActiveDocument.Range.End - myTot
+If numCaps > 0 Then WordBasic.EditUndo
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "([A-Z][a-z]{1,}-[a-z]{1,})"
+  .Replacement.Text = "^&!"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+numNoCaps = ActiveDocument.Range.End - myTot
+If numNoCaps > 0 Then WordBasic.EditUndo
+
+Selection.HomeKey Unit:=wdStory
 Set rng = ActiveDocument.Content
 Documents.Add
 Selection.FormattedText = rng.FormattedText
@@ -224,6 +252,17 @@ With rng.Find
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
 End With
+
+If numCaps + numNoCaps > 0 Then
+  Selection.EndKey Unit:=wdStory
+  myText = vbCr & vbCr & "Lowercase after hyphen (Non-linear): " & _
+       Trim(Str(numNoCaps)) & vbCr & _
+       "Uppercase after hyphen (Non-Linear): " & Trim(Str(numCaps)) _
+       & vbCr & vbCr
+  Selection.TypeText Text:=myText
+  Selection.HomeKey Unit:=wdStory
+End If
+
 If doingSeveralMacros = False Then
   Beep
   myTime = Timer

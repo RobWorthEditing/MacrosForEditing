@@ -1,0 +1,83 @@
+Sub CommentCompose()
+' Paul Beverley - Version 06.08.21
+' Allows you to create a new (modern) comment
+
+' sentenceSelect = False
+sentenceSelect = True
+
+stdName = "Document"
+docName = ActiveDocument.Name
+dotPos = InStr(docName, ".")
+If dotPos > 1 Then
+  justName = Left(docName, dotPos - 1)
+Else
+  justName = docName
+End If
+If Left(docName, Len(stdName)) = stdName Then GoTo insertComment
+gottaCompo = False
+For Each myDoc In Documents
+  thisName = myDoc.Name
+  If Left(thisName, Len(stdName)) = stdName And _
+      InStr(myDoc.Paragraphs(1).Range.Text, justName) > 0 Then
+    myDoc.Activate
+    gottaCompo = True
+    Exit For
+  End If
+  DoEvents
+Next myDoc
+If gottaCompo = False Then
+  Documents.Add
+  Selection.TypeText Text:=docName & vbCr & vbCr
+Else
+  If ActiveDocument.Paragraphs.Count > 2 Then
+    ActiveDocument.Paragraphs(3).Range.Select
+    Selection.End = ActiveDocument.Content.End
+  Else
+    Selection.EndKey Unit:=wdStory
+  End If
+End If
+Exit Sub
+
+insertComment:
+Set rng = ActiveDocument.Paragraphs(1).Range
+rng.End = rng.End - 1
+docName = rng.Text
+If ActiveDocument.Paragraphs.Count > 2 Then
+  ActiveDocument.Paragraphs(3).Range.Select
+  Selection.End = ActiveDocument.Content.End
+Else
+  myResponse = MsgBox("Please type your comment in here", vbQuestion _
+     + vbOKOnly, "CommentCompose")
+  Exit Sub
+End If
+Selection.Copy
+For Each myDoc In Documents
+  thisName = myDoc.Name
+  If thisName = docName Then
+    myDoc.Activate
+    Exit For
+  End If
+  DoEvents
+Next myDoc
+Set myWnd = ActiveDocument.ActiveWindow
+If myWnd.WindowState = 2 Then myWnd.WindowState = wdWindowStateNormal
+
+' If no text selected,  select the current sentence
+If Selection.Start = Selection.End And sentenceSelect = True Then
+  Selection.Expand wdSentence
+  If Right(Selection, 4) = "al. " Or Right(Selection, 5) = "al., " _
+       Or Right(Selection, 5) = "e.g. " Or Right(Selection, 5) = "i.e. " _
+       Or Right(Selection, 6) = "e.g., " Or Right(Selection, 6) = "i.e., " Then
+    Selection.MoveRight Unit:=wdSentence, Count:=1, Extend:=wdExtend
+  End If
+  Do While InStr(" " & vbCr, Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+End If
+
+Set cmt = Selection.Comments.Add(Range:=Selection.Range)
+Selection.Paste
+ActiveWindow.ActivePane.Close
+End Sub
+

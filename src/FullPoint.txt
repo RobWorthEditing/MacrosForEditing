@@ -1,9 +1,14 @@
 Sub FullPoint()
-' Paul Beverley - Version 19.06.19
+' Paul Beverley - Version 23.07.21
 ' Makes adjacent words into sentence end
 
 newBit = ". "
 myQuotes = Chr(34) & Chr(39) & ChrW(8220) & ChrW(8216)
+
+If Selection.Start <> Selection.End Then
+  Selection.Delete
+  Selection.MoveLeft , 2
+End If
 Selection.Collapse wdCollapseEnd
 While (LCase(Selection) <> UCase(Selection))
   Selection.MoveRight 1

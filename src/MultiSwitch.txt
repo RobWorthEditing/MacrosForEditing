@@ -1,5 +1,5 @@
 Sub MultiSwitch()
-' Paul Beverley - Version 09.05.21
+' Paul Beverley - Version 29.08.21
 ' Scripted word/phrase switching
 
 maxWords = 6
@@ -35,7 +35,8 @@ If InStr(".,)", prevChar) > 0 Then
   Selection.InsertBefore Text:=" "
 End If
 Selection.MoveStart , 1
-If InStr(".,;:?!)" & CR & Chr(12), ChrW(AscW(Selection))) > 0 Then
+If InStr(".,;:?!)" & CR & ChrW(9) & ChrW(12), _
+     ChrW(AscW(Selection))) > 0 Then
   Selection.Collapse wdCollapseStart
   Selection.MoveLeft , 1
   Selection.Expand wdWord
@@ -237,6 +238,33 @@ If inComments = True Then startRng.Select
 Selection.Start = textStart
 Selection.End = endStr(numWords)
 
+' Check if too near to a comment
+numCmts = ActiveDocument.Comments.Count
+If numCmts > 0 Then
+' Find scope of (range covered by) the next comment
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.Start = 0
+  cmtNumber = rng.Comments.Count + 1
+  If cmtNumber <= numCmts Then
+    Set nextCmtRange = ActiveDocument.Comments(cmtNumber).Scope
+    
+  ' Does the scope of that comment overlap the current word?
+    Set rng = Selection.Range.Duplicate
+    rng.Expand wdWord
+    Debug.Print rng.Start, rng.End
+    Debug.Print nextCmtRange.Start, nextCmtRange.End
+    If rng.End > nextCmtRange.Start Then
+      Beep
+      rng.Select
+      myResponse = MsgBox("Selection contains a comment", _
+           vbOKOnly, "MultiSwitch")
+      Exit Sub
+    End If
+  End If
+End If
+
+
 myTrack = ActiveDocument.TrackRevisions
 myState = ActiveWindow.View.ShowInsertionsAndDeletions
 If noTrack Then ActiveDocument.TrackRevisions = False
@@ -319,7 +347,7 @@ If tildePos = 0 Then
     Selection.Collapse wdCollapseStart
   End If
 Else
-  Do While InStr("~", Right(Selection.Text, 1)) > 0
+  Do While InStr(Selection, "~") > 0
     Selection.MoveEnd , -1
     DoEvents
   Loop

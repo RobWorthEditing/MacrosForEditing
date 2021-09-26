@@ -1,0 +1,51 @@
+Sub CommentsModernCollect()
+' Paul Beverley - Version 02.08.21
+' Extracts modern comments with format and colouring
+
+myInits = "PB"
+myColour = wdBlue
+myInits2 = "NH"
+myColour2 = wdPink
+' For any other initials
+myColour3 = wdGreen
+
+Set mainText = ActiveDocument
+Documents.Add
+CR = vbCr
+CR2 = CR & CR
+totCmnts = mainText.Comments.Count
+If totCmnts = 0 Then
+  Beep
+  Exit Sub
+End If
+For i = 1 To totCmnts
+  Set cmnt = mainText.Comments(i)
+  cmntInits = cmnt.Initial
+  cmnt.Range.Copy
+  myStart = Selection.Start
+  Selection.InsertAfter Text:=cmntInits & ": "
+  Selection.Start = myStart
+  gotColour = False
+  Selection.Font.Bold = True
+  If cmntInits = myInits Then
+    Selection.Font.ColorIndex = myColour
+    gotColour = True
+  End If
+  If gotColour = False Then
+    If cmntInits = myInits2 Then
+      Selection.Font.ColorIndex = myColour2
+    Else
+      Selection.Font.ColorIndex = myColour3
+    End If
+  End If
+  Selection.Collapse wdCollapseEnd
+  Selection.Paste
+  Selection.TypeText Text:=CR2
+  Selection.Collapse wdCollapseEnd
+  DoEvents
+Next i
+Beep
+Selection.TypeText Text:=CR2
+Selection.TypeText Text:="Total comments = " & Str(totCmnts)
+End Sub
+

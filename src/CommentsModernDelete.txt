@@ -1,0 +1,22 @@
+Sub CommentsModernDelete()
+' Paul Beverley - Version 02.08.21
+' Deletes current comment or all comments
+
+If Selection.Start = Selection.End Then
+  Set rng = Selection.Range.Duplicate
+  rng.Start = 0
+  n = rng.Comments.Count + 1
+  ActiveDocument.Comments(n).Scope.Select
+  Selection.Collapse wdCollapseEnd
+  ActiveDocument.Comments(n).DeleteRecursively
+Else
+  numberCmnts = ActiveDocument.Comments.Count
+  myResponse = MsgBox("Delete all comments?!", vbQuestion _
+       + vbYesNoCancel, "CommentsModernDelete")
+  If myResponse <> vbYes Then Beep: Exit Sub
+  If numberCmnts > 0 Then ActiveDocument.DeleteAllComments
+  MsgBox ("Comments deleted: " & Str(numberCmnts))
+  Beep
+End If
+End Sub
+

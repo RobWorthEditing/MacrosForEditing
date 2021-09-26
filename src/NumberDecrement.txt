@@ -1,21 +1,22 @@
 Sub NumberDecrement()
-' Paul Beverley - Version 20.07.20
-' Subtract one from the following number (or decrease the letter)
+' Paul Beverley - Version 31.07.21
+' Subtracts one from the following number (or decreases the letter)
+
+myJump = -1
 
 goNext = False
 
-lookAfterSelection = False
+lookAfterSelection = True
 
 trackIt = True
-myJump = -1
 
 doLettersToo = True
-searchRange = 50
+searchRange = 150
 
 If lookAfterSelection = False Then
   Selection.Collapse wdCollapseStart
 Else
-  Selection.Collapse wdCollapseStart
+  Selection.Collapse wdCollapseEnd
 End If
 
 searchChars = "0123456789"
@@ -24,37 +25,44 @@ If trackIt = False Then ActiveDocument.TrackRevisions = False
 
 i = 0
 myStart = Selection.Start
+Set rng = ActiveDocument.Range(myStart, myStart + 1)
 If Selection.End = Selection.Start Or Val(Selection) = 0 Then
-  While InStr(searchChars, Selection) = 0
-    Selection.MoveRight 1
-    DoEvents
+  While InStr(searchChars, rng.Text) = 0
     i = i + 1
+    rng.Start = myStart + i
+    rng.End = myStart + i + 1
+    DoEvents
     If i = searchRange Then
       Beep
-      Selection.Start = myStart
       GoTo CleanExit
     End If
   Wend
-  myStart = Selection.Start
-  While InStr(searchChars, Selection) > 0
-    Selection.MoveRight 1
+  rng.Select
+  myEnd = Selection.Start
+  Set rng = ActiveDocument.Range(myEnd, myEnd + 1)
+  i = 0
+  While InStr(searchChars, rng.Text) > 0
+    i = i + 1
+    rng.Start = myEnd + i
+    rng.End = myEnd + i + 1
     DoEvents
   Wend
-  Selection.Start = myStart
+  Selection.End = myEnd + i
 End If
 
 Selection.TypeText Trim(Str(Val(Selection) + myJump))
-Selection.Start = myStart
-Selection.End = myStart
+Selection.Start = myEnd
+Selection.End = myEnd
 doLettersToo = False
 
 CleanExit:
 If doLettersToo = True Then
   Selection.End = Selection.Start + 1
-  Selection.TypeText ChrW(AscW(Selection) - 1)
+  Selection.TypeText ChrW(AscW(Selection) + 1)
   Selection.MoveLeft , 1
 End If
 ActiveDocument.TrackRevisions = myTrack
 If goNext = True Then Call FindFwd
 End Sub
+
 
