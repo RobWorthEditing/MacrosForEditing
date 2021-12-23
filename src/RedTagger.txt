@@ -1,0 +1,25 @@
+Sub RedTagger()
+' Paul Beverley - Version 28.10.20
+' Colours all tags red
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\<[a-zA-Z]@\>"
+' Or square bracket version:
+' .Text = "\[[a-zA-Z]@\]"
+  .Replacement.Text = ""
+  .Replacement.Font.Color = wdColorRed
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Format = True
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchAllWordForms = False
+  .MatchSoundsLike = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+
+

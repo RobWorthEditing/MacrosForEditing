@@ -1,0 +1,47 @@
+Sub EtAlElisionSharman()
+' Paul Beverley - Version 02.03.15
+' Crop multi-authors to a given number before 'et al'
+
+maxAuthors = 4
+delimiter = ")"
+warningColour = wdYellow
+okAsIsColour = wdGray25
+nameHighlightColour = wdTurquoise
+
+For Each myPar In ActiveDocument.Paragraphs
+  refText = myPar.Range.Text
+  delimiterPosn = InStr(refText, delimiter)
+  If delimiterPosn = 0 Then
+    If InStr(refText, Chr(9)) > 0 Then myPar.Range.HighlightColorIndex = warningColour
+  Else
+    myText = Left(refText, delimiterPosn)
+    If Len(myText) - Len(Replace(myText, ",", "")) >= maxAuthors Then
+      myPar.Range.Select
+      myStart = Selection.Start
+      veryStart = myStart
+      myEnd = Selection.End
+      veryEnd = myEnd
+      doHighlight = False
+      remaingText = myText
+      For i = 1 To maxAuthors - 1
+        commaPos = InStr(remaingText, ",")
+        Selection.End = Selection.Start + commaPos
+        If doHighlight = True Then
+          Selection.Range.HighlightColorIndex = nameHighlightColour
+          doHighlight = False
+        Else
+          doHighlight = True
+        End If
+        Selection.Collapse wdCollapseEnd
+        remaingText = Mid(remaingText, myPointer)
+      DoEvents ' Debug.Print myPointer, remaingText
+      Next i
+    Else
+      myPar.Range.HighlightColorIndex = okAsIsColour
+    End If
+  End If
+Next myPar
+
+End Sub
+
+

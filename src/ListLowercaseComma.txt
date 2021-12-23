@@ -1,0 +1,74 @@
+Sub ListLowercaseComma()
+' Paul Beverley - Version 09.02.21
+' Add commas to bulletted list + lowercase initial char
+
+trackThis = True
+
+addAnd = False
+checkLength = 10
+notThese = ";,. "
+
+nowTrack = ActiveDocument.TrackRevisions
+If trackThis = False Then ActiveDocument.TrackRevisions = False
+Selection.Expand wdParagraph
+startStyle = Selection.Style
+startColour = Selection.Font.Color
+
+i = 0
+Do
+  endItem = Selection.End - 1
+' select LH end until you meet an alpha character
+  Selection.End = Selection.Start + 1
+  If UCase(Selection) = LCase(Selection) Then Selection.MoveEnd , 1
+  If UCase(Selection) = LCase(Selection) Then Selection.MoveEnd , 1
+  Selection.Range.Case = wdLowerCase
+' Get rid of any stray characters you don't want
+  Selection.Start = endItem
+  Do
+    gotOne = False
+    Selection.MoveStart , -1
+    If InStr(notThese, Selection) > 0 Then
+      Selection.Delete
+      gotOne = True
+    End If
+  Loop Until gotOne = False
+  Selection.InsertAfter ","
+' Now select the next item/para
+  Selection.MoveStart , 3
+  Selection.Expand wdParagraph
+  nowStyle = Selection.Style
+  nowColour = Selection.Font.Color
+  i = i + 1
+  If i = checkLength Then
+    myResponse = MsgBox("Continue?", vbQuestion + vbYesNo)
+    If myResponse = vbNo Then Exit Sub
+    i = 0
+  End If
+Loop Until nowStyle <> startStyle Or nowColour <> startColour
+Selection.End = Selection.Start - 1
+Selection.Start = Selection.End - 1
+If Selection = "," Then Selection.Delete
+Selection.MoveStart wdCharacter, -1
+If Selection <> "." Then Selection.InsertAfter "."
+If addAnd = True Then
+  ' Go back to penultimate
+  Selection.Expand wdParagraph
+  Selection.Start = Selection.Start - 1
+  Selection.End = Selection.Start
+  Selection.TypeText " and"
+  Selection.MoveStart wdCharacter, -10
+  If Selection = ", and, and" Then
+    Selection.MoveStart wdCharacter, 5
+    Selection.Delete
+  End If
+  Selection.MoveStart , 1
+  If Selection = " and, and" Then
+    Selection.MoveEnd , -5
+    Selection.Delete
+  End If
+End If
+Selection.Start = Selection.End
+ActiveDocument.TrackRevisions = nowTrack
+End Sub
+
+

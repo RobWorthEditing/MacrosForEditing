@@ -1,23 +1,35 @@
 Sub PunctuationToSpace()
-' Paul Beverley - Version 06.04.13
-' Changes the next punctuation item to a space
+' Paul Beverley - Version 19.11.21
+' Change the next punctuation item to a space
 
 trackIt = True
 
-myChar = " "
+searchChars = "-" & ChrW(8201) & ChrW(160) & ChrW(8211) & ChrW(8212) _
+     & ChrW(8722) & Chr(30)
+
+newChar = " "
+
 myTrack = ActiveDocument.TrackRevisions
 If trackIt = False Then ActiveDocument.TrackRevisions = False
 
-searchChars = "-" & ChrW(8201) & ChrW(160) & ChrW(8211) & ChrW(8212) _
-     & ChrW(8722) & Chr(30)
-Selection.End = Selection.Start
-While InStr(searchChars, Selection) = 0
-  Selection.MoveRight , 1
-Wend
-Selection.MoveEnd wdCharacter, 1
-Selection.Delete
-Selection.TypeText Text:=myChar
-ActiveDocument.TrackRevisions = myTrack
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+If Len(rng) > 1000 Then rng.End = rng.Start + 1000
 
+For Each ch In rng.Characters
+  If InStr(searchChars, ch.Text) > 0 Then
+    ch.Select
+    gotChar = True
+    Exit For
+  Else
+  End If
+Next ch
+If gotChar = False Then
+  Beep
+  ActiveDocument.TrackRevisions = myTrack
+  Exit Sub
+End If
+Selection.TypeText Text:=newChar
+ActiveDocument.TrackRevisions = myTrack
 End Sub
 

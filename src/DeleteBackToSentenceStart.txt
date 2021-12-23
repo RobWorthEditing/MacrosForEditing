@@ -1,0 +1,15 @@
+Sub DeleteBackToSentenceStart()
+' Paul Beverley - Version 23.04.21
+' Selects from current word to end of sentence
+
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+Set rng = Selection.Range.Duplicate
+rng.End = rng.End + 1
+rng.Text = UCase(rng.Text)
+rng.Expand wdSentence
+Selection.Start = rng.Start
+' Selection.Delete
+End Sub
+
+

@@ -1,0 +1,12 @@
+Sub EmailAddress()
+' Paul Beverley - Version 05.02.21
+' Puts my email address into the clipboard
+
+Set myData = New DataObject
+myData.SetText ""
+myData.PutInClipboard
+myData.SetText "paul@archivepub.co.uk"
+myData.PutInClipboard
+End Sub
+
+

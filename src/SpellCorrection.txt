@@ -1,0 +1,87 @@
+Sub SpellCorrection()
+' Paul Beverley - Version 13.02.12
+' Prepare highlighted word to be corrected throughout the text
+' Alt - K
+
+showNumberChanged = True
+
+keepHilight = True
+correctionColour = wdTurquoise
+
+If keepHilight = False Then correctionColour = wdNoHighlight
+
+' Select current word
+Selection.Expand wdWord
+Selection.MoveEndWhile cset:=ChrW(8217) & "' ", Count:=wdBackward
+If Right(Selection, 2) = ChrW(8217) & "s" Then Selection.MoveEnd wdCharacter, -2
+theWord = Selection
+
+
+theNewWord = InputBox("Change to?", "Spelling correction", theWord)
+If theNewWord = "" Then Exit Sub
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = correctionColour
+myCount = 0
+' Now change (and unhighlight) all occurrences of the word ...
+
+For i = 1 To 3
+  If i = 1 And ActiveDocument.Footnotes.Count = 0 Then i = 2
+  If i = 2 And ActiveDocument.Endnotes.Count = 0 Then i = 3
+  Select Case i
+    Case 1: Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    Case 2: Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    Case 3: Set rng = ActiveDocument.Content
+  End Select
+
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "<" & theWord & ChrW(8217) & "s"
+    .Replacement.Text = theNewWord & ChrW(8217) & "s"
+    .Font.StrikeThrough = False
+    .Forward = True
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  Do While rng.Find.Found = True
+    myCount = myCount + 1
+    rng.Find.Execute Replace:=wdReplaceOne
+    rng.HighlightColorIndex = correctionColour
+    rng.Start = rng.End
+    rng.Find.Execute
+  Loop
+
+  rng.End = 0
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "<" & theWord & ">"
+    .Font.StrikeThrough = False
+    .Replacement.Text = theNewWord
+    .Forward = True
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  Do While rng.Find.Found = True
+    myCount = myCount + 1
+    rng.Find.Execute Replace:=wdReplaceOne
+    rng.HighlightColorIndex = correctionColour
+    rng.Start = rng.End
+    rng.Find.Execute
+  Loop
+Next i
+
+If showNumberChanged = True Then
+  MsgBox ("Changed: " & Str(myCount))
+Else
+  StatusBar = "                                  Changed: " & Str(myCount)
+End If
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+
+

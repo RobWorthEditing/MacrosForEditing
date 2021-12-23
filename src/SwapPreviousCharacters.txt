@@ -1,17 +1,12 @@
 Sub SwapPreviousCharacters()
-' Paul Beverley - Version 17.10.18
+' Paul Beverley - Version 06.10.21
 ' Switches the two chars in front of the caret
 
 Selection.Collapse wdCollapseStart
-Set rng1 = Selection.range.Duplicate
-Set rng2 = rng1.Duplicate
-rng1.MoveStart , -2
-rng1.MoveEnd , -1
-rng2.MoveStart , -1
-Selection.range.FormattedText = rng1.FormattedText
-Selection.range.FormattedText = rng2.FormattedText
 Selection.MoveStart , -2
-Selection.Delete
-Selection.MoveRight , 2
+txt = Selection.Text
+Selection.Text = Right(txt, 1) & Left(txt, 1)
+Selection.MoveStart , 2
 End Sub
+
 

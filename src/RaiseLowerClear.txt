@@ -1,0 +1,24 @@
+Sub RaiseLowerClear()
+' Paul Beverley - Version 28.07.14!!!!!!!!!!!!
+' Change weird super/subscript format to proper ones
+
+If Selection.Start <> Selection.End Then
+  Set rng = Selection
+  doSelection = True
+Else
+  myResponse = MsgBox("Work on WHOLE text?!", _
+         vbQuestion + vbYesNoCancel, "RaiseLowerClear")
+    If myResponse <> vbYes Then Exit Sub
+  Set rng = ActiveDocument.Content
+  doSelection = False
+End If
+
+For Each myChar In rng.Characters
+  DoEvents ' Debug.Print myChar & "  " & myChar.Font.Position
+  myChar.Font.Position = 0
+  StatusBar = spcs & myChar
+  DoEvents
+Next
+End Sub
+
+

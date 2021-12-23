@@ -1,22 +1,16 @@
 Sub CommentAddSimple()
-' Paul Beverley - Version 13.05.21
+' Paul Beverley - Version 18.12.20
 ' Adds a new comment with a standard text item added
 
-useCommentPane = True
-paneZoom = 240
-
-' myText = "### "
-myText = ""
+myText = "PB: "
+keepPaneOpen = False
 
 Set cmt = Selection.Comments.Add(Range:=Selection.Range)
 cmt.Edit
 Selection.TypeText Text:=myText
-Selection.MoveLeft , 1
-Selection.MoveRight , 1
-If useCommentPane = False Then
+If keepPaneOpen = False Then
   ActiveWindow.ActivePane.Close
-Else
-  Application.ActiveWindow.View.Zoom.Percentage = paneZoom
+  cmt.Edit
 End If
 End Sub
 

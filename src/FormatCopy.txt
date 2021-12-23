@@ -1,0 +1,10 @@
+Sub FormatCopy()
+' Paul Beverley - Version 25.06.13
+' Copy format of paragraph
+
+Set myData = New DataObject
+myData.GetFromClipboard
+MyClip = myData.GetText
+End Sub
+
+

@@ -1,0 +1,14 @@
+Sub WindowSize()
+' Paul Beverley - Version 05.02.15
+' Size window how i like it
+
+If ActiveDocument.ActiveWindow.WindowState = 0 Then
+  Application.Resize Width:=1400, Height:=780
+
+  ActiveDocument.ActiveWindow.WindowState = wdWindowStateMaximize
+Else
+  Beep
+End If
+End Sub
+
+

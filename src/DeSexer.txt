@@ -1,0 +1,24 @@
+Sub DeSexer()
+' Paul Beverley - Version 18.01.20
+' Finds one of your words, then calls MultiSwitch to change it
+
+myWords = "man,he,him,his"
+
+myrange = 200
+
+myWords = "," & myWords & ","
+For i = 1 To myrange
+  Selection.MoveRight wdWord, 1
+  Selection.Expand wdWord
+  Selection.MoveEndWhile cset:=ChrW(8217) & " '", Count:=wdBackward
+  If InStr(myWords, "," & Selection & ",") > 0 Then Exit For
+  DoEvents
+Next i
+If i > myrange Then
+  Beep
+Else
+  Application.Run MacroName:="MultiSwitch"
+End If
+End Sub
+
+

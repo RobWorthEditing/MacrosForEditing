@@ -1,0 +1,34 @@
+Sub EtAlReducer()
+' Paul Beverley - Version 13.02.15
+' Reduce the number of names before "et al"
+
+' How can i identify the end of the list of author names?
+myDelimiter = "year"
+myDelimiter = ":"
+
+Selection.Expand wdParagraph
+
+If myDelimiter = "year" Then
+myDelimiter = "<[0-9]{4}>"
+  wc = True
+Else
+  wc = False
+End If
+
+Set rng = Selection
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myDelimiter
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = wc
+  .Execute
+End With
+rng.Select
+
+End Sub
+
+

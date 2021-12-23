@@ -1,0 +1,25 @@
+Sub RevisionHighlight()
+' Paul Beverley - Version 19.02.20
+' Highlights all the edits in a text
+
+myrange = 3
+' = how many characters either side of the edit to highlight
+
+myHighlight = wdBrightGreen
+
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+For Each rv In ActiveDocument.Revisions
+  Set rng = rv.Range
+  rng.Start = rng.Start - myrange
+  rng.End = rng.End + myrange
+  rng.HighlightColorIndex = myHighlight
+Next rv
+ActiveDocument.TrackRevisions = myTrack
+
+rng.Select
+Beep
+End Sub
+
+

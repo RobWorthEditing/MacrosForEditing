@@ -1,0 +1,16 @@
+Sub ListItemFinderShort()
+' Paul Beverley - Version 28.08.14
+' Jump to an auto-list number
+
+If Selection.Start = Selection.End Then Selection.Expand wdWord
+mySearch = Val(Trim(Selection))
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+ActiveDocument.Bookmarks.Add Name:="myTempMark"
+ActiveDocument.TrackRevisions = myTrack
+
+ActiveDocument.ListParagraphs(mySearch).Range.Select
+
+End Sub
+
+

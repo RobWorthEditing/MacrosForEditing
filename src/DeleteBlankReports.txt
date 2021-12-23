@@ -1,0 +1,22 @@
+Sub DeleteBlankReports()
+' Paul Beverley - Version 12.06.19
+' Delete any table containing a blank Teacher-comment
+
+numWds = ActiveDocument.Tables(1).Rows(7).Range.Words.Count
+If numWds < 8 Then
+  ActiveDocument.Tables(1).Rows(7).Delete
+  ActiveDocument.Tables(1).Rows(6).Delete
+  ActiveDocument.Tables(1).Rows(5).Delete
+  ActiveDocument.Tables(1).Rows(4).Delete
+  ActiveDocument.Tables(1).Rows(4).Delete
+  ActiveDocument.Tables(1).Rows(3).Delete
+End If
+
+For i = ActiveDocument.Tables.Count To 2 Step -1
+  Set tb = ActiveDocument.Tables(i).Range
+  If tb.Words(1) = "Subject" And tb.Cells(6).Range.Words.Count < 8 _
+    Then ActiveDocument.Tables(i).Delete
+Next i
+End Sub
+
+

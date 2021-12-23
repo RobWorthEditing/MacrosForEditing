@@ -1,0 +1,14 @@
+Sub EmailSplit()
+' Paul Beverley - Version 02.05.20
+' Splits a quoted email [not in book]
+
+CR = vbCr
+Selection.Expand wdWord
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , Count:=1
+Selection.TypeText Text:=CR & CR & CR & CR
+Selection.TypeText Text:=">"
+Selection.MoveUp Unit:=wdLine, Count:=2
+End Sub
+
+

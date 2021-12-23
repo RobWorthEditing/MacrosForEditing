@@ -1,0 +1,23 @@
+Sub FindAndDoSelectedText()
+' Paul Beverley - Version 10.07.17
+' Does something to a selection
+
+
+Set rng = Selection.Range
+' To record the original extent of the selection
+Set rng0 = rng.Duplicate
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "e"
+  Do While .Execute
+    rng.Font.Bold = True
+    rng.HighlightColorIndex = wdYellow
+    rng.Start = rng.End
+    rng.End = rng0.End
+  Loop
+End With
+
+End Sub
+
+

@@ -1,0 +1,19 @@
+Sub InsertHeadingRef()
+' Paul Beverley - Version 18.02.18
+' Adds a hyperlinked reference to a heading
+
+myHeads = ActiveDocument.GetCrossReferenceItems(wdRefTypeHeading)
+For i = 1 To UBound(myHeads) - 8
+ allHeads = allHeads & i & myHeads(i) & vbCr
+Next i
+
+allHeads = allHeads & vbCr & vbCr & "Reference number?"
+thisNumber = InputBox(allHeads, "Add heading reference")
+
+Selection.InsertCrossReference ReferenceType:="Heading", ReferenceKind:= _
+    wdContentText, ReferenceItem:=thisNumber, InsertAsHyperlink:=True, _
+    IncludePosition:=False, SeparateNumbers:=False, SeparatorString:=" "
+
+End Sub
+
+

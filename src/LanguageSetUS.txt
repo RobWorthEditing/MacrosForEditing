@@ -1,5 +1,5 @@
 Sub LanguageSetUS()
-' Paul Beverley - Version 02.02.21
+' Paul Beverley - Version 06.12.21
 ' Sets language as US English
 
 ' If you want all the styles to be language-set as well,
@@ -12,16 +12,24 @@ myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 ActiveDocument.Content.LanguageID = myLanguage
 For Each aStory In ActiveDocument.StoryRanges
-  aStory.LanguageID = myLanguage
+  Do
+    aStory.LanguageID = myLanguage
+    If aStory.NextStoryRange Is Nothing Then
+      MoreStoryRanges = False
+    Else
+      MoreStoryRanges = True
+      Set aStory = aStory.NextStoryRange
+    End If
+  Loop While MoreStoryRanges
 Next aStory
 If setStyleLanguage = True Then
-  For i = 1 To ActiveDocument.Styles.Count
+  For i = 1 To ActiveDocument.Styles.count
     Set sty = ActiveDocument.Styles(i)
     If sty.Type = wdStyleTypeParagraph Then _
-      sty.LanguageID = myLanguage
+         sty.LanguageID = myLanguage
   Next i
 End If
-If ActiveDocument.Shapes.Count > 0 Then
+If ActiveDocument.Shapes.count > 0 Then
   For Each shp In ActiveDocument.Shapes
     If shp.Type <> 24 And shp.Type <> 3 Then
       If shp.TextFrame.HasText Then
@@ -36,4 +44,5 @@ ActiveDocument.SpellingChecked = False
 ActiveDocument.GrammarChecked = False
 ActiveDocument.TrackRevisions = myTrack
 End Sub
+
 

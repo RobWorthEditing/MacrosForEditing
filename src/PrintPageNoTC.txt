@@ -1,0 +1,11 @@
+Sub PrintPageNoTC()
+' Paul Beverley - Version 13.07.15
+' Print the current page, but without track changes
+
+ActiveWindow.View.ShowRevisionsAndComments = False
+Application.PrintOut FileName:="", Range:=wdPrintAllPages, _
+     Item:=wdPrintDocumentContent
+ActiveWindow.View.ShowRevisionsAndComments = True
+End Sub
+
+

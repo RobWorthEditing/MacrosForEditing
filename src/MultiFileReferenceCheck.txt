@@ -1,0 +1,136 @@
+Sub MultiFileReferenceCheck()
+' Paul Beverley - Version 11.03.20
+' Collects references, adds chapter labels, and sorts
+
+remindAboutCancel = False
+
+On Error GoTo ReportIt
+CR2 = vbCr & vbCr
+Dim allMyFiles(200) As String
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then navigate to the required folder
+  If remindAboutCancel = True Then myResponse = _
+       MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "Multifile Text Collection")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.Count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+
+  myResponse = MsgBox("Collect unformatted text from ALL the files in" & _
+       " directory:" & dirName & " ?", vbQuestion + vbYesNoCancel, _
+       "Multifile Text Collection")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  myResponse = MsgBox("Collect unformatted text from the files listed here?", _
+       vbQuestion + vbYesNoCancel, "Multifile Text Collection")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.Range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+Selection.HomeKey Unit:=wdStory
+
+Set allRefsDoc = Documents.Add
+
+For i = 1 To numFiles
+' Get the folder name, and then the text for the files in the list
+  thisFile = myFolder & myDelimiter & allMyFiles(i)
+  myFile = Replace(thisFile, ".docx", "")
+  myFile = Replace(myFile, ".doc", "")
+  myFile = Replace(myFile, ".rtf", "")
+  myNum = Right(myFile, 2)
+  If Val(myNum) = 0 Then myNum = Right(myFile, 1)
+  If Val(myNum) = 0 Then myNum = Trim(Str$(i))
+  Set myDoc = Application.Documents.Open(FileName:=thisFile)
+  DoEvents
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^pReferences^p"
+    .Wrap = wdFindContinue
+    .MatchWildcards = False
+    .MatchCase = True
+    .Replacement.Text = ""
+    .Execute
+  End With
+  If Selection.Find.Found = True Then
+    Selection.Collapse wdCollapseEnd
+    myStart = Selection.Start
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "^p"
+      .Wrap = wdFindStop
+      .MatchWildcards = False
+      .Replacement.Text = " [[ " & myNum & " ]]^p"
+      .Execute Replace:=wdReplaceAll
+    End With
+    Selection.End = myDoc.Content.End
+    Set rng = allRefsDoc.Content
+    rng.Collapse wdCollapseEnd
+    rng.FormattedText = Selection.Range.FormattedText
+  End If
+  myDoc.Close SaveChanges:=wdDoNotSaveChanges
+Next i
+
+allRefsDoc.Content.Sort SortOrder:=wdSortOrderAscending
+Beep
+Exit Sub
+
+ReportIt:
+On Error GoTo 0
+Resume
+End Sub
+
+

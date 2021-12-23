@@ -1,0 +1,59 @@
+Sub HeadingLister()
+' Paul Beverley - Version 11.01.14
+' Create a list of all coded headings
+
+codesWanted = "PH CH A B C D"
+
+myCodeEnds = "<>"
+
+lCode = Left(myCodeEnds, 1)
+rCode = Right(myCodeEnds, 1)
+codesWanted = lCode & Trim(codesWanted) & rCode
+codesWanted = Replace(codesWanted, " ", rCode & lCode)
+Set rng = ActiveDocument.Content
+
+rng.Copy
+Documents.Add
+Selection.Paste
+Set rng = ActiveDocument.Content
+rng.Revisions.AcceptAll
+rng.HighlightColorIndex = wdYellow
+
+For Each myTable In ActiveDocument.Tables
+  myTable.Delete
+Next myTable
+
+For Each myPar In ActiveDocument.Paragraphs
+  If Len(myPar.Range.Text) > 6 Then
+    myTest = Left(myPar.Range.Text, 6)
+    codePos = InStr(myTest, rCode)
+    If codePos > 0 Then myTest = Left(myTest, codePos)
+    If InStr(codesWanted, myTest) > 0 Then
+      myPar.Range.HighlightColorIndex = 0
+    End If
+  End If
+Next myPar
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Text = "[^13]{2,}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+Beep
+End Sub
+
+

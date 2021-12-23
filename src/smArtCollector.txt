@@ -1,0 +1,70 @@
+Sub smArtCollector()
+' Paul Beverley - Version 28.01.20
+' Find something specific and do things to each one
+
+wcFind = "<[Aa]rt[a-zA-Z 0-9.]{1,}[;\)^13]"
+
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.Text = rng.Text
+Set tempDoc = ActiveDocument
+
+fText = "(,),[,]"
+rText = "zczc,qcqc,qvqv,xzxz"
+f = Split(fText, ",")
+r = Split(rText, ",")
+
+Set rng = ActiveDocument.Content
+For i = 0 To UBound(f)
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = f(i)
+    .Wrap = wdFindContinue
+    .Replacement.Text = r(i)
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+Next i
+
+Documents.Add
+Set rng2 = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = wcFind
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  endNow = rng.End
+  rng2.InsertAfter Text:=rng.Text & vbCr
+  rng.Start = endNow
+  rng.Find.Execute
+  DoEvents
+Loop
+
+For i = 0 To UBound(f)
+  With rng2.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = r(i)
+    .Wrap = wdFindContinue
+    .Replacement.Text = f(i)
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+Next i
+
+tempDoc.Close SaveChanges:=False
+Beep
+End Sub
+
+

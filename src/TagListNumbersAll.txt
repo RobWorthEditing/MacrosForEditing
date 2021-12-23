@@ -1,0 +1,51 @@
+Sub TagListNumbersAll()
+' Paul Beverley - Version 15.07.17
+' Find all numbered lists and tag them
+
+endTextOnSameLine = False
+codeON = "<NL>"
+codeOFF = "</NL>" & vbCr
+
+' endTextOnSameLine = True
+' codeON = "<NL>"
+' codeOFF = "</NL>"
+
+
+firstItem = "1."
+showCount = True
+
+Selection.HomeKey Unit:=wdStory
+myCount = 0
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p" & firstItem
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+Do While Selection.Find.Found
+  myCount = myCount + 1
+  Selection.MoveStart , 1
+  Selection.InsertBefore Text:=codeON
+  paraNum = ActiveDocument.Range(0, _
+       Selection.Paragraphs(1).Range.End).Paragraphs.Count
+  Do
+    paraNum = paraNum + 1
+    num = Val(Left(ActiveDocument.Paragraphs(paraNum).Range.Text, 1))
+  Loop Until num = 0
+  ActiveDocument.Paragraphs(paraNum).Range.Select
+  
+  Selection.Collapse wdCollapseStart
+  If endTextOnSameLine = True Then Selection.MoveLeft , 1
+  Selection.TypeText codeOFF
+  Selection.Find.Execute
+Loop
+If showCount = True Then MsgBox "Numbered lists found: " & myCount
+End Sub
+
+

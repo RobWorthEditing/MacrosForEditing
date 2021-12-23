@@ -1,5 +1,5 @@
 Sub CaseNextWord()
-' Paul Beverley - Version 16.01.21
+' Paul Beverley - Version 27.10.21
 ' Changes case of initial letter of next word or selection
 
 trackIt = True
@@ -23,52 +23,32 @@ If Selection.End > Selection.Start Then
 Else
 
 ' If no text is selected ...
-' Find a word start
-startAgain:
-  Do
-    Selection.MoveRight Unit:=wdWord, Count:=1
-    Selection.Expand wdWord
-    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
-      Selection.MoveEnd , -1
-      DoEvents
-    Loop
+' Find next word start
+  Set rng = Selection.Range.Duplicate
+  rng.End = rng.End + 1
+  Do While UCase(rng) <> LCase(rng) Or InStr("0123456789", rng) > 0
+    rng.Start = rng.Start + 1
+    rng.End = rng.End + 1
     DoEvents
-  Loop Until UCase(Selection) <> LCase(Selection)
-  Selection.Collapse wdCollapseStart
-  Selection.MoveStart , -1
-  Selection.MoveEnd , 1
-
+  Loop
+  Do While UCase(rng) = LCase(rng)
+    rng.Start = rng.Start + 1
+    rng.End = rng.End + 1
+    DoEvents
+  Loop
+  rng.Select
   If trackIt = False Then
-    Selection.MoveStart , 1
-    myChar = Selection
-    If myChar = "-" Then
-      Selection.Collapse wdCollapseEnd
-      Selection.MoveEnd , 1
-    End If
-  
     Selection.Range.Case = wdToggleCase
     Selection.MoveRight Unit:=wdCharacter, Count:=1
   Else
-    Selection.Start = Selection.Start + 1
     myChar = Selection
-    If myChar = "-" Then
-      Selection.Collapse wdCollapseEnd
-      Selection.MoveEnd , 1
-      myChar = Selection
-    End If
-    If Asc(myChar) > 64 Then
-      If Asc(myChar) > 96 Then
-        myChar = UCase(myChar)
-      Else
-        myChar = LCase(myChar)
-      End If
-      Selection.Start = Selection.End
-      Selection.TypeBackspace
-      Selection.TypeText myChar
+    If UCase(myChar) = myChar Then
+      myChar = LCase(myChar)
     Else
-      Selection.Start = Selection.End
-      GoTo startAgain
+      myChar = UCase(myChar)
     End If
+    Selection.Text = myChar
+    Selection.Collapse wdCollapseEnd
   End If
 End If
 End Sub

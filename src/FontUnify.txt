@@ -1,0 +1,39 @@
+Sub FontUnify()
+' Paul Beverley - Version 26.08.17
+' Restore selection to same font size
+
+' This works for font SIZE, but with thin spaces,
+' Word refuses to change font name!
+
+Selection.Font.Name = "Times New Roman"
+Exit Sub
+
+
+myLen = Len(Selection)
+Set rng1 = Selection.Characters.First
+Set rng2 = Selection.Characters.Last
+useRng1 = False
+useRng2 = False
+For i = 1 To myLen
+  Set rng = Selection.Characters(i)
+  If rng.Font.Size <> rng1.Font.Size Then useRng1 = True
+  If rng.Font.Size <> rng2.Font.Size Then useRng2 = True
+  If rng.Font.Name <> rng1.Font.Name Then useRng1 = True
+  If rng.Font.Name <> rng2.Font.Name Then useRng2 = True
+Next i
+  Debug.Print rng1.Font.Size, rng1.Font.Name
+  Debug.Print rng2.Font.Size, rng2.Font.Name
+If useRng1 Then
+  Selection.Font.Size = rng1.Font.Size
+  Selection.Font.Name = rng1.Font.Name
+Else
+  If useRng1 Then
+    Selection.Font.Size = rng2.Font.Size
+    Selection.Font.Name = rng2.Font.Name
+  Else
+    Beep
+  End If
+End If
+End Sub
+
+

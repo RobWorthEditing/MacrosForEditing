@@ -1,0 +1,23 @@
+Sub QuoteExtractor()
+' Paul Beverley - Version 23.03.20
+' Copies paragraph that contain italic text and are indented or contain quotes
+
+Set myDoc = ActiveDocument
+myMix = 9999999
+Documents.Add
+For Each myPar In myDoc.Paragraphs
+  If myPar.Range.Italic = myMix Then
+    copyIt = False
+    If InStr(myPar.Range.Text, ChrW(8216)) Then copyIt = True
+    If InStr(myPar.Range.Text, ChrW(8220)) Then copyIt = True
+    If myPar.Range.ParagraphFormat.LeftIndent > 0 Then copyIt = True
+
+    If copyIt = True Then
+      Selection.Collapse wdCollapseEnd
+      Selection.FormattedText = myPar.Range.FormattedText
+    End If
+  End If
+Next myPar
+End Sub
+
+

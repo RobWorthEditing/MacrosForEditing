@@ -1,0 +1,22 @@
+Sub WordsMoveRight()
+' Paul Beverley - Version 15.04.21
+' Moves the partly selected words one word right
+
+endNow = Selection.End
+Selection.Collapse wdCollapseStart
+Selection.MoveRight , 1
+Selection.Expand wdWord
+startNew = Selection.Start
+Selection.End = endNow
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 1
+Selection.Expand wdWord
+Selection.Start = startNew
+Selection.Cut
+Selection.MoveRight wdWord, 1
+startHere = Selection.Start
+Selection.Paste
+Selection.Start = startHere
+End Sub
+
+

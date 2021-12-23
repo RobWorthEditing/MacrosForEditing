@@ -1,0 +1,98 @@
+Sub CitExtraBits()
+' Paul Beverley - Version 04.07.20
+' Creates a list of all citations
+' This had no info here. Above is just what the CitationLister says.
+
+
+allPrefs = "van von der de den of on da le la dos al and et"
+
+
+finalChars = "abcdef0123456789"
+
+allPrefs = " " & allPrefs & " "
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[!0-9][0-9]{4}[!0-9]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+' Note where the end of the found item is
+rng.Select
+  myEnd = rng.End
+  myStart = rng.Start
+  Set rg = rng.Duplicate
+  rg.Collapse wdCollapseStart
+  DoEvents
+  gotStart = False
+  Do
+    With rg.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "<[a-z]{1,}>"
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .Forward = False
+      .MatchWildcards = True
+      .Execute
+    End With
+    rStart = rg.Start
+' rg.Select
+    wd = " " & rg.Text & " "
+  Loop Until InStr(allPrefs, wd) = 0
+  rg.Collapse wdCollapseEnd
+  rg.End = myEnd
+' rg.Select
+  rStart = rg.Start
+  
+  myTest = rg.Text
+  For i = Len(myTest) - 8 To 6 Step -1
+    If Val(Mid(myTest, i, 4)) > 1000 Then
+      rg.Start = rg.Start + i + 4
+      Exit For
+    End If
+  Next i
+  rg.Select
+  rg.MoveStartWhile cset:=ChrW(8217) & _
+       ChrW(8221) & ".,;:( '""" & vbCr, Count:=wdForward
+  brktPos = InStr(rg.Text, "(")
+  If Len(rg.Text) - brktPos > 8 Then _
+       rg.Start = rg.Start + brktPos
+  If Left(rg.Text, 4) = "and " Then rg.Start = rg.Start + 4
+  If Left(rg.Text, 5) = "Thus " Then rg.Start = rg.Start + 5
+  rg.Select
+  myRef = rg.Text
+  myRef = Replace(myRef, "(", "")
+  myRef = Replace(myRef, ")", "")
+  myRef = Replace(myRef, ", 1", " 1")
+  myRef = Replace(myRef, ", 2", " 2")
+  lastChar = Right(myRef, 1)
+'  Debug.Print myRef
+  If InStr(finalChars, lastChar) = 0 Then
+    myRef = Left(myRef, Len(myRef) - 1)
+  End If
+  rng.Start = myEnd
+  With rng.Find
+    .Text = "[!0-9][0-9]{4}[!0-9]"
+    .Wrap = wdFindStop
+    .Forward = True
+    .Execute
+  End With
+  If UCase(myRef) <> LCase(myRef) Then
+    myRefsAll = myRefsAll & myRef & vbCr
+  Debug.Print myRef
+    Else
+  End If
+Loop
+Documents.Add
+Selection.TypeText Text:=myRefsAll
+End Sub
+
+

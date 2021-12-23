@@ -1,0 +1,363 @@
+Sub HighlightOddQuotations()
+' Paul Beverley - Version 25.05.20
+' Marks all quotes + displayed text
+
+' Do you want displayed text marked?
+markDisplayed = True
+
+' Add coding to existing displayed quotes?
+addCodes = True
+addCodes = False
+preCode = "<DIS>"
+Postcode = "</DIS>"
+codeOnNextLine = False
+
+' Minimum length of quotes (words)
+minLength = 3
+
+' Minimum indent of quotes (cm)
+minIndent = 1.05
+
+' Colour the font of quotations
+colourFont = True
+colourFont = False
+myColour = wdColorBlue
+
+' Colour of the possible plural possessive problems
+possessiveColour = wdColorRed
+' Possible possessive errors only shown if within
+' this many paragraphs
+maxParasPossessive = 5
+
+' Add a highlight
+highlightText = True
+myHighlight = wdYellow
+
+' Strike it through
+strSingle = False
+strDouble = False
+
+' What kind of quote?
+doDoubleQuotes = True
+doSingleQuotes = True
+
+' Do you want the notes checked (if there are any)?
+doFootnotes = True
+doEndnotes = True
+
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+nowColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myHighlight
+soCalledWords = "---,.;:!?..." & ChrW(8220) & ChrW(8221)
+
+' Clear old codes, in case you're running it a second time
+If addCodes = True Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = preCode
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = Postcode
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+
+If markDisplayed = True Then
+  For Each myPara In ActiveDocument.Paragraphs
+    If myPara.Range.ParagraphFormat.LeftIndent > _
+         CentimetersToPoints(minIndent) Then
+      myPara.Range.Font.Emboss = True
+      If addCodes = True Then
+        myPara.Range.InsertBefore Text:=preCode
+        myPara.Range.InsertAfter Text:=Postcode
+      End If
+    End If
+  Next
+
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = preCode & Postcode
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  DoEvents
+
+  If codeOnNextLine = False Then
+    With rng.Find
+      .Text = "^p" & Postcode
+      .Replacement.Text = Postcode & "^p"
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+End If
+
+gottaFunny = False
+funnyCount = 0
+For i = 1 To 3
+  If i = 1 And (ActiveDocument.Footnotes.Count = 0 Or _
+       doFootnotes = False) Then i = 2
+  If i = 2 And (ActiveDocument.Endnotes.Count = 0 Or _
+       doEndnotes = False) Then i = 3
+  Select Case i
+    Case 1: Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    Case 2: Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    Case 3: Set rng = ActiveDocument.Content
+  End Select
+
+' Single quotes
+  If doSingleQuotes = True Then
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ChrW(8216) & "*" & ChrW(8217)
+      .Wrap = wdFindContinue
+      .Replacement.Text = ""
+      .Replacement.Font.Emboss = True
+      .Forward = True
+      .MatchWildcards = True
+      .Execute Replace:=wdReplaceAll
+    End With
+    DoEvents
+  End If
+
+' Check for any apostrophe-letter that is half struck-through
+  If doSingleQuotes = True Then
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ChrW(8217) & "^$"
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = False
+      .Execute
+    End With
+
+    Do While rng.Find.Found = True
+      ' If this is half struckthrough
+      If rng.Font.Emboss > 999 Then
+      ' Extend to the following close single quote
+        rng.MoveEndUntil cset:=ChrW(8217), Count:=wdForward
+        rng.MoveEnd wdCharacter, 1
+        rng.Font.Emboss = True
+        rng.Start = rng.End - 1
+        rng.Collapse wdCollapseStart
+      Else
+        rng.Collapse wdCollapseEnd
+      End If
+      rng.Find.Execute
+      DoEvents
+    Loop
+
+  ' Now check for plural possessives: s'
+    Select Case i
+      Case 1: Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+      Case 2: Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+      Case 3: Set rng = ActiveDocument.Content
+    End Select
+  ' Add a dummy open quote at the end of the text
+    rng.InsertAfter ChrW(8216)
+    theVeryEnd = rng.End
+  ' Check from each of the s-apostrophes to the next open quote
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "s" & ChrW(8217) & "*" & ChrW(8216)
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = True
+      .Execute
+    End With
+
+    Do While rng.Find.Found = True
+      endNow = rng.End
+      rng.End = rng.Start + 1
+      isQuote = rng.Font.Emboss
+      rng.End = endNow
+      rng.MoveStart wdCharacter, 2
+      endQuoteWas = rng.Start
+      myText = rng.Text
+      If InStr(myText, ChrW(8217)) > 0 And isQuote = True Then
+      ' How many apostrophe/close quotes are there?
+        aposNum = Len(myText) - Len(Replace(myText, ChrW(8217), ""))
+        myPointer = endQuoteWas
+        endQuoteNow = myPointer
+        For j = 1 To aposNum
+          aposPos = InStr(myText, ChrW(8217))
+          nextChar = Mid(myText, aposPos + 1, 1)
+          myPointer = myPointer + aposPos
+        ' Is nextChar non-alpha? If so, this is the *real* end of the quote
+          If LCase(nextChar) = UCase(nextChar) Then
+            endQuoteNow = myPointer
+          End If
+          myText = Mid(myText, aposPos + 1)
+        Next
+        If endQuoteNow > endQuoteWas Then
+          endNow = rng.End
+          rng.End = endQuoteNow
+          rng.Font.Emboss = True
+          myChar = Right(rng.Text, 2)
+          thisLot = rng.Text
+          numParas = Len(thisLot) - Len(Replace(thisLot, Chr(13), ""))
+          If Asc(myChar) = Asc("s") And numParas < maxParasPossessive Then
+            gottaFunny = True
+            rng.Font.Emboss = False
+            rng.Font.Color = possessiveColour
+            funnyCount = funnyCount + 1
+          End If
+        End If
+        rng.End = myPointer
+      End If
+      rng.Collapse wdCollapseEnd
+      rng.Find.Execute
+    Loop
+    rng.Start = theVeryEnd - 2
+    rng.End = theVeryEnd - 1
+    rng.Delete
+    DoEvents
+  End If
+
+' Double quotes
+  If doDoubleQuotes = True Then
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ChrW(8220) & "*" & ChrW(8221)
+      .Wrap = wdFindContinue
+      .Replacement.Text = ""
+      .Replacement.Font.Emboss = True
+      .Forward = True
+      .MatchWildcards = True
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+
+' Remove embossing from short quotes
+  If minLength > 0 Then
+    Select Case i
+      Case 1: Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+      Case 2: Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+      Case 3: Set rng = ActiveDocument.Content
+    End Select
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ""
+      .Font.Emboss = True
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = False
+      .Execute
+    End With
+    Do While rng.Find.Found = True
+    ' Find the true word count
+      myText = rng.Text
+      wdsOff = 1
+      For j = 1 To Len(myText)
+        If InStr(soCalledWords, Mid(myText, j, 1)) > 0 Then _
+             wdsOff = wdsOff + 1
+      Next j
+      If j > 3 Then
+    ' To correct Word's weird wordcount'hello' = count OK
+    ' 'hello?' error by one word, and 'hello??' = count OK
+        charOne = Mid(myText, j - 3, 1)
+        charTwo = Mid(myText, j - 2, 1)
+        oneIsAlpha = (LCase(charOne) <> UCase(charOne))
+        twoIsNotAlpha = (LCase(charTwo) = UCase(charTwo))
+        If oneIsAlpha And twoIsNotAlpha Then wdsOff = wdsOff + 1
+        If rng.Words.Count - wdsOff < minLength - 1 Then
+          rng.Font.Emboss = False
+          rng.Collapse wdCollapseEnd
+        End If
+      End If
+      rng.Find.Execute
+      DoEvents
+    Loop
+  End If
+  
+' Apply whatever effect is wanted on the embossed text
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Font.Emboss = True
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Font.Emboss = False
+    If highlightText = True Then .Replacement.Highlight = True
+    If strSingle = True Then .Replacement.Font.StrikeThrough = True
+    If strDouble = True Then .Replacement.Font.DoubleStrikeThrough = True
+    If colourFont = True Then .Replacement.Font.Color = myColour
+    .Forward = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  DoEvents
+Next i
+
+' Warn the user of possible plural possessives
+If gottaFunny = True Then
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Wrap = wdFindContinue
+    .Font.Color = possessiveColour
+    .MatchWildcards = False
+    .Execute
+  End With
+  Selection.End = Selection.Start - 1
+  Selection.Find.Execute
+  MsgBox "Please check possible plural possessives (" _
+       & Trim(Str(funnyCount)) & ")"
+End If
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8220) & "[!^13]" & ChrW(8221)
+  .Highlight = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Highlight = False
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Options.DefaultHighlightColorIndex = nowColour
+ActiveDocument.TrackRevisions = myTrack
+Beep
+End Sub
+
+

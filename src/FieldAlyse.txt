@@ -1,11 +1,12 @@
+
 Sub FieldAlyse()
 ' Paul Beverley - Version 06.09.19
 ' Counts all fields of different types
 
 Dim n(100) As Integer
 
-knownTypes = " 13 33 58 72 81 88 "
-stopAtUnknown = True
+knownTypes = " 4 13 33 58 72 81 88 "
+stopAtUnknown = False
 Set myFile = ActiveDocument
 Set rng = ActiveDocument.Content
 For i = 1 To myFile.Fields.Count
@@ -27,6 +28,7 @@ For i = 1 To 100
     myResult = myResult & Str(n(i)) & "  " & _
          "field type" & Str(i) & "  ("
     Select Case i
+      Case 4: myType = "datetime"
       Case 13: myType = "table of contents"
       Case 33: myType = "page"
       Case 58: myType = "equation"
@@ -44,7 +46,11 @@ Selection.EndKey Unit:=wdStory
 If myResult = "" Then
   Beep
 Else
-    myTrack = ActiveDocument.TrackRevisions
+  myTrack = ActiveDocument.TrackRevisions
   ActiveDocument.TrackRevisions = False
+  Selection.TypeText vbCr & vbCr & myResult
+  ActiveDocument.TrackRevisions = myTrack
+End If
+End Sub
 
-  Selection.TypeText Text:=v
+

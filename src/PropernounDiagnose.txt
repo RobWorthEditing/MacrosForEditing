@@ -1,0 +1,31 @@
+Sub PropernounDiagnose()
+' Paul Beverley - Version 01.02.10
+' No comment!
+
+
+For Each myPar In ActiveDocument.Words
+    If myPar.Font.Size = 4 Then
+    myPar.Font.Size = 6
+    End If
+Next myPar
+
+For Each myPar In ActiveDocument.Paragraphs
+  n = myPar.Range.Words(1).Text
+  n = Replace(n, "a", "")
+  n = Replace(n, "e", "")
+  n = Replace(n, "i", "")
+  n = Replace(n, "o", "")
+  n = Replace(n, "u", "")
+  n = Replace(n, "y", "")
+  If myPar.Range.Words.Count > 4 Then
+    If myPar.Range.Words(4) = ". " Then
+      myPar.Range.Words(4).Text = n & " . ."
+      myPar.Range.Words(4).Font.Size = 4
+    End If
+  End If
+Next myPar
+Beep
+
+End Sub
+
+

@@ -1,0 +1,16 @@
+Sub DeleteLine()
+' Paul Beverley - Version 10.10.16
+' Delete current line
+  
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Selection.Expand wdParagraph
+If Len(Selection) > 3 Then
+  Beep
+  Exit Sub
+End If
+Selection.TypeBackspace
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+
+

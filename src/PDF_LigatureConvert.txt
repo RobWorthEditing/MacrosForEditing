@@ -1,0 +1,68 @@
+Sub PDF_LigatureConvert()
+' Paul Beverley - Version 20.02.17
+' Replace underlines with fi/ff/fl/ffi in converted PDF
+
+Selection.HomeKey Unit:=wdStory
+    myLanguage = Selection.Range.LanguageID
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "_"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  endNow = rng.End
+  rng.Expand wdWord
+  Set rng2 = rng.Duplicate
+  rng2.Start = rng2.Start - 1
+  rng2.Select
+  myChar = Left(rng2.Text, 1)
+  If myChar <> " " And myChar <> Chr(13) And _
+       myChar <> Chr(9) Then rng.MoveStart wdWord, -1
+  rng.MoveEnd wdWord, 1
+  rng.MoveEndWhile cset:=ChrW(8217) & " '", Count:=wdBackward
+  myWord = rng.Text
+  rng.Select
+  myNewWord = ""
+  myTry = Replace(myWord, "_", "ffi")
+  If Application.CheckSpelling(myTry, MainDictionary:= _
+       Languages(myLanguage).NameLocal) = True _
+       Then myNewWord = myTry
+  myTry = Replace(myWord, "_", "fl")
+  If Application.CheckSpelling(myTry, MainDictionary:= _
+       Languages(myLanguage).NameLocal) = True _
+       Then myNewWord = myTry
+  myTry = Replace(myWord, "_", "ff")
+  If Application.CheckSpelling(myTry, MainDictionary:= _
+       Languages(myLanguage).NameLocal) = True _
+       Then myNewWord = myTry
+  myTry = Replace(myWord, "_", "fi")
+  If Application.CheckSpelling(myTry, MainDictionary:= _
+       Languages(myLanguage).NameLocal) = True _
+       Then myNewWord = myTry
+  If myNewWord = "" Then
+    rng.HighlightColorIndex = wdBrightGreen
+  Else
+    rng.Delete
+    rng.InsertAfter myNewWord
+  End If
+  rng.Select
+  rng.Start = endNow + Len(myWord)
+  rng.End = rng.Start
+
+  rng.Find.Execute
+  DoEvents
+Loop
+MsgBox "Changed: " & myCount
+End Sub
+
+

@@ -7,7 +7,7 @@ attrib1 = "PB: "
 ' postText = " is not on the refs list."
  postText = " Will the readers know this acronym?"
 ' postText = " Undefined acronym " & Chrw(8217) & " "
-' postText = " - reference?"
+' postText = " – reference?"
 
 addPageNum1 = True
 addLineNum1 = True

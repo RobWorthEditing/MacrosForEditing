@@ -1,0 +1,21 @@
+Sub maxWordsInPara()
+' Paul Beverley - Version 03.03.13
+' Count max number of words in a paragraph
+
+lineMin = 10
+maxWords = 20
+For Each myPara In ActiveDocument.Paragraphs
+  txt = Replace(myPara.Range.Text, ".", "")
+  Do
+    lenWas = Len(txt)
+    txt = Replace(txt, "  ", " ")
+  Loop Until Len(txt) = lenWas
+  paraWords = Len(txt) - Len(Replace(txt, " ", ""))
+  If paraWords > maxWords Then
+    maxWords = paraWords
+  End If
+Next myPara
+
+End Sub
+
+

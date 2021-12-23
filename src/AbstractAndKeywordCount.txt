@@ -1,0 +1,20 @@
+Sub AbstractAndKeywordCount()
+' Paul Beverley - Version 09.04.21
+' Counts abstract word numbers and keyword items
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+numWds = rng.ComputeStatistics(wdStatisticWords)
+If numWds = 0 Then
+  rng.MoveEnd , 1
+  numWds = rng.ComputeStatistics(wdStatisticWords)
+End If
+lenLess = Len(rng) - Len(Replace(rng, ",", ""))
+If lenLess < 3 Then lenLess = Len(rng) - Len(Replace(rng, ";", ""))
+numKeywords = lenLess + 1
+
+MsgBox ("Words: " & Trim(Str(numWds)) & vbCr & vbCr & _
+     "Keywords: " & Trim(Str(numKeywords)))
+End Sub
+
+

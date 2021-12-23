@@ -1,9 +1,13 @@
-Sub ToCupdate()
+Sub TOCupdate()
 ' Paul Beverley - Version 16.12.13
 ' Update (and customise) the table of contents
-' Ctrl-Alt-F3
+' Ctrl - Alt - F3
 
 ActiveDocument.TablesOfContents(1).Update
+Exit Sub
+
+
+
 
 Options.DefaultHighlightColorIndex = wdYellow
 
@@ -21,13 +25,13 @@ With Selection.Find
   .MatchWholeWord = False
   .MatchSoundsLike = False
   .Text = "Macros for Editors by Paul Beverley, LCGI"
-  .Style = "Hyperlink"
+  .Style = wdStyleHyperlink
   .Replacement.Text = ""
-  .Execute Replace:=wdReplaceOne
+'  .Execute Replace:=wdReplaceOne
 End With
 Selection.TypeBackspace
 
-' This deletes some lines I don't want, from here...
+' This deletes some lines i don't want, from here...
 With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -46,15 +50,15 @@ With Selection.Find
   .Text = "Notes to publisher"
   .Style = "Hyperlink"
   .Replacement.Text = ""
-  .Execute
+' .Execute
 End With
 Selection.HomeKey Unit:=wdStory
 
 ' Extend the selection back to the first line
 ' that needs deleting.
-Selection.Start = myStart
-Selection.TypeBackspace
-Selection.TypeBackspace
+'Selection.Start = myStart
+'Selection.TypeBackspace
+'Selection.TypeBackspace
 
 Selection.HomeKey Unit:=wdStory
 With Selection.Find
@@ -164,4 +168,5 @@ With Selection.Find
   .Replacement.Text = oldReplace
 End With
 End Sub
+
 

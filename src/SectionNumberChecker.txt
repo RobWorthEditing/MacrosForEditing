@@ -1,0 +1,95 @@
+Sub SectionNumberChecker()
+' Paul Beverley - Version 16.02.11
+' Check the sequence of section numbers
+
+maxTabPosition = 15
+marker = Chr(9) ' tab character
+marker = " "
+
+Selection.Expand wdParagraph
+myText = Selection
+tabPos = InStr(myText, marker) - 1
+wasNum = Left(myText, tabPos)
+' this should now hold just the heading number, e.g. F2.4.5
+Selection.Start = Selection.End
+Dim posNow(4) As Long
+For i = 0 To 3
+  posNow(i) = i
+Next i
+Do
+  Do
+    i = Int(4 * Rnd())
+    posNow(i) = Selection.Start
+    myJump = 0
+    If posNow(0) = posNow(1) Then i = -1
+    If posNow(0) = posNow(2) Then i = -1
+    If posNow(0) = posNow(3) Then i = -1
+    If posNow(1) = posNow(2) Then i = -1
+    If posNow(1) = posNow(3) Then i = -1
+    If posNow(2) = posNow(3) Then i = -1
+    If i = -1 Then Selection.MoveRight Unit:=wdCell, Count:=3
+    Selection.Expand wdParagraph
+    myText = Selection
+    Selection.Start = Selection.End
+    If Selection.Start > ActiveDocument.Range.End - 3 Then
+    Selection.HomeKey Unit:=wdStory
+    Beep
+    myTime = Timer
+    Do
+    Loop Until Timer > myTime + 0.2
+    Beep
+    Exit Sub
+    End If
+  Loop Until Len(myText) > 3
+  tabPos = InStr(myText, Chr(9)) - 1
+  If tabPos > 2 And tabPos < maxTabPosition Then
+    nowNum = Left(myText, tabPos)
+  ' this should now hold just the heading number, e.g. F2.4.5
+    nowLen = Len(nowNum)
+    wasLen = Len(wasNum)
+    If nowLen >= wasLen Then
+      longer = True
+      i = wasLen + 1
+    Else
+      longer = False
+      i = nowLen + 1
+    End If
+    Do
+      i = i - 1
+      commonBit = Left(nowNum, i)
+    Loop Until commonBit = Left(wasNum, i)
+    wasPart = Replace(wasNum, commonBit, "")
+    nowPart = Replace(nowNum, commonBit, "")
+    gotanError = True
+    If longer = True Then
+      If Right(commonBit, 1) = "." Then
+        If Val(nowPart) - Val(wasPart) = 1 Then gotanError = False
+      Else
+        If wasPart = "" And nowPart = ".1" Then gotanError = False
+      End If
+    Else
+      wasPart = Left(wasPart, InStr(wasPart, ".") - 1)
+      If Val(nowPart) - Val(wasPart) = 1 Then gotanError = False
+    End If
+    If Right(commonBit, 1) = "." Or nowLen = wasLen Then
+      If Val(nowPart) - Val(wasPart) = 1 Then gotanError = False
+    End If
+    wasNum = nowNum
+  End If
+Loop Until (Selection.Start > ActiveDocument.Range.End - 3) Or gotanError = True
+If gotanError = True Then
+  Selection.MoveLeft Unit:=wdCharacter, Count:=2
+  Selection.Expand wdParagraph
+  Beep
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^t"
+    .Forward = True
+    .Replacement.Text = " "
+    .MatchWildcards = False
+  End With
+End If
+End Sub
+
+

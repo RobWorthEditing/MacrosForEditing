@@ -66,5 +66,7 @@ With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
 End With
+
 End Sub
+
 

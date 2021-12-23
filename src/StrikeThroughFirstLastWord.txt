@@ -1,0 +1,20 @@
+Sub StrikeThroughFirstLastWord()
+' Paul Beverley - Version 25.10.19
+' Underlines the first and last words of every paragraph
+For Each myPar In ActiveDocument.Paragraphs
+  numWords = myPar.Range.Words.Count
+  If numWords < 4 Then
+    myPar.Range.Font.StrikeThrough = True
+  Else
+    myPar.Range.Words(1).Font.StrikeThrough = True
+    If myPar.Range.Words(numWords - 1) = "-" Then
+      myPar.Range.Words(numWords - 2).Font.StrikeThrough = True
+    Else
+      myPar.Range.Words(numWords - 1).Font.StrikeThrough = True
+    End If
+  End If
+Next myPar
+Beep
+End Sub
+
+

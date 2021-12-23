@@ -1,0 +1,10 @@
+Sub ParaDelete()
+' Paul Beverley - Version 29.10.21
+' Deletes the current paragraph
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+rng.Delete
+End Sub
+
+

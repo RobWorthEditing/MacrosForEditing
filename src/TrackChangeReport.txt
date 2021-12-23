@@ -1,0 +1,32 @@
+Sub TrackChangeReport()
+' Paul Beverley - Version 27.02.18
+' Creates a file of sentences containing TCs
+
+mySpace = vbCr & vbCr
+ActiveDocument.TrackRevisions = False
+Set sourceText = ActiveDocument
+Documents.Add
+Set myReport = ActiveDocument
+Set rptRng = ActiveDocument.Content
+sntEnd = 0
+For Each rv In sourceText.Revisions
+  If rv.Range.End > sntEnd Then
+    Set rng = rv.Range.Duplicate
+    rng.Expand wdSentence
+    rptRng.FormattedText = rng.FormattedText
+    rptRng.Collapse wdCollapseEnd
+    rptRng.InsertAfter Text:=mySpace
+    rptRng.Collapse wdCollapseEnd
+    rng.Collapse wdCollapseEnd
+    sntEnd = rng.End
+  End If
+Next rv
+myReport.Activate
+Selection.HomeKey Unit:=wdStory
+myFileName = Left(sourceText.Name, InStr(sourceText.Name, ".") - 1)
+Selection.TypeText myFileName & mySpace
+ActiveDocument.Paragraphs(1).Range.Style = wdStyleHeading2
+Selection.MoveLeft , 2
+End Sub
+
+

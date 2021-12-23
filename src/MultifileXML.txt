@@ -1,0 +1,113 @@
+Sub MultifileXML()
+' Paul Beverley - Version 01.09.21
+' Save a folder full of files as XMLs
+
+showTrackChanges = True
+
+XMLFilesInFolder = True
+XMLFolderName = "XML"
+
+Dim allMyFiles(200) As String
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  myResponse = MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "Multifile Text Collection")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.Count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+  
+  If XMLFilesInFolder = True Then
+    mySubFolder = "\" & XMLFolderName
+  Else
+    mySubFolder = ""
+  End If
+  myResponse = MsgBox("Save XMLs of ALL the files in this folder: " & mySubFolder & dirName _
+       & " ?", vbQuestion + vbYesNoCancel, "Multifile XML Writer")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.Range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+If XMLFilesInFolder = True Then
+  myResponse = MsgBox("Save XMLs of just the files listed here, in this folder: " & _
+       mySubFolder & myFolder & " ?", _
+       vbQuestion + vbYesNoCancel, "Multifile XML Writer")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+For i = 1 To numFiles
+  thisName = allMyFiles(i)
+  myFileType = Mid(thisName, InStr(thisName, "."))
+  justName = Replace(thisName, myFileType, "")
+  thisFile = myFolder & myDelimiter & thisName
+  Set myDoc = Application.Documents.Open(FileName:=thisFile)
+  StatusBar = allMyFiles(i)
+  If XMLFilesInFolder = True Then
+    justName = XMLFolderName & "\" & justName & ".xml"
+  End If
+  DoEvents
+  ActiveDocument.SaveAs2 FileName:=justName, FileFormat:= _
+       wdFormatFlatXML, LockComments:=False, Password:="", AddToRecentFiles:= _
+       True, WritePassword:="", ReadOnlyRecommended:=False, EmbedTrueTypeFonts:= _
+       False, SaveNativePictureFormat:=False, SaveFormsData:=False, _
+       SaveAsAOCELetter:=False, CompatibilityMode:=12
+  myDoc.Close SaveChanges:=wdDoNotSaveChanges
+Next
+Selection.HomeKey Unit:=wdStory
+
+MsgBox (numFiles & "  files saved as XML")
+End Sub
+
+

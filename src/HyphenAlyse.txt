@@ -1,5 +1,5 @@
 Sub HyphenAlyse()
-' Paul Beverley - Version 18.01.21
+' Paul Beverley - Version 18.12.21
 ' Creates a frequency list of all possible hyphenations
 
 myList = "anti,cross,eigen,hyper,inter,meta,mid,multi," _
@@ -11,6 +11,7 @@ lighterColour = wdGray25
 ' lighterColour = wdColor50
 
 Dim myResult As String
+On Error GoTo ReportIt
 myList = "," & myList
 myList = Replace(myList, ",,", ",")
 pref = Split(myList, ",")
@@ -31,6 +32,7 @@ Set rng = ActiveDocument.Content
 Documents.Add
 Selection.FormattedText = rng.FormattedText
 Selection.HomeKey Unit:=wdStory
+Application.ScreenUpdating = False
 
 Set rng = ActiveDocument.Content
 With rng.Find
@@ -272,8 +274,6 @@ For i = 1 To myPairs
   If (myPairs - i) Mod 10 = 0 Then
     If doingSeveralMacros = False Then _
          Debug.Print "To go:  ", myPairs - i
-    ActiveDocument.Paragraphs(1).Range.Text = "To go:  " _
-         & myPairs - i & vbCr
   End If
   If Len(thisFind) > 8 Then myResult = myResult & "%" & _
        wd & "%" & thisFind & "!"
@@ -310,7 +310,7 @@ Selection.End = ActiveDocument.Range.End
 Selection.ConvertToTable Separator:=wdSeparateByTabs
 
 Set tb = ActiveDocument.Tables(1)
-For i = 1 To tb.Rows.Count
+For i = 1 To tb.Rows.count
   num = 0
   For j = 1 To 4
     If Len(tb.Cell(i, j).Range.Text) > 2 Then num = num + 1
@@ -323,7 +323,7 @@ For i = 1 To tb.Rows.Count
 Next i
 
 Set tb = ActiveDocument.Tables(1)
-For i = 1 To tb.Rows.Count
+For i = 1 To tb.Rows.count
   For j = 1 To 4
     hyphPos = 0
     txt = tb.Cell(i, j).Range.Text
@@ -346,7 +346,7 @@ For i = 1 To tb.Rows.Count
   Next j
 Next i
 
-For i = 1 To tb.Rows.Count
+For i = 1 To tb.Rows.count
     s = 0
     If Len(tb.Cell(i, 1).Range.Text) > 2 Then s = s + 1
     If Len(tb.Cell(i, 3).Range.Text) > 2 Then s = s + 1
@@ -408,6 +408,7 @@ End If
 Selection.HomeKey Unit:=wdStory
 
 timNow = Timer
+Application.ScreenUpdating = True
 
 If doingSeveralMacros = False Then
   timGone = timNow - strttime
@@ -421,11 +422,17 @@ If doingSeveralMacros = False Then
   timeAll = "Time:  " & Trim(Str(m)) & " m " & _
        Trim(Str(s)) & " s"
   Selection.HomeKey Unit:=wdStory
-  numPairs = ActiveDocument.Tables(1).Rows.Count
+  numPairs = ActiveDocument.Tables(1).Rows.count
   MsgBox "Items:  " & Trim(Str(numPairs)) & vbCr & vbCr _
        & timeAll
 Else
   FUT.Activate
 End If
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
 

@@ -1,0 +1,15 @@
+Sub InitialCapWord()
+' Paul Beverley - Version 18.09.15
+' Initial capital word at cursor
+
+Selection.Expand wdWord
+If UCase(Selection) = Selection Then
+  Selection.Range.Case = wdLowerCase
+  Selection.Range.Characters(1).Case = wdUpperCase
+  Selection.Collapse wdCollapseEnd
+Else
+  Selection.Range.Case = wdUpperCase
+End If
+End Sub
+
+

@@ -1,25 +1,31 @@
 Sub PunctuationToMinus()
-' Paul Beverley - Version 26.03.14
+' Paul Beverley - Version 21.11.21
 ' Finds punctuation and changes to minus sign
 
-trackIt = False
+trackit = False
 
 myChar = ChrW(8722)
-myTrack = ActiveDocument.TrackRevisions
-If trackIt = False Then ActiveDocument.TrackRevisions = False
 
-searchChars = "-" & ChrW(8211) & ChrW(8212) & Chr(30)
-Selection.End = Selection.Start
-While InStr(searchChars, Selection) = 0
-  Selection.MoveRight , 1
-Wend
-Selection.MoveEnd wdCharacter, 1
-isSuper = (Selection.Font.Superscript)
-Selection.Delete
-Selection.TypeText Text:=myChar
-If isSuper = True Then
-  Selection.MoveStart , -1
-  Selection.Font.Superscript = True
+searchChars = "-" & ChrW(8711) & ChrW(8712) & Chr(30)
+
+myTrack = ActiveDocument.TrackRevisions
+If trackit = False Then ActiveDocument.TrackRevisions = False
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+If Len(rng) > 1000 Then rng.End = rng.Start + 1000
+
+For Each ch In rng.Characters
+  If InStr(searchChars, ch.Text) > 0 Then
+    ch.Select
+    gotChar = True
+    Exit For
+  Else
+  End If
+Next ch
+If gotChar = False Then
+  Beep
+Else
+  Selection.TypeText Text:=myChar
 End If
 ActiveDocument.TrackRevisions = myTrack
 End Sub

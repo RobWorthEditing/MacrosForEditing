@@ -1,0 +1,10 @@
+Sub VariablesDeleteAll()
+' Paul Beverley - Version 31.08.11
+' Delete all variables
+
+For Each v In ActiveDocument.Variables
+ v.Delete
+Next v
+End Sub
+
+

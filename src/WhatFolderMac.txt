@@ -1,0 +1,16 @@
+Sub WhatFolderMac()
+' Paul Beverley - Version 10.02.21
+' Loads the clipboard with the address of folder of this file
+
+myPath = ActiveDocument.Path
+myPath = Replace(myPath, "Macintosh HD", "")
+myPath = Replace(myPath, ":", "/")
+Documents.Add
+Selection.TypeText Text:=myPath
+Selection.WholeStory
+Selection.Copy
+Selection.Collapse wdCollapseEnd
+ActiveDocument.Close SaveChanges:=False
+End Sub
+
+

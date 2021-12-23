@@ -1,0 +1,25 @@
+Sub FindSamePageLine()
+' Paul Beverley - Version 17.12.12
+' Find the same place in another file by page and line
+
+matchNameChars = 6
+Selection.Collapse wdCollapseEnd
+myPage = Selection.Information(wdActiveEndAdjustedPageNumber)
+myLine = Selection.Information(wdFirstCharacterLineNumber)
+Set firstDoc = ActiveDocument
+firstDocPartName = Left(firstDoc.Name, matchNameChars)
+For Each myWnd In Application.Windows
+  Set secondDoc = myWnd.Document
+  If Left(secondDoc.Name, matchNameChars) = firstDocPartName _
+       And secondDoc.Name <> firstDoc.Name Then
+    secondDoc.Activate
+    If myWnd.WindowState = 2 Then myWnd.WindowState = wdWindowStateNormal
+    Selection.GoTo What:=wdGoToPage, Count:=myPage
+    Selection.MoveDown Unit:=wdLine, Count:=myLine
+    Selection.MoveUp Unit:=wdLine, Count:=1, Extend:=wdExtend
+    Exit Sub
+  End If
+Next myWnd
+End Sub
+
+

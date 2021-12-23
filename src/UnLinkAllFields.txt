@@ -1,0 +1,42 @@
+Sub UnLinkAllFields()
+' Paul Beverley - Version 30.10.12
+' Unlinks all fields and hyperlinks
+
+' First the main text
+linksHere = ActiveDocument.Fields.Count + ActiveDocument.Hyperlinks.Count
+linksTotal = linksHere
+watchOUT = False
+If linksHere > 0 Then
+  For Each fld In ActiveDocument.Fields
+    If fld.Type = 58 Then watchOUT = True
+  Next fld
+  If watchOUT = False Then
+    Selection.WholeStory
+    Selection.Fields.Unlink
+  Else
+    MsgBox "Beware! Equations present!" & vbCr & vbCr & _
+         "Use the FieldsUnlink macro instead."
+    Exit Sub
+  End If
+End If
+
+' then the endnotes, if there are any
+If ActiveDocument.Endnotes.Count > 0 Then
+  linksHere = ActiveDocument.StoryRanges(wdEndnotesStory).Fields.Count
+  linksTotal = linksTotal + linksHere
+  ActiveDocument.StoryRanges(wdEndnotesStory).Select
+  Selection.Fields.Unlink
+End If
+
+' then the footnotes, if there are any
+If ActiveDocument.Footnotes.Count > 0 Then
+  linksHere = ActiveDocument.StoryRanges(wdFootnotesStory).Fields.Count
+  linksTotal = linksTotal + linksHere
+  ActiveDocument.StoryRanges(wdFootnotesStory).Select
+  Selection.Fields.Unlink
+End If
+
+MsgBox ("Fields unlinked: " & Str(linksTotal))
+End Sub
+
+

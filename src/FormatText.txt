@@ -1,0 +1,36 @@
+Sub FormatText()
+' Paul Beverley - Version 15.10.21
+' Formats a word/selection of whole words
+
+myFont = "Arial"
+' myFont = ""
+mySize = 14
+' mySize = 0
+myItalic = True
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.Start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Start = startNow
+End If
+
+If myFont <> "" Then Selection.Font.Name = myFont
+If mySize > 0 Then Selection.Font.Size = mySize
+If myItalic = True Then Selection.Font.Italic = True
+Selection.Collapse wdCollapseEnd
+End Sub
+
+

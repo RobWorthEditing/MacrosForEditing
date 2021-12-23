@@ -1,8 +1,7 @@
 Sub CommentAdder()
-' Paul Beverley - Version 14.05.21
+' Paul Beverley - Version 02.11.21
 ' Adds a comment off a menu
 
-useCommentPane = True
 useCommentPane = False
 paneZoom = 240
 
@@ -21,11 +20,11 @@ maxLen = 100
 cm = "Start\"
 cm = cm & ",Dummy\"
 cm = cm & "l '[]' is not in the references list.\"
-cm = cm & "L '[]' is not in the references list. (But '[]|', is.)\"
+cm = cm & "L AU: '[]' is not in the references list. (But '[]|', is.)\"
 cm = cm & "c '[]' - Not cited in the text.\"
 cm = cm & "h '[]' - Have I caught the intended meaning?\"
 cm = cm & "r '[]' - Will the readers know what this means? If so, fine.\"
-cm = cm & "R '[]' - Will readers know what '|' refers to? If so, that's fine.\"
+cm = cm & "R AU: '[]' - Will readers know what '|' refers to? If so, that's fine.\"
 cm = cm & "s '[]' - Sorry, but I can't work out the intended meaning here. Is it something like '[]|'?\"
 
 maxLenPrompt = 100
@@ -50,6 +49,8 @@ If useDoubleQuotes = True Then
   cm = Replace(cm, ",'", "," & ChrW(8220))
   cm = Replace(cm, "' ", ChrW(8221) & " ")
   cm = Replace(cm, "'", ChrW(8221))
+  cm = Replace(cm, ChrW(8221) & "r", ChrW(8217) & "r")
+  cm = Replace(cm, ChrW(8221) & "m", ChrW(8217) & "m")
   cm = Replace(cm, ChrW(8221) & "t", ChrW(8217) & "t")
   cm = Replace(cm, ChrW(8221) & "s", ChrW(8217) & "s")
 Else
@@ -162,8 +163,5 @@ Else
   Application.ActiveWindow.View.Zoom.Percentage = paneZoom
 End If
 End Sub
-
-
-
 
 

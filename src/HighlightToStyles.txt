@@ -1,0 +1,40 @@
+Sub HighlightToStyles()
+' Paul Beverley - Version 03.08.21
+' Finds highlighted text and does things to each colour
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  For Each ch In rng.Characters
+    Select Case ch.HighlightColorIndex
+      Case wdBrightGreen
+          ch.Bold = True
+      Case wdYellow
+          ch.Italic = True
+      Case wdTurquoise
+          ch.Style = ActiveDocument.Styles("HTML sample")
+    DoEvents
+    End Select
+
+  Next ch
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Beep
+End Sub
+
+

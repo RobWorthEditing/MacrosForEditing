@@ -1,0 +1,11 @@
+Sub SplitLine()
+' Paul Beverley - Version 09.06.20
+' Splits an email
+
+Selection.TypeText Text:=vbCr & vbCr & vbCr & vbCr & vbCr & ">"
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Selection.MoveLeft , 3
+End Sub
+
+

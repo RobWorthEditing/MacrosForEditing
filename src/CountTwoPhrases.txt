@@ -1,0 +1,422 @@
+Sub CountTwoPhrases()
+' Paul Beverley - Version 28.09.20
+' Counts this and that word or phrase
+' Ben Dare, based on  PB's CountPhrase
+
+''original CountPhrase
+doFormatCount = True
+doCountWhole = True
+limitTimeSpent = True
+maxTime = 10
+
+old2Find = Selection.Find.Text
+old2Replace = Selection.Find.Replacement.Text
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+If limitTimeSpent = True Then
+  myTime = Timer
+Else
+  myTime = Timer + 999
+End If
+
+
+' If nothing is selected, select the current word
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Selection.MoveEndWhile cset:=ChrW(8217) & "' ", Count:=wdBackward
+End If
+
+oldStart = Selection.Start
+oldEnd = Selection.End
+
+thisBit = Trim(Selection)
+thisBit = Replace(thisBit, "^", "^^")
+thisBit = Replace(thisBit, Chr(13), "^p")
+If Right(thisBit, 1) = ChrW(8217) Then thisBit _
+     = Left(thisBit, Len(thisBit) - 1)
+CR = vbCr: CR2 = CR & CR
+
+' Find whether we're in a footnote
+InANote = Selection.Information(wdInFootnote)
+
+If InANote = True Then
+  lineJump = 0
+  Do
+    Selection.MoveUp Unit:=wdLine, Count:=1
+    lineJump = lineJump + 1
+  Loop Until Selection.Information(wdInFootnote) = False
+  oldStart = Selection.Start
+  oldEnd = Selection.Start
+End If
+Selection.HomeKey Unit:=wdStory
+Set rng = ActiveDocument.Content
+myTot = ActiveDocument.Range.End
+' Count all occurences
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = thisBit
+  .MatchCase = False
+  .Replacement.Text = "^& "
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+allCount = ActiveDocument.Range.End - myTot
+If allCount > 0 Then WordBasic.EditUndo
+
+nts = ""
+' Are there any footnotes?
+If ActiveDocument.Footnotes.Count > 0 Then
+  nts = ActiveDocument.StoryRanges(wdFootnotesStory)
+End If
+If ActiveDocument.Endnotes.Count > 0 Then
+  nts = nts & ActiveDocument.StoryRanges(wdEndnotesStory)
+  nts = Replace(nts, Chr(2), "")
+End If
+
+If Len(nts) > 0 Then
+  lcNts = LCase(nts)
+  lcBit = LCase(thisBit)
+  lnWas = Len(nts)
+  lnNow = Len(Replace(lcNts, lcBit, lcBit & "!"))
+  allCount = allCount + lnNow - lnWas
+End If
+myText = "All:" & Str(allCount) & CR
+
+If Timer > myTime + maxTime Then
+  myText = myText & CR & "Time out!"
+  GoTo printResult
+End If
+
+' Count case sensitively
+With rng.Find
+  .MatchCase = True
+  .Execute Replace:=wdReplaceAll
+End With
+caseCount = ActiveDocument.Range.End - myTot
+If caseCount > 0 Then WordBasic.EditUndo
+
+' Now notes, if any
+If Len(nts) > 0 Then
+  lnNow = Len(Replace(nts, thisBit, thisBit & "!"))
+  caseCount = caseCount + lnNow - lnWas
+End If
+
+myText = myText & "Case sensitive:" & Str(caseCount) & CR
+
+If Timer > myTime + maxTime Then
+  myText = myText & CR & "Time out!"
+  GoTo printResult
+End If
+
+If doFormatCount = True Then
+  ' Count bold italic
+  With rng.Find
+    .ClearFormatting
+    .MatchCase = False
+    .Font.Italic = True
+    .Font.Bold = True
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  biCount = ActiveDocument.Range.End - myTot
+  If biCount > 0 Then
+    WordBasic.EditUndo
+    myText = myText & "Bold italic (main text only):" & Str(biCount) & CR
+  End If
+
+  ' Count italic
+  With rng.Find
+    .ClearFormatting
+    .MatchCase = False
+    .Font.Italic = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  iCount = ActiveDocument.Range.End - myTot
+  If iCount > 0 Then
+    WordBasic.EditUndo
+    myText = myText & "Italic (main text only):" & Str(iCount - biCount) & CR
+  End If
+
+  ' Count bold
+  With rng.Find
+    .ClearFormatting
+    .Font.Bold = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  bCount = ActiveDocument.Range.End - myTot
+  If bCount > 0 Then
+    WordBasic.EditUndo
+    myText = myText & "Bold (main text only):" & Str(bCount - biCount) & CR
+  End If
+End If
+
+If Timer > myTime + maxTime Then
+  myText = myText & CR & "Time out!"
+  GoTo printResult
+End If
+
+If doCountWhole = True Then
+  ' Count as whole words (case sensitive)
+  thisBit = Replace(thisBit, "(", "\(")
+  thisBit = Replace(thisBit, ")", "\)")
+  thisBit = Replace(thisBit, "^p", "^13")
+  
+  ' Add text of the notes at the end of main text
+  If Len(nts) > 0 Then
+    Selection.EndKey Unit:=wdStory
+    Selection.TypeText Text:=""
+  End If
+  
+  Set rng = ActiveDocument.Content
+  myTot = ActiveDocument.Range.End
+  With rng.Find
+    .ClearFormatting
+    .Text = "[!a-zA-Z]" & thisBit & "[!a-zA-Z]"
+    .Replacement.Text = "^& "
+    .MatchWholeWord = False
+    .MatchCase = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  wholeWdCaseCount = ActiveDocument.Range.End - myTot
+  If wholeWdCaseCount > 0 Then
+    WordBasic.EditUndo
+    myText = myText & "Whole words (case sensitive):" & _
+         Str(wholeWdCaseCount) & CR
+  End If
+  With rng.Find
+    .ClearFormatting
+    .Text = ""
+    .Replacement.Text = ""
+    .MatchWholeWord = False
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+
+' Start of second phrase
+thatBit = InputBox("Second word/phrase?", selText)
+thatBit = Replace(thatBit, "^", "^^")
+thatBit = Replace(thatBit, Chr(13), "^p")
+If Right(thatBit, 1) = ChrW(8217) Then thatBit _
+     = Left(thatBit, Len(thatBit) - 1)
+CR = vbCr: CR2 = CR & CR
+
+' Find whether we're in a footnote
+InANote = Selection.Information(wdInFootnote)
+
+If InANote = True Then
+  lineJump = 0
+  Do
+    Selection.MoveUp Unit:=wdLine, Count:=1
+    lineJump = lineJump + 1
+  Loop Until Selection.Information(wdInFootnote) = False
+  oldStart = Selection.Start
+  oldEnd = Selection.Start
+End If
+Selection.HomeKey Unit:=wdStory
+Set rng = ActiveDocument.Content
+myTot = ActiveDocument.Range.End
+' Count all occurences
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = thatBit
+  .MatchCase = False
+  .Replacement.Text = "^& "
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+allCount = ActiveDocument.Range.End - myTot
+If allCount > 0 Then WordBasic.EditUndo
+
+nts = ""
+' Are there any footnotes?
+If ActiveDocument.Footnotes.Count > 0 Then
+  nts = ActiveDocument.StoryRanges(wdFootnotesStory)
+End If
+If ActiveDocument.Endnotes.Count > 0 Then
+  nts = nts & ActiveDocument.StoryRanges(wdEndnotesStory)
+  nts = Replace(nts, Chr(2), "")
+End If
+
+If Len(nts) > 0 Then
+  lcNts = LCase(nts)
+  lcBit = LCase(thatBit)
+  lnWas = Len(nts)
+  lnNow = Len(Replace(lcNts, lcBit, lcBit & "!"))
+  allCount = allCount + lnNow - lnWas
+End If
+my2Text = "All:" & Str(allCount) & CR
+
+If Timer > myTime + maxTime Then
+  my2Text = my2Text & CR & "Time out!"
+  GoTo printResult
+End If
+
+' Count case sensitively
+With rng.Find
+  .MatchCase = True
+  .Execute Replace:=wdReplaceAll
+End With
+caseCount = ActiveDocument.Range.End - myTot
+If caseCount > 0 Then WordBasic.EditUndo
+
+' Now notes, if any
+If Len(nts) > 0 Then
+  lnNow = Len(Replace(nts, thatBit, thatBit & "!"))
+  caseCount = caseCount + lnNow - lnWas
+End If
+
+my2Text = my2Text & "Case sensitive:" & Str(caseCount) & CR
+
+If Timer > myTime + maxTime Then
+  my2Text = my2Text & CR & "Time out!"
+  GoTo printResult
+End If
+
+If doFormatCount = True Then
+  ' Count bold italic
+  With rng.Find
+    .ClearFormatting
+    .MatchCase = False
+    .Font.Italic = True
+    .Font.Bold = True
+    .Execute Replace:=wdReplaceAll
+  End With
+
+  biCount = ActiveDocument.Range.End - myTot
+  If biCount > 0 Then
+    WordBasic.EditUndo
+    my2Text = my2Text & "Bold italic (main text only):" & Str(biCount) & CR
+  End If
+
+  ' Count italic
+  With rng.Find
+    .ClearFormatting
+    .MatchCase = False
+    .Font.Italic = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  iCount = ActiveDocument.Range.End - myTot
+  If iCount > 0 Then
+    WordBasic.EditUndo
+    my2Text = my2Text & "Italic (main text only):" & Str(iCount - biCount) & CR
+  End If
+
+  ' Count bold
+  With rng.Find
+    .ClearFormatting
+    .Font.Bold = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  bCount = ActiveDocument.Range.End - myTot
+  If bCount > 0 Then
+    WordBasic.EditUndo
+    my2Text = my2Text & "Bold (main text only):" & Str(bCount - biCount) & CR
+  End If
+End If
+
+If Timer > myTime + maxTime Then
+  my2Text = my2Text & CR & "Time out!"
+  GoTo printResult
+End If
+
+If doCountWhole = True Then
+  ' Count as whole words (case sensitive)
+  thatBit = Replace(thatBit, "(", "\(")
+  thatBit = Replace(thatBit, ")", "\)")
+  thatBit = Replace(thatBit, "^p", "^13")
+  
+  ' Add text of the notes at the end of main text
+  If Len(nts) > 0 Then
+    Selection.EndKey Unit:=wdStory
+    Selection.TypeText Text:=""
+  End If
+  
+  Set rng = ActiveDocument.Content
+  myTot = ActiveDocument.Range.End
+  With rng.Find
+    .ClearFormatting
+    .Text = "[!a-zA-Z]" & thatBit & "[!a-zA-Z]"
+    .Replacement.Text = "^& "
+    .MatchWholeWord = False
+    .MatchCase = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  wholeWdCaseCount = ActiveDocument.Range.End - myTot
+  If wholeWdCaseCount > 0 Then
+    WordBasic.EditUndo
+    my2Text = my2Text & "Whole words (case sensitive):" & _
+         Str(wholeWdCaseCount) & CR
+  End If
+  With rng.Find
+    .ClearFormatting
+    .Text = ""
+    .Replacement.Text = ""
+    .MatchWholeWord = False
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+
+printResult:
+Selection.End = oldStart
+Selection.MoveRight Unit:=wdCharacter, Count:=1
+Selection.Start = oldStart
+Selection.End = oldEnd
+
+If InANote = True Then
+  Selection.MoveDown Unit:=wdLine, Count:=lineJump
+End If
+
+'''msgBox original CountPhrase (for reference)
+'myText = "Word searched:  " & thisBit & CR2 & myText
+'MsgBox myText, 0, "CountPhrase"
+'With Selection.Find
+' .Text = oldFind
+' .Replacement.Text = oldReplace
+' .MatchWildcards = False
+'End With
+
+''' msbBox for 2nd phrase (for reference)
+'my2Text = "Word searched:  " & thatBit & CR2 & my2Text
+'MsgBox my2Text, 0, "CountTwoPhrases"
+'With Selection.Find
+' .Text = old2Find
+' .Replacement.Text = old2Replace
+' .MatchWildcards = False
+'End With
+'ActiveDocument.TrackRevisions = myTrack
+
+''new message box combined
+myText = "Word searched:  " & thisBit & CR2 & myText
+my2Text = "Word searched:  " & thatBit & CR2 & my2Text
+MsgBox myText & CR2 & my2Text, 0, "CountTwoPhrases"
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchWildcards = False
+End With
+With Selection.Find
+  .Text = old2Find
+  .Replacement.Text = old2Replace
+  .MatchWildcards = False
+End With
+'' back to new element for second word/phrsae
+
+
+ActiveDocument.TrackRevisions = myTrack
+
+
+End Sub
+
+

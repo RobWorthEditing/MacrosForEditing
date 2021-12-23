@@ -1,0 +1,48 @@
+Sub AuthorSurnameSwap()
+' Paul Beverley - Version 19.05.21
+' Moves author surname in a list to the beginning of the line
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdParagraph
+  Selection.Collapse wdCollapseEnd
+  Selection.MoveLeft , 1
+  Selection.MoveLeft wdWord, 1, Extend:=wdExtend
+  Selection.Cut
+  Selection.MoveStart , -1
+  Selection.Delete
+  Selection.Expand wdParagraph
+  Selection.Collapse wdCollapseStart
+  Selection.Paste
+  Selection.TypeText Text:=", "
+  Selection.Expand wdParagraph
+  Selection.Collapse wdCollapseEnd
+Else
+  Selection.Cut
+  Selection.Expand wdParagraph
+  hasComma = (InStr(Selection, ",") > 0)
+  Selection.Collapse wdCollapseStart
+  Selection.Paste
+  
+  If Right(Selection, 1) = " " Then Selection.MoveLeft , 1
+  Selection.TypeText Text:=", "
+  Selection.Expand wdParagraph
+  spPos = InStr(Selection, " ,")
+  If hasComma Then
+    If spPos > 0 Then Selection.MoveStart , spPos - 1
+    Selection.Collapse wdCollapseStart
+    Selection.MoveEnd , 1
+    Selection.Delete
+  End If
+  Selection.Expand wdParagraph
+  If Left(Right(Selection, 2), 1) = " " Then
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveLeft , 2
+    Selection.MoveEnd , 1
+    Selection.Delete
+    Selection.MoveRight , 1
+  End If
+  Selection.Collapse wdCollapseEnd
+End If
+End Sub
+
+

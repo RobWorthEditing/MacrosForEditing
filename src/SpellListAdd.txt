@@ -1,0 +1,18 @@
+Sub SpellListAdd()
+' Paul Beverley - Version 03.06.11 modified Version 28.11.11
+' Take current word and add to FRedit list
+' Alt - L
+
+' Select current word
+Selection.Expand wdWord
+Selection.MoveEndWhile cset:=ChrW(8217) & "' ", Count:=wdBackward
+theWord = Trim(Selection)
+Selection.Start = Selection.End
+
+Selection.TypeText "[[["
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText theWord & "|" & theWord & vbCr
+End Sub
+
+

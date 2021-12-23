@@ -1,0 +1,38 @@
+Sub GreekHighlighter()
+' Paul Beverley - Version 05.11.17
+' Finds unicode Greek sections of text and highlights them
+
+myForeign = "[" & ChrW(913) & "-" & ChrW(980) & "]"
+myEnglishChars = "[A-Za-z]"
+notTheseChars = vbCr & Chr(11) & " " & Chr(160)
+
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myForeign
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While Selection.Find.Found = True
+  myStart = Selection.Start
+  Selection.Collapse wdCollapseEnd
+  Selection.Find.Text = myEnglishChars
+  Selection.Find.Execute
+  myEnd = Selection.End
+  Selection.Collapse wdCollapseStart
+  Selection.MoveStartWhile cset:=notTheseChars, Count:=wdBackward
+  Selection.Collapse wdCollapseStart
+  Selection.Start = myStart
+  Selection.Range.HighlightColorIndex = wdTurquoise
+  Selection.Start = myEnd
+  Selection.Find.Text = myForeign
+  Selection.Find.Execute
+Loop
+End Sub
+
+

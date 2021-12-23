@@ -1,0 +1,12 @@
+Sub DraftViewToggle()
+' Paul Beverley - Version 05.12.18
+' Switches between draft view and print view
+
+If ActiveWindow.ActivePane.View.Type = wdPrintView Then
+  ActiveWindow.ActivePane.View.Type = wdNormalView
+Else
+  ActiveWindow.View.Type = wdPrintView
+End If
+End Sub
+
+

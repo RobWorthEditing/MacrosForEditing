@@ -1,0 +1,25 @@
+Sub CopySelectedForCompare()
+' Paul Beverley - Version 23.10.21
+' Copies the selected text to a specified file
+
+myFile = "aaTempFile.docx"
+
+Set mainFile = ActiveDocument
+If Selection.Start = Selection.End Then
+  Beep
+  myResponse = MsgBox("Work with me! Select some text first. :-)", _
+  , "CopySelectedForCompare")
+  Exit Sub
+End If
+
+Selection.Copy
+
+Documents.Open FileName:=myFile
+Selection.WholeStory
+Selection.Delete
+Selection.Paste
+mainFile.Activate
+Beep
+End Sub
+
+

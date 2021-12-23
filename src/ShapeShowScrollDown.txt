@@ -1,0 +1,31 @@
+Sub ShapeShowScrollDown()
+' Paul Beverley - Version 30.08.17
+' Makes all shapes clearly visible
+
+If Selection.Bookmarks.Exists("myScrollMark") Then _
+     ActiveDocument.Bookmarks("myScrollMark").Delete
+ActiveDocument.ActiveWindow.LargeScroll down:=1
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+ActiveDocument.Bookmarks.Add Name:="myScrollMark"
+Selection.WholeStory
+
+Exit Sub
+
+ActiveDocument.Bookmarks.Add Name:="myScrollTop"
+ActiveDocument.ActiveWindow.LargeScroll down:=1
+ActiveDocument.Bookmarks.Add Name:="myScrollBottom"
+Selection.Expand wdCharacter
+'Selection.MoveRight , 1
+Selection.WholeStory
+
+Exit Sub
+
+Application.ScreenUpdating = False
+Selection.EndKey Unit:=wdStory
+wasSelected.Select
+Application.ScreenUpdating = True
+ActiveDocument.ActiveWindow.LargeScroll down:=1
+End Sub
+
+

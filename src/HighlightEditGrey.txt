@@ -1,0 +1,13 @@
+Sub HighlightEditGrey()
+' Paul Beverley - Version 06.09.13
+' Highlight current edit in light grey
+
+ActiveDocument.TrackRevisions = False
+Application.Run MacroName:="PreviousChangeOrComment"
+Selection.Range.HighlightColorIndex = wdGray25
+Selection.Collapse wdCollapseEnd
+ActiveDocument.TrackRevisions = True
+
+End Sub
+
+

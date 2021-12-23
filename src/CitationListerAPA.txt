@@ -1,0 +1,400 @@
+Sub CitationListerAPA()
+' Paul Beverley - Version 04.07.20
+' Create a list of all citations
+
+ignoreFootnotes = False
+
+allowInitials = False
+
+bannedWords = "January,February,March,April,June,July,August,"
+bannedWords = bannedWords & "September,October,November,December"
+
+allPrefs = " van der de den da le la dos and "
+' prepreList = "van de al " ' for things like van der Waals or de la Rue
+
+Dim myList As String
+Dim myCite As String
+totWords = ActiveDocument.Words.Count
+  
+Set rng = ActiveDocument.Content
+endDoc = rng.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{4}"
+  .Wrap = wdFindContinue
+  .Font.Underline = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute
+End With
+
+If rng.Find.Found = False Then
+  myResponse = MsgBox("If there's a reference list, is the text underlined?", _
+      vbQuestion + vbYesNoCancel, "Citation Lister")
+ If myResponse <> vbYes Then Exit Sub
+End If
+
+Set mainDoc = ActiveDocument
+Selection.WholeStory
+Selection.HomeKey Unit:=wdStory
+gotFoots = (ActiveDocument.Footnotes.Count > 0)
+gotEnds = (ActiveDocument.Endnotes.Count > 0)
+DoEvents
+
+' Create list document
+Documents.Add
+Set listDoc = ActiveDocument
+Selection.FormattedText = mainDoc.Content.FormattedText
+DoEvents
+
+' Pick up text of foot/endnotes
+If gotFoots = True And ignoreFootnotes = False Then
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText vbCr
+  Selection.FormattedText = _
+       mainDoc.StoryRanges(wdFootnotesStory).FormattedText
+End If
+If gotEnds = True Then
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText vbCr
+  Selection.FormattedText = _
+       mainDoc.StoryRanges(wdEndnotesStory).FormattedText
+End If
+DoEvents
+
+' Ignore underlined text
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+Set rng = ActiveDocument.Content
+
+' Avoid double spaces
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "  "
+  .Wrap = wdFindContinue
+  .Replacement.Text = " "
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Avoid page breaks
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^m"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Avoid spaces at line starts
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p "
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Avoid "et al's"
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "et al's"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "et al"
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "et al.'s"
+  .Execute Replace:=wdReplaceAll
+End With
+
+
+Set rng = ActiveDocument.Content
+Documents.Add
+Set tempDoc = ActiveDocument
+Selection.Text = rng.Text
+DoEvents
+Set rng2 = ActiveDocument.Content
+listDoc.Activate
+Selection.WholeStory
+Selection.Delete
+Selection.Text = rng2.Text
+tempDoc.Close SaveChanges:=False
+listDoc.Activate
+
+' Go and find the first occurrence
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[!0-9][0-9]{4}[!0-9]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+' Note where the end of the found item is
+' rng.Select
+  myEnd = rng.End
+  Set rg = rng.Duplicate
+  rg.Collapse wdCollapseStart
+  DoEvents
+  With rg.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "[\( ^13^9][A-Z]"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = False
+    .MatchWildcards = True
+    .Execute
+  End With
+  
+  rg.MoveStart wdCharacter, 1
+  rg.End = myEnd
+  myShortCite = rg
+  lenshort = rg.Words.Count
+  If lenshort = 1 Then GoTo getNext
+  firstWord = Trim(rg.Words(1))
+  If rg.Find.Found = True Then
+    secondWord = Trim(rg.Words(2))
+    hyphenatedSurname = (secondWord = "-")
+  End If
+  rg.Collapse wdCollapseStart
+  With rg.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "[\( ^13^9][A-Z]"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = False
+    .MatchWildcards = True
+    .Execute
+  End With
+' rg.Select
+  rg.MoveStart wdCharacter, 1
+  rg.End = myEnd
+  myLongCite = rg
+  maxLen = 7
+  citeWithInitials = (Len(rg.Words(2)) = 1)
+  If citeWithInitials = True Then initialedCite = rg
+  lenLong = rg.Words.Count
+  If lenLong - lenshort = 1 Then
+    rg.Collapse wdCollapseStart
+    With rg.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "[\( ^13^9][A-Z]"
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .Forward = False
+      .MatchWildcards = True
+      .Execute
+    End With
+    rg.MoveStart wdCharacter, 1
+    rg.End = myEnd
+    myLongCite = rg
+    maxLen = 8
+  End If
+  If InStr(myShortCite, ",") > 0 Then maxLen = maxLen + 1
+  
+  If hyphenatedSurname Then maxLen = maxLen + 2
+' Check the two words before the first surname for 'van', etc,.
+  rg.MoveStart wdWord, -2
+  preWord = rg.Words(2)
+  prepreWord = rg.Words(1)
+  rg.MoveStart wdWord, 2
+ 
+  myCite = myShortCite
+  If InStr(myLongCite, " and ") > 0 Then myCite = myLongCite
+  If InStr(myLongCite, " & ") > 0 Then myCite = myLongCite
+  If InStr(myLongCite, Chr(13)) > 0 Then myCite = myShortCite
+  numWords = rg.Words.Count
+  If numWords > maxLen Then myCite = myShortCite
+  DoEvents
+
+  ' Check for van, der, den, de, etc
+  If myCite = myShortCite Then
+    If numWords > 4 Then
+      preWord = rg.Words(numWords - 4)
+    Else
+      preWord = "blah"
+    End If
+    If numWords > 5 Then
+      prepreWord = rg.Words(numWords - 5)
+    Else
+      prepreWord = "blah"
+    End If
+    If Len(prepreWord) > 1 And InStr(prepreList, LCase(prepreWord)) > 0 Then
+      myCite = prepreWord & preWord & myCite
+    Else
+      If Len(preWord) > 1 And InStr(allPrefs, LCase(preWord)) > 0 Then
+        myCite = preWord & myCite
+      End If
+    End If
+  Else
+    ' check long cite
+    If InStr(prepreList, LCase(prepreWord)) > 0 Then
+      myCite = prepreWord & preWord & myCite
+    Else
+      If InStr(allPrefs, LCase(preWord)) > 0 Then
+        myCite = preWord & myCite
+      End If
+    End If
+  End If
+  rng.Start = rg.Start
+  rng.End = rng.Start
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "[!0-9,][12][0-9]{3}[!0-9]"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  If rng.End - myEnd > 2 Then myCite = myShortCite
+  If citeWithInitials And allowInitials Then myCite = initialedCite
+' Work out if this really is a citation
+  isACite = False
+' It's only a citation if it's fairly short
+  If Len(myCite) - Len(Replace(myCite, " ", "")) < 8 Then isACite = True
+  If InStr(bannedWords, firstWord) > 0 Then isACite = False
+' Is the second word all lowercase (but not 'and' or 'et')?
+  If LCase(secondWord) = secondWord And UCase(secondWord) <> secondWord _
+       And secondWord <> "and" And secondWord <> "et" Then isACite = False
+' Not wanted if it's all numbers
+  If LCase(myCite) = UCase(myCite) Then isACite = False
+' Not wanted if it's too short
+  If Len(myCite) < 9 Then isACite = False
+' No split lines
+  If InStr(myCite, Chr(13)) > 0 Then isACite = False
+  If InStr(myCite, Chr(9)) > 0 Then isACite = False
+' OK then, add it to the list
+  If isACite = True Then myList = myList & myCite & vbCr
+' Go and find the next occurence (if there is one)
+  DoEvents
+
+getNext:
+  rng.Start = myEnd
+  rng.End = myEnd
+  rng.Find.Execute
+  myIndex = myIndex + 1
+  If myIndex Mod 15 = 0 Then
+    StatusBar = "                Done: " & _
+         Trim(Int(myEnd / endDoc * 100)) & "%         " & myCite:
+  End If
+Loop
+
+myList = Replace(myList, ";", "")
+myList = Replace(myList, ":", "")
+myList = Replace(myList, ".", "")
+myList = Replace(myList, ")", "")
+myList = Replace(myList, "(", "")
+myList = Replace(myList, ",", "")
+myList = Replace(myList, "=", "")
+myList = Replace(myList, ChrW(8211), "")
+myList = Replace(myList, ChrW(8212), "")
+myList = Replace(myList, "'s", "")
+myList = Replace(myList, ChrW(8217) & "s", "")
+myList = Replace(myList, "&", "and")
+myList = Replace(myList, " " & vbCr, vbCr)
+myList = Replace(myList, vbCr & "and ", vbCr)
+
+Selection.WholeStory
+Selection.Delete
+Selection.Text = myList
+
+' Replace runs of dates
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "([0-9]{4}) ([0-9]{4}) ([0-9]{4}) ([0-9]{4})"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "\4"
+  .Forward = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .Text = "([0-9]{4}) ([0-9]{4}) ([0-9]{4})"
+  .Replacement.Text = "\3"
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .Text = "([0-9]{4}) ([0-9]{4})"
+  .Replacement.Text = "\2"
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .Text = "([0-9]{4}) and ([0-9]{4})"
+  .Replacement.Text = "\2"
+  .Execute Replace:=wdReplaceAll
+End With
+DoEvents
+
+Selection.WholeStory
+Selection.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+
+' Remove duplicates
+For j = ActiveDocument.Paragraphs.Count To 2 Step -1
+  Set rng1 = ActiveDocument.Paragraphs(j).Range
+  Set rng2 = ActiveDocument.Paragraphs(j - 1).Range
+  If rng1 = rng2 Then rng1.Delete
+  StatusBar = "Lines to go: " & Str(j)
+  DoEvents
+Next j
+Set rng = ActiveDocument.Content
+mainDoc.Activate
+Selection.EndKey Unit:=wdStory
+listStart = Selection.Start
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Selection.Text = rng.Text
+Selection.Start = listStart
+Selection.Font.Underline = False
+ActiveDocument.TrackRevisions = myTrack
+Selection.End = listStart
+StatusBar = "           "
+With Selection.Find
+  .Text = "References"
+  .Replacement.Text = ""
+End With
+listDoc.Close SaveChanges:=False
+mainDoc.Activate
+Beep
+End Sub
+
+

@@ -1,0 +1,18 @@
+Sub PluraliseDE()
+' Paul Beverley - Version 23.05.21
+' Toggles the ending plural/singular
+
+Selection.Expand wdWord
+Selection.Start = Selection.End - 4
+myText = Selection.Text
+If InStr(myText, "em") > 0 Then
+  Selection.Text = Replace(myText, "em", "en")
+Else
+  Selection.Text = Replace(myText, "en", "em")
+End If
+
+If Selection.Text = myText Then Beep
+Selection.Collapse wdCollapseStart
+End Sub
+
+

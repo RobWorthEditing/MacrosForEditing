@@ -1,0 +1,53 @@
+Sub DisplayHighlighterBack()
+' Paul Beverley - Version 01.08.18
+' Highlights next word in a display file
+
+displayFile = "zzDisplay"
+myColour = wdYellow
+
+Set nowDoc = ActiveDocument.ActiveWindow
+
+' Go and look for the list file
+gottaList = False
+For i = 1 To Application.Windows.Count
+  If InStr(Application.Windows(i).Document.Name, _
+       displayFile) > 0 Then
+    Set dispDoc = Application.Windows(i).Document
+    gottaList = True
+    Exit For
+  End If
+Next i
+If gottaList = False Then
+  MsgBox ("Couldn't find file: " & displayFile)
+  Exit Sub
+Else
+  dispDoc.Activate
+End If
+
+' Find highlighted text
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Execute
+End With
+If Selection.Find.Found = False Or Len(Selection) < 3 Then
+  Selection.HomeKey Unit:=wdStory
+  Selection.MoveEndUntil cset:=" ", Count:=wdForward
+  Selection.Range.HighlightColorIndex = myColour
+Else
+  Selection.MoveEndWhile cset:=" ", Count:=wdBackward
+  Selection.Range.HighlightColorIndex = wdNoHighlight
+  Selection.Collapse wdCollapseStart
+  Selection.MoveEndUntil cset:=" ", Count:=wdBackward
+  Selection.MoveEndWhile cset:=" ", Count:=wdBackward
+  Selection.MoveStartUntil cset:=" ", Count:=wdBackward
+  Selection.Range.HighlightColorIndex = myColour
+End If
+Selection.Collapse wdCollapseStart
+nowDoc.Activate
+End Sub
+
+

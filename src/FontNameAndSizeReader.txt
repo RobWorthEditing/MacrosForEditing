@@ -1,0 +1,40 @@
+Sub FontNameAndSizeReader()
+' Paul Beverley - Version 21.11.18
+' Reads style font Name + any applied Name
+
+myMixName = ""
+paraName = ActiveDocument.Styles(Selection.Range.Style).Font.Name
+myName = Selection.Range.Font.Name
+
+myMessage = ""
+myMessage = myMessage & "Style font name = " & paraName & vbCr
+If myName = myMixName Then
+  myMessage = myMessage & "Mixed names" & vbCr
+Else
+  If paraName = myName Then
+    myMessage = myMessage & "No applied name" & vbCr
+  Else
+    myMessage = myMessage & "Applied name = " & myName & vbCr
+  End If
+End If
+MsgBox myMessage
+
+myMix = 9999999
+paraSize = ActiveDocument.Styles(Selection.Range.Style).Font.Size
+mySize = Selection.Range.Font.Size
+
+myMessage = ""
+myMessage = myMessage & "Style font Size = " & paraSize & vbCr
+If mySize = myMix Then
+  myMessage = myMessage & "Mixed Sizes" & vbCr
+Else
+  If paraSize = mySize Then
+    myMessage = myMessage & "No applied size" & vbCr
+  Else
+    myMessage = myMessage & "Applied size = " & mySize & vbCr
+  End If
+End If
+MsgBox myMessage
+End Sub
+
+

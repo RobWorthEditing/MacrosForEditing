@@ -1,0 +1,15 @@
+Sub StyleCoder()
+' Paul Beverley - Version 02.12.19
+' Adds style codes to every paragraph
+
+For Each myPar In ActiveDocument.Paragraphs
+  myStyle = myPar.Range.Style
+  If myStyle <> "Normal" Then
+    myTag = "< pstyle:" & myStyle & " >"
+    myPar.Range.InsertBefore Text:=myTag
+  End If
+Next myPar
+
+End Sub
+
+

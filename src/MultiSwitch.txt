@@ -1,100 +1,82 @@
 Sub MultiSwitch()
-' Paul Beverley - Version 29.08.21
+' Paul Beverley - Version 13.11.21
 ' Scripted word/phrase switching
 
-maxWords = 6
+maxWords = 9
 myListName = "zzSwitchList"
 
 ' Set min number of chars for an abbreviation
 minChars = 3
 includeApostrophe = True
-useSpike = True
+
+Set thisDoc = ActiveDocument
+
+' If you want to load the SwitchList file automatically...
+
+' On Windows, it will need to be something like this:
+' Documents.Open FileName:= "C:\Documents and Settings\Paul\My Documents\zzSwitchList.docx"
+
+' On a Mac, it will need to be something like this:
+' Documents.Open FileName:= "/Users/Paul/My Documents/Macro stuff/zzSwitchList.docx"
 
 CR = vbCr
 CR2 = CR & CR
-ReDim myStr(maxWords) As String
-ReDim endStr(maxWords) As Long
-
+Dim myStr(20) As String
+Dim endStr(20) As Long
+thisDoc.Activate
 ' Read the context, noting if the word is selected
 wasSelected = (Selection.End > Selection.Start)
-If wasSelected = True Then maxWords = 1
-Selection.Expand wdWord
-
-' If the word is immediately after an apostrophe...
-apoPos = InStr(Selection, ChrW(8217))
-If apoPos > 0 And includeApostrophe = False Then
-  Selection.MoveStart , apoPos
-  Selection.InsertBefore Text:=" "
-  Selection.MoveStart , 1
+If wasSelected = True Then
+  maxWords = 1
+Else
+  Selection.Expand wdWord
 End If
 
-' If the word is immediately after comma, FP or ).
-Selection.MoveStart , -1
-prevChar = ChrW(AscW(Selection))
-If InStr(".,)", prevChar) > 0 Then
-  Selection.InsertBefore Text:=" "
-End If
-Selection.MoveStart , 1
-If InStr(".,;:?!)" & CR & ChrW(9) & ChrW(12), _
-     ChrW(AscW(Selection))) > 0 Then
+' If no word selected
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+
+okChars = ".,;:" & Chr(13) & ChrW(8211) & ChrW(8212) & ChrW(8221)
+If InStr(okChars, Left(Selection, 1)) > 0 Then
   Selection.Collapse wdCollapseStart
   Selection.MoveLeft , 1
   Selection.Expand wdWord
 End If
 
 isAbbrev = Not (Len(Selection) > minChars)
-
-textStart = Selection.Start
-endNow = Selection.End
-Set startRng = Selection.Range.Duplicate
-
-inComments = Selection.Range.Information(wdInCommentPane)
-Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
-  Selection.MoveEnd , -1
-  DoEvents
-Loop
-
-endStr(1) = Selection.End
-myStr(1) = Selection
-
-Selection.End = endNow
 startNow = Selection.Start
+Set startRng = Selection.Range.Duplicate
 iMax = maxWords
-If iMax = 1 Then
-  i = 1
-  endNow = Selection.End
-  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
-    Selection.MoveEnd , -1
-    DoEvents
-  Loop
-  endStr(i) = Selection.End
-  Selection.End = endNow
-  myStr(i) = Trim(Selection)
-Else
-  For i = 2 To maxWords
-    Selection.MoveEnd Unit:=wdWord, Count:=1
-    endNow = Selection.End
-    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
-      Selection.MoveEnd , -1
-      DoEvents
-    Loop
-    endStr(i) = Selection.End
-    Selection.End = endNow
-    myStr(i) = Trim(Selection)
-    If InStr(Selection, Chr(13)) > 0 Or _
-         Selection.Range.Words.Count > maxWords Then
-      iMax = i - 1
-      i = maxWords
-    End If
-  Next i
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+rng.MoveEnd Unit:=wdWord, Count:=maxWords
+numTCs = rng.Revisions.Count
+If numTCs > 0 Then
+  rng.Revisions.AcceptAll
+  rng.MoveEnd Unit:=wdWord, Count:=maxWords
 End If
-Selection.End = startNow
-Selection.Start = startNow
+wdsLeft = rng.Words.Count
+If maxWords > wdsLeft Then maxWords = wdsLeft
+For i = 1 To maxWords
+  endStr(i) = rng.Words(i).End
+  If rng.Words(i) = vbCr Then
+    maxWords = i - 1
+    Exit For
+  End If
+  If Right(rng.Words(i), 1) = " " Then endStr(i) = endStr(i) - 1
+ ' Debug.Print rng.Words(i), Asc(rng.Words(i))
+  myStr(i) = Left(rng, endStr(i) - rng.Start)
+  DoEvents
+Next i
+If numTCs > 0 Then WordBasic.EditUndo
+Selection.Collapse wdCollapseStart
+
+iMax = maxWords
 
 ' Find the zzSwitchList file
-Set thisDoc = ActiveDocument
-
-' Go and look for a list file
 gottaList = False
 For i = 1 To Documents.Count
   Set dcu = Documents(i)
@@ -138,6 +120,7 @@ If lfPos > 0 Then
 End If
 
 For i = iMax To 1 Step -1
+'For i = maxWords To 1 Step -1
   myPos = InStr(allWords, CR2 & myStr(i) & CR)
   If myPos > 0 Then
     allWords = Mid(allWords, myPos + 1)
@@ -152,7 +135,7 @@ For i = iMax To 1 Step -1
       j = j + 1
     Loop Until Len(altText(j)) = 0 Or j = 10
     numAlts = j - 2
-    ' We now have j= number of options
+    ' We now have j = number of options
     ' altText contains all numAlts texts
     Exit For
   Else
@@ -224,65 +207,55 @@ gotFormat = r.Font.Bold Or r.Font.Italic Or r.Font.SmallCaps _
 If AscW(Selection) = 172 Or gotFormat Then
   useFormat = True
   If AscW(Selection) = 172 Then Selection.MoveStart , 1
-  If useSpike = True Then
-    NormalTemplate.AutoTextEntries.AppendToSpike Range:=Selection.Range
-    WordBasic.EditUndo
-  Else
-    Selection.Copy
-  End If
+  Selection.Copy
 End If
 noTrack = (Selection.Font.StrikeThrough)
 thisDoc.Activate
-Debug.Print inComments
-If inComments = True Then startRng.Select
-Selection.Start = textStart
+startRng.Select
 Selection.End = endStr(numWords)
 
 ' Check if too near to a comment
+If Selection.Information(wdInCommentPane) = 0 And _
+     Selection.Information(wdInFootnote) = 0 And _
+     Selection.Information(wdInEndnote) = 0 Then
+
 numCmts = ActiveDocument.Comments.Count
-If numCmts > 0 Then
-' Find scope of (range covered by) the next comment
-  Set rng = Selection.Range.Duplicate
-  rng.Collapse wdCollapseStart
-  rng.Start = 0
-  cmtNumber = rng.Comments.Count + 1
-  If cmtNumber <= numCmts Then
-    Set nextCmtRange = ActiveDocument.Comments(cmtNumber).Scope
-    
-  ' Does the scope of that comment overlap the current word?
+  If numCmts > 0 Then
+  ' Find scope of (range covered by) the next comment
     Set rng = Selection.Range.Duplicate
-    rng.Expand wdWord
-    Debug.Print rng.Start, rng.End
-    Debug.Print nextCmtRange.Start, nextCmtRange.End
-    If rng.End > nextCmtRange.Start Then
-      Beep
-      rng.Select
-      myResponse = MsgBox("Selection contains a comment", _
-           vbOKOnly, "MultiSwitch")
-      Exit Sub
+    rng.Collapse wdCollapseStart
+    rng.Start = 0
+    cmtNumber = rng.Comments.Count + 1
+    If cmtNumber <= numCmts Then
+      Set nextCmtRange = ActiveDocument.Comments(cmtNumber).Scope
+      
+    ' Does the scope of that comment overlap the current word?
+      Set rng = Selection.Range.Duplicate
+      rng.Expand wdWord
+
+      Debug.Print rng.Start, rng.End
+      Debug.Print nextCmtRange.Start, nextCmtRange.End
+      If rng.End > nextCmtRange.Start Then
+        Beep
+        rng.Select
+        myResponse = MsgBox("Selection contains a comment. Word might crash!" _
+             & CR2 & "Please use a manual change.", _
+             vbOKOnly, "MultiSwitch")
+        Exit Sub
+      End If
     End If
   End If
 End If
-
 
 myTrack = ActiveDocument.TrackRevisions
 myState = ActiveWindow.View.ShowInsertionsAndDeletions
 If noTrack Then ActiveDocument.TrackRevisions = False
 If useFormat = True Then
-  If useSpike = True Then
-    With NormalTemplate.AutoTextEntries("Spike")
-      .Insert where:=Selection.Range, RichText:=True
-      .Delete
-    End With
-    Selection.MoveStart , -1
-    Selection.Delete
-  Else
-    Selection.Paste
-  End If
+  Selection.Paste
 Else
-  Selection.TypeText Text:=myNewItem
+  Selection.Text = myNewItem
 End If
-Selection.Start = textStart
+Selection.Start = startNow
 ' Selection.Style = nowStyle
 textEnd = Selection.End
 If InStr(Selection, "^p") > 0 Then
@@ -304,7 +277,7 @@ If InStr(Selection, "^p") > 0 Then
     Selection.Find.Execute
     numCRs = numCRs + 1
   Loop
-  Selection.Start = textStart
+  Selection.Start = startNow
   Selection.End = textEnd - numCRs
   Selection.Find.Text = oldFind
 End If
@@ -327,7 +300,7 @@ If InStr(Selection, "^t") > 0 Then
     Selection.Find.Execute
     numTabs = numTabs + 1
   Loop
-  Selection.Start = textStart
+  Selection.Start = startNow
   Selection.End = textEnd - numCRs - numTabs
   Selection.Find.Text = oldFind
 End If

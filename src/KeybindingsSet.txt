@@ -1,0 +1,57 @@
+Sub KeybindingsSet()
+' Paul Beverley - Version 21.05.13
+' Restore key bindings removed by MathType
+
+keyList = "a\, VerbChanger; aQ, MultiSwitch; saQ, SwapPreviousCharacters;"
+keyList = keyList & "aE, ArticleChanger; aO, OUPFetch; caQ, SwapWords;"
+keyList = keyList & " csaQ, SwapThreeWords;"
+
+
+keyList = Replace(keyList, ";;", ";")
+keyList = Replace(keyList, " ", "")
+While InStr(keyList, ",") > 0
+  colonPos = InStr(keyList, ";")
+  If colonPos > 2 Then
+    aKey = Left(keyList, colonPos - 1)
+    keyList = Right(keyList, Len(keyList) - colonPos)
+  Else
+    aKey = keyList
+  End If
+  commaPos = InStr(aKey, ",")
+  keyBits = Left(aKey, commaPos - 1)
+  MacroName = Trim(Right(aKey, Len(aKey) - commaPos))
+  If InStr(keyBits, "c") Then keyNumber = wdKeyControl Else keyNumber = 0
+  If InStr(keyBits, "a") Then keyNumber = keyNumber + wdKeyAlt
+  If InStr(keyBits, "s") Then keyNumber = keyNumber + wdKeyShift
+  keyBits = Replace(keyBits, "a", "")
+  keyBits = Replace(keyBits, "s", "")
+  keyBits = Replace(keyBits, "c", "")
+  If keyBits = "\" Then keyBits = ChrW(220)
+  If Len(keyBits) = 1 Then
+    keyNumber = keyNumber + Asc(keyBits)
+  Else
+    If Asc(keyBits) = Asc("F") Then
+      aCode = 111 + Val(Replace(keyBits, "F", ""))
+    Else
+      Select Case keyBits
+        Case "Up": aCode = vbKeyUp
+        Case "Down": aCode = vbKeyDown
+        Case "Right": aCode = vbKeyRight
+        Case "Left": aCode = vbKeyLeft
+        Case Else: MsgBox ("Error - Can't find: " & keyBits): Exit Sub
+      End Select
+    End If
+    keyNumber = keyNumber + aCode
+  End If
+  KeyBindings.Add KeyCode:=keyNumber, KeyCategory:=wdKeyCategoryMacro, _
+       Command:=MacroName
+Wend
+
+Documents.Open FileName:="C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\zzSwitchList.docx"
+ActiveWindow.View.ShowParagraphs = False
+ActiveWindow.View.ShowTabs = False
+Application.ActiveWindow.View.Zoom.Percentage = 120
+
+End Sub
+
+

@@ -1,0 +1,57 @@
+Sub ColourMyMacros()
+' Paul Beverley - Version 30.04.20
+' Colours alternate macros
+
+Beep
+myResponse = MsgBox("Colour my macros?!", vbQuestion _
+      + vbYesNo)
+If myResponse <> vbYes Then Exit Sub
+
+i = 0
+
+Set rng = ActiveDocument.Content
+
+' Go and find the first occurrence
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Sub "
+  .Font.Bold = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .Execute
+End With
+myStart = rng.Start
+
+Do
+  rng.Find.Execute
+  myEnd = rng.Start
+  i = i + 1
+' If you want to count them...
+  Select Case i Mod 2
+    Case 0: myColour = wdColorAutomatic
+    Case 1: myColour = wdColorBlue
+'    Case 2: myColour = wdColorBlue
+    Case Else: myColour = wdColorAutomatic
+  End Select
+  rng.Start = myStart
+  rng.End = myEnd
+  rng.Font.Color = myColour
+  rng.Collapse wdCollapseEnd
+  myNow = myStart
+  rng.Find.Execute
+  myStart = rng.Start
+Loop Until myStart = myNow
+rng.End = ActiveDocument.Content.End
+If (i Mod 2) = 0 Then
+  myColour = wdColorAutomatic
+Else
+  myColour = wdColorBlue
+End If
+rng.Font.Color = myColour
+
+MsgBox "Coloured: " & i
+End Sub
+
+

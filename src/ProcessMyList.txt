@@ -1,0 +1,66 @@
+Sub ProcessMyList()
+' Paul Beverley - Version 17.09.18
+' Italicise the first word of each paragraph
+' Does specific things to the list of macros
+
+Set rng = ActiveDocument.Content
+rng.HighlightColorIndex = wdNoHighlight
+Documents.Add
+Selection.Text = rng.Text
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^t([0-9.]@)^t"
+  .Wrap = wdFindContinue
+  .Replacement.Text = " ^=^32"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+For Each myPar In ActiveDocument.Paragraphs
+  myPar.Range.Words(1).Font.Italic = True
+  myPar.Range.Words(3).Select
+  Selection.Expand wdWord
+  Selection.MoveEndWhile cset:=ChrW(8217) & " '", Count:=wdBackward
+  myWord = Selection
+  Selection.Collapse wdCollapseEnd
+  
+  Select Case Right(myWord, 1)
+    Case "o"
+        Selection.TypeText "es"
+    Case "y"
+        Selection.MoveStart , -1
+        Selection.TypeText "ies"
+    Case "s"
+    Case Else
+        Selection.TypeText "s"
+  End Select
+  Selection.MoveStart , -3
+  If Selection = "chs" Then Selection.TypeText "ches"
+  myPar.Range.Select
+  Selection.Collapse wdCollapseEnd
+  fgsdf = Selection.End
+  dfhs = ActiveDocument.Content.End
+  If Selection.End <> ActiveDocument.Content.End - 1 Then
+    Selection.MoveLeft , 1
+  End If
+  Selection.MoveStart , -1
+  If InStr("!?.", Selection) = 0 Then
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText "."
+  End If
+Next myPar
+
+Selection.WholeStory
+Selection.Cut
+ActiveDocument.Close SaveChanges:=False
+
+End Sub
+
+

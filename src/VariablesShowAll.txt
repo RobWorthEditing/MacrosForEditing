@@ -1,0 +1,12 @@
+Sub VariablesShowAll()
+' Paul Beverley - Version 31.08.11
+' Show all variables
+
+Selection.HomeKey Unit:=wdStory
+For Each v In ActiveDocument.Variables
+  myText = v.Name & ":  " & ActiveDocument.Variables(v.Name) & vbCr
+  Selection.TypeText myText
+Next v
+End Sub
+
+

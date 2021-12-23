@@ -1,0 +1,11 @@
+Sub EquationsAllItalic()
+' Paul Beverley - Version 02.11.20
+' Makes all equations in the current selection italic
+
+For Each myMath In Selection.Range.OMaths
+  myMath.Range.Italic = True
+  DoEvents
+Next myMath
+End Sub
+
+

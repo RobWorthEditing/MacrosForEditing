@@ -1,0 +1,27 @@
+Sub SurnamesAllCaps()
+' Paul Beverley - Version 18.09.15
+' Capitalise all the surnames in a refs list
+
+andInCaps = False
+
+paraNum = ActiveDocument.Range(0, Selection.Paragraphs(1).Range.End).Paragraphs.Count
+For para = paraNum To ActiveDocument.Paragraphs.Count
+  Set p = ActiveDocument.Paragraphs(para).Range
+  If Len(p.Text) < 4 Then
+    p.Select
+    Selection.Collapse wdCollapseEnd
+    Beep
+    Exit Sub
+  End If
+  For i = 1 To p.Words.Count
+    doCapIt = True
+    w = p.Words(i).Text
+    If Val(w) > 100 Then Exit For
+    If Trim(w) = "and" And andInCaps = False Then doCapIt = False
+    If doCapIt = True Then p.Words(i).Case = wdUpperCase
+  Next i
+Next para
+Selection.Collapse wdCollapseEnd
+End Sub
+
+

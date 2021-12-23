@@ -1,0 +1,38 @@
+Sub FeatureCounter()
+' Paul Beverley - Version 24.08.17
+' Counts various feature of the current Word file
+
+myResult = ""
+
+CR = vbCr
+n = ActiveDocument.Endnotes.Count
+If n > 0 Then myResult = myResult & "Endnotes: " & Str(n) & CR
+
+n = ActiveDocument.Footnotes.Count
+If n > 0 Then myResult = myResult & "Footnotes: " & Str(n) & CR
+
+' count all the textboxes that have text
+shCount = myDoc.Shapes.Count
+If shCount > 0 Then
+  n = 0
+  For j = 1 To shCount
+    Set shp = ActiveDocument.Shapes(j)
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.HasText Then n = n + 1
+    End If
+  Next
+  myResult = myResult & "Textboxes: " & Str(n) & CR
+End If
+
+' Count all equations
+n = ActiveDocument.InlineShapes.Count
+If n > 0 Then myResult = myResult & "MathType: " & Str(n) & CR
+
+n = ActiveDocument.OMaths.Count
+If n > 0 Then myResult = myResult & "Equation Editor: " & Str(n) & CR
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText myResult & CR & CR
+End Sub
+
+

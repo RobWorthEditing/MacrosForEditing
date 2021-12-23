@@ -1,0 +1,31 @@
+Sub ListSurnameSwap()
+' Paul Beverley - Version 29.01.18
+' Swaps forename first to surname first in selected text
+
+colourSurname = True
+
+startWord = 5
+
+If Selection.Start = Selection.End Then Selection.WholeStory
+Set rng = Selection.Range.Duplicate
+For i = 1 To rng.Paragraphs.Count
+  If Len(rng.Paragraphs(i)) > 2 Then
+  saarfais = Len(rng.Paragraphs(i))
+    srName = startWord
+    Do
+      gotsurname = True
+      srName = srName + 1
+      Set myPar = rng.Paragraphs(i)
+      mySurname = myPar.Range.Words(srName)
+      If Len(mySurname) = 1 Then gotsurname = False
+      If InStr(mySurname, ".") > 0 Then gotsurname = False
+    Loop Until gotsurname
+    mySurname = myPar.Range.Words(srName)
+    myPar.Range.Words(srName).Delete
+    myPar.Range.Words(startWord).InsertBefore Text:=Trim(mySurname) & ", "
+    If colourSurname Then myPar.Range.Words(startWord).Font.Color = wdColorBlue
+  End If
+Next i
+End Sub
+
+

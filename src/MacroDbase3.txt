@@ -1,0 +1,138 @@
+Sub MacroDbase3()
+' Paul Beverley - Version 02.01.18
+' Creates a list of all macros in Normal template
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+CR = vbCr
+allText = "Macro list " & ChrW(8211) & " latest versions" & vbCr
+
+i = 0
+Set rng = ActiveDocument.Content
+Do
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .MatchWildcards = False
+    .Text = "^pSub "
+    .Wrap = wdFindStop
+    .Execute
+  End With
+  If rng.Find.Found = True Then
+    i = i + 1
+    gotOne = True
+    rng.Start = rng.End
+    rng.MoveEndUntil cset:="(", Count:=wdForward
+    mName = rng.Text
+    rng.Move Unit:=wdParagraph, Count:=1
+    rng.MoveEnd Unit:=wdParagraph, Count:=1
+    lineStart = rng.Start
+    lineEnd = rng.End
+    rng.End = rng.Start
+  ' Find the date
+    With rng.Find
+      .Text = "^#^#.^#^#.^#^#"
+      .Execute
+    End With
+  ' If no date, bleat about it
+    If rng.Start > lineEnd Then
+      Beep
+      rng.Start = lineStart
+      rng.End = lineEnd
+      rng.Select
+      Exit Sub
+    End If
+    mDate = rng.Text
+    rng.Move Unit:=wdParagraph, Count:=1
+    rng.MoveEnd Unit:=wdParagraph, Count:=1
+    rng.Start = rng.Start + 2
+    mDescrip = rng.Text
+    If Len(mDescrip) < 3 Then mDescrip = "Blah blah blah!!!!!!!!!"
+    allText = allText & mName & Chr(9) & mDate & Chr(9) & mDescrip
+    allText = allText & "zzkjk" & mDate & "zzkjk" & mName & Chr(9) & mDate & Chr(9) & mDescrip
+    rng.Start = rng.End
+  Else
+    gotOne = False
+  End If
+Loop Until gotOne = False
+
+Documents.Add
+' Selection.TypeText(allText)
+Selection.InsertAfter Text:=allText
+Set rng = ActiveDocument.Content
+' Switch the date order
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zzkjk([0-9][0-9]).([0-9][0-9]).([0-9][0-9])zzkjk"
+  .Replacement.Text = "zzkjk\3.\2.\1zzkjk"
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Format = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+Selection.WholeStory
+Selection.Sort ExcludeHeader:=False, FieldNumber:="Column 1", _
+    SortFieldType:=wdSortFieldAlphanumeric, SortOrder:=wdSortOrderDescending, _
+    Separator:=wdSortSeparateByCommas, SortColumn:=False, caseSensitive:=True, _
+    SubFieldNumber:="Paragraphs"
+
+Selection.EndKey Unit:=wdStory
+' Find the first (last) zzkjkdatezzkjk
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Forward = False
+  .Text = "zzkjk*zzkjk"
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute
+End With
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseEnd
+Selection.InsertBefore Text:="Alphabetic order" & vbCr
+Selection.Style = "Heading 2"
+Selection.Collapse wdCollapseEnd
+Selection.End = ActiveDocument.Content.End
+Selection.Sort ExcludeHeader:=False, FieldNumber:="Column 1", _
+    SortFieldType:=wdSortFieldAlphanumeric, SortOrder:=wdSortOrderAscending, _
+    Separator:=wdSortSeparateByCommas, SortColumn:=False, caseSensitive:=True, _
+    SubFieldNumber:="Paragraphs"
+Selection.Collapse wdCollapseStart
+Selection.Expand wdParagraph
+Selection.Delete
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText "Sorted in date order" & vbCr
+Selection.MoveUp Unit:=wdLine, Count:=1, Extend:=wdExtend
+Selection.Style = "Heading 2"
+
+Set rng = ActiveDocument.Content
+
+' Remove the reverse dates
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zzkjk*zzkjk"
+  .Replacement.Text = ""
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Format = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+Selection.WholeStory
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+Selection.Tables(1).Style = "Table Grid"
+Selection.Tables(1).AutoFitBehavior (wdAutoFitContent)
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchWildcards = False
+End With
+Selection.HomeKey Unit:=wdStory
+
+End Sub
+
+

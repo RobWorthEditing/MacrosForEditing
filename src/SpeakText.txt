@@ -1,0 +1,12 @@
+Sub SpeakText()
+' Paul Beverley - Version 01.02.10
+' No comment!
+
+  ' Based on a macro by Mathew Heikkila
+  ' Do you also need: Public speech As SpVoice
+  Set speech = New SpVoice
+  speech.Speak Selection, SVSFPurgeBeforeSpeak
+  Set speech = Nothing
+End Sub
+
+

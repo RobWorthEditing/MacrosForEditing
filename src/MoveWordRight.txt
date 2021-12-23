@@ -1,0 +1,35 @@
+Sub MoveWordRight()
+' Paul Beverley - Version 30.11.19
+' Moves current word one word to the left
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+End If
+gotRightSpace = (Right(Selection, 1) = " ")
+If gotRightSpace Then
+  Selection.MoveEnd , -1
+  Selection.Cut
+  Selection.MoveEnd , 1
+Else
+  Selection.Cut
+  Selection.MoveStart , -1
+End If
+' myWord = Selection
+Selection.Delete
+
+Selection.Expand wdWord
+Selection.Collapse wdCollapseEnd
+
+If LCase(Selection) <> UCase(Selection) Then
+  Selection.Paste
+  Selection.TypeText Text:=" "
+Else
+  Selection.TypeText Text:=" "
+  Selection.Paste
+End If
+
+Selection.MoveLeft , 1
+Selection.Expand wdWord
+End Sub
+
+

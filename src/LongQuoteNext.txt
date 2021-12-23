@@ -1,0 +1,70 @@
+Sub LongQuoteNext()
+' Paul Beverley - Version 01.08.20
+' Jumps to the next long quotation
+
+minWords = 40
+
+ignoreSapostrophe = True
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start
+If InStr(ChrW(8216) & ChrW(8220), Left(rng, 1)) > 0 Then _
+     rng.Start = rng.Start + 1
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[" & ChrW(8216) & ChrW(8220) & "]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+  DoEvents
+End With
+
+Do While rng.Find.Found = True
+  mySingle = (AscW(rng) = 8216)
+  rng.End = ActiveDocument.Content.End
+  Set rng2 = rng.Words(minWords + 1)
+  rng2.Start = rng.Start
+  myTest = rng2
+  If mySingle = True Then
+    myEnd = ChrW(8217)
+    myTest = Replace(myTest, myEnd & "s", "")
+    If ignoreSapostrophe = True Then _
+         myTest = Replace(myTest, "s" & myEnd, "")
+    myTest = Replace(myTest, myEnd & "t", "")
+    myTest = Replace(myTest, myEnd & "v", "")
+    myTest = Replace(myTest, myEnd & "d", "")
+    myTest = Replace(myTest, myEnd & "l", "")
+    myTest = Replace(myTest, myEnd & "r", "")
+    Debug.Print myTest
+  Else
+    myEnd = ChrW(8221)
+  End If
+  If InStr(myTest, myEnd) = 0 Then
+    rng.End = ActiveDocument.Content.End
+    myTest = Replace(rng.Text, myEnd & "s", "xx")
+    If ignoreSapostrophe = True Then _
+         myTest = Replace(myTest, "s" & myEnd, "xx")
+    myTest = Replace(myTest, myEnd & "t", "xx")
+    myTest = Replace(myTest, myEnd & "v", "xx")
+    myTest = Replace(myTest, myEnd & "d", "xx")
+    myTest = Replace(myTest, myEnd & "l", "xx")
+    myTest = Replace(myTest, myEnd & "r", "xx")
+    Debug.Print Left(myTest, 40)
+    myEndQuote = InStr(myTest, myEnd)
+    rng2.End = rng2.Start + myEndQuote
+    rng2.Select
+    Exit Sub
+  End If
+  rng.Start = rng.Start + 1
+  rng.Find.Execute
+Loop
+Beep
+End Sub
+
+

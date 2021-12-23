@@ -1,0 +1,76 @@
+Sub ItaliciseVariable_New()
+' Paul Beverley - Version 26.06.13
+' Run along to find alpha chars and italicise them
+
+greekItalic = True
+ucaseGreekItalic = False
+avoidWords = ",to,and,or,at,"
+doTrack = False
+
+myTrack = ActiveDocument.TrackRevisions
+If doTrack = False Then ActiveDocument.TrackRevisions = False
+If Selection.Start = Selection.End Then
+  Set rng = Selection.Range
+  rng.MoveEnd , 1
+  rng.Select
+  fjkl = (rng.Font.Name = "Symbol")
+  fkl = rng.Font.Name
+  
+  
+  
+  
+  While LCase(rng) = UCase(rng) And Asc(rng) <> 181 And _
+       Not (rng.Font.Name = "Symbol" And greekItalic)
+    rng.Collapse wdCollapseEnd
+    rng.MoveEnd , 1
+    DoEvents
+  Wend
+  myStart = rng.Start
+  isItalic = rng.Font.Italic
+  Do
+    rng.Collapse wdCollapseEnd
+    rng.MoveEnd , 1
+  Loop Until LCase(rng) = UCase(rng) And Asc(rng) <> 181 And _
+       Not (rng.Font.Name = "Symbol" And greekItalic)
+  rng.Collapse wdCollapseStart
+  rng.Start = myStart
+  If InStr(avoidWords, "," & Selection & ",") = 0 Then
+    numChars = Len(rng)
+    For i = 1 To numChars
+    rng.Select
+      gotVar = False
+      rng.End = myStart + i
+      rng.Start = rng.End - 1
+      ch = rng.Text
+      a = Asc(ch)
+      u = AscW(ch)
+      
+      ' Ordinary letter
+      If a = u Then gotVar = True
+      If greekItalic = True Then
+        If a = Asc("?") Then gotVar = True
+        If u > 915 And u < 970 Then
+          gotVar = True
+          If ucaseGreekItalic = False And u < 945 Then gotVar = False
+        End If
+        If ucaseGreekItalic = False And u < -3999 Then gotVar = False
+      End If
+      If gotVar = False Then
+        rng.MoveEnd , -1
+        Exit For
+      End If
+    Next i
+    Selection.Start = myStart
+    Selection.End = rng.End
+    Selection.Font.Italic = Not (isItalic)
+    Selection.Collapse wdCollapseEnd
+    If gotVar = False Then Selection.MoveStart , 1
+  End If
+Else
+  If Selection <> " " Then Selection.Font.Italic = Not (Selection.Font.Italic)
+  Selection.Collapse wdCollapseEnd
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+
+

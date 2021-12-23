@@ -1,0 +1,18 @@
+Sub CaseThisWordJumpNextWord()
+' Version 31.01.21
+' Changes case of initial letter of word and jump to next word
+
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+Selection.MoveEnd , 1
+ch = Selection.Range.Text
+If UCase(ch) = ch Then
+  ch = LCase(ch)
+Else
+  ch = UCase(ch)
+End If
+Selection.Range.Text = ch
+Selection.MoveRight Unit:=wdWord, Count:=1
+End Sub
+
+

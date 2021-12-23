@@ -1,0 +1,10 @@
+Sub DisplayWindow()
+' Paul Beverley - Version 23.10.20
+' Displays copied screengrab of window
+
+Documents.Add
+Selection.Paste
+
+End Sub
+
+

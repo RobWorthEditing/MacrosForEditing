@@ -1,0 +1,43 @@
+Sub UnlinkSomeFields()
+' Paul Beverley - Version 31.10.12
+' Delete hyperlinks that are not URLs
+
+myColour = 0
+myColour = wdGray25
+
+linksDel = 0
+linksTotal = 0
+For pass = 1 To 3
+  Select Case pass
+    Case 1
+      linksHere = ActiveDocument.Hyperlinks.Count
+      If linksHere > 0 Then Set rng = ActiveDocument.Content
+    Case 2
+      linksHere = ActiveDocument.StoryRanges(wdEndnotesStory).Hyperlinks.Count
+      If linksHere > 0 Then Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    Case 3
+      linksHere = ActiveDocument.StoryRanges(wdFootnotesStory).Hyperlinks.Count
+      If linksHere > 0 Then Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+  End Select
+
+  If linksHere > 0 Then
+    linksTotal = linksTotal + linksHere
+    For i = linksHere To 1 Step -1
+      myText = rng.Hyperlinks(i).TextToDisplay
+      myAddress = rng.Hyperlinks(i).Address
+      If InStr(myText, "www") = 0 And InStr(myText, "http") = 0 _
+           And InStr(myAddress, "mailto") = 0 Then
+        Set rng2 = ActiveDocument.Hyperlinks(i).Range
+        If myColour > 0 Then rng2.HighlightColorIndex = myColour
+        ActiveDocument.Hyperlinks(i).Delete
+        linksDel = linksDel + 1
+      End If
+    Next i
+  End If
+Next pass
+
+linksDel = 0
+MsgBox ("Links deleted: " & Str(linksDel) & " out of " & Str(linksTotal))
+End Sub
+
+

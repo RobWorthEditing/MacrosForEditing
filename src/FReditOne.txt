@@ -1,0 +1,12 @@
+Sub FReditOne()
+' Paul Beverley - Version 08.11.13
+' Copy one F&R to the top of the list
+
+Selection.Expand wdParagraph
+Selection.Copy
+Selection.HomeKey Unit:=wdStory
+Selection.Paste
+Selection.TypeText Chr(35) & vbCr
+End Sub
+
+

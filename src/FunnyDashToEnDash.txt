@@ -1,0 +1,21 @@
+Sub FunnyDashToEnDash()
+' Paul Beverley - Version 06.08.21
+' Changes all funny dashes to proper en dash
+
+doHighlight = True
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8210)
+  .Wrap = wdFindContinue
+  .Forward = True
+  If doHighlight = True Then .Replacement.Highlight = True
+  .Replacement.Text = ChrW(8211)
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+Beep
+End Sub
+
+

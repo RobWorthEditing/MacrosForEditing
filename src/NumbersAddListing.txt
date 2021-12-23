@@ -1,0 +1,67 @@
+Sub NumbersAddListing()
+' Paul Beverley - Version 16.05.19
+' Adds line numbers to macro listings
+
+For i = 5 To ActiveDocument.Paragraphs.Count
+  Set myPar = ActiveDocument.Paragraphs(i).Range
+  txt = Replace(Trim(myPar.Text), vbCr, "")
+  If Len(txt) > 1 And Left(txt, 1) <> "'" Then
+    myPar.Text = "'<<<" & i - 5 & ">>>" & myPar.Text
+  End If
+Next i
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ">>>"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ">>>^p"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "_*\>\>\>"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "_"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ">>>"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ">"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<<<"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "<"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+Beep
+Selection.WholeStory
+' Selection.Copy
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+
+

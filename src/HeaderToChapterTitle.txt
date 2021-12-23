@@ -1,0 +1,23 @@
+Sub HeaderToChapterTitle()
+' Paul Beverley - Version 13.05.17
+' Copies the header and make it the chapter title
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+ActiveDocument.StoryRanges(wdPrimaryHeaderStory).Copy
+Selection.HomeKey Unit:=wdStory
+Selection.PasteSpecial DataType:=wdPasteText
+If Len(ActiveDocument.Paragraphs(1).Range.Text) < 3 Then
+  ActiveDocument.Paragraphs(1).Range.Delete
+End If
+ActiveDocument.Paragraphs(1).Range.Select
+myH = Selection
+myH = Replace(myH, "Chapter ", "<CHN>")
+myH = Replace(myH, " - ", vbCr & "<CH>")
+myH = Replace(myH, ": ", vbCr & "<CH>")
+myH = Replace(myH, ". ", vbCr & "<CH>")
+Selection.TypeText myH
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+
+

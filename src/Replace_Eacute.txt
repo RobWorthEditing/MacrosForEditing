@@ -1,0 +1,24 @@
+Sub Replace_Eacute()
+' Paul Beverley - Version 15.12.16
+' Changes all e-acute to LaTeX code: \'e
+
+curlyON = Options.AutoFormatAsYouTypeReplaceQuotes
+Options.AutoFormatAsYouTypeReplaceQuotes = False
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(233) ' e-acute
+  .Wrap = wdFindContinue
+  .Replacement.Text = "\'e"
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+Options.AutoFormatAsYouTypeReplaceQuotes = curlyON
+End Sub
+
+

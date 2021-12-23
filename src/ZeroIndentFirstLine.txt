@@ -1,0 +1,24 @@
+Sub ZeroIndentFirstLine()
+' Paul Beverley - Version 29.03.15
+' Zero indent on paragraph after heading
+
+paraNum = ActiveDocument.Range(0, _
+     Selection.Paragraphs(1).Range.End).Paragraphs.Count
+For i = paraNum To ActiveDocument.Paragraphs.Count - 3
+  Set rng1 = ActiveDocument.Paragraphs(i).Range
+  Set rng2 = ActiveDocument.Paragraphs(i + 1).Range
+  Set rng3 = ActiveDocument.Paragraphs(i + 2).Range
+
+  If rng1.Font.Bold = True And rng3.Font.Bold = False Then
+    rng1.Select
+    If Len(rng2.Text) > 3 Then
+      Beep
+      Exit Sub
+    End If
+    rng3.ParagraphFormat.FirstLineIndent = 0
+  End If
+Next i
+Beep
+End Sub
+
+

@@ -1,0 +1,29 @@
+Sub FindNonBlackFont()
+' Paul Beverley - Version 25.10.17
+' Finds next non-black font
+
+' But this does the same as FindColouredText !????
+
+Selection.Collapse wdCollapseEnd
+Do
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Color = wdColorAutomatic
+    .Execute
+  End With
+  Selection.Collapse wdCollapseEnd
+  If Selection.Range.Font.Color <> wdColorAutomatic Then
+    Do
+    Selection.MoveEnd , 1
+    Loop Until Selection.Range.Font.Color = 9999999 Or _
+         (InStr(Selection, vbCr) > 0) Or Selection.End = _
+         ActiveDocument.Content.End
+    Selection.MoveEnd , -1
+  End If
+Loop Until Selection.Range.Font.Color <> wdColorAutomatic _
+     Or Selection.End = ActiveDocument.Content.End - 1
+End Sub
+
+

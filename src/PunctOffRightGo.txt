@@ -1,0 +1,32 @@
+Sub PunctOffRightGo()
+' Paul Beverley - Version 17.09.10
+' Remove the final character or punct off a word and move on
+' Ctrl - Alt - x
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+Selection.End = Selection.Start
+With Selection.Find
+  .ClearFormatting
+  .Text = "[ ^13^11]"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+Selection.MoveLeft Unit:=wdCharacter, Count:=1
+Selection.TypeBackspace
+Selection.MoveRight Unit:=wdCharacter, Count:=2
+
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchWildcards = False
+End With
+End Sub
+
+

@@ -1,0 +1,37 @@
+Sub NavPaneLoad()
+' Paul Beverley - Version 10.04.21
+' Copies selected text into the F&R box
+
+Application.CommandBars ("Navigation")
+' Application.Run NavPane
+' WordBasic NavPane
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+End If
+myText = Selection
+myText = Replace(myText, vbCr, "^p")
+myText = Replace(myText, vbTab, "^t")
+If Asc(myText) <> 32 Then myText = Trim(myText)
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myText
+  .Forward = True
+  .Replacement.Text = myText
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchCase = True
+End With
+Selection.End = Selection.Start
+On Error Resume Next
+' Application.Run MacroName:="EditReplace"
+
+End Sub
+
+

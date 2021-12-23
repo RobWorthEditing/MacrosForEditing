@@ -1,0 +1,20 @@
+Sub LocalFandR()
+' Paul Beverley - Version 26.09.17
+' Does a find and replace, but only on the selected text
+
+myFind = ";"
+myReplace = ","
+Set rng = Selection.Range.Duplicate
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Wrap = wdFindStop
+  .Replacement.Text = myReplace
+  .Forward = True
+  .MatchCase = False
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+
+

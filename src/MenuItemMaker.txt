@@ -1,0 +1,33 @@
+Sub MenuItemMaker()
+' Paul Beverley - Version 13.04.20
+' Creates a histogram of paragraph length
+
+hashstart = InStr(ActiveDocument.Content, "#####")
+hashEnd = InStr(ActiveDocument.Content, "#####" & vbCr)
+CR = vbCr: CR2 = CR & CR
+If Selection.Start < hashstart Then
+  Set rng = ActiveDocument.Range(0, hashstart - 2)
+  m = rng.Text
+  Debug.Print m
+  m = Replace(m, "a = a & """, "")
+  m = Replace(m, "a = """"" & CR, "")
+  m = Replace(m, """" & CR, "" & vbCr)
+  m = Replace(m, "|", "")
+  Selection.Start = hashEnd + 6
+  Selection.Collapse wdCollapseStart
+  Selection.TypeText Text:=m
+Else
+  Set rng = ActiveDocument.Range(hashEnd + 5, _
+       ActiveDocument.Content.End)
+  m = rng.Text
+  Debug.Print m & CR2
+  m = Replace(m, CR, "|""" & CR & "a = a & """)
+  Debug.Print m
+  m = Mid(m, 3, Len(m) - 23)
+  m = "a = """"" & m
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText Text:=m & CR2
+End If
+End Sub
+
+

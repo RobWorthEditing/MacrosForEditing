@@ -1,0 +1,48 @@
+Sub ParticipleChanger()
+' Paul Beverley - Version 23.06.21
+' Toggles between past to present participles
+
+If Asc(Selection) = 32 Then Selection.MoveRight , 1
+fstChar = Left(Selection, 1)
+If UCase(fstChar) = LCase(fstChar) Then Selection.MoveLeft , 1
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & ChrW(39) & " ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+theWord = Selection.Text
+
+Debug.Print fiveChars, twoChars
+rtChars = Right(theWord, 3)
+
+If rtChars = "ing" Then
+' Remove 'ing' and try adding an 'ed'
+  Selection.Start = Selection.End - 3
+  Selection.TypeText Text:="ed"
+  Selection.MoveLeft , 1
+Else
+' Remove 'ed' and try adding an 'ing'
+  Selection.Start = Selection.End - 2
+  twoChars = Selection.Text
+  Select Case twoChars
+    Case "ed": Selection.TypeText "ing"
+    Case "lt": Selection.TypeText "lling"
+    Case "nt": Selection.TypeText "ning"
+    Case "an": Selection.TypeText "inning"
+    Case "un": Selection.TypeText "inning"
+    Case Else: Beep
+  End Select
+End If
+Selection.MoveLeft , 1
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & ChrW(39) & " ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+myWord = Selection.Text
+spellOK = Application.CheckSpelling(myWord)
+If spellOK = False Then Beep
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 1
+End Sub
+

@@ -1,0 +1,34 @@
+Sub InsertTableRefs()
+' Paul Beverley - Version 21.02.18
+' Adds hyperlinked references to all tables
+
+Set rng = Selection.Range.Duplicate
+Application.ScreenUpdating = False
+numTables = ActiveDocument.Tables.Count
+st = -9: en = 0
+Do
+  st = st + 10: en = en + 10
+  allTables = ""
+  For i = st To en
+    ActiveDocument.Tables(i).Select
+    Selection.Collapse wdCollapseStart
+    Selection.MoveUp , 1
+    Selection.Expand wdParagraph
+    If Len(Selection) > 5 Then allTables = allTables & Selection.Text
+    If i = numTables Then Exit For
+  Next i
+  allTables = allTables & vbCr & vbCr & "Reference number?"
+  thisNumber = InputBox(allTables, "Add table reference")
+Loop Until en > numTables Or Val(thisNumber) > 0
+Application.ScreenUpdating = True
+rng.Select
+If Val(thisNumber) = 0 Then
+  Beep
+Else
+  Selection.InsertCrossReference ReferenceType:="table", ReferenceKind:= _
+      wdOnlyLabelAndNumber, ReferenceItem:=thisNumber, InsertAsHyperlink:=True, _
+      IncludePosition:=False, SeparateNumbers:=False, SeparatorString:=" "
+End If
+End Sub
+
+

@@ -1,0 +1,33 @@
+Sub NameSwitcher()
+' Paul Beverley - Version 27.07.15
+' Changes "surname, forename(s)/initials," to other way round
+
+Selection.Expand wdParagraph
+finished = False
+Do While Len(Selection) > 3 And Selection.End < ActiveDocument.Range.End
+  myBit = Selection
+  CommaOnePos = InStr(myBit, ",")
+  restOfLine = Mid(myBit, CommaOnePos + 2)
+  commaTwoPos = InStr(restOfLine, ",")
+  myBit = Left(myBit, CommaOnePos + commaTwoPos)
+  andPos = InStr(myBit, " and ")
+  If andPos > 0 Then
+    commaTwoPos = andPos - CommaOnePos - 1
+    myBit = Left(myBit, andPos - 1)
+  End If
+  parenPos = InStr(myBit, " (")
+  If parenPos > 0 Then
+    commaTwoPos = parenPos - CommaOnePos - 1
+    myBit = Left(myBit, parenPos - 1)
+  End If
+  myNewBit = Right(myBit, commaTwoPos - 1) _
+       & " " & Left(myBit, CommaOnePos - 1)
+  Selection.End = Selection.Start + Len(myBit)
+  Selection.TypeText myNewBit
+  Selection.MoveDown wdParagraph, 1
+  Selection.Expand wdParagraph
+Loop
+
+End Sub
+
+

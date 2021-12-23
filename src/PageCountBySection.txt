@@ -1,0 +1,55 @@
+Sub PageCountBySection()
+' Paul Beverley - Version 03.04.21
+' Counts the pages between section headings
+
+myStyle = "Heading 1"
+
+Set testDoc = ActiveDocument
+Documents.Add
+
+Set rng = testDoc.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Style = ActiveDocument.Styles(myStyle)
+  .Format = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+pgWas = 1
+myChapter = ""
+myNewChapter = Replace(rng.Text, vbCr, "")
+
+Do While rng.Find.Found = True
+  myNewChapter = Replace(rng.Text, vbCr, "")
+  pgNow = rng.Information(wdActiveEndPageNumber)
+  rng.Collapse wdCollapseEnd
+  numPages = pgNow - pgWas
+  Debug.Print Left(myChapter, 15), pgWas, pgNow
+  If myChapter > "" Then
+    myChapter = myChapter & vbTab & Trim(Str(numPages)) & vbCr
+    Selection.TypeText Text:=myChapter
+  End If
+  pgWas = pgNow
+  myChapter = myNewChapter
+  DoEvents
+  rng.Find.Execute
+Loop
+
+rng.Collapse wdCollapseEnd
+pgNow = rng.Information(wdActiveEndPageNumber)
+' Debug.Print Left(myChapter, 15), pgWas, pgNow
+numPages = pgNow - pgWas + 2
+myChapter = myChapter & vbTab & Trim(Str(numPages)) & vbCr
+Selection.TypeText Text:=myChapter
+pgWas = pgNow
+DoEvents
+End Sub
+
+

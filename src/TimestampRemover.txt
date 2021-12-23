@@ -1,0 +1,20 @@
+Sub TimestampRemover()
+' Paul Beverley - Version 29.08.21
+' Deletes all timestamps of the form: nn:nn:nn<sp>
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<([0-9]{2}):([0-9]{2}):([0-9]{2})^32"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Beep
+End Sub
+
+

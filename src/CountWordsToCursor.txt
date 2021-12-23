@@ -1,0 +1,16 @@
+Sub CountWordsToCursor()
+' Paul Beverley - Version 29.01.18
+' Counts how many words in the paragraph up to the cursor
+
+myStart = Selection.Start
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+i = 0
+Do
+  i = i + 1
+  Selection.MoveRight wdWord, 1
+Loop Until Selection.Start > myStart
+MsgBox i
+End Sub
+
+

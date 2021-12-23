@@ -1,0 +1,59 @@
+Sub NoteRelocater()
+' Paul Beverley - Version 01.02.18
+' Takes footnotes out into the running text
+
+totNotes = ActiveDocument.Footnotes.Count
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "xxxx^p"
+  .Execute
+End With
+Selection.Collapse wdCollapseEnd
+
+idx = 0
+ntNum = 0
+For Each myPar In ActiveDocument.Paragraphs
+  If Left(myPar.Range.Text, 4) = "xxxx" Then
+    ntNum = 0
+    Selection.Find.Execute
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText vbCr
+    Selection.Expand wdParagraph
+    Selection.Range.Style = wdStyleNormal
+  End If
+  If myPar.Range.Footnotes.Count > 0 Then
+    ' myPar.Range.Select
+    paraNTs = myPar.Range.Footnotes.Count
+    For i = 1 To paraNTs
+      ntNum = ntNum + 1
+      idx = idx + 1
+      StatusBar = totNotes - idx
+      If idx > totNotes Then Exit For: Exit For
+      Set fn = ActiveDocument.Footnotes(idx)
+      Set cit = fn.Reference
+      cit.InsertBefore Text:="[" & ntNum & "]"
+   '   Debug.Print fn.range.Text
+      fn.Range.Copy
+      Selection.TypeText "[" & ntNum & "] "
+      Selection.Paste
+      Selection.TypeText vbCr
+    Next i
+  End If
+Next myPar
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\[([0-9]{1,})\]"
+  .Replacement.Text = "\1"
+  .Replacement.Font.Superscript = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+Beep
+End Sub
+
+

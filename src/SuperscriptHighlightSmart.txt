@@ -1,0 +1,74 @@
+Sub SuperscriptHighlightSmart()
+' Paul Beverley - Version 25.09.15
+' Highlight all superscript numbers according to type
+
+ignoreThese = "cm,m,"
+myColourFoot = wdBrightGreen
+myColourSuper = wdYellow
+myColourQuery = wdGray25
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColourFoot
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^2"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+Options.DefaultHighlightColorIndex = myColourSuper
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{1,}"
+  .Font.Superscript = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+
+  myStart = rng.Start
+  myEnd = rng.End
+  rng.Collapse wdCollapseStart
+    rng.MoveStart , -1
+  Do
+    rng.MoveStart , -1
+    fstChar = rng.Characters(1)
+    DoEvents ' Debug.Print rng
+  Loop Until UCase(fstChar) = LCase(fstChar)
+  rng.MoveStart , 1
+  testWord = rng.Text
+  rng.Start = myStart
+  rng.End = myEnd
+  If InStr(ignoreThese, testWord) = 0 Then
+    rng.HighlightColorIndex = myColourSuper
+  Else
+    rng.HighlightColorIndex = myColourQuery
+  End If
+  rng.Collapse wdCollapseEnd
+
+' Go and find the next occurence (if there is one)
+  rng.Find.Execute
+Loop
+
+Options.DefaultHighlightColorIndex = oldColour
+
+End Sub
+
+

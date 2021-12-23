@@ -1,0 +1,53 @@
+Sub URLlinksVisible()
+' Paul Beverley - Version 01.05.21
+' Unlinks all the URLs in the selection or the whole file
+
+foreText = " ("
+afterText = ")"
+'foreText = " "
+'afterText = " "
+
+makeTextBold = False
+
+remove1 = "http://"
+remove2 = "https://"
+remove1 = ""
+remove2 = ""
+
+If Selection.Start <> Selection.End Then
+  Set rng = Selection.Range.Duplicate
+Else
+  Set rng = ActiveDocument.Content
+End If
+
+For i = rng.Fields.Count To 1 Step -1
+  Set fld = rng.Fields(i)
+  myType = fld.Type
+  If myType = 88 Then
+    fld.Select
+    myURLtext = fld.Code
+    myDisplayText = fld.Result
+    myURLtext = Replace(myURLtext, "HYPERLINK """, "")
+    qtPos = InStr(myURLtext, """")
+    myURLtext = Trim(Left(myURLtext, qtPos - 1))
+    myURLtext = Replace(myURLtext, remove1, "")
+    myURLtext = Replace(myURLtext, remove2, "")
+    myDisplayText = Replace(myDisplayText, remove1, "")
+    myDisplayText = Replace(myDisplayText, remove2, "")
+    Debug.Print myDisplayText
+    Debug.Print myURLtext & vbCr
+    If myDisplayText <> myURLtext Then
+      Selection.InsertBefore Text:=myDisplayText & foreText
+      myStart = Selection.Start
+      fld.Result.Text = myURLtext
+      Selection.Collapse wdCollapseEnd
+      Selection.InsertAfter Text:=afterText
+      Selection.Range.Font.ColorIndex = wdAuto
+      Selection.Range.Underline = False
+    End If
+    Selection.Collapse wdCollapseEnd
+  End If
+Next i
+End Sub
+
+

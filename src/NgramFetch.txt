@@ -1,0 +1,46 @@
+Sub NgramFetch()
+' Paul Beverley - Version 18.10.21
+' Launches selected text on Google Ngram
+
+mySite = "https://books.google.com/ngrams/graph?content="
+
+yearStart = "1800"
+' yearStart = ""
+
+yearEnd = "2000"
+' yearEnd = ""
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.Start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Start = startNow
+End If
+
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, " ,", ",")
+mySubject = Replace(mySubject, ", ", ",")
+mySubject = Replace(mySubject, ",", "%2C")
+mySubject = Replace(mySubject, ChrW(8217), "'")
+Debug.Print mySite & mySubject
+If yearStart > "" Then mySubject = mySubject & _
+     "&year_start=" & yearStart
+If yearEnd > "" Then mySubject = mySubject & _
+     "&year_end=" & yearEnd
+Debug.Print mySite & mySubject
+ActiveDocument.FollowHyperlink Address:=mySite & mySubject
+End Sub
+

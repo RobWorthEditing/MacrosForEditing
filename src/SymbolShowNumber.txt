@@ -1,0 +1,12 @@
+Sub SymbolShowNumber()
+' Paul Beverley - Version 28.10.13
+' Type out the 'unicode' of the symbol font character
+
+Selection.MoveEnd , 1
+symbolCode = Replace(Hex(Dialogs(wdDialogInsertSymbol).CharNum), "FFFF", "")
+Selection.Collapse wdCollapseEnd
+Selection.TypeText symbolCode & ",;"
+Selection.MoveRight , 1
+End Sub
+
+

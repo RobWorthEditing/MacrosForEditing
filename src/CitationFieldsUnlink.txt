@@ -1,0 +1,19 @@
+Sub CitationFieldsUnlink()
+' Paul Beverley - Version 27.02.14
+' Selective field unlinking
+
+myResponse = MsgBox("Unlink all citation fields?", vbQuestion + vbYesNo)
+If myResponse = vbNo Then Exit Sub
+
+myCount = ActiveDocument.Fields.Count
+For Each fld In ActiveDocument.Fields
+  If fld.Type = 81 Then
+    fld.Unlink
+    i = i + 1
+    myCount = myCount - 1
+  End If
+Next fld
+MsgBox ("Fields unlinked: " & Str(i))
+End Sub
+
+

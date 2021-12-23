@@ -1,0 +1,121 @@
+Sub RefCitationConvert()
+' Paul Beverley - Version 04.04.20
+' Converts superscripted ref. citations to bracketed
+
+myPuncts = ",.:;)"
+doItalic = True
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = wdBrightGreen
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Superscript = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .Replacement.Font.Color = wdColorBlue
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9\-," & ChrW(8211) & "]{1,}"
+  .Wrap = False
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  endNow = rng.End
+  Set preText = rng.Duplicate
+  preText.Start = preText.End - 1
+  preText.Select
+  If preText.Font.Superscript = False Then _
+       rng.End = rng.End - 1
+  Set preText = rng.Duplicate
+  preText.Select
+  preText.End = preText.Start + 1
+  If preText.Font.Superscript = False Then _
+       rng.Start = rng.Start + 1
+  preText.Select
+  myCol = rng.Font.Color
+  If myCol > 0 And rng.Font.Superscript = True Then
+    Set preText = rng.Duplicate
+    preText.End = preText.Start + 1
+    Do
+      preText.Start = preText.Start - 1
+      preText.End = preText.End - 1
+      DoEvents
+    Loop Until preText.Font.Superscript = False
+    pun = preText.Text
+    cit = rng.Text
+    Debug.Print pun, cit
+    ' If citation follows punctuation
+    If InStr(myPuncts, pun) > 0 Then
+      preText.Delete
+      rng.Delete
+      cit = Replace(cit, ChrW(8211), "-")
+      cit = Replace(cit, ", ", ",")
+      rng.InsertAfter Text:=" (zczc" & cit & "czcz)" & pun
+      rng.Font.Subscript = False
+      rng.Font.Superscript = False
+      rng.Start = rng.Start + 1
+      rng.HighlightColorIndex = wdYellow
+      rng.Collapse wdCollapseEnd
+      cit = ""
+    End If
+    
+    ' If citation follows Lcase character
+    If Len(cit) > 1 And LCase(pun) = pun Then
+      rng.Delete
+      cit = Replace(cit, ChrW(8211), "-")
+      cit = Replace(cit, ", ", ",")
+      myString = "(zczc" & cit & "czcz)"
+      If pun = " " Then
+        myString = myString & " "
+      Else
+        myString = " " & myString
+      End If
+      rng.InsertAfter Text:=myString
+      rng.Font.Subscript = False
+      rng.Font.Superscript = False
+      rng.Start = rng.Start + 1
+      rng.HighlightColorIndex = wdYellow
+      rng.Collapse wdCollapseEnd
+    End If
+  Else
+    rng.Start = endNow
+  End If
+  rng.Find.Execute
+  DoEvents
+Loop
+
+Options.DefaultHighlightColorIndex = wdYellow
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zczc(*)czcz"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "\1"
+  If doItalic = True Then .Replacement.Font.Italic = True
+  .Replacement.Font.Subscript = False
+  .Replacement.Highlight = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+Options.DefaultHighlightColorIndex = oldColour
+Beep
+End Sub
+
+

@@ -1,0 +1,21 @@
+Sub SwitchCodeLine()
+' Paul Beverley - Version 28.08.15
+' Switch code line either side of "="
+
+Selection.Paste
+Selection.MoveLeft , 1
+Selection.Expand wdParagraph
+
+eqPos = InStr(Selection, "=")
+leftBit = Trim(Left(Selection, eqPos - 1))
+rightBit = Trim(Mid(Selection, eqPos + 1))
+rightBit = Replace(rightBit, Chr(13), "")
+
+newText = rightBit & " = " & leftBit & vbCr
+Selection.TypeText newText
+Selection.MoveLeft , 1
+Selection.Expand wdParagraph
+Selection.Copy
+End Sub
+
+

@@ -101,7 +101,6 @@ Else
       rng.End = myPar.Range.End - 1
       If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
       If rng = " " Then rng.Delete:  ng.Start = rng.Start - 1
-      Debug.Print Asc(rng.Text)
       If rng.Text = ChrW(2) Then
          rng.Start = rng.Start - 1
          rng.End = rng.End - 1

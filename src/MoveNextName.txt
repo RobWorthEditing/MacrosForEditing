@@ -1,0 +1,17 @@
+Sub MoveNextName()
+' Paul Beverley - Version 02.03.15
+' Jump on to the next word that could be a forename
+
+Selection.MoveRight Unit:=wdWord, Count:=1
+If Selection = "and " Or UCase(Selection) = LCase(Selection) Then _
+     Selection.MoveRight Unit:=wdWord, Count:=1
+Selection.Words(1).Select
+If Selection = "and " Or UCase(Selection) = LCase(Selection) Then _
+     Selection.MoveRight Unit:=wdWord, Count:=1
+Selection.Words(1).Select
+If Selection = "and " Or UCase(Selection) = LCase(Selection) Then _
+     Selection.MoveRight Unit:=wdWord, Count:=1
+Selection.Collapse wdCollapseStart
+End Sub
+
+

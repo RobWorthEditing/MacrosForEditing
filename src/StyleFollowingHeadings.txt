@@ -1,0 +1,15 @@
+Sub StyleFollowingHeadings()
+' Paul Beverley - Version 13.04.18
+' Sets the style of the paragraph after each heading
+
+styleFollowing = "NoIndent"
+afterTheseStyles = "Heading 1, Heading 2, Heading 3"
+
+For Each myPar In ActiveDocument.Paragraphs
+  If doNextPara Then myPar.Range.Style = styleFollowing
+  st = myPar.Range.Style
+  doNextPara = InStr(afterTheseStyles, st) > 0
+Next myPar
+End Sub
+
+

@@ -1,0 +1,23 @@
+Sub DoNothingForAges()
+' Paul Beverley - Version 20.11.14
+' Opens a new Word document, and fiddles with it for several seconds
+
+' Number of second per run
+myTime = 4
+
+If Left(ActiveDocument.Name, 8) <> "Document" Then Documents.Add
+startTime = Timer
+Do
+  For i = 1 To 10
+    Selection.TypeText Str(Int(99 * Rnd() + 1)) & _
+         "Blah, blah, blah, blah, blah." & vbCr
+  Next i
+  Set rng = ActiveDocument.Content
+  rng.Sort SortOrder:=wdSortOrderDescending
+  rng.Sort SortOrder:=wdSortOrderAscending
+Loop Until Timer > startTime + myTime
+Beep
+
+End Sub
+
+

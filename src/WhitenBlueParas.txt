@@ -1,0 +1,23 @@
+Sub WhitenBlueParas()
+' Paul Beverley - Version 01.06.20
+' No comment!
+
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+If Selection.Start = Selection.End Then Selection.Expand wdParagraph
+Selection.Range.Font.Color = wdColorWhite
+Selection.Collapse wdCollapseEnd
+ActiveDocument.TrackRevisions = myTrack
+
+Exit Sub
+
+ActiveDocument.TrackRevisions = False
+For Each myPar In ActiveDocument.Paragraphs
+  If Selection.Shading.BackgroundPatternColor _
+           <> wdColorAutomatic Then _
+           Selection.Range.Font.Color = wdColorWhite
+Next myPar
+End Sub
+
+

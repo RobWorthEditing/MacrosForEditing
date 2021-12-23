@@ -1,0 +1,22 @@
+Sub ItalicOffWord()
+' Paul Beverley - Version 18.05.17
+' Removes all italic and underline from selected text (or current word)
+
+uLineOffToo = False
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+If Len(Selection) > 1 Then
+  Selection.Range.Font.Italic = False
+  If uLineOffToo = True Then Selection.Range.Font.Underline = False
+Else
+  Selection.Expand wdWord
+  Selection.Range.Font.Italic = False
+  If uLineOffToo = True Then Selection.Range.Font.Underline = False
+  Selection.Collapse wdCollapseEnd
+End If
+ActiveDocument.TrackRevisions = myTrack
+
+End Sub
+
+

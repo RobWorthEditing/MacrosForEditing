@@ -1,0 +1,16 @@
+Sub ParaSplitJoin()
+' Paul Beverley - Version 13.09.19
+' Splits the para after current word or joins to next para
+
+Selection.MoveEndUntil cset:=" " & Chr(13), Count:=wdForward
+Selection.MoveEnd , 1
+Selection.Start = Selection.End - 1
+If Selection = " " Then
+  Selection.Text = Chr(13)
+Else
+  Selection.Text = " "
+End If
+Selection.Collapse wdCollapseEnd
+End Sub
+
+

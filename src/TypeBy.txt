@@ -1,0 +1,21 @@
+Sub TypeBy()
+' Paul Beverley - Version 07.11.19
+' Types 'by' between two words.
+
+Selection.MoveStart wdCharacter, -1
+Selection.MoveEnd wdCharacter, 5
+crPos = InStr(Selection, vbCr)
+If crPos = 0 Then
+  spPos = InStr(Selection, " ")
+  Selection.MoveStart wdCharacter, spPos
+  Selection.Collapse wdCollapseStart
+  Selection.TypeText "by "
+Else
+  Selection.MoveStart wdCharacter, crPos
+  Selection.Collapse wdCollapseStart
+  Selection.MoveLeft , 1
+  Selection.TypeText " by"
+End If
+End Sub
+
+

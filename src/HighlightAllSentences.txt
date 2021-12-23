@@ -1,0 +1,16 @@
+Sub HighlightAllSentences()
+' Paul Beverley - Version 01.02.10
+' No comment!
+
+For i = 1 To ActiveDocument.Sentences.Count
+  If i Mod 2 = 0 Then
+    ActiveDocument.Sentences(i).Font.ColorIndex = wdYellow
+  Else
+    'ActiveDocument.Sentences(i).Font.ColorIndex = wdRed
+    ActiveDocument.Sentences(i).Font.Color = wdColorOrange
+  End If
+  DoEvents
+Next i
+End Sub
+
+

@@ -1,0 +1,21 @@
+Sub PatternClear()
+' Paul Beverley - Version 13.03.14
+' Remove shading and other funny colours!
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+If Selection.Start = Selection.End Then
+  Set rng = ActiveDocument.Content
+Else
+  Set rng = Selection.Range
+End If
+rng.Font.Shading.BackgroundPatternColor = wdColorAutomatic
+rng.ParagraphFormat.Shading.BackgroundPatternColor = wdColorAutomatic
+rng.Shading.Texture = wdTextureNone
+rng.Shading.ForegroundPatternColor = wdColorAutomatic
+rng.Shading.BackgroundPatternColor = wdColorAutomatic
+ActiveDocument.TrackRevisions = myTrack
+
+End Sub
+
+

@@ -1,0 +1,34 @@
+Sub InsertFigureRefs()
+' Paul Beverley - Version 21.02.18
+' Adds hyperlinked reference to all figures
+
+Set rng = Selection.Range.Duplicate
+Application.ScreenUpdating = False
+
+myFigs = ActiveDocument.GetCrossReferenceItems(wdRefType)
+
+numFigs = UBound(myFigs)
+st = -9: en = 0
+Do
+  st = st + 10: en = en + 10
+  allFigs = ""
+  For i = st To en
+    allFigs = allFigs & i & myFigs(i) & vbCr
+    If i = numFigs Then Exit For
+  Next i
+  allFigs = allFigs & vbCr & vbCr & "Reference number?"
+  thisNumber = InputBox(allFigs, "Add table reference")
+Loop Until en > numFigs Or Val(thisNumber) > 0
+Application.ScreenUpdating = True
+rng.Select
+If Val(thisNumber) = 0 Then
+  Beep
+Else
+  Selection.InsertCrossReference ReferenceType:="Figure", ReferenceKind:= _
+      wdOnlyLabelAndNumber, ReferenceItem:=thisNumber, InsertAsHyperlink:=True, _
+      IncludePosition:=False, SeparateNumbers:=False, SeparatorString:=" "
+End If
+
+End Sub
+
+

@@ -1,0 +1,20 @@
+Sub HighlightInvalidLinks()
+  Dim objLink As Hyperlink
+  Dim strLinkAddress As String
+  Dim strResult As String
+  Dim objDoc As Document
+ 
+  Set objDoc = ActiveDocument
+ 
+  With objDoc
+    For Each objLink In .Hyperlinks
+      strLinkAddress = objLink.Address
+ 
+      If Not CheckURL(strLinkAddress) Then
+        objLink.Range.HighlightColorIndex = wdYellow
+      End If
+    Next objLink
+  End With
+End Sub
+
+

@@ -1,0 +1,14 @@
+Sub SmallBullets()
+' Paul Beverley - Version 10.05.12
+' Change auto bulleted list to small bullets
+
+With ListGalleries(wdBulletGallery).ListTemplates(1).ListLevels(1)
+  .NumberFormat = ChrW(8226)
+  .Font.Name = "Times New Roman"
+End With
+
+Selection.Range.ListFormat.ApplyListTemplateWithLevel ListTemplate:= _
+    ListGalleries(wdBulletGallery).ListTemplates(1)
+End Sub
+
+

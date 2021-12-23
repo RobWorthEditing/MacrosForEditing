@@ -1,0 +1,36 @@
+Sub TitleCapAllItalic()
+' Paul Beverley - Version 29.11.16
+' Changes all italic titles to title capitals.
+
+' Start from the top of the document
+Selection.HomeKey Unit:=wdStory
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Italic = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+Do While Selection.Find.Found = True
+' Note where the end of the found item is
+  endNow = Selection.End
+
+' Make your required change
+  Call TitleCapper
+  
+  ' Be sure you're past the previous occurrence
+  Selection.End = endNow
+  Selection.Collapse wdCollapseEnd
+
+' Go and find the next occurrence (if there is one)
+  Selection.Find.Execute
+Loop
+End Sub
+
+

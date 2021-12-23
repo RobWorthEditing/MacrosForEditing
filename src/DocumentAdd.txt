@@ -1,0 +1,13 @@
+Sub DocumentAdd()
+' Paul Beverley - Version 28.01.15
+' Adds document at specific window size
+
+Documents.Add
+ActiveDocument.Windows(1).WindowState = wdWindowStateNormal
+Application.Resize Width:=1000, Height:=500
+'Application.Resize Width:=600, Height:=400
+Application.ActiveWindow.View.Zoom.Percentage = 200
+'Application.ActiveWindow.View.Zoom.Percentage = 250
+End Sub
+
+

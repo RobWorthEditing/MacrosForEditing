@@ -1,0 +1,117 @@
+Sub InitialCapAlyse()
+' Paul Beverley - Version 17.09.18
+' Highlight possible capitalisation inconsistency
+
+'Not tried if it works
+
+
+myColour1 = wdYellow
+myColour2 = wdTurquoise
+showTime = True
+
+If ActiveDocument.Words.Count / ActiveDocument.Paragraphs.Count _
+     < 10 Then GoTo analyse
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+
+Set rng = ActiveDocument.Content
+Selection.HomeKey Unit:=wdStory
+Documents.Add
+Selection.Text = rng.Text
+Selection.HomeKey Unit:=wdStory
+
+For Each sn In ActiveDocument.Sentences
+  sn.Words(1).HighlightColorIndex = wdYellow
+Next sn
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .Highlight = True
+  .MatchCase = False
+  .Execute Replace:=wdReplaceAll
+End With
+Options.DefaultHighlightColorIndex = oldColour
+Exit Sub
+
+analyse:
+
+timeStart = Timer
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText vbCr
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^32{1,}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^t"
+  .Forward = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+With rng.Find
+  .Text = "^p^t"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+wordPointer = 1
+testWord = ActiveDocument.Paragraphs(5).Range.Words(wordPointer)
+If LCase(testWord) = UCase(testWord) Then wordPointer = 2
+
+' Find the final actual item in the list
+maxPara = ActiveDocument.Paragraphs.Count
+Do While Len(ActiveDocument.Paragraphs(maxPara).Range.Text) < 5
+  maxPara = maxPara - 1
+Loop
+
+previousWord = "dummy"
+myColour = myColour1
+
+For i = 1 To maxPara
+  thisWord = Trim(ActiveDocument.Paragraphs(i).Range.Words(wordPointer))
+  ' myNumber = ActiveDocument.Paragraphs(i).Range.Words.Count
+  j = j + 1
+  If j = 30 Then
+    DoEvents ' Debug.Print thisWord
+    StatusBar = thisWord
+    j = 0
+  End If
+  gotOne = (LCase(thisWord) = LCase(previousWord))
+  If gotOne Then
+ '   DoEvents ' Debug.Print thisWord, previousWord
+    paraText = ActiveDocument.Paragraphs(i).Range.Text
+    prevParaText = ActiveDocument.Paragraphs(i - 1).Range.Text
+    If InStr(paraText, "-") > 0 Then
+      testWord = ActiveDocument.Paragraphs(i).Range.Words(wordPointer + 2)
+      previousTestWord = ActiveDocument.Paragraphs(i - 1).Range.Words(wordPointer + 2)
+      gotOne = (LCase(testWord) = LCase(previousTestWord))
+    End If
+    If gotOne Then
+      ActiveDocument.Paragraphs(i).Range.HighlightColorIndex = myColour
+      ActiveDocument.Paragraphs(i - 1).Range.HighlightColorIndex = myColour
+      If myColour = myColour2 Then
+        myColour = myColour1
+      Else
+        myColour = myColour2
+      End If
+    End If
+  End If
+  previousWord = thisWord
+Next i
+totTime = Timer - timeStart
+If showTime = True And totTime > 60 Then _
+  MsgBox ((Int(10 * totTime / 60) / 10) & _
+       "  minutes")
+
+End Sub
+
+

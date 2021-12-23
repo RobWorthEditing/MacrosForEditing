@@ -1,0 +1,23 @@
+Sub FullPointMissing()
+' Paul Beverley - Version 06.08.15
+' Add a full point to the next line that doesn't have one
+
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[!.]^13"
+  .Replacement.Text = ""
+  .Forward = True
+  .Wrap = wdFindStop
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute
+End With
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 1
+Selection.TypeText "."
+Selection.MoveStart , -1
+End Sub
+
+

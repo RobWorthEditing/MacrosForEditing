@@ -1,6 +1,7 @@
+
 Sub PunctuationToDoublePrime()
-' Paul Beverley - Version 03.05.17
-' Changes next quote mark to prime
+' Paul Beverley - Version 19.11.21
+' Change next quote mark to double prime
 
 trackIt = True
 
@@ -10,33 +11,30 @@ searchChars = Chr(34) & Chr(39) & ChrW(8216) & ChrW(8217) _
        & ChrW(8242) & ChrW(8243)
 
 newChar = ChrW(8243)
+
 myTrack = ActiveDocument.TrackRevisions
 If trackIt = False Then ActiveDocument.TrackRevisions = False
-Selection.End = Selection.Start
-startHere = Selection.Start
-Set rng = ActiveDocument.Content
-theEnd = rng.End
-gotOne = False
-Do While gotOne = False
-  If InStr(searchChars, Selection) > 0 Then
-    Set rng = ActiveDocument.Content
-    rng.Start = Selection.Start - 1
-    rng.End = Selection.Start + 2
-    charBefore = Left(rng.Text, 1)
-    Exit Do
-  End If
-  Selection.MoveRight , 1
-  If Selection.Start > startHere + 1000 Or _
-       Selection.Start > theEnd - 2 Then
-    Beep
-    ActiveDocument.TrackRevisions = myTrack
-    Exit Sub
-  End If
-Loop
 
-Selection.MoveEnd wdCharacter, 1
-Selection.TypeBackspace
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+If Len(rng) > 1000 Then rng.End = rng.Start + 1000
+
+For Each ch In rng.Characters
+  If InStr(searchChars, ch.Text) > 0 Then
+    ch.Select
+    gotChar = True
+    Exit For
+  Else
+  End If
+Next ch
+If gotChar = False Then
+  Beep
+  ActiveDocument.TrackRevisions = myTrack
+  Exit Sub
+End If
 Selection.TypeText Text:=newChar
 ActiveDocument.TrackRevisions = myTrack
 End Sub
+
+
 

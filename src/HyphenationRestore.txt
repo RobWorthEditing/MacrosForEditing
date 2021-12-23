@@ -1,0 +1,60 @@
+Sub HyphenationRestore()
+' Paul Beverley - Version 04.02.13
+' Unhyphenate split words
+
+' Highlight the result (use zero for no highlight)
+myColour = wdGray25
+
+Set rng = ActiveDocument.Content
+langText = Languages(Selection.LanguageID).NameLocal
+
+' Go and find the first occurrence
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "-^p"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+' If you want to count them...
+  splitPoint = rng.Start
+  rng.End = rng.Start
+  rng.Start = rng.Start - 60
+  testSection = rng.Text
+  wordOne = rng.Words.Last
+  myStart = rng.End - Len(wordOne)
+  rng.Start = splitPoint + 2
+  rng.End = rng.Start + 25
+  wordTwo = rng.Words.First
+  myEnd = rng.Start + Len(wordTwo)
+' If it's a spelling error...
+  If Application.CheckSpelling(wordOne & wordTwo, _
+       MainDictionary:=langText) = True Then
+    chopOut = 2
+  Else
+    chopOut = 1
+  End If
+  rng.Start = splitPoint + 2 - chopOut
+  rng.End = splitPoint + 2
+  rng.Delete
+  myCount = myCount + 1
+  If myColour > 0 Then
+    rng.Start = myStart
+    rng.End = myEnd - chopOut
+    rng.HighlightColorIndex = myColour
+  End If
+  rng.Start = rng.End + 2
+  rng.Find.Execute
+Loop
+MsgBox "Changed: " & myCount
+End Sub
+
+

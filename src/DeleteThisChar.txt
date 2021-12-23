@@ -1,0 +1,19 @@
+Sub DeleteThisChar()
+' Paul Beverley - Version 26.09.17
+' From the cursor, it tries to delete one of the listed characters
+
+myChars = ",."
+Set rng = ActiveDocument.Range(Selection.Start, ActiveDocument.Content.End)
+
+For i = 1 To 1000
+  If InStr(myChars, rng.Characters(i)) > 0 Then
+    rng.Characters(i).Select
+    Selection.Delete
+  Exit Sub
+  End If
+Next i
+Beep
+
+End Sub
+
+

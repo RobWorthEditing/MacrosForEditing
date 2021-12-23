@@ -1,0 +1,8 @@
+Sub NoteNext()
+' Paul Beverley - Version 05.03.12
+' Jump to next note
+Application.Browser.Target = wdBrowseFootnote
+Application.Browser.Next
+End Sub
+
+

@@ -1,11 +1,11 @@
 Sub CommentNext()
-' Paul Beverley - Version 15.03.14
+' Paul Beverley - Version 13.11.21
 ' Goes to next comment
 
 hereNow = Selection.Start
-WordBasic.GoToNextComment
-If Selection.Start = hereNow Then
-  Beep
-End If
+Selection.GoTo What:=wdGoToComment, Which:=wdGoToNext
+If Selection.Start = hereNow Then Beep
 End Sub
+
+
 

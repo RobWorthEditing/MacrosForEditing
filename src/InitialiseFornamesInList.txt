@@ -1,0 +1,66 @@
+Sub InitialiseFornamesInList()
+' Paul Beverley - Version 10.02.20
+' Changes forenames within a list to initials
+
+Dot = "."
+Dot = ""
+initialSpaced = True
+noChange = "van,der,de"
+
+Selection.Expand wdParagraph
+Set rng = Selection.Range.Duplicate
+Selection.Collapse wdCollapseStart
+numWds = rng.Words.Count
+noChange = "," & noChange & ","
+n = False
+wasHyp = False
+For i = numWds To 1 Step -1
+  w = rng.Words(i)
+  nWas = n
+  lng = (Len(Trim(w)) > 1)
+  If w = "-" Then lng = True
+'                        Debug.Print rng.Words(i), w, lng, n
+  If lng And nWas Then
+    If w = "-" Then
+      wasHyp = True
+    Else
+      If wasHyp = True Then
+        rng.Words(i) = Left(w, 1) & Dot
+        wasHyp = False
+      Else
+        If InStr(noChange, "," & Trim(w) & ",") = 0 Then
+          rng.Words(i) = Left(w, 1) & Dot & " "
+        Else
+          nWas = True
+        End If
+      End If
+    End If
+  End If
+  If Not (lng) Then n = False
+  If lng And Not (nWas) Then n = True
+Next i
+
+If initialSpaced = False Then
+  If Dot = "" Then
+    For i = 1 To numWds - 3
+      w = rng.Words(i)
+      w1 = rng.Words(i + 1)
+      If Right(w, 1) = " " And Right(w1, 1) = " " And _
+             LCase(w) <> UCase(w) And LCase(w1) <> _
+             UCase(w1) Then
+        rng.Words(i) = Replace(w, " ", "")
+        numWds = numWds - 1
+      End If
+    Next i
+  Else
+    numChars = rng.Characters.Count
+    For i = numChars - 4 To 1 Step -1
+      c0 = rng.Characters(i)
+      c3 = rng.Characters(i + 3)
+      If c0 = "." And c3 = "." Then rng.Characters(i + 1) = ""
+    Next i
+  End If
+End If
+End Sub
+
+

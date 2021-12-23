@@ -1,0 +1,102 @@
+Sub MultiFilePageCount()
+' Paul Beverley - Version 30.03.21
+' Counts pages in a group of files
+
+Dim allMyFiles(200) As String
+
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 _
+     And InStr(LCase(rng.Text), ".pdf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  myResponse = MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "Multifile Text Collection")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.Count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Or _
+         InStr(LCase(myFile), ".pdf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+
+  myResponse = MsgBox("Count ALL the files in this folder:" & dirName _
+       & " ?", vbQuestion + vbYesNoCancel, "Multifile Wordcount")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  myResponse = MsgBox("Count just the files listed here?", _
+       vbQuestion + vbYesNoCancel, "Multifile Wordcount")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.Range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+For i = 1 To numFiles
+  thisFile = myFolder & myDelimiter & allMyFiles(i)
+  Set myDoc = Application.Documents.Open(FileName:=thisFile)
+  StatusBar = allMyFiles(i)
+  Selection.EndKey Unit:=wdStory
+  myCount = Selection.Information(wdActiveEndAdjustedPageNumber)
+  myResult = myResult & myDoc.Name & vbTab & Trim(Str(myCount)) & vbCr
+  myResult = Replace(myResult, ".docx", "")
+  myResult = Replace(myResult, ".doc", "")
+  myResult = Replace(myResult, ".pdf", "")
+  myDoc.Close SaveChanges:=wdDoNotSaveChanges
+  DoEvents
+Next i
+Documents.Add
+Selection.TypeText myResult
+
+Selection.WholeStory
+Set tbl = Selection.ConvertToTable(Separator:=wdSeparateByTabs)
+tbl.Columns.AutoFit
+Selection.HomeKey Unit:=wdStory
+End Sub
+
+

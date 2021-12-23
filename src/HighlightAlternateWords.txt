@@ -1,0 +1,21 @@
+Sub HighlightAlternateWords()
+' Paul Beverley - Version 29.08.17
+' Highlights alternate words, to show what a "word" is
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+i = 0
+For Each wd In Selection.Words
+  If i = 0 Then
+    wd.HighlightColorIndex = wdBrightGreen
+    i = 1
+  Else
+    i = 0
+  End If
+Next wd
+ActiveDocument.TrackRevisions = myTrack
+
+End Sub
+
+

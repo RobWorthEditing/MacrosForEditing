@@ -1,0 +1,30 @@
+Sub TagAPlus()
+' Paul Beverley - Version 27.05.21
+' Adds a tag to the current paragraph, in bold and red
+
+startText = "<A>"
+endText = "</A>"
+' endText = ""
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Selection.InsertBefore startText
+Selection.Range.Font.Bold = True
+Selection.Range.Font.Color = wdColorRed
+' Add close tag, if there is one
+If endText > "" Then
+  Selection.Expand wdParagraph
+  Selection.Collapse wdCollapseEnd
+  Selection.MoveLeft , 1
+  Selection.InsertBefore endText
+  Selection.Range.Font.Bold = True
+  Selection.Range.Font.Color = wdColorRed
+End If
+Selection.Collapse wdCollapseEnd
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+
+

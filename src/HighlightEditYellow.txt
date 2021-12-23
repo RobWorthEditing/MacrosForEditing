@@ -1,0 +1,12 @@
+Sub HighlightEditYellow()
+' Paul Beverley - Version 06.09.13
+' Highlight current edit in yellow
+
+ActiveDocument.TrackRevisions = False
+Application.Run MacroName:="PreviousChangeOrComment"
+Selection.Range.HighlightColorIndex = wdYellow
+Selection.Collapse wdCollapseEnd
+ActiveDocument.TrackRevisions = True
+End Sub
+
+

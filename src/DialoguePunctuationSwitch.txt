@@ -1,0 +1,44 @@
+Sub DialoguePunctuationSwitch()
+' Paul Beverley - Version 12.09.19
+' Switches adjacent word link between comma and full point
+
+newBit = "." & ChrW(8221) & " "
+' US users:
+' newBit = ChrW(8221) & ". "
+
+stopCaseChange = (Selection.Start <> Selection.End)
+Selection.Words(1).Select
+Selection.Collapse wdCollapseEnd
+myStart = Selection.Start
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[a-zA-Z]"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute
+End With
+
+If stopCaseChange = False Then
+  If LCase(Selection) = Selection Then
+    Selection = UCase(Selection)
+  Else
+    Selection = LCase(Selection)
+  End If
+End If
+
+Selection.Collapse wdCollapseStart
+Selection.Start = myStart
+
+If InStr(Selection, ChrW(8217)) > 0 Then _
+     newBit = Replace(newBit, ChrW(8221), ChrW(8217))
+
+If InStr(Selection, ".") > 0 Then _
+ newBit = Replace(newBit, ".", ",")
+Selection.TypeText newBit
+End Sub
+
+

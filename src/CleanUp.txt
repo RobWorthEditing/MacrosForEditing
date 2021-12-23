@@ -1,0 +1,90 @@
+Sub CleanUp()
+' Paul Beverley - Version 10.06.20
+' Cleans up a file by F&R
+
+For i = 1 To 3
+  changeIt = False
+  If i = 1 Then
+    Set rng = ActiveDocument.Content
+    changeIt = True
+  If i = 2 And ActiveDocument.Footnotes.Count > 0 Then
+    Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    changeIt = True
+  End If
+  If i = 3 And ActiveDocument.Endnotes.Count > 0 Then _
+    Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    changeIt = True
+  End If
+  If changeIt = True Then
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "  "
+      .Wrap = wdFindContinue
+      .Replacement.Text = " "
+      .Forward = True
+      .MatchCase = True
+      .MatchWildcards = False
+      .MatchWholeWord = False
+      .MatchSoundsLike = False
+      .Execute Replace:=wdReplaceAll
+    
+      .Text = " & "
+      .Replacement.Text = " and "
+      .Replacement.Highlight = True
+      .Execute Replace:=wdReplaceAll
+    
+      .Text = "#"
+      .Replacement.Text = "^&"
+      .Execute Replace:=wdReplaceAll
+  
+      .MatchWildcards = True
+      .Text = "<etc>([!.])"
+      .Replacement.Text = "etc.\1"
+      .Execute Replace:=wdReplaceAll
+      .MatchWildcards = False
+    
+      .Text = " ie "
+      .Replacement.Text = " i.e. "
+      .Execute Replace:=wdReplaceAll
+      
+      .Text = " eg "
+      .Replacement.Text = " e.g. "
+      .Execute Replace:=wdReplaceAll
+      
+      .Text = " / "
+      .Replacement.Text = "/"
+      .Execute Replace:=wdReplaceAll
+    
+      .Text = "/ "
+      .Replacement.Text = "/"
+      .Execute Replace:=wdReplaceAll
+    
+      .Text = " /"
+      .Replacement.Text = "/"
+      .Execute Replace:=wdReplaceAll
+    
+      .Text = " - "
+      .Replacement.Text = " ^= "
+      .Execute Replace:=wdReplaceAll
+      
+      ' switch highlighting off
+      .Replacement.ClearFormatting
+      
+      .Text = "'"
+      .Replacement.Text = "^039"
+      .Execute Replace:=wdReplaceAll
+    
+      .Text = """"
+      .Replacement.Text = "^034"
+      .Execute Replace:=wdReplaceAll
+           
+      .Text = "-ly"
+      .Replacement.Text = "ly"
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+Next i
+End Sub
+
+

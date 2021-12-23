@@ -1,0 +1,23 @@
+Sub LongParagraphHighlighterChars()
+' Paul Beverley - Version 23.06.21
+' Highlights all paragraphs more than a certain length
+
+charsLength = 40
+myCharsColour = wdBrightGreen
+
+nowTrack = ActiveDocument.TrackRevisions
+
+ActiveDocument.TrackRevisions = False
+
+For Each myPara In ActiveDocument.Paragraphs
+    If myPara.Range.Characters.Count > charsLength Then
+      myPara.Range.HighlightColorIndex = myCharsColour
+      myPara.Range.Select
+    End If
+  DoEvents
+Next
+ActiveDocument.TrackRevisions = nowTrack
+Beep
+End Sub
+
+

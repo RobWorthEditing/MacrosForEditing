@@ -1,0 +1,39 @@
+Sub MacroMenu2()
+' Paul Beverley - Version 05.10.19
+' Offers a list of macros to launch
+
+myList1 = "r=PDFHyphenRemover, c=PDFHyphenChecker"
+myList2 = ""
+myList3 = "l=SpellingErrorLister, h=SpellingErrorHighlighter"
+myList4 = "a=AddNewWindow"
+
+
+myList = "," & myList1 & "," & myList2 & "," & myList3 & "," & myList4
+myList = Replace(myList, ",,", ",")
+mcr = Split(myList, ",")
+myPrompt = ""
+myCodes = ""
+numItems = UBound(mcr)
+For i = 1 To numItems
+  mcr(i) = Trim(mcr(i))
+  myCode = Left(mcr(i), 1)
+  myCodes = myCodes & myCode
+  mName = Mid(mcr(i), 3)
+  myPrompt = myPrompt & Trim(Str(i)) & " " & ChrW(8211) & " "
+  myPrompt = myPrompt & mName & "  (" & myCode & ")" & vbCr
+Next i
+
+Do
+  myResponse = UCase(InputBox(myPrompt, "MacroMenu"))
+  myNum = Val(myResponse)
+  If myResponse = "" Then Exit Sub
+  If myNum = 0 Then
+    myNum = InStr(UCase(myCodes), Left(myResponse, 1))
+  End If
+Loop Until myNum > 0 And myNum < numItems + 1
+
+mName = Mid(mcr(myNum), 3)
+Application.Run MacroName:=mName
+End Sub
+
+

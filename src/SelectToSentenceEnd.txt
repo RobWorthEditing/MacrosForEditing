@@ -1,0 +1,19 @@
+Sub SelectToSentenceEnd()
+' Paul Beverley - Version 23.04.21
+' Selects from current word to end of sentence
+
+Selection.Expand wdWord
+Set rng = Selection.Range.Duplicate
+rng.Expand wdSentence
+If InStr(" " & vbCr, Right(rng.Text, 1)) > 0 Then
+  Selection.End = rng.End - 1
+Else
+  Selection.End = rng.End
+End If
+If InStr(" " & vbCr, Right(Selection.Text, 1)) > 0 Then
+  Selection.MoveEnd , -1
+End If
+' Selection.Delete
+End Sub
+
+

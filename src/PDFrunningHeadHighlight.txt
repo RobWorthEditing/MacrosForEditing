@@ -1,0 +1,69 @@
+Sub PDFrunningHeadHighlight()
+' Paul Beverley - Version 09.04.21
+' Locates running heads and highlights/enlarges page number
+
+myFontSize = 40
+' myColour = wdYellow
+myColour = 0
+'myFontColour = 0
+myFontColour = wdColorRed
+
+
+minLength = 8
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13[A-Z0-9. \-\(\)" & ChrW(8211) & _
+        ChrW(8212) & "]{5,}^13"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  endNow = rng.End
+  If LCase(rng) <> rng And Len(rng) > minLength Then
+    i = 1
+    Do
+      i = i + 1
+      txt = Left(rng, i)
+    Loop Until LCase(txt) <> txt
+    i = i - 1
+    Set numRng = ActiveDocument.Range(rng.Start + 1, rng.Start + i)
+    If Len(numRng) > 1 Then
+      numRng.Font.Size = myFontSize
+      If myColour > 0 Then numRng.HighlightColorIndex = myColour
+      If myFontColour > 0 Then numRng.Font.Color = myFontColour
+    End If
+    i = 1
+    Do
+      i = i + 1
+      txt = Right(rng, i)
+    Loop Until LCase(txt) <> txt
+    i = i - 1
+    Set numRng = ActiveDocument.Range(rng.End - i, rng.End - 1)
+    If Len(numRng) > 1 Then
+      numRng.Font.Size = myFontSize
+      If myColour > 0 Then numRng.HighlightColorIndex = myColour
+      If myFontColour > 0 Then numRng.Font.Color = myFontColour
+    End If
+  j = j + 1
+  If j Mod 20 = 0 Then
+    rng.Select
+    Selection.Collapse wdCollapseEnd
+  End If
+  End If
+  rng.Start = endNow
+  DoEvents
+  rng.Find.Execute
+Loop
+Beep
+Selection.HomeKey Unit:=wdStory
+End Sub
+
+

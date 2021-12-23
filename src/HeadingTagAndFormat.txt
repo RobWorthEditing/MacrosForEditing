@@ -1,0 +1,29 @@
+Sub HeadingTagAndFormat()
+' Paul Beverley - Version 02.06.18
+' Tags and formats the chapter title
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+' ActiveDocument.StoryRanges(wdPrimaryHeaderStory).Copy
+' Selection.HomeKey Unit:=wdStory
+' Selection.PasteSpecial DataType:=wdPasteText
+' If Len(ActiveDocument.Paragraphs(1).range.Text) < 3 Then
+' ActiveDocument.Paragraphs(1).Range.Delete
+'End If
+Selection.HomeKey Unit:=wdStory
+Selection.Expand wdParagraph
+Selection.Range.HighlightColorIndex = wdNoHighlight
+Selection.Range.Font.ColorIndex = wdAuto
+
+myH = Selection
+myH = Replace(myH, "Chapter ", "<CHN>")
+myH = Replace(myH, " - ", vbCr & "<CH>")
+myH = Replace(myH, ": ", vbCr & "<CH>")
+myH = Replace(myH, ". ", vbCr & "<CH>")
+myH = Replace(myH, ">0", ">")
+Selection.TypeText myH
+ActiveDocument.TrackRevisions = myTrack
+
+End Sub
+
+

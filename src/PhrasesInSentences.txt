@@ -1,0 +1,33 @@
+Sub PhrasesInSentences()
+' Paul Beverley - Version 25.10.20
+' Adds strikethrough to all highlighted text
+
+myPhrase = Trim(Selection)
+CR2 = vbCr & vbCr
+If Len(myPhrase) < 5 Then
+  myResponse = MsgBox("Find phrase:" & CR2 & myPhrase & CR2 & "Sure?", vbQuestion _
+       + vbYesNoCancel, "PhrasesInSentences")
+  If myResponse <> vbYes Then Exit Sub
+End If
+Set rng = ActiveDocument.Content
+Documents.Add
+num = 0
+gogo = False
+For i = 1 To rng.Sentences.Count
+  mySent = rng.Sentences(i).Text
+  If InStr(mySent, myPhrase) > 0 Then
+    num = num + 1
+    Selection.TypeText Text:=mySent & CR2
+  End If
+  DoEvents
+  If num > 49 And gogo = False Then
+  myResponse = MsgBox("Found 50 sentences!" & CR2 & "Continue?", vbQuestion _
+       + vbYesNoCancel, "PhrasesInSentences")
+  If myResponse <> vbYes Then Exit Sub
+  gogo = True
+  End If
+Next i
+MsgBox ("Found: " & Str(num) & " times")
+End Sub
+
+

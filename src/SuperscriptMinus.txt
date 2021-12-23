@@ -1,0 +1,32 @@
+Sub SuperscriptMinus()
+' Paul Beverley - Version 25.10.13
+' Convert superscripted hyphens to minus signs
+
+myColour = wdTurquoise
+
+' For no highlight, use:
+' myColour = 0
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+
+Set rng = ActiveDocument.Range
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "-"
+  .Font.Superscript = True
+  .Replacement.Text = ChrW(8722)
+  .Replacement.Font.Superscript = True
+  If myColour > 0 Then .Replacement.Highlight = True
+  .Forward = True
+  .Wrap = wdFindContinue
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+
+

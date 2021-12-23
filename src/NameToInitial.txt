@@ -1,0 +1,24 @@
+Sub NameToInitial()
+' Paul Beverley - Version 02.03.15
+' Change given name to initial, then jump on to next
+
+Selection.Words(1).Select
+myInitial = Left(Selection, 1) & "."
+lastChar = Right(Selection, 1)
+If lastChar = " " Then
+  Selection.TypeText myInitial & " "
+Else
+  Selection.TypeText myInitial
+End If
+Selection.MoveRight Unit:=wdWord, Count:=1
+Selection.Words(1).Select
+asgfsd = Selection
+If Selection = "and " Or UCase(Selection) = LCase(Selection) Then _
+     Selection.MoveRight Unit:=wdWord, Count:=1
+Selection.Words(1).Select
+If Selection = "and " Or UCase(Selection) = LCase(Selection) Then _
+     Selection.MoveRight Unit:=wdWord, Count:=1
+Selection.Collapse wdCollapseStart
+End Sub
+
+

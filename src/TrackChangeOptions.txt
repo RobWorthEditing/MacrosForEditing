@@ -1,0 +1,31 @@
+Sub TrackChangeOptions()
+' Paul Beverley - Version 16.07.15
+' Set up track changes to taste
+
+' All TC shown in bubbles
+ActiveWindow.View.MarkupMode = wdBalloonRevisions
+
+' Insertion/deletion shown inline
+' Format changes show left margin line only
+ActiveWindow.View.MarkupMode = wdInLineRevisions
+
+' Iinsertion/deletion shown inline
+' Format changes shown in bubble
+ActiveWindow.View.MarkupMode = wdMixedRevisions
+
+
+With ActiveWindow.View
+' Do you want comments showing?
+  .ShowComments = True
+' Do you want insertions and deletions showing?
+  .ShowInsertionsAndDeletions = True
+' Do you want format changes showing?
+  .ShowFormatChanges = True
+End With
+
+ActiveWindow.View.RevisionsFilter.Markup = wdRevisionsMarkupAll
+'ActiveWindow.View.RevisionsFilter.Markup = wdRevisionsMarkupSimple
+
+End Sub
+
+

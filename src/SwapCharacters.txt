@@ -1,18 +1,13 @@
 Sub SwapCharacters()
-' Paul Beverley - Version 17.10.18
-' Switches the characters either side of the caret
+' Paul Beverley - Version 06.10.21
+' Switches characters either side of caret
 
 Selection.Collapse wdCollapseStart
-Set rng1 = Selection.range.Duplicate
-Set rng2 = rng1.Duplicate
-rng1.MoveStart , -1
-rng2.MoveEnd , 1
-Selection.MoveLeft , 1
-Selection.range.FormattedText = rng1.FormattedText
-Selection.range.FormattedText = rng2.FormattedText
-Selection.MoveRight , 2
-Selection.MoveEnd , 2
-Selection.Delete
-Selection.MoveLeft , 1
+Selection.MoveStart , -1
+Selection.MoveEnd , 1
+txt = Selection.Text
+Selection.Text = Right(txt, 1) & Left(txt, 1)
+Selection.MoveEnd , -1
+Selection.MoveStart , 1
 End Sub
 

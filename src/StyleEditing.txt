@@ -1,0 +1,145 @@
+Sub StyleEditing()
+' Paul Beverley - Version 01.02.10
+' No comment!
+
+
+  Selection.Style = ActiveDocument.Styles(wdStyleHeading1)
+  With ActiveDocument.Styles(wdStyleHeading1).Font
+    .Name = "MS Gothic"
+    .Size = 20
+    .Bold = True
+    .Italic = False
+    .Underline = wdUnderlineNone
+    .UnderlineColor = wdColorAutomatic
+    .StrikeThrough = False
+    .DoubleStrikeThrough = False
+    .Outline = False
+    .Emboss = False
+    .Shadow = False
+    .Hidden = False
+    .SmallCaps = False
+    .AllCaps = False
+    .Color = 12611584
+    .Engrave = False
+    .Superscript = False
+    .Subscript = False
+    .Scaling = 100
+    .Kerning = 16
+    .Animation = wdAnimationNone
+    .Ligatures = wdLigaturesNone
+    .NumberSpacing = wdNumberSpacingDefault
+    .NumberForm = wdNumberFormDefault
+    .StylisticSet = wdStylisticSetDefault
+    .ContextualAlternates = 0
+  End With
+  With ActiveDocument.Styles(wdStyleHeading1)
+    .AutomaticallyUpdate = False
+    .BaseStyle = "Normal"
+    .NextParagraphStyle = "Normal"
+  End With
+  Selection.Style = ActiveDocument.Styles("List Paragraph")
+  Selection.TypeText "dfsgsdfgdrfg"
+  Selection.TypeParagraph
+  Selection.TypeText "sdfgsdfgsd"
+  Selection.TypeParagraph
+  Selection.MoveUp Unit:=wdLine, Count:=3, Extend:=wdExtend
+  Selection.Style = ActiveDocument.Styles("List Paragraph")
+  With ListGalleries(wdBulletGallery).ListTemplates(1).ListLevels(1)
+    .NumberFormat = ChrW(61623)
+    .TrailingCharacter = wdTrailingTab
+    .NumberStyle = wdListNumberStyleBullet
+    .NumberPosition = CentimetersToPoints(0.63)
+    .Alignment = wdListLevelAlignLeft
+    .TextPosition = CentimetersToPoints(1.27)
+    .TabPosition = wdUndefined
+    .ResetOnHigher = 0
+    .StartAt = 1
+    With .Font
+      .Bold = wdUndefined
+      .Italic = wdUndefined
+      .StrikeThrough = wdUndefined
+      .Subscript = wdUndefined
+      .Superscript = wdUndefined
+      .Shadow = wdUndefined
+      .Outline = wdUndefined
+      .Emboss = wdUndefined
+      .Engrave = wdUndefined
+      .AllCaps = wdUndefined
+      .Hidden = wdUndefined
+      .Underline = wdUndefined
+      .Color = wdUndefined
+      .Size = wdUndefined
+      .Animation = wdUndefined
+      .DoubleStrikeThrough = wdUndefined
+      .Name = "Symbol"
+    End With
+    .LinkedStyle = ""
+  End With
+  ListGalleries(wdBulletGallery).ListTemplates(1).Name = ""
+  Selection.Range.ListFormat.ApplyListTemplateWithLevel ListTemplate:= _
+    ListGalleries(wdBulletGallery).ListTemplates(1), ContinuePreviousList:= _
+    False, ApplyTo:=wdListApplyToWholeList, DefaultListBehavior:= _
+    wdWord10ListBehavior
+  With ActiveDocument.Styles("List Paragraph").Font
+    .Name = "Arial Black"
+    .Size = 14
+    .Bold = False
+    .Italic = False
+    .Underline = wdUnderlineNone
+    .UnderlineColor = wdColorAutomatic
+    .StrikeThrough = False
+    .DoubleStrikeThrough = False
+    .Outline = False
+    .Emboss = False
+    .Shadow = False
+    .Hidden = False
+    .SmallCaps = False
+    .AllCaps = False
+    .Color = wdColorAutomatic
+    .Engrave = False
+    .Superscript = False
+    .Subscript = False
+    .Scaling = 100
+    .Kerning = 0
+    .Animation = wdAnimationNone
+    .Ligatures = wdLigaturesNone
+    .NumberSpacing = wdNumberSpacingDefault
+    .NumberForm = wdNumberFormDefault
+    .StylisticSet = wdStylisticSetDefault
+    .ContextualAlternates = 0
+  End With
+  With ActiveDocument.Styles("List Paragraph").ParagraphFormat
+    .LeftIndent = CentimetersToPoints(1.27)
+    .RightIndent = CentimetersToPoints(0)
+    .SpaceBefore = 0
+    .SpaceBeforeAuto = False
+    .SpaceAfter = 0
+    .SpaceAfterAuto = False
+    .LineSpacingRule = wdLineSpaceSingle
+    .Alignment = wdAlignParagraphLeft
+    .WidowControl = True
+    .KeepWithNext = False
+    .KeepTogether = False
+    .PageBreakBefore = False
+    .NoLineNumber = False
+    .Hyphenation = True
+    .FirstLineIndent = CentimetersToPoints(0)
+    .OutlineLevel = wdOutlineLevelBodyText
+    .CharacterUnitLeftIndent = 0
+    .CharacterUnitRightIndent = 0
+    .CharacterUnitFirstLineIndent = 0
+    .LineUnitBefore = 0
+    .LineUnitAfter = 0
+    .MirrorIndents = False
+    .TextboxTightWrap = wdTightNone
+  End With
+  ActiveDocument.Styles("List Paragraph"). _
+    NoSpaceBetweenParagraphsOfSameStyle = True
+  With ActiveDocument.Styles("List Paragraph")
+    .AutomaticallyUpdate = False
+    .BaseStyle = "Normal"
+    .NextParagraphStyle = "List Paragraph"
+  End With
+End Sub
+
+

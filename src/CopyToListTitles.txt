@@ -1,0 +1,39 @@
+Sub CopyToListTitles()
+' Paul Beverley - Version 15.10.17
+' Copies selected text into a list file
+
+' As used for running videos
+
+doubleReturn = False
+goBackToSource = True
+
+Set thisDoc = ActiveDocument
+
+If Selection.Start = Selection.End Then Selection.Expand wdParagraph
+
+Selection.Copy
+Selection.Collapse wdCollapseStart
+
+gottaList = False
+For Each myWnd In Application.Windows
+  thisName = myWnd.Document.Name
+  nm = LCase(thisName)
+  If InStr(nm, "list") > 0 And InStr(nm, "freditlist") = 0 _
+       And InStr(nm, "switchlist") = 0 Then
+    gottaList = True
+    myWnd.Document.Activate
+    Exit For
+  End If
+Next myWnd
+
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseEnd
+Selection.Paste
+Selection.Collapse wdCollapseEnd
+If doubleReturn = True Then Selection.TypeText vbCr
+Selection.MoveLeft , 1
+Selection.MoveRight , 1
+If goBackToSource = True Then thisDoc.Activate
+End Sub
+
+

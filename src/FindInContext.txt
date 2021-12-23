@@ -110,7 +110,6 @@ Do While rng.Find.Found = True
       myTest = LCase(rng.Text)
       myWdPos1 = InStr(myTest, LCase(nearWord1))
       myWdPosMain = InStr(myTest, LCase(mainWord))
-      Debug.Print rng.Text, myWdPos1, myWdPosMain
       If myWdPos1 > 1 Then
         rng.Start = rng.Start + myWdPos1 + 1
       Else

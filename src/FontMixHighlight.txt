@@ -1,0 +1,24 @@
+Sub FontMixHighlight()
+' Paul Beverley - Version 17.05.21
+' Highlights paragraphs with mixed fonts, showing odd fonts
+
+myParaColour = wdGray25
+myDiffFontColour = wdBrightGreen
+
+For i = 1 To ActiveDocument.Paragraphs.Count
+  Set rng = ActiveDocument.Paragraphs(i).Range
+  If rng.Font.Name = "" Then
+    rng.HighlightColorIndex = myParaColour
+    nowFont = rng.Characters(1).Font.Name
+    For Each wd In rng.Words
+      If wd.Font.Name <> nowFont Then
+        wd.HighlightColorIndex = myDiffFontColour
+      End If
+    Next wd
+  End If
+Next i
+Selection.EndKey Unit:=wdStory
+Beep
+End Sub
+
+

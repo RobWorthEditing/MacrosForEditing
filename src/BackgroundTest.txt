@@ -1,0 +1,33 @@
+Sub BackgroundTest()
+' Paul Beverley - Version 11.04.20
+' Removes all background colours
+Set rng = Selection.Range.Duplicate
+
+    Debug.Print "Font.Shading.Texture", rng.Shading.Texture
+    Debug.Print "Shading.BackgroundPatternColor", rng.Shading.BackgroundPatternColor
+    Debug.Print "Font.Shading.BackgroundPatternColor", rng.Font.Shading.BackgroundPatternColor
+    Debug.Print "Font.Shading.ForegroundPatternColor", rng.Font.Shading.ForegroundPatternColor
+    ' Debug.Print "Fill.Visible", ActiveDocument.Background.Fill.Visible
+    Debug.Print
+Exit Sub
+
+For Each myPar In ActiveDocument.Paragraphs
+Set rng = myPar.Range.Duplicate
+If rng.Information(wdWithInTable) = False Then
+  If rng.Shading.BackgroundPatternColor <> -16777216 Then
+    ' Set rng = Selection.Range.Duplicate
+    Debug.Print "Shading.BackgroundPatternColor", rng.Shading.BackgroundPatternColor
+    Debug.Print "Shading.Texture", rng.Font.Shading.Texture
+    Debug.Print "Font.Shading.BackgroundPatternColor", rng.Font.Shading.BackgroundPatternColor
+    Debug.Print "Font.Shading.ForegroundPatternColor", rng.Font.Shading.ForegroundPatternColor
+    Debug.Print "Fill.Visible", ActiveDocument.Background.Fill.Visible
+    Debug.Print
+    DoEvents
+    rng.Select
+  asdfg = 0
+  End If
+End If
+Next myPar
+End Sub
+
+

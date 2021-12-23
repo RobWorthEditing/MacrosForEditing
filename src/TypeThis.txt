@@ -1,0 +1,48 @@
+Sub TypeThis()
+' Paul Beverley - Version 19.12.14
+' Type something and maybe highlight the line
+
+' Selection.MoveStartUntil cset:="123456789", Count:=wdForward
+'Selection.Expand wdWord
+'Selection.Collapse wdCollapseEnd
+'Selection.Expand wdParagraph
+'Selection.Range.HighlightColorIndex = wdYellow
+'Selection.Collapse wdCollapseStart
+'Selection.EndKey Unit:=wdLine
+
+'Selection.TypeText " ()"
+'Selection.MoveLeft , 1
+'Exit Sub
+'Selection.TypeText "Change '' to ''."
+
+Selection.TypeText "Change " & ChrW(8216) & ChrW(8217) & " to " _
+     & ChrW(8216) & ChrW(8217) & "."
+' Selection.PasteSpecial DataType:=wdPasteText
+' Selection.TypeText "<Fig  here>"
+Selection.MoveLeft , 8
+
+Exit Sub
+
+startHere = Selection.Start
+' This is an omega
+'Selection.TypeText ChrW(937)
+
+' <thin space> <micro> <m>
+' Selection.TypeText ChrW(8201) & ChrW(956) & "m"
+
+' "Points to"
+' Selection.TypeText " " & ChrW(8722) & "> "
+
+' "et al."
+Selection.TypeText " et al."
+
+Selection.Start = startHere
+Selection.Font.Italic = True
+
+'Selection.Expand wdParagraph
+'Selection.Range.HighlightColorIndex = wdYellow
+'Selection.Start = Selection.End
+'Selection.MoveLeft Unit:=wdCharacter, Count:=1
+End Sub
+
+

@@ -1,0 +1,13 @@
+Sub ApostropheS()
+' Paul Beverley - Version 13.06.20
+' Adds an apostrophe before the s
+
+Selection.Expand wdWord
+Selection.MoveEndWhile cset:=ChrW(8217) & " '", Count:=wdBackward
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 1
+Selection.TypeText Text:=ChrW(8217)
+
+End Sub
+
+

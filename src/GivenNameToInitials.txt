@@ -1,0 +1,59 @@
+Sub GivenNameToInitials()
+' Paul Beverley - Version 27.03.14
+' Reduce given names to initial only
+
+givenNameFirst = True
+addFP = True
+
+Selection.Expand wdParagraph
+parStart = Selection.Start
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{4}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Selection.Start = parStart
+myText = Selection
+If addFP = True Then FP = "." Else FP = ""
+
+wds = Split(myText, " ")
+lastWd = UBound(wds)
+
+' First deal with the first author's given name
+n = wds(1)
+newone = Left(n, 1) & FP
+If Right(n, 1) = "," Then newone = newone & ","
+newText = wds(0) & " " & newone & " "
+
+If givenNameFirst = True Then thisIsSurname = False
+
+For i = 2 To lastWd - 1
+  n = wds(i)
+  If n = "and" Then
+    newText = newText & "and "
+  Else
+    If thisIsSurname = True Then
+      newText = newText & n & " "
+    Else
+      newone = Left(n, 1) & FP
+      If Right(n, 1) = "," Then newone = newone & ","
+      newText = newText & newone & " "
+    End If
+    thisIsSurname = Not (thisIsSurname)
+  End If
+Next i
+newText = newText & wds(lastWd)
+
+Selection.TypeText newText
+sjkdfhjks = 0
+
+End Sub
+
+

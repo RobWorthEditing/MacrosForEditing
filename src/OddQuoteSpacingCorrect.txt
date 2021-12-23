@@ -1,0 +1,46 @@
+Sub OddQuoteSpacingCorrect()
+' Paul Beverley - Version 02.09.21
+' Corrects the odd spacing on single quotation marks
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "'"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  endNow = rng.End
+  rng.Collapse wdCollapseStart
+  rng.Delete Unit:=wdCharacter, Count:=1
+  rng.InsertAfter Text:="'"
+  rng.Start = endNow + 2
+  rng.End = endNow + 2
+  rng.Find.Execute
+  DoEvents
+  DoEvents
+  q = q + 1
+  If q Mod 100 = 0 Then rng.Select
+Loop
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "'"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "'"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+
+

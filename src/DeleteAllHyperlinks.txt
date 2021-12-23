@@ -1,0 +1,16 @@
+Sub DeleteAllHyperlinks()
+' Paul Beverley - Version 30.06.12
+' Unlink all hyperlinks including footnotes
+   
+For Each myStory In ActiveDocument.StoryRanges
+  For Each myHlink In myStory.Hyperlinks
+    myHlink.Range.Select
+    myHlink.Delete
+    myCount = myCount + 1
+  Next myHlink
+  
+Next myStory
+MsgBox ("Links deleted: " & Str(myCount))
+End Sub
+
+

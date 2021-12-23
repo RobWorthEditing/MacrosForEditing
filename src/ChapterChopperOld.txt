@@ -1,0 +1,189 @@
+Sub ChapterChopperOld()
+' Paul Beverley - Version 28.01.15
+' Chop text into chapters
+
+' NEEDS rethinking
+
+Dim wordsTrue As Long, wordsCount As Long
+
+myPostfix = ""
+
+' For Macs only, use
+' myPostfix = ".docx"
+
+'find start of special heading
+Set rng = ActiveDocument.Content
+endOfFile = rng.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Summary of chapter contents"
+  .Execute
+End With
+
+' If that heading is already there, you're
+' ready to chop up the file
+
+If rng.Find.Found = True Then GoTo chopItUp
+
+If Selection.End = Selection.Start Then
+  myResponse = MsgBox("Chapter chopper" & vbCr & _
+     "Please select text to define chapter start")
+  Exit Sub
+End If
+
+chapTitle = Selection
+
+' Find actual total wordcount
+wordsTrue = ActiveDocument.Content.ComputeStatistics(wdStatisticWords)
+
+' Find apparent total word count
+wordsCount = ActiveDocument.Content.Words.Count
+correctionFactor = wordsTrue / wordsCount
+
+Set rng = ActiveDocument.Content
+
+' Find start of first chapter
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = chapTitle
+  .MatchCase = True
+  .Execute
+End With
+chapStart = rng.Start
+' If it's a long chapter heading, cut it down a bit.
+rng.End = rng.End + 50
+rng.Start = chapStart
+chapName = rng
+' If we've picked up more then one line
+' of text, chop it short at the line end
+anyNewLine = InStr(chapName, Chr(11))
+anyReturn = InStr(chapName, Chr(13))
+If anyNewLine > 2 Then
+  If anyNewLine < anyReturn Then anyReturn = anyNewLine
+End If
+If anyReturn > 2 Then chapName = Left(chapName, anyReturn - 1)
+rng.End = rng.Start
+rng.Start = 0
+wordsTrue = Int(rng.Words.Count * correctionFactor)
+Selection.EndKey Unit:=wdStory
+Selection.TypeText "Summary of chapter contents" & vbCr & vbCr
+Selection.TypeText "Prelims" & vbTab & Str(wordsTrue) _
+    & vbCr & vbCr
+   
+' Note where the list starts
+listStart = Selection.Start
+
+Do
+  Set rng = ActiveDocument.Content
+  rng.Start = chapStart + 1
+  lastChapStart = chapStart
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = chapTitle
+    .MatchCase = True
+    .Execute
+  End With
+ 
+  If rng.Start > listStart Then Exit Sub
+  rng.End = rng.End + 50
+  nextChapName = rng
+ 
+  ' If we've picked up more then one line
+  ' of text, chop it short at the line end
+  anyNewLine = InStr(nextChapName, Chr(11))
+  anyReturn = InStr(nextChapName, Chr(13))
+  If anyNewLine > 2 Then
+    If anyNewLine < anyReturn Then anyReturn = anyNewLine
+  End If
+  If anyReturn > 2 Then nextChapName = Left(nextChapName, anyReturn - 1)
+  chapStart = rng.Start
+  rng.End = rng.Start
+  rng.Start = lastChapStart
+  wordsTrue = Int(rng.Words.Count * correctionFactor)
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText chapName & vbTab & Str(wordsTrue) _
+      & vbCr & vbCr
+  chapName = nextChapName
+
+Loop Until finished = True
+Exit Sub
+
+
+' Start of chopping up mechanism
+chopItUp:
+' Text at beginning of every filename
+myPrefix = InputBox("Filename?", "Chapter Chopper", "Chapter")
+
+rng.Select
+Dim startNextText(100) As String
+
+' First find out if the prelims have been
+' lumped into chapter 1
+startNumber = 1
+Selection.MoveDown Unit:=wdLine, Count:=2
+'Selection.Expand wdParagraph
+'myLine = Selection
+' Selection.Start = Selection.End
+' If the second line is longer than two
+' then prelims and chapter 1 are together as file 01
+'If Len(myLine) > 2 Then
+' startNumber = 1
+'  Selection.MoveDown Unit:=wdLine, Count:=1
+'End If
+
+' Starting from zero (prelims file) or
+' one (prelims + chapter 1), store the
+' text that follows, i.e. the start of the
+' next file
+fileNumber = startNumber
+Do
+  Selection.Expand wdParagraph
+  thisBit = Replace(Selection, ".", "")
+  ' Chop off the tab and the wordcount
+  thisBit = Left(thisBit, InStr(thisBit, Chr(9)) - 1)
+  If fileNumber <> -1 Then startNextText(fileNumber) = thisBit
+  ' Skip any files that have been bunched together
+  ' i.e. are to be stored in a single file
+  Do
+    Selection.Collapse wdCollapseEnd
+    Selection.Expand wdParagraph
+  Loop Until Len(Selection) < 3
+  Selection.Start = Selection.End
+  fileNumber = fileNumber + 1
+Loop Until Selection.End > endOfFile - 3
+startNextText(fileNumber) = "Summary of chapter contents"
+
+' Chop up the text, section by section
+' according to the numbering and sections
+' defined above
+startText = 0
+For i = startNumber To fileNumber
+  Set rng = ActiveDocument.Content
+
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = startNextText(i)
+    .Execute
+  End With
+  rng.Select
+  rng.Collapse wdCollapseEnd
+  rng.Start = startText
+  If rng.Start <> rng.End Then
+    rng.Copy
+    startText = rng.End
+    Documents.Add
+    Selection.Paste
+    myFile = Trim(Str(i))
+    If Len(myFile) = 1 Then myFile = "0" & myFile
+    myFile = myPrefix & myFile & myPostfix
+    ActiveDocument.SaveAs FileName:=myFile
+    ActiveDocument.Close
+  End If
+Next i
+End Sub
+
+

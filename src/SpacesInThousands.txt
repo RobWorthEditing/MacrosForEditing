@@ -1,0 +1,43 @@
+Sub SpacesInThousands()
+' Paul Beverley - Version 29.11.16
+' Changes four-figure numbers from comma to space.
+
+' Start from the top of the document
+Selection.HomeKey Unit:=wdStory
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^#,^#^#^#"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+
+Do While Selection.Find.Found = True
+' Note where the end of the found item is
+  endNow = Selection.End
+
+' Make your required change
+  oldText = Selection.Text
+  newText = Replace(oldText, ",", " ")
+  
+' or if you prefer a fixed space?
+' newText = Replace(oldText, ",", ChrW(160))
+  
+' Type in the replacement text
+  Selection.TypeText newText
+  
+  ' Be sure you're past the previous occurrence
+  Selection.End = endNow
+  Selection.Collapse wdCollapseEnd
+
+' Go and find the next occurrence (if there is one)
+  Selection.Find.Execute
+Loop
+End Sub
+
+

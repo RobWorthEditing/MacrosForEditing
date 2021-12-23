@@ -1,0 +1,37 @@
+Sub ReturnURLCheck()
+  Dim objLink As Hyperlink
+  Dim strLinkText As String
+  Dim strLinkAddress As String
+  Dim strResult As String
+  Dim nInvalidLink As Integer, nTotalLinks As Integer
+  Dim objDoc As Document
+ 
+  ' Application.ScreenUpdating = False
+ 
+  Set objDoc = ActiveDocument
+  nTotalLinks = objDoc.Hyperlinks.Count
+  nInvalidLink = 0
+ 
+  With objDoc
+    For Each objLink In .Hyperlinks
+      strLinkText = objLink.Range.Text
+      strLinkAddress = objLink.Address
+ Debug.Print strLinkText
+      If Not CheckURL(strLinkAddress) Then
+        nInvalidLink = nInvalidLink + 1
+        strResult = frmCheckURLs.txtShowResult.Text
+        frmCheckURLs.txtShowResult.Text = strResult & nInvalidLink & ". Invalid Link Information:" & vbNewLine & _
+                                          "Displayed Text: " & strLinkText & vbNewLine & _
+                                           "Address: " & strLinkAddress & vbNewLine & vbNewLine
+      End If
+    Next objLink
+ 
+    'frmCheckURLs.txtTotalLinks.Text = nTotalLinks
+    'frmCheckURLs.txtNumberOfInvalidLinks.Text = nInvalidLink
+    'frmCheckURLs.Show Modal
+ 
+  End With
+  Application.ScreenUpdating = True
+End Sub
+
+

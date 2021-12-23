@@ -1,0 +1,42 @@
+Sub EmailQuoter()
+' Paul Beverley - Version 02.07.18
+' Chops and indents quoted email
+
+myLen = 70
+For Each pa In Selection.Range.Paragraphs
+  pa.Range.InsertBefore Text:="> "
+  If Len(pa.Range.Text) > myLen Then
+    myPtr = myLen
+    For i = myPtr To Len(pa.Range.Text)
+      myChar = pa.Range.Characters(i)
+      If myChar = " " Then
+        myPtr = i
+        For j = 1 To 30
+        Debug.Print pa.Range.Characters(myPtr - j)
+          prvChar = pa.Range.Characters(myPtr - j)
+          If prvChar = " " Then
+            pa.Range.Characters(myPtr - j) = ChrW(8201)
+            myPtr = i - j
+            Exit For
+          End If
+        Next j
+        i = myPtr + myLen
+      End If
+    Next i
+  End If
+
+Next pa
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8201)
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p> "
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+
+
+

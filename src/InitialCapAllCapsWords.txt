@@ -1,0 +1,17 @@
+Sub InitialCapAllCapsWords()
+' Paul Beverley - Version 03.06.21
+' Initial caps the all-caps words in a document
+
+For Each myWord In ActiveDocument.Words
+  wd = myWord.Text
+  If Len(wd) > 2 And UCase(wd) = wd And _
+       LCase(wd) <> wd Then
+    newWord = Left(wd, 1) & LCase(Mid(wd, 2))
+    If newWord <> wd Then myWord.Text = newWord
+    Debug.Print myWord.Text & "|" & newWord & "|"
+  End If
+  DoEvents
+Next myWord
+End Sub
+
+

@@ -1,0 +1,29 @@
+Sub ExceptionsListEdit()
+' Paul Beverley - Version 27.05.20
+' Allows the user to edit, add to or replace the exceptions list
+
+CR = vbCr: CR2 = CR & CR
+allText = Selection.Text
+If Selection.Start = Selection.End Then
+  Selection.TypeText Text:=pbExceptionsList
+Else
+  myInput = InputBox("1 = Add to exceptions list" & CR & _
+       "2 = Create new exceptions list", "ExceptionsListEdit", "1")
+  myNumber = Val(myInput)
+  sdfsgf = Replace(pbExceptionsList, vbCr, " ")
+  Select Case myNumber
+
+    Case 1: pbExceptionsList = pbExceptionsList & allText
+    Case 2: pbExceptionsList = allText
+    Case Else: Beep: Exit Sub
+  End Select
+
+  If Left(pbExceptionsList, 1) <> CR Then _
+       pbExceptionsList = CR & pbExceptionsList
+  If Right(pbExceptionsList, 1) <> CR Then _
+       pbExceptionsList = pbExceptionsList & CR
+End If
+
+End Sub
+
+

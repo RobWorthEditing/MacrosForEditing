@@ -1,0 +1,42 @@
+Sub StrikeAllColouredFonts()
+' Paul Beverley - Version 23.05.13
+' Add strike-through to all coloured text
+
+Set rng = ActiveDocument.Content
+rng.Font.Shadow = True
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Color = wdColorAutomatic
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.Shadow = False
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Shadow = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.StrikeThrough = True
+  .Replacement.Font.Shadow = False
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+End Sub
+
+

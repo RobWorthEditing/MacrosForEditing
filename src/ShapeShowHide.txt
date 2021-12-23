@@ -1,0 +1,88 @@
+Sub ShapeShowHide()
+' Paul Beverley - Version 29.08.17
+' Makes all shapes distinguishable
+
+useVariagated = False
+doFill = True
+doGlow = True
+
+'On Error GoTo myReport
+numTB = ActiveDocument.Shapes.Count
+Set myPlace = Selection.Range.Duplicate
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+If myPlace.Start = 0 And myPlace.End = ActiveDocument.Content.End Then
+  myPlace.End = 0
+  ' Remove shape showing
+  For i = 1 To numTB
+    thisType = ActiveDocument.Shapes(i).Type
+    If ActiveDocument.Shapes(i).TextFrame.HasText Then
+      ActiveDocument.Shapes(i).Select
+      Selection.Range.Font.Color = wdColorAutomatic
+    Else
+      If thisType <> 13 And doGlow = True Then
+        ActiveDocument.Shapes(i).Glow.Radius = 0
+      End If
+      ActiveDocument.Shapes(i).Fill.Visible = False
+    End If
+  Next i
+Else
+  ' Add shape showing
+  For i = 1 To numTB
+    thisType = ActiveDocument.Shapes(i).Type
+ '   If thisType = 9 Then
+ ' ActiveDocument.Shapes(i).Select
+ '     Selection.Collapse wdCollapseStart
+ '     Exit Sub
+ '   End If
+    If ActiveDocument.Shapes(i).TextFrame.HasText Then
+      ActiveDocument.Shapes(i).Select
+      x = 1
+      If useVariagated = True Then
+        For Each ch In Selection.Characters
+          If x = 1 Then
+            ch.Font.Color = wdColorBlue
+            ch.Font.Bold = True
+            ch.Font.Size = 16
+            x = 0
+          Else
+            ch.Font.Color = wdColorRed
+            x = 1
+          End If
+        Next ch
+      Else
+        Selection.Font.Color = wdColorRed
+        Selection.Font.Bold = True
+        Selection.Font.Size = 12
+      End If
+    Else
+      If thisType <> 9 And thisType <> 13 And doFill = True Then
+        With ActiveDocument.Shapes(i).Fill
+          .ForeColor.RGB = RGB(55, 55, 200)
+          .Visible = True
+          .Solid
+        End With
+      End If
+      If thisType = 9 And doGlow = True Then
+        myAutoType = ActiveDocument.Shapes(i).AutoShapeType
+        If myAutoType <> -2 Then
+          ActiveDocument.Shapes(i).Glow.Radius = 2
+        End If
+      End If
+    End If
+  Next i
+End If
+ActiveDocument.TrackRevisions = myTrack
+myPlace.Select
+Beep
+Exit Sub
+
+
+myReport:
+On Error GoTo 0
+ActiveDocument.Shapes(i).Select
+Selection.Collapse wdCollapseEnd
+End Sub
+
+

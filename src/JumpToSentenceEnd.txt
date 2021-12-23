@@ -1,0 +1,13 @@
+Sub JumpToSentenceEnd()
+' Paul Beverley - Version 22.07.15
+' Move to the end of the current sentence
+
+Selection.Collapse wdCollapseEnd
+Selection.MoveRight , 2
+Selection.Expand wdSentence
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 3
+Selection.Expand wdWord
+End Sub
+
+

@@ -1,0 +1,13 @@
+Sub DeleteThisFileNOW()
+' Paul Beverley - Version 27.01.20
+' Close file WITHOUT SAVING - BEWARE!!
+
+myName = ActiveDocument.Name
+myResponse = MsgBox("Kill file:     " & myName, vbQuestion _
+     + vbYesNoCancel)
+If myResponse <> vbYes Then Exit Sub
+
+ActiveDocument.Close SaveChanges:=False
+End Sub
+
+

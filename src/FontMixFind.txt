@@ -1,0 +1,23 @@
+Sub FontMixFind()
+' Paul Beverley - Version 16.05.21
+' Finds the next paragraph that has mixed fonts
+
+Set rng = ActiveDocument.Range(0, Selection.End)
+myStart = rng.Paragraphs.Count
+For i = myStart + 1 To ActiveDocument.Paragraphs.Count
+  Set rng = ActiveDocument.Paragraphs(i).Range
+  If rng.Font.Name = "" Then
+    nowFont = rng.Characters(1).Font.Name
+    For Each wd In rng.Words
+      If wd.Font.Name <> nowFont Then
+        wd.Select
+        Exit Sub
+      End If
+    Next wd
+  End If
+Next i
+Selection.EndKey Unit:=wdStory
+Beep
+End Sub
+
+

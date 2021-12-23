@@ -1,0 +1,61 @@
+Sub PDFunderlineFR()
+' Paul Beverley - Version 16.03.14
+' Find underline word
+
+Do
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "_"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  If rng.Find.Found = False Then
+    Beep
+    Selection.EndKey Unit:=wdStory
+    Exit Sub
+  End If
+  rng.Select
+  Selection.MoveEnd Unit:=wdWord, Count:=1
+  Selection.MoveStart Unit:=wdWord, Count:=-1
+  Selection.MoveEndWhile cset:=ChrW(8217) & "'", Count:=wdBackward
+  Selection.MoveEndWhile cset:=" ", Count:=wdBackward
+  
+  myText = Trim(Selection)
+  If Asc(myText) <> 32 Then myText = Trim(myText)
+  myNewText = InputBox("Change?", "Underline finder", myText)
+  
+  If Len(myNewText) = 0 Then Exit Sub
+  
+  If InStr(myNewText, "_") > 0 Then
+    myText = myNewText
+    myNewText = InputBox("Change?", "Underline finder", myText)
+  End If
+  
+  If Left(myNewText, 1) = "f" And Len(myNewText) < 4 Then
+    myTextNow = Replace(myText, "_", myNewText)
+    Set rng = ActiveDocument.Content
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = myText
+      .Wrap = wdFindContinue
+      .Replacement.Text = myTextNow
+      .MatchWildcards = False
+      .MatchCase = False
+      .Execute Replace:=wdReplaceAll
+    End With
+  End If
+    myResponse = MsgBox("OK?", vbOKCancel, "Underline finder")
+    If myResponse <> vbOK Then Exit Sub
+Loop Until myNewText = ""
+
+End Sub
+
+

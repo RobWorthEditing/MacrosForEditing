@@ -1,0 +1,18 @@
+Sub CopyIntelligent()
+' Paul Beverley - Version 19.12.18
+' Sets up copy assuming word or paragraph
+
+Selection.Copy
+assumeWord = True
+
+If Selection.Start = Selection.End Then
+  If assumeWord = True Then
+  Selection.Expand wdWord
+  Else
+  Selection.Expand wdParagraph
+  End If
+End If
+Selection.Copy
+End Sub
+
+

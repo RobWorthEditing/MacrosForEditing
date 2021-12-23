@@ -1,0 +1,20 @@
+Sub FindUnderline()
+' Paul Beverley - Version 26.02.13
+' Find underlined text
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+End Sub
+
+

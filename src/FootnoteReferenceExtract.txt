@@ -1,0 +1,61 @@
+Sub FootnoteReferenceExtract()
+' Paul Beverley - Version 11.03.17
+' Extracts references from footnotes, leaving Harvard citation
+
+minYear = 1900
+maxYear = 2020
+
+myColour = wdBrightGreen
+
+numFNs = ActiveDocument.Footnotes.Count
+CR = vbCr
+CR2 = vbCr & vbCr
+Set rng = ActiveDocument.Content
+rng.Collapse wdCollapseEnd
+rng.InsertAfter CR2 & "References" & CR2
+For i = numFNs To 1 Step -1
+  isAref = False
+  Set fn = ActiveDocument.Footnotes(i)
+  If fn.Range.Words(3).HighlightColorIndex = 0 Then
+    numWds = fn.Range.Words.Count
+    For j = 1 To numWds
+      myWd = Trim(fn.Range.Words(j))
+      If Len(myWd) = 4 Then
+        myYear = Val(myWd)
+        If myYear > minYear And myYear < maxYear Then
+          isAref = True
+          Exit For
+        End If
+      End If
+    Next j
+  End If
+  If isAref Then
+    fn.Range.Copy
+    Selection.EndKey Unit:=wdStory
+    myEnd = Selection.End
+    Selection.Paste
+    Selection.TypeText CR
+    Selection.End = myEnd
+    Selection.MoveEndUntil cset:=",", Count:=wdForward
+    Selection.Copy
+    Selection.GoTo What:=wdGoToFootnote, Count:=i
+    Selection.MoveStart , -1
+    If InStr(",.:;!?", Selection) > 0 Then
+      Selection.Collapse wdCollapseStart
+    Else
+      Selection.Collapse wdCollapseEnd
+    End If
+    myStart = Selection.Start
+    Selection.TypeText " ("
+    Selection.Paste
+    Selection.TypeText ", " & Trim(Str(myYear)) & ")"
+    Selection.Start = myStart
+    Selection.Range.HighlightColorIndex = myColour
+    fn.Delete
+  End If
+Next i
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+
+

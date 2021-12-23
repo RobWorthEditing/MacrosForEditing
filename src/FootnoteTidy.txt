@@ -1,0 +1,13 @@
+Sub FootnoteTidy()
+' Paul Beverley - Version 30.07.21
+' Checks each footnote
+
+For Each ft In ActiveDocument.Footnotes
+  fnText = ft.Range.Text
+  If Left(fnText, 1) <> " " Then
+    ft.Range.InsertBefore " "
+  End If
+Next ft
+End Sub
+
+

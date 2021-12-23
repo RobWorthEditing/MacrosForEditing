@@ -1,0 +1,16 @@
+Sub CheckCapSentences()
+' Paul Beverley - Version 18.06.21
+' Forces an initial capital on every sentence
+
+For Each sn In ActiveDocument.Sentences
+  mySnt = sn
+  Debug.Print Left(mySnt, 10)
+  init = Left(mySnt, 1)
+  If UCase(init) <> init Then
+    sn.Characters(1).Text = UCase(init)
+  End If
+  DoEvents
+Next sn
+End Sub
+
+

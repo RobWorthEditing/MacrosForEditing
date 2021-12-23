@@ -1,0 +1,17 @@
+Sub ItalicisePatternedText()
+' Paul Beverley - Version 20.05.17
+' Italicises all text in the document in current background pattern colour
+
+' Read pattern colour at cursor
+Selection.End = Selection.Start + 1
+colNow = Selection.Shading.BackgroundPatternColor
+
+'Italicise ALL characters in that colour
+For Each ch In ActiveDocument.Characters
+  If ch.Shading.BackgroundPatternColor = colNow Then _
+       ch.Font.Italic = True
+Next ch
+
+End Sub
+
+

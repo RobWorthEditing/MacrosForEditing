@@ -1,0 +1,104 @@
+Sub TimecodeEditor()
+' Paul Beverley - Version 22.10.14
+' Increment/decrement timecode in a file
+
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Selection.End = Selection.End + 5
+
+myText = Selection
+wasStart = Selection.Start
+wasMins = Val(Left(myText, 2))
+wasSecs = Val(Right(myText, 2))
+
+userInput = InputBox("+/- seconds?", "TimecodeEditor")
+extraSecs = Val(userInput)
+
+If extraSecs = 0 Then
+  myResponse = MsgBox("Please type + or -, and a number of seconds", _
+      vbExclamation, "TimecodeEditor")
+  Exit Sub
+End If
+
+' Calculate new timecode
+myNewSecs = wasSecs + extraSecs
+
+secsNew = myNewSecs
+minsNew = wasMins
+
+If myNewSecs < 0 Then
+  secsNew = 60 + myNewSecs Mod 60
+  minsNew = wasMins + Int(myNewSecs / 60)
+End If
+
+If myNewSecs >= 59 Then
+  secsNew = myNewSecs Mod 60
+  minsNew = wasMins + Int(myNewSecs / 60)
+End If
+
+minsText = Right("0" & Trim(Str(minsNew)), 2)
+secsText = Right("0" & Trim(Str(secsNew)), 2)
+newTime = minsText & "." & secsText
+
+myResponse = MsgBox("You typed " & userInput & vbCr & _
+     "New timecode = " & newTime & " OK?", _
+      vbQuestion + vbYesNo, "TimecodeEditor")
+If myResponse <> vbYes Then
+  Beep
+  Exit Sub
+End If
+
+Selection.TypeText newTime
+
+' Go and find the first occurrence
+Set rng = ActiveDocument.Content
+rng.Start = Selection.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p^#^#.^#^#"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+' Note where the end of the found item is
+  endNow = rng.End
+  rng.Start = rng.Start + 1
+  myText = rng.Text
+  
+  wasMins = Val(Left(myText, 2))
+  wasSecs = Val(Right(myText, 2))
+  
+  ' Calculate new timecode
+  myNewSecs = wasSecs + extraSecs
+  
+  secsNew = myNewSecs
+  minsNew = wasMins
+  
+  If myNewSecs < 0 Then
+    secsNew = 60 + myNewSecs Mod 60
+    minsNew = wasMins + Int(myNewSecs / 60)
+  End If
+  
+  If myNewSecs >= 59 Then
+    secsNew = myNewSecs Mod 60
+    minsNew = wasMins + Int(myNewSecs / 60)
+  End If
+  
+  minsText = Right("0" & Trim(Str(minsNew)), 2)
+  secsText = Right("0" & Trim(Str(secsNew)), 2)
+  newTime = minsText & "." & secsText
+   
+  rng.Text = newTime
+  ' Be sure you're past the previous occurrence
+  rng.Start = endNow + 5
+  rng.Find.Execute
+Loop
+Beep
+End Sub
+
+

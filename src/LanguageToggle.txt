@@ -1,0 +1,42 @@
+Sub LanguageToggle()
+' Paul Beverley - Version 01.11.21
+' Toggles the language setting of (part selected) text
+
+myLanguage1 = wdEnglishUK
+addItalic1 = False
+
+myLanguage2 = wdFrench
+addItalic2 = True
+
+myPriority = myLanguage2
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.Start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Start = startNow
+End If
+
+nowLanguage = Selection.LanguageID
+Debug.Print nowLanguage
+Select Case nowLanguage
+  Case myLanguage1: Selection.LanguageID = myLanguage2
+                    If addItalic2 = True Then Selection.Font.Italic = True
+  Case myLanguage2: Selection.LanguageID = myLanguage1
+                    If addItalic1 = True Then Selection.Font.Italic = True
+  Case Else: Selection.LanguageID = myPriority
+End Select
+End Sub
+

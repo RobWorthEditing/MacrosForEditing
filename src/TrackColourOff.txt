@@ -1,0 +1,15 @@
+Sub TrackColourOff()
+' Paul Beverley - Version 04.09.19
+' Switch off background colour from track on/off macro
+
+ActiveDocument.TrackRevisions = False
+ActiveDocument.Styles(wdStyleNormal).ParagraphFormat.Shading.BackgroundPatternColor = wdColorAutomatic
+With ActiveDocument.Background.Fill
+  .ForeColor.RGB = RGB(255, 255, 255)
+  .Visible = msoTrue
+  .Solid
+End With
+
+End Sub
+
+

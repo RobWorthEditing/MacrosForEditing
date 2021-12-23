@@ -1,5 +1,5 @@
 Sub WordPairAlyse()
-' Paul Beverley - Version 05.01.21
+' Paul Beverley - Version 22.12.21
 ' Creates a file of all the adjacent word pairs
 
 ' Ignore these words
@@ -7,11 +7,13 @@ nonWords = "a,as"
 
 addAtestPair = True
 
+myScreenOff = True
+
 Set FUT = ActiveDocument
-aT = LCase(FUT.Content.Text)
+At = LCase(FUT.Content.Text)
 
 If addAtestPair = True Then
-  aT = "aatest word and aatestword " & aT
+  At = "aatest word and aatestword " & At
 End If
 
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
@@ -21,7 +23,7 @@ If doingSeveralMacros = False Then
        + vbYesNoCancel, "WordPairAlyse")
   If myResponse <> vbYes Then Exit Sub
 End If
-
+If myScreenOff = True Then Application.ScreenUpdating = False
 startTime = Timer
 chs = " , . ! : ; [ ] { } ( ) / \ + "
 chs = chs & ChrW(8220) & " "
@@ -40,7 +42,7 @@ chs = Left(chs, Len(chs) - 1)
 
 chars = Split(chs, " ")
 For i = 1 To UBound(chars)
-  aT = Replace(aT, chars(i), " " & chars(i) & " ")
+  At = Replace(At, chars(i), " " & chars(i) & " ")
 Next i
 
 ' Remove all non-words
@@ -51,33 +53,33 @@ nonWords = Left(nonWords, Len(nonWords) - 1)
 wd = Split(nonWords, ",")
 Set rng = ActiveDocument.Content
 For i = 1 To UBound(wd)
-  aT = Replace(aT, " " & wd(i) & " ", " ")
+  At = Replace(At, " " & wd(i) & " ", " ")
   DoEvents
 Next i
-aT = Replace(aT, "  ", " ")
+At = Replace(At, "  ", " ")
 
 Documents.Add
-Selection.Text = " " & aT
+Selection.Text = " " & At
 
 Set rng = ActiveDocument.Content
 Selection.HomeKey Unit:=wdStory
 
 Set rng = ActiveDocument.Content
-aT = LCase(rng.Text)
-myTot = Len(aT)
-If Asc(aT) = 32 Then
+At = LCase(rng.Text)
+myTot = Len(At)
+If Asc(At) = 32 Then
   ptr = 2
 Else
   ptr = 1
 End If
 ptrWas = ptr
 Do
-  ch = Mid(aT, ptr, 1)
+  ch = Mid(At, ptr, 1)
  ' Debug.Print ch & "|"
   ptr = ptr + 1
 Loop Until ch = " "
 
-w2 = Mid(aT, ptrWas, ptr - ptrWas - 1)
+w2 = Mid(At, ptrWas, ptr - ptrWas - 1)
 ' Debug.Print w2 & "|"
 
 allChkd = " "
@@ -86,21 +88,21 @@ Do
   w1 = w2
   ptrWas = ptr
   Do
-    ch = Mid(aT, ptr, 1)
+    ch = Mid(At, ptr, 1)
     ptr = ptr + 1
   Loop Until ch = " "
   
-  w2 = Mid(aT, ptrWas, ptr - ptrWas - 1)
+  w2 = Mid(At, ptrWas, ptr - ptrWas - 1)
   
   If UCase(w1) <> w1 And UCase(w2) <> w2 Then
     oneWd = w1 & w2
     chk = " " & oneWd & " "
     If InStr(allChkd, chk) = 0 Then
       ' Check it!
-      If InStr(aT, chk) > 0 Then
-        numSingle = Len(Replace(aT, chk, chk & "!")) - myTot
+      If InStr(At, chk) > 0 Then
+        numSingle = Len(Replace(At, chk, chk & "!")) - myTot
         chk2 = " " & w1 & " " & w2 & " "
-        numPair = Len(Replace(aT, chk2, chk2 & "!")) - myTot
+        numPair = Len(Replace(At, chk2, chk2 & "!")) - myTot
         myResult = myResult & w1 & " " & w2 & " . . " & _
              Trim(Str(numPair)) & vbCr
         myResult = myResult & oneWd & " . . " & _
@@ -114,7 +116,7 @@ Do
     End If
   End If
   DoEvents
-Loop Until InStr(Mid(aT, ptr), " ") = 0
+Loop Until InStr(Mid(At, ptr), " ") = 0
 
 Selection.WholeStory
 Selection.Delete
@@ -137,8 +139,8 @@ If Len(myResult) > 0 Then
     .Replacement.Text = "^p"
     .Execute Replace:=wdReplaceAll
   End With
-  Selection.WholeStory
-  Selection.Sort SortOrder:=wdSortOrderAscending
+  Set rng = ActiveDocument.Content
+  rng.Sort SortOrder:=wdSortOrderAscending
   With rng.Find
     .Text = "^p"
     .Replacement.Text = "^p^p"
@@ -148,20 +150,20 @@ If Len(myResult) > 0 Then
     .Execute Replace:=wdReplaceAll
   End With
   
-  Selection.Start = 0
-  Selection.End = 3
-  Selection.Delete
+  Set rng = ActiveDocument.Content
+  If Len(rng.Paragraphs(1)) < 3 Then rng.Paragraphs(1).Range.Delete
 Else
   Selection.TypeText "No word pairs found" & vbCr
 End If
 Selection.HomeKey Unit:=wdStory
-Selection.TypeText "Word pair (possible) inconsistencies" & vbCr
+Selection.TypeText "Word pair inconsistencies?" & vbCr
 ActiveDocument.Paragraphs(1).Style = _
      ActiveDocument.Styles(wdStyleHeading1)
 timNow = Timer
 timGone = timNow - startTime
 m = Int(timGone / 60)
 s = Int(timGone) - m * 60
+Application.ScreenUpdating = True
 If doingSeveralMacros = False Then
   Beep
   myTime = Timer
@@ -176,5 +178,11 @@ If doingSeveralMacros = False Then
 Else
   FUT.Activate
 End If
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
 

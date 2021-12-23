@@ -1,0 +1,41 @@
+Sub SpellingErrorInserter()
+' Paul Beverley - Version 01.01.20
+' Adds random spelling errors from a list into a text
+
+thisString = Selection
+numWords = ActiveDocument.Words.Count - Selection.Range.Words.Count
+myWds = Split(thisString, vbCr)
+' x = Rnd(-1)
+Randomize 10
+
+For i = 1 To UBound(myWds)
+  j = Int(numWords * Rnd())
+  wd = ActiveDocument.Words(j)
+  If LCase(wd) = UCase(wd) Then
+    j = j + 1
+    wd = ActiveDocument.Words(j)
+  End If
+  If LCase(wd) = UCase(wd) Then
+    j = j + 1
+    wd = ActiveDocument.Words(j)
+  End If
+  Set rng = ActiveDocument.Words(j)
+  testWd = rng.Text
+  init = Left(testWd, 1)
+  newWd = myWds(i)
+  If UCase(init) = init Then
+    newWd = UCase(Left(newWd, 1)) & Mid(newWd, 2)
+  End If
+  rng.MoveEndWhile cset:=ChrW(8217) & " '", Count:=wdBackward
+  If rng.Information(wdWithInTable) = False Then
+    rng.Text = newWd
+  Else
+    Beep
+    kjhkjhd = 0
+  End If
+  Debug.Print j, myWds(i)
+  rng.Select
+Next i
+End Sub
+
+

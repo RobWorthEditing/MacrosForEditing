@@ -1,0 +1,50 @@
+Sub QuotationMarkErrorFinder()
+' Paul Beverley - Version 28.05.20
+' Moves to the next mismatched double quotes
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = """"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  i = i + 1: If i Mod 30 = 0 Then rng.Select
+  If rng.Text = ChrW(8220) Then
+    ' An open double quote
+    rngStart = rng.Start
+    DoEvents
+    rng.MoveEndUntil cset:=ChrW(8221) & ChrW(8220) & Chr(13)
+    rng.Collapse wdCollapseEnd
+    rng.End = rng.Start + 1
+    DoEvents
+    If rng.Text <> ChrW(8221) Then
+      rng.Start = rngStart
+      rng.Select
+      Beep
+      Exit Sub
+    End If
+  Else
+    ' A close double quote
+    DoEvents
+    rng.MoveStartUntil cset:=ChrW(8221) & ChrW(8220) & Chr(13), Count:=wdBackward
+    DoEvents
+    rng.Select
+    Beep
+    Exit Sub
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+Beep
+rng.Select
+End Sub
+
+

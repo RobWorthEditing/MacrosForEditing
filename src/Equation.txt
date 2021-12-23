@@ -1,0 +1,8 @@
+Sub Equation()
+' Paul Beverley - Version 03.01.10
+' Insert an equation
+' <Ctrl-Shift-Alt-E>
+Selection.InlineShapes.AddOLEObject ClassType:="Equation.3"
+End Sub
+
+

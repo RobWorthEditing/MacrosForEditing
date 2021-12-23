@@ -1,0 +1,59 @@
+Sub SanthoshQuoteSelect()
+' Paul Beverley - Version 25.01.21
+' Changes exisiting single quotes into doubles
+
+maxWords = 550
+
+
+maxChars = maxWords * 6
+
+i = 0
+myStop = False
+Do
+  Selection.MoveStart , -1
+  If InStr(ChrW(8216) & "'", Left(Selection.Text, 1)) > 0 _
+       Then myStop = True
+  i = i + 1
+  If i > maxChars Then myStop = True
+  If Selection.Start = 0 Then myStop = True
+  DoEvents
+Loop Until myStop
+
+If Selection.Start > 0 And i < maxChars + 1 Then
+  Selection.Collapse wdCollapseStart
+  Selection.MoveEnd , 1
+  Selection.TypeText Text:=ChrW(8220)
+Else
+  Beep
+  Exit Sub
+End If
+i = 0
+myStop = False
+Do
+  Selection.MoveEnd , 1
+  If InStr(ChrW(8217) & "'", Right(Selection.Text, 1)) > 0 Then
+    ' Check for 'don't', can't, etc
+    Set rng = Selection.Range.Duplicate
+    rng.Collapse wdCollapseEnd
+    rng.End = rng.End + 1
+    If LCase(rng) = UCase(rng) Then myStop = True
+  End If
+  i = i + 1
+  If i > maxChars Then myStop = True
+  If Selection.End = ActiveDocument.Content.End Then myStop = True
+  DoEvents
+  sdsd = 0
+Loop Until myStop
+
+If Selection.End <> ActiveDocument.Content.End And _
+     i < maxChars + 1 Then
+  Selection.Collapse wdCollapseEnd
+  Selection.MoveStart , -1
+  Selection.TypeText Text:=ChrW(8221)
+Else
+  Beep
+  Exit Sub
+End If
+End Sub
+
+

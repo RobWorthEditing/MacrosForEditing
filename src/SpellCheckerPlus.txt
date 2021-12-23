@@ -1,0 +1,68 @@
+Sub SpellCheckerPlus()
+' Paul Beverley - Version 27.05.20
+' Spellchecks from cursor, using multiple languages
+
+OKwords = " etc "
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+Selection.Collapse wdCollapseStart
+langText = Languages(Selection.LanguageID).NameLocal
+CR = vbCr: CR2 = CR & CR
+OKwords = Replace(" " & OKwords & " ", " ", CR)
+Set rngAll = ActiveDocument.Content
+For Each wd In rng.Words
+  DoEvents
+  w = Trim(wd)
+  If Application.CheckSpelling(wd, _
+       MainDictionary:=langText) = False _
+       And InStr(pbExceptionsList, CR & w & CR) = 0 Then
+    wd.Select
+' Debug.Print Replace(pbExceptionsList, CR, " ")
+    Set suggList = Application.GetSpellingSuggestions(wd, _
+         MainDictionary:=langText)
+      myPrompt = "{{ " & w & " }}   * "
+    If suggList.Count > 0 Then
+      newWord = suggList.Item(1).Name
+      myPrompt = myPrompt & "Alt:  >> " & newWord & " <<"
+    Else
+      myPrompt = myPrompt & "No alternative"
+    End If
+    myInput = InputBox(myPrompt & CR2 & _
+         "1 = Replace one" & CR & "2 = Replace all" & CR & _
+         "3 = Add to exceptions list" & CR & _
+         "0 = Exit", "SpellCheckPlus")
+    Select Case myInput
+      Case "": 'Give up
+            Selection.Collapse wdCollapseEnd
+            Exit Sub
+      Case "0": 'Give up
+            Selection.Collapse wdCollapseEnd
+            Exit Sub
+      Case "1": ' Replace once
+            If Right(wd, 1) = " " Then newWord = newWord & " "
+            wd.Text = newWord
+      Case "2": ' Replace all
+            With rng.Find
+              .ClearFormatting
+              .Replacement.ClearFormatting
+              .Text = w
+              .Wrap = wdFindContinue
+              .Replacement.Text = newWord
+              .Forward = True
+              .MatchCase = False
+              .MatchWildcards = False
+              .MatchWholeWord = True
+              .Execute Replace:=wdReplaceAll
+              DoEvents
+            End With
+      Case "3": ' Replace all
+            pbExceptionsList = pbExceptionsList & w & CR
+      Case Else: ' Ignore it
+    End Select
+Debug.Print Replace(pbExceptionsList, CR, " ")
+  End If
+Next wd
+Beep
+End Sub
+
+

@@ -1,0 +1,16 @@
+Sub LineConvert()
+' Paul Beverley - Version 15.07.21
+' Converts 'poetry' line ends in selected text to new paragraphs
+
+Set rng = Selection.Range.Duplicate
+Do
+  Selection.GoTo What:=wdGoToLine, Which:=wdGoToNext, Count:=1, Name:=""
+  Selection.Collapse wdCollapseEnd
+  Selection.MoveStart , -1
+  If Selection = " " And Selection.End < rng.End Then Selection = vbCr
+  Selection.Collapse wdCollapseEnd
+  DoEvents
+Loop Until Selection.End >= rng.End
+End Sub
+
+

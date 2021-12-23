@@ -1,0 +1,21 @@
+Sub TheEmailFormatter()
+' Paul Beverley - Version 25.02.21
+' Tidies up an email text and adds ">" symbols as quoting
+
+Set rng = ActiveDocument.Content
+rng.Font.Size = 16
+Selection.HomeKey Unit:=wdStory
+Do
+  Selection.MoveDown , 1
+  If InStr(">" & vbCr, Selection) = 0 Then
+    Selection.TypeText Text:=vbCr
+    Selection.InsertAfter Text:="> "
+    Selection.Collapse wdCollapseStart
+  End If
+  DoEvents
+Loop Until Selection.End < ActiveDocument.Content.End - 3
+Set rng = ActiveDocument.Content
+rng.Copy
+End Sub
+
+

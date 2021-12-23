@@ -1,13 +1,11 @@
 Sub CommentPrevious()
-' Paul Beverley - Version 10.05.21
+' Paul Beverley - Version 13.11.21
 ' Goes to previous comment
 
 hereNow = Selection.Start
-
-WordBasic.GoToPreviousComment
-If Selection.Start = hereNow Then
-  Beep
-End If
+Selection.GoTo What:=wdGoToComment, Which:=wdGoToPrevious
+If Selection.Start = hereNow Then Beep
 End Sub
+
 
 

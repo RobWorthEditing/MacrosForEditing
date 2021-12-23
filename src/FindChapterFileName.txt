@@ -1,0 +1,28 @@
+Sub FindChapterFileName()
+' Paul Beverley - Version 09.03.21
+' Looks back up, to find the chapter title
+
+oldFind = Selection.Find.Text
+Set rng = Selection.Range.Duplicate
+rng.Start = 0
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[[["
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = False
+  .MatchCase = False
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+  .Text = oldFind
+  .Forward = True
+End With
+rng.Expand wdParagraph
+MsgBox (rng.Text)
+Selection.Find.Text = oldFind
+End Sub
+
+

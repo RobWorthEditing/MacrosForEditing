@@ -1,0 +1,20 @@
+Sub ChatFormatter()
+' Paul Beverley - Version 23.10.20
+' Load, run and close a specific FRedit list
+
+Documents.Add
+Selection.Paste
+listFile = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\Training\Zoom_chat_format.docx"
+
+Set thisFile = ActiveDocument
+Documents.Open listFile
+Set FRlist = ActiveDocument
+thisFile.Activate
+Call FRedit
+FRlist.Activate
+ActiveDocument.Close SaveChanges:=False
+' Beep to let you know it has finished
+Beep
+End Sub
+
+

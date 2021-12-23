@@ -1,0 +1,29 @@
+Sub SearchHierarchically()
+' Paul Beverley - Version 20.11.17
+' Finds
+
+doSelection = (Len(Selection) > 1)
+
+If doSelection Then
+  Set rng = Selection.Range.Duplicate
+Else
+  Set rng = ActiveDocument.Content
+End If
+
+For Each myPar In rng.Paragraphs
+  If InStr(myPar.Range.Text, "w") > 0 Then
+    For Each wd In myPar.Range.Words
+      If InStr(wd.Text, "w") > 0 Then
+        For Each ch In wd.Characters
+          If ch = "w" Then
+            ch.Select
+            asjdhfkashfkjhdas = 0
+          End If
+        Next ch
+      End If
+    Next wd
+  End If
+Next myPar
+End Sub
+
+

@@ -1,0 +1,39 @@
+Sub CheckMacrosInBook()
+' Paul Beverley - Version 07.06.17
+' Looks through the first n paragraphs and highlights
+' any that don't appear in the text
+
+' Just copy all this test, sort alpha, delete all lines except
+' Sub Whatever(), count those lines and paste them at the top of
+' TheMacros file.
+
+n = 678
+
+For i = 1 To n
+  myText = ActiveDocument.Paragraphs(i).Range.Text
+  myText = Replace(myText, vbCr, "")
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myText
+    .Wrap = False
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  If rng.Find.Found = False Then
+    ActiveDocument.Paragraphs(i).Range.HighlightColorIndex = wdYellow
+  End If
+Next i
+ActiveDocument.Paragraphs(n).Range.Select
+Beep
+End Sub
+
+

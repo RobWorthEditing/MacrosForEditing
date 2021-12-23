@@ -1,0 +1,19 @@
+Sub HighlightAllTrackedText()
+' Paul Beverley - Version 30.07.21
+' Highlights all tracked text
+
+ActiveDocument.TrackRevisions = False
+For Each rev In ActiveDocument.Range.Revisions
+  Set rng = rev.Range
+  rng.Start = rng.Start - 1
+  rng.End = rng.End + 1
+  rng.HighlightColorIndex = wdYellow
+  DoEvents
+  i = i + 1
+  If i Mod 20 = 1 Then rng.Select
+Next rev
+Beep
+Selection.HomeKey Unit:=wdStory
+End Sub
+
+

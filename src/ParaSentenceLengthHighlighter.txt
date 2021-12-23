@@ -1,0 +1,13 @@
+Sub ParaSentenceLengthHighlighter()
+' Paul Beverley - Version 16.05.19
+' Highlights paragraphs with too many sentences
+
+For Each myPar In ActiveDocument.Paragraphs
+  If myPar.Range.Sentences.Count > 3 Then _
+       myPar.Range.HighlightColorIndex = wdYellow
+  If myPar.Range.Sentences.Count > 5 Then _
+       myPar.Range.HighlightColorIndex = wdBrightGreen
+Next myPar
+End Sub
+
+

@@ -1,0 +1,13 @@
+Sub ShapeShowScrollUp()
+' Paul Beverley - Version 30.08.17
+' Makes all shapes clearly visible
+
+ActiveDocument.ActiveWindow.LargeScroll up:=2
+Selection.Expand wdCharacter
+ActiveDocument.ActiveWindow.LargeScroll down:=1
+Selection.Expand wdCharacter
+'Selection.MoveRight , 1
+Selection.WholeStory
+End Sub
+
+

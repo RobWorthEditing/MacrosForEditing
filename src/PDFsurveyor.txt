@@ -1,0 +1,98 @@
+Sub PDFsurveyor()
+' Paul Beverley - Version 08.11.13
+' Identify PDF conversion problems
+
+minLen = 2
+myListName = "FRedit"
+
+thisLanguage = Selection.LanguageID
+langName = Languages(thisLanguage).NameLocal
+
+isAnError = False
+giveUp = False
+If Selection.Start = Selection.End Then
+Selection.Expand wdWord
+Else
+  GoTo addToList
+End If
+Do
+  Set rng = Selection.Range
+  Do
+    myWord = rng.Text
+    tooShort = (Len(myWord) < minLen)
+    If isAnError = False And tooShort = False And rng.HighlightColorIndex = 0 Then
+      isAnError = (Application.CheckSpelling(myWord, MainDictionary:=langName) = False)
+    End If
+    If isAnError = False Then
+      rng.Collapse wdCollapseEnd
+      i = i + 1
+      If i Mod 300 = 0 Then rng.Select
+      nextWord = rng.Words(1)
+      rng.End = rng.Start + Len(nextWord)
+    End If
+  Loop Until isAnError
+  rng.Select
+  myResponse = MsgBox("Ignore?", vbQuestion + vbYesNoCancel, "PdfSurveyor")
+  If myResponse = vbCancel Then
+    Selection.Collapse wdCollapseEnd
+    rng.Select
+    Exit Sub
+  End If
+  If myResponse = vbYes Then
+    Set rng = ActiveDocument.Content
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = Trim(Selection)
+      .Wrap = wdFindContinue
+      .Replacement.Highlight = True
+      .Replacement.Text = "^&"
+      .Forward = True
+      .MatchWildcards = False
+      .MatchWholeWord = True
+      .MatchSoundsLike = False
+      .Execute Replace:=wdReplaceAll
+    End With
+    Beep
+  Else
+    myResponse = MsgBox("Add to FRedit list?", vbQuestion + vbYesNoCancel, "PdfSurveyor")
+    If myResponse = vbYes Then
+      GoTo addToList
+    Else
+      Exit Sub
+    End If
+  End If
+  isAnError = False
+  Selection.Collapse wdCollapseEnd
+Loop Until False = True
+addToList:
+thisWord = Selection.Text
+Selection.Collapse wdCollapseEnd
+
+' find a FRedit list
+gottadoc = False
+For Each myWnd In Application.Windows
+  Set myDoc = myWnd.Document
+  myDocName = LCase(myDoc.Name)
+  If InStr(myDoc.Name, myListName) + InStr(myDoc.Name, "Document") > 0 Then
+    myDoc.Activate
+    gottadoc = True
+    Exit For
+  End If
+Next myWnd
+If gottadoc = False Then MsgBox ("Please provide a FRedit list"): Exit Sub
+
+' process it
+For i = 1 To Len(thisWord)
+  myChar = Mid(thisWord, i, 1)
+  myASCII = Asc(myChar)
+  If myASCII < 32 Then myChar = "^" & Trim(Str(myASCII))
+  myText = myText & myChar
+Next i
+' Add word to list
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseEnd
+Selection.TypeText myText & ChrW(124) & myText & vbCr
+End Sub
+
+

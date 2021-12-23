@@ -1,0 +1,36 @@
+Sub SmallCapsToProperNoun()
+' Paul Beverley - Version 11.02.18
+' Changes every small caps word into initial cap + lowercase
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.SmallCaps = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+' If you want to count them...
+  myCount = myCount + 1
+  rng.Collapse wdCollapseStart
+  rng.Expand wdWord
+  newWord = rng.Text
+  rng.Font.SmallCaps = False
+  newWord = LCase(newWord)
+  newWord = UCase(Left(newWord, 1)) & Mid(newWord, 2)
+  rng.Text = newWord
+  rng.Expand wdWord
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+MsgBox "Changed: " & myCount
+End Sub
+
+

@@ -1,0 +1,35 @@
+Sub SrikeAllHighlightText()
+' Paul Beverley - Version 25.10.20
+' Adds strikethrough to all highlighted text
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+' If you want to count them...
+' Note where the end of the found item is
+  endNow = rng.End
+  rng.Font.StrikeThrough = True
+  
+  ' Be sure you're past the previous occurrence
+  rng.Start = endNow
+  rng.End = endNow
+
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+Loop
+
+End Sub
+
+

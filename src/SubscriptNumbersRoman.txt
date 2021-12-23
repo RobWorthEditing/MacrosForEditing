@@ -1,0 +1,35 @@
+Sub SubscriptNumbersRoman()
+' Paul Beverley - Version 02.08.14
+' Make all subscript numbers roman!!!!!!!!!!!!!!!
+
+doHighlight = True
+myColour = wdGray25
+doTrackIt = False
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = doTrackIt
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Font.Superscript = False
+  .Font.Subscript = True
+  .Replacement.Font.Italic = False
+  .Text = "^#"
+  .Replacement.Text = "^&"
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Format = True
+  .MatchCase = False
+  If doHighlight = True Then .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+ActiveDocument.TrackRevisions = myTrack
+Options.DefaultHighlightColorIndex = oldColour
+
+End Sub
+
+

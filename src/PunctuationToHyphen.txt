@@ -1,22 +1,32 @@
 Sub PunctuationToHyphen()
-' Paul Beverley - Version 14.05.13
-' Changes the word break punctuation to a hyphen
+' Paul Beverley - Version 21.11.21
+' Change the word break punctuation to a hyphen
 
-trackIt = True
+trackit = True
 
 myChar = "-"
-myTrack = ActiveDocument.TrackRevisions
-If trackIt = False Then ActiveDocument.TrackRevisions = False
 
 searchChars = " " & ChrW(160) & ChrW(8211) & ChrW(8212) & ChrW(8722) & Chr(30)
-'Selection.End = Selection.Start + 1
 
-While InStr(searchChars, Selection) = 0
-  Selection.MoveRight , 1
-Wend
-Selection.MoveRight wdCharacter, 1
-Selection.TypeBackspace
-Selection.TypeText Text:=myChar
+myTrack = ActiveDocument.TrackRevisions
+If trackit = False Then ActiveDocument.TrackRevisions = False
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+If Len(rng) > 1000 Then rng.End = rng.Start + 1000
+
+For Each ch In rng.Characters
+  If InStr(searchChars, ch.Text) > 0 Then
+    ch.Select
+    gotChar = True
+    Exit For
+  Else
+  End If
+Next ch
+If gotChar = False Then
+  Beep
+Else
+  Selection.TypeText Text:=myChar
+End If
 ActiveDocument.TrackRevisions = myTrack
 End Sub
 

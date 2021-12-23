@@ -1,32 +1,35 @@
 Sub PunctuationToDoubleQuote()
-' Paul Beverley - Version 03.05.17
+' Paul Beverley - Version 19.11.21
 ' Changes next quote mark to double curly
 
-trackIt = False
+trackit = True
 
 myTrack = ActiveDocument.TrackRevisions
-If trackIt = False Then ActiveDocument.TrackRevisions = False
+If trackit = False Then ActiveDocument.TrackRevisions = False
 
 searchChars = Chr(34) & Chr(39) & ChrW(8216) & ChrW(8217) _
        & ChrW(8220) & ChrW(8221) & ChrW(8249) & ChrW(8250) _
-       & ChrW(8222) & ChrW(8218) & ChrW(171) & ChrW(187) & ChrW(96) _
-       & ChrW(8242) & ChrW(8243)
+       & ChrW(8222) & ChrW(8218) & ChrW(171) & ChrW(187) _
+       & ChrW(96) & ChrW(8242) & ChrW(8243)
 
-Selection.Collapse wdCollapseEnd
-startHere = Selection.Start
-Set rng = ActiveDocument.Content
-theEnd = rng.End
-Do While InStr(searchChars, Selection) = 0
-  Selection.MoveRight , 1
-  If Selection.Start > startHere + 1000 Or _
-       Selection.Start > theEnd - 2 Then
-    Beep
-    ActiveDocument.TrackRevisions = myTrack
-    Exit Sub
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+If Len(rng) > 1000 Then rng.End = rng.Start + 1000
+
+For Each ch In rng.Characters
+  If InStr(searchChars, ch.Text) > 0 Then
+    ch.Select
+    gotChar = True
+    Exit For
+  Else
   End If
-Loop
-Selection.MoveEnd wdCharacter, 1
-thisChar = Selection
+Next ch
+If gotChar = False Then
+  Beep
+  ActiveDocument.TrackRevisions = myTrack
+  Exit Sub
+End If
+
 Selection.Collapse wdCollapseStart
 
 optNow = Options.AutoFormatAsYouTypeReplaceQuotes
@@ -35,8 +38,8 @@ Options.AutoFormatAsYouTypeReplaceQuotes = True
 With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = thisChar
-  .Replacement.Text = """"
+  .Text = ch
+  .Replacement.Text = "'"
   .Execute Replace:=wdReplaceOne
 End With
 Selection.Collapse wdCollapseEnd

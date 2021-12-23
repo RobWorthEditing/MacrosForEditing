@@ -1,0 +1,44 @@
+Sub WordDisplay()
+' Paul Beverley - Version 30.03.14
+' Type out word at big size
+
+myRep = False
+myRep = True
+thisLanguage = Selection.LanguageID
+langName = Languages(thisLanguage).NameLocal
+Do
+  myWord = InputBox("?")
+  If myWord = "" Then Exit Sub
+  Selection.HomeKey Unit:=wdStory
+  Selection.InsertAfter Text:=myWord
+
+  Select Case Len(myWord)
+    Case Is > 9: mySize = 80
+    Case Is >= 6: mySize = 120
+    Case Else: mySize = 140
+  End Select
+  Selection.Font.Size = mySize
+  If Application.CheckSpelling(Selection, MainDictionary:= _
+       Languages(Selection.LanguageID).NameLocal) = False Then
+    Beep
+    Set wd = Selection.Words(1)
+    Set suggList = wd.GetSpellingSuggestions(MainDictionary:=langName)
+    If suggList.Count > 0 Then
+      Selection.Delete
+      Selection.InsertAfter Text:=suggList.Item(1).Name
+    Else
+      Selection.Collapse wdCollapseEnd
+      Selection.TypeText vbCr
+      Selection.MoveLeft , 1
+      myTime = Timer
+      Do: Loop Until Timer > myTime + 0.2: Beep
+      Exit Sub
+    End If
+  End If
+  Selection.Collapse wdCollapseEnd
+  Selection.TypeText vbCr
+Loop Until Not myRep
+
+End Sub
+
+

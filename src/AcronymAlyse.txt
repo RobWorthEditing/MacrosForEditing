@@ -1,0 +1,252 @@
+
+Sub AcronymAlyse()
+' Paul Beverley - Version 27.11.21
+' Lists all acronyms, with frequency
+
+doBeeps = True
+minCount = 3
+myColour = wdGray25
+deleteTableBorders = True
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+myResponse = MsgBox("Acronym Lister: Include numbers?", _
+     vbQuestion + vbYesNoCancel)
+If myResponse = vbCancel Then Exit Sub
+
+' First create a copy of the existing document
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.FormattedText = rng.FormattedText
+Selection.HomeKey Unit:=wdStory
+Selection.TypeParagraph
+
+' Remove all apostrophes (close single quotes)
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.StrikeThrough = True
+  .Replacement.Text = " "
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+allText = rng.Text
+rng.Delete
+Selection.InsertAfter Text:=allText
+' Remove all apostrophes (close single quotes)
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[" & ChrW(8217) & "']"
+  .Replacement.Text = " "
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' Add highlight to all words with/without numbers
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  If myResponse = vbYes Then
+    .Text = "<[0-9A-Za-z]{2,}>"
+  Else
+    .Text = "<[A-Za-z]{2,}>"
+  End If
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+If doBeeps = True Then Beep
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  If myResponse = vbYes Then
+    .Text = "<[0-9A-Za-z]{1,}-[0-9A-Za-z]{1,}>"
+  Else
+    .Text = "<[A-Za-z]{1,}-[A-Za-z]{1,}>"
+  End If
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+If doBeeps = True Then Beep
+
+' Remove highlight from words in all lowercase
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[a-z0-9]@>"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+If doBeeps = True Then Beep
+
+' Remove highlight from words in all lowercase
+' followed by a hyphen
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[a-z0-9]@>\-"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+If doBeeps = True Then Beep
+
+' Remove highlight from initial-cap words
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[A-Z][\-a-z]@>"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' Remove highlight from words ending in hyphen
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[-A-Za-z]@->"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' Remove all unhighlighted characters
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = False
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' Remove all blank lines
+Set rng = ActiveDocument.Content
+wasEnd = rng.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13{2,}"
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  .Execute Replace:=wdReplaceAll
+  .Execute Replace:=wdReplaceAll
+End With
+DoEvents
+
+
+rng.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+rng.HighlightColorIndex = 0
+rng.InsertAfter Text:=vbCr & vbCr
+
+Set rng = ActiveDocument.Content
+' Remove all single hyphens
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p-"
+  .Highlight = False
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' Remove all blank lines (again)
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13{2,}"
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  .Execute Replace:=wdReplaceAll
+  .Execute Replace:=wdReplaceAll
+End With
+DoEvents
+
+Selection.HomeKey Unit:=wdStory
+
+ct = 1
+oldWord = ActiveDocument.Paragraphs(2).Range.Text
+For i = 3 To ActiveDocument.Paragraphs.count
+  newWord = Trim(ActiveDocument.Paragraphs(i).Range.Text)
+  If newWord = oldWord Then
+    ct = ct + 1
+  Else
+    Set rng = ActiveDocument.Paragraphs(i - 1).Range
+    rng.End = rng.End - 1
+    rng.InsertAfter Text:=vbTab & Trim(Str(ct))
+    oldWord = newWord
+    If ct < minCount Then rng.HighlightColorIndex = myColour
+    ct = 1
+  End If
+Next i
+For i = ActiveDocument.Paragraphs.count To 1 Step -1
+  Set pa = ActiveDocument.Paragraphs(i).Range
+  If InStr(pa.Text, vbTab) = 0 Then
+    ActiveDocument.Paragraphs(i).Range.Delete
+  End If
+Next i
+ActiveDocument.Content.InsertAfter vbCr
+
+' Add title and set as table
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText "Acronym list" & vbCr
+startTable = Selection.End
+ActiveDocument.Paragraphs(1).Style = _
+     ActiveDocument.Styles(wdStyleHeading1)
+ActiveDocument.Paragraphs(1).Range.HighlightColorIndex _
+     = wdNoHighlight
+Selection.Start = startTable
+Selection.End = ActiveDocument.Range.End
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+
+Set tb = ActiveDocument.Tables(1)
+tb.Style = "Table Grid"
+tb.AutoFitBehavior (wdAutoFitContent)
+If deleteTableBorders = True Then
+  tb.Borders(wdBorderTop).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderRight).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+  tb.Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+End If
+Selection.HomeKey Unit:=wdStory
+If doBeeps = True Then Beep
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

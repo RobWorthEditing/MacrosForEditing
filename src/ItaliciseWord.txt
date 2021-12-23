@@ -1,0 +1,15 @@
+Sub ItaliciseWord()
+' Paul Beverley - Version 08.08.14
+' Italicise current word and move on!!!!!!!!!!!!
+
+Selection.Expand wdWord
+If LCase(Selection) = UCase(Selection) Then
+  Selection.Collapse wdCollapseEnd
+  Selection.Expand wdWord
+End If
+Selection.Font.Italic = Not Selection.Font.Italic
+Selection.Collapse wdCollapseEnd
+
+End Sub
+
+

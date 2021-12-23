@@ -1,35 +1,33 @@
 Sub PunctuationToDash()
-' Paul Beverley - Version 31.03.17
-' Changes next hyphen/em/en dash to an em/en dash
+' Paul Beverley - Version 19.11.21
+' Change next hyphen/em/en dash to an em/en dash
 
 myDash = ChrW(8211) ' en dash
-' myDash = ChrW(8212)' em dash
-' myDash = " -- "' em dash
+' myDash = ChrW(8212) ' em dash
 
-trackIt = True
+trackit = True
+
+searchChars = "-~" & ChrW(8211) & ChrW(8212) & ChrW(8722) & Chr(30)
 
 myTrack = ActiveDocument.TrackRevisions
-If trackIt = False Then ActiveDocument.TrackRevisions = False
+If trackit = False Then ActiveDocument.TrackRevisions = False
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+If Len(rng) > 1000 Then rng.End = rng.Start + 1000
 
-searchChars = "-" & ChrW(8211) & ChrW(8212) & ChrW(8722) & Chr(30)
-Selection.End = Selection.Start
-Set rng = Selection.range.Duplicate
-rng.End = rng.Start + 20
-If InStr(rng.Text, "-") = 0 Then searchChars = searchChars & " "
-While InStr(searchChars, Selection) = 0
-  Selection.MoveRight , 1
-  i = i + 1
-  If i = 50 Then
-    Beep
-    Selection.MoveEnd , 4
-    MsgBox "Up to here, no suitable character found"
-    ActiveDocument.TrackRevisions = myTrack
-    Exit Sub
+For Each ch In rng.Characters
+  If InStr(searchChars, ch.Text) > 0 Then
+    ch.Select
+    gotChar = True
+    Exit For
+  Else
   End If
-Wend
-Selection.MoveEnd wdCharacter, 1
-Selection.Delete
-Selection.TypeText Text:=myDash
+Next ch
+If gotChar = False Then
+  Beep
+Else
+  Selection.TypeText Text:=myDash
+End If
 ActiveDocument.TrackRevisions = myTrack
 End Sub
 

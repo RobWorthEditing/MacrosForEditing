@@ -1,0 +1,26 @@
+Sub HighlightOffNext()
+' Paul Beverley - Version 15.05.21
+' Unhighlights the next area of highlighting
+
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Wrap = wdFindStop
+  .Forward = True
+  .Highlight = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+If Selection.Find.Found = True Then
+  Selection.Range.HighlightColorIndex = wdNoHighlight
+  Selection.Collapse wdCollapseEnd
+Else
+  Beep
+End If
+End Sub
+
+

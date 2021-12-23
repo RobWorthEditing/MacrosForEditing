@@ -1,0 +1,102 @@
+Sub FindRefName()
+' Paul Beverley - Version 18.07.12
+' Jump to the first named Vancouver ref, e.g. [Bever09]
+
+Set rng = ActiveDocument.Content
+myMax = 0
+If rng.End - Selection.End < 3 Then
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "References"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = False
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  stopHere = rng.End
+  rng.Collapse wdCollapseEnd
+  Do
+    rng.Collapse wdCollapseStart
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "\[[0-9]@\]"
+      .Replacement.Text = ""
+      .Forward = True
+      .Wrap = wdFindStop
+      .MatchWildcards = True
+      .Execute
+    End With
+    rng.MoveStart wdCharacter, 1
+    rng.MoveEnd wdCharacter, -1
+    myNumber = Val(rng)
+    If myNumber > myMax Then myMax = myNumber
+  Loop Until rng.Find.Found = False
+  For i = 1 To myMax
+    rng.Start = stopHere
+    rng.Collapse wdCollapseStart
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "[" & Trim(Str(i)) & "]"
+      .Replacement.Text = ""
+      .Forward = True
+      .Wrap = wdFindStop
+      .MatchWildcards = False
+      .Execute
+    End With
+    If rng.Find.Found = False Then
+      MsgBox ("Final number = " & myMax & vbCr & "Missing number" & i)
+      Exit Sub
+    End If
+  Next i
+  rng.Select
+Else
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[[A-Za-z]"
+    .Replacement.Text = ""
+    .Forward = True
+    .Wrap = wdFindContinue
+    .Format = False
+    .MatchCase = False
+    .MatchWholeWord = False
+    .MatchAllWordForms = False
+    .MatchSoundsLike = False
+    .MatchWildcards = True
+    .Execute
+  End With
+  If Selection.Find.Found = False Then
+    MsgBox ("Finished?!")
+    Exit Sub
+  End If
+  myStart = Selection.Start + 1
+  Selection.Collapse wdCollapseEnd
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "]"
+    .MatchWildcards = False
+    .Execute
+  End With
+  Selection.MoveEnd wdCharacter, -1
+  Selection.Start = myStart
+  myWord = Selection
+
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myWord
+    .MatchWildcards = False
+' .Execute
+  End With
+End If
+End Sub
+
+

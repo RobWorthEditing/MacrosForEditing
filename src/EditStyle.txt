@@ -1,0 +1,8 @@
+Sub EditStyle()
+' Paul Beverley - Version 27.07.10
+' Pull up Edit style dialogue box
+' Ctrl - f6
+Dialogs(wdDialogFormatStyle).Show
+End Sub
+
+

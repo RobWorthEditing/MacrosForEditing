@@ -1,0 +1,9 @@
+Sub NTaddress()
+' Paul Beverley - Version 26.06.20
+' Locates your Normal template folder
+
+Documents.Add
+Selection.TypeText Text:=NormalTemplate.FullName & vbCr
+End Sub
+
+

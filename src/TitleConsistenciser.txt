@@ -1,0 +1,12 @@
+Sub TitleConsistenciser()
+' Paul Beverley - Version 18.05.17
+' Applie general formatting of heading to tagging and section number
+
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Selection.MoveEndUntil cset:=vbTab, Count:=wdForward
+Selection.MoveEnd , 5
+Call UnifyFormatBackwards
+End Sub
+
+

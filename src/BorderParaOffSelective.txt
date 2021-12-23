@@ -1,0 +1,27 @@
+Sub BorderParaOffSelective()
+' Paul Beverley - Version 06.08.11
+' Remove the borders applied to the paragraph
+For Each pa In ActiveDocument.Paragraphs
+  styName = pa.Range.Style
+'  Debug.Print styName
+  If InStr(styName, "EXT") = 0 Then
+  Set rng = pa.Range
+  rng.End = rng.End - 1
+  rng.Font.Borders(1).LineStyle = wdLineStyleNone
+    Selection.Borders(wdBorderTop).LineStyle = wdLineStyleNone
+' Selection.Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+' Selection.Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+' Selection.Borders(wdBorderRight).LineStyle = wdLineStyleNone
+' Selection.Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+' Selection.Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+' pa.Range.Borders(wdBorderTop).LineStyle = wdLineStyleNone
+' pa.Range.Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+' pa.Range.Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+' pa.Range.Borders(wdBorderRight).LineStyle = wdLineStyleNone
+' pa.Range.Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+' pa.Range.Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+  End If
+Next pa
+End Sub
+
+

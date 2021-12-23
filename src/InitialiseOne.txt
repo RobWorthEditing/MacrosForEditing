@@ -1,0 +1,21 @@
+Sub InitialiseOne()
+' Paul Beverley - Version 24.01.19
+' Initialise one word then skip one
+
+Selection.Expand wdWord
+Selection.MoveEndWhile cset:=" ", Count:=wdBackward
+init = Left(Selection, 1)
+Selection.TypeText init & "."
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[A-Z][a-z]{1,}"
+  .MatchWildcards = True
+  .Execute
+End With
+Selection.Collapse wdCollapseEnd
+Selection.Find.Execute
+Selection.Find.MatchWildcards = False
+End Sub
+
+

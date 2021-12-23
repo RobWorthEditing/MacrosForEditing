@@ -1,0 +1,11 @@
+Sub SentencesToParas()
+' Paul Beverley - Version 17.05.21
+' Splits all sentences into individual
+
+For Each sn In ActiveDocument.Sentences
+  If sn.Information(wdWithInTable) = False Then _
+       sn.InsertBefore Text:=vbCr
+Next sn
+End Sub
+
+

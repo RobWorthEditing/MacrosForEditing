@@ -1,0 +1,11 @@
+Sub FolderAddress()
+' Paul Beverley - Version 15.01.21
+' Locates the folder of the current file
+
+myAddress = ActiveDocument.FullName
+myAddress = Replace(myAddress, ActiveDocument.Name, "")
+Documents.Add
+Selection.TypeText Text:=myAddress
+End Sub
+
+

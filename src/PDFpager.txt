@@ -1,0 +1,93 @@
+Sub PDFpager()
+' Paul Beverley - Version 14.05.12
+' Highlights page numbers of text from a PDF
+
+pageNumberStyle = wdStyleHeading1
+textBefore = ">>>"
+textAfter = "<<<"
+numberAtBottom = False
+endCode1 = " "
+'endCode1 = "^p"
+endCode2 = "^p"
+
+Selection.Expand wdWord
+findPage = Val(Selection) - 1
+stepSize = 3
+
+If numberAtBottom = True Then
+  codeBefore = "": codeAfter = Chr(12)
+Else
+  codeBefore = Chr(12): codeAfter = ""
+End If
+
+If endCode1 = "^p" Then endCode1 = Chr(13)
+If endCode2 = "^p" Then endCode2 = Chr(13)
+Set rng = ActiveDocument.Content
+Set rng2 = ActiveDocument.Content
+rng.Start = Selection.Start - 1
+If Asc(rng) <> Asc(Right(textBefore, 1)) Then
+  Selection.InsertBefore codeBefore & textBefore
+  Selection.InsertAfter textAfter & codeAfter
+  Selection.Expand wdParagraph
+  Selection.ParagraphFormat.LineSpacingRule = wdLineSpaceSingle
+  Selection.Style = ActiveDocument.Styles(pageNumberStyle)
+End If
+pagesMissing = ""
+Do
+  hereNow = Selection.Start
+  rng.Start = 0
+  rng.End = hereNow
+  If findPage >= stepSize Then
+    myLimit = hereNow * (findPage - stepSize) / findPage + 1
+  Else
+    myLimit = 1
+  End If
+  Do
+    thisIsIt = False
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = Trim(Str(findPage))
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .Forward = False
+      .MatchWildcards = False
+      .MatchWholeWord = False
+      .MatchSoundsLike = False
+      .Execute
+    End With
+    If rng.Find.Found Then
+    rng.Select
+      rng2.Start = rng.Start - 1
+      rng2.Select
+      leftCode = Left(rng2, 1)
+      rng2.Start = rng.End
+      rng2.Select
+      rightCode = Left(rng2, 1)
+      If leftCode = endCode1 And rightCode = endCode2 Then thisIsIt = True
+      If leftCode = endCode2 And rightCode = endCode1 Then thisIsIt = True
+    End If
+  Loop Until thisIsIt Or rng.Start <= myLimit Or rng.Find.Found = False
+
+  If thisIsIt And rng.Start > myLimit Then
+    rng.Select
+    Selection.InsertBefore codeBefore & textBefore
+    Selection.InsertAfter textAfter & codeAfter
+    Selection.Expand wdParagraph
+    Selection.ParagraphFormat.LineSpacingRule = wdLineSpaceSingle
+    Selection.Style = ActiveDocument.Styles(pageNumberStyle)
+    Selection.MoveRight Unit:=wdCharacter, Count:=1
+  Else
+    pagesMissing = pagesMissing & Trim(Str(findPage)) & ", "
+    Beep
+' StatusBar = "Searching for: " & findPage - 1
+  End If
+  findPage = findPage - 1
+Loop Until nowPage = 1 Or findPage = 0
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText pagesMissing & vbCr & vbCr
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+
+

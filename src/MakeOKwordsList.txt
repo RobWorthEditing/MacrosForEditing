@@ -1,0 +1,26 @@
+Sub MakeOKwordsList()
+' Paul Beverley - Version 26.10.19
+' Makes a list of all words not highlighted
+
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.FormattedText = rng.FormattedText
+Set myList = ActiveDocument
+For i = myList.Paragraphs.Count To 1 Step -1
+  Set myPar = myList.Paragraphs(i).Range
+  myPar.End = myPar.End - 1
+  isHigh = myPar.HighlightColorIndex <> 0
+  If Len(myPar.Text) > 1 Then
+    col = myPar.Font.Color
+  Else
+    col = 0
+  End If
+  If isHigh Or col > 0 Then
+     myList.Paragraphs(i).Range.Delete
+    sdfgdsf = 0
+  End If
+Next i
+myList.Paragraphs(1) = "OKwords"
+End Sub
+
+

@@ -1,0 +1,8 @@
+Sub WhatColor()
+' Paul Beverley - Version 13.05.20
+' Tests current font colour
+
+Debug.Print Hex(Selection.Font.Color), Selection.Font.Color
+End Sub
+
+

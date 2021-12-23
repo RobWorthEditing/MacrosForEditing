@@ -1,0 +1,65 @@
+Sub BackupIndexed()
+' Paul Beverley - Version 18.01.21
+' Saves an indexed copy of the current file
+
+' Needs a line at the top of the VBA area:
+' Private pbComputerToolsCount As Integer
+
+' To initialise the count, use:
+
+' pbComputerToolsCount = 3
+' Exit Sub
+
+
+'pbComputerToolsCount = 3
+'pbMacrosCount = 0
+'pbAppendicesCount = 2
+'Exit Sub
+
+myResponse = MsgBox("    Backup Indexed" & vbCr & vbCr & _
+     "Backup this document?", vbQuestion _
+     + vbYesNoCancel, "BackupIndexed")
+If myResponse <> vbYes Then Exit Sub
+
+myName = ActiveDocument.FullName
+dotPos = InStr(myName, ".")
+fType = Mid(myName, dotPos)
+myNm = Replace(myName, fType, "")
+myFileName = ActiveDocument.Name
+myFolder = Replace(myName, myFileName, "") & "zzBackup"
+Debug.Print myFolder
+
+Select Case Replace(myFileName, ".docx", "")
+
+  Case "ComputerTools4Eds": Selection.TypeText "-"
+    nowIndex = pbComputerToolsCount + 1
+    pbComputerToolsCount = nowIndex
+  
+  Case "ComputerTools4Eds_Appendices": Selection.TypeText "-"
+    nowIndex = pbAppendicesCount + 1
+    pbAppendicesCount = nowIndex
+  
+  Case "TheMacrosAll": Selection.TypeText "-"
+    nowIndex = pbMacrosCount + 1
+    pbMacrosCount = nowIndex
+  
+  Case Else:
+    Beep
+    MsgBox "Please check your setup of the variables."
+    Exit Sub
+End Select
+
+idx = Trim(Str(nowIndex))
+
+If nowIndex < 10 Then idx = "0" & idx
+myNewFile = myFolder & "\" & myFileName & "_PB_" & idx & ".docx"
+Debug.Print myNewFile
+ActiveDocument.SaveAs FileName:=myNewFile
+ActiveDocument.Close SaveChanges:=False
+Debug.Print myName
+Documents.Open FileName:=myName
+Beep
+MsgBox "Backup saved"
+End Sub
+
+

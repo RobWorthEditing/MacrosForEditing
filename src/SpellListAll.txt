@@ -1,0 +1,47 @@
+Sub SpellListAll()
+' Paul Beverley - Version 09.05.11 modified Version 28.11.11
+' Create a FRedit list for all coloured words
+' Ctrl - Alt - Shift - L
+Selection.End = Selection.Start + 1
+colNow = Selection.Range.HighlightColorIndex
+
+If colNow = wdNoHighlight Then
+  MsgBox ("Place cursor in chosen highlight colour" & vbCr _
+       & "and try again.")
+  Exit Sub
+End If
+
+Selection.EndKey Unit:=wdStory
+Selection.TypeText "^0146| zczc" & vbCr
+
+i = ActiveDocument.Words.Count
+Set rng = ActiveDocument.Range
+For Each wd In ActiveDocument.Words
+  rng.Start = wd.Start
+  rng.End = wd.Start + 1
+  If rng.HighlightColorIndex = colNow Then
+    theWord = Trim(wd)
+    If Right(theWord, 1) = ChrW(8217) Then theWord = Left(theWord, Len(theWord) - 1)
+    Selection.TypeText "~<" & theWord & ">|" & theWord & vbCr
+  End If
+  i = i - 1
+  If i Mod 100 = 0 Then
+    StatusBar = "To go: " & Str(i)
+    DoEvents
+  End If
+Next wd
+Selection.TypeText " zczc|^0146" & vbCr
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zczc"
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+Selection.HomeKey Unit:=wdLine
+End Sub
+
+

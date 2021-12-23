@@ -1,0 +1,87 @@
+Sub KeyBindings2()
+' Paul Beverley - Version 12.04.13
+' Add keybindings to macros on various keys
+
+keyList = "csaUp, InstantFindUp; csaF1, DocAlyse; aK, SpellAlyse; csC, commaAdd;"
+keyList = keyList & "caL, IZIScount;"
+
+
+On Error GoTo ReportIt
+keyList = Replace(keyList, ";;", ";")
+keyList = Replace(keyList, " ", "")
+
+While InStr(keyList, ",") > 0
+  colonPos = InStr(keyList, ";")
+  If colonPos > 2 Then
+    aKey = Left(keyList, colonPos - 1)
+    keyList = Right(keyList, Len(keyList) - colonPos)
+  Else
+    aKey = keyList
+  End If
+  commaPos = InStr(aKey, ",")
+  keyBits = Left(aKey, commaPos - 1)
+  MacroName = Trim(Right(aKey, Len(aKey) - commaPos))
+  If InStr(keyBits, "c") Then keyNumber = wdKeyControl Else keyNumber = 0
+  If InStr(keyBits, "a") Then keyNumber = keyNumber + wdKeyAlt
+  If InStr(keyBits, "s") Then keyNumber = keyNumber + wdKeyShift
+  keyBits = Replace(keyBits, "a", "")
+  keyBits = Replace(keyBits, "s", "")
+  keyBits = Replace(keyBits, "c", "")
+  If Len(keyBits) = 1 Then
+    keyNumber = keyNumber + Asc(keyBits)
+  Else
+    If Asc(keyBits) = Asc("F") Then
+      aCode = 111 + Val(Replace(keyBits, "F", ""))
+    Else
+      Select Case keyBits
+        Case "Up": aCode = vbKeyUp '  The Up Cursor key
+        Case "Down": aCode = vbKeyDown '  The Down Cursor key
+        Case "Right": aCode = vbKeyRight '  The Right Cursor key
+        Case "Left": aCode = vbKeyLeft '  The Left Cursor key
+        Case "BackSingleQuote": aCode = wdKeyBackSingleQuote '  The ` key
+        Case "BackSlash": aCode = wdKeyBackSlash '  The \ key
+        Case "Backspace": aCode = wdKeyBackspace '  The Backspace key
+        Case "CloseSquareBrace": aCode = wdKeyCloseSquareBrace '  The ] key
+        Case "Comma": aCode = wdKeyComma '  The , key
+        Case "Delete": aCode = wdKeyDelete '  The Delete key
+        Case "End": aCode = wdKeyEnd '  The EndD key
+        Case "Equals": aCode = wdKeyEquals '  The = key
+        Case "Home": aCode = wdKeyHome '  The HOME key
+        Case "Hyphen": aCode = wdKeyHyphen '  The - key
+        Case "Insert": aCode = wdKeyInsert '  The Insert key
+        Case "NumAdd": aCode = wdKeyNumericAdd '  The + key on the keypad
+        Case "NumDecimal": aCode = wdKeyNumericDecimal '  The . key on the keypad
+        Case "NumDivide": aCode = wdKeyNumericDivide '  The / key on the keypad
+        Case "NumMultiply": aCode = wdKeyNumericMultiply '  The * key on the keypad
+        Case "NumSubtract": aCode = wdKeyNumericSubtract '  The - key on the keypad
+        Case "OpenSquareBrace": aCode = wdKeyOpenSquareBrace '  The [ key
+        Case "PageDown": aCode = wdKeyPageDown '  The Page Down key
+        Case "PageUp": aCode = wdKeyPageUp '  The Page Up key
+        Case "Period": aCode = wdKeyPeriod '  The  key
+        Case "Return": aCode = wdKeyReturn '  The Enter or Return key
+        Case "SemiColon": aCode = wdKeySemiColon '  The ; key
+        Case "SingleQuote": aCode = wdKeySingleQuote '  The ' key
+        Case "Slash": aCode = wdKeySlash '  The / key
+        Case "Spacebar": aCode = wdKeySpacebar '  The Spacebar key
+        Case Else: MsgBox ("Error - Can't find: " & keyBits): Exit Sub
+      End Select
+    End If
+    keyNumber = keyNumber + fCode
+  End If
+  KeyBindings.Add KeyCode:=keyNumber, KeyCategory:=wdKeyCategoryMacro, Command:=MacroName
+Wend
+
+MsgBox "Keys successfully programmed."
+Exit Sub
+
+ReportIt:
+If Err.Number = 5346 Then
+  MsgBox "Can't find macro:   " & MacroName
+Else
+' Display Word's error message
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+
+

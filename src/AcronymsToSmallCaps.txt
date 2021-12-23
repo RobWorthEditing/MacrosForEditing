@@ -1,0 +1,49 @@
+Sub AcronymsToSmallCaps()
+' Paul Beverley - Version 01.02.20
+' Finds all acronyms (in text or selection) and changes to small caps
+
+minLength = 3
+
+If Selection.Start = Selection.End Then
+  myResponse = MsgBox("Whole of the text?", _
+      vbQuestion + vbYesNoCancel, "AcronymsToSmallCaps")
+  If myResponse <> vbYes Then Exit Sub
+  theStart = ActiveDocument.Content.Start
+  theEnd = ActiveDocument.Content.End
+Else
+  theStart = Selection.Range.Start
+  theEnd = Selection.Range.End
+End If
+
+mySearch = "<[A-Z]{" & Trim(Str(minLength)) & ",}>"
+Set rng = ActiveDocument.Content
+rng.Start = theStart
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = mySearch
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  If rng.End < theEnd Then
+    myCount = myCount + 1
+    myEnd = rng.End
+    rng.Text = LCase(rng.Text)
+    rng.Font.SmallCaps = True
+    rng.Start = myEnd
+    rng.Find.Execute
+    DoEvents
+  Else
+    Exit Do
+  End If
+Loop
+MsgBox "Changed: " & myCount & " small caps"
+End Sub
+
+

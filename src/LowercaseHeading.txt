@@ -1,0 +1,54 @@
+Sub LowercaseHeading()
+' Paul Beverley - Version 06.09.11
+' Lowercase caption/heading and find the next one
+findThis = "^0013^t"
+findThis = "^0013" & "zczc*^t"
+findThis = "^0013Fig.*^0032"
+findThis = "^0013" & "3.*^t"
+
+showTrack = False
+
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = showTrack
+
+' Examine current paragraph
+startHere = Selection.Start
+endHere = Selection.End
+Selection.Expand wdParagraph
+twoChars = Left(Selection, 2)
+findThis = Replace(findThis, "zczc", twoChars)
+
+' restore selection as was
+Selection.Start = startHere
+Selection.End = endHere
+
+' If no selection, select to end of para
+If Selection.Start = Selection.End Then
+  Selection.Expand wdParagraph
+  Selection.Start = startHere
+End If
+
+Selection.Range.Case = wdLowerCase
+Selection.Start = Selection.End
+
+Selection.Find.ClearFormatting
+Selection.Find.Replacement.ClearFormatting
+With Selection.Find
+  .Text = findThis
+  .Forward = True
+  .Wrap = wdFindStop
+  .Format = False
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+  
+Selection.Start = Selection.End
+Selection.MoveRight Unit:=wdWord, Count:=1
+
+ActiveDocument.TrackRevisions = nowTrack
+
+End Sub
+
+

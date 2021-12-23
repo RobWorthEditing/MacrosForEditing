@@ -1,0 +1,10 @@
+Sub NonCurlyDoubleQuote()
+' Paul Beverley - Version 01.01.10
+' Type a non-curly double quote
+' <Ctrl-Shift-">
+Options.AutoFormatAsYouTypeReplaceQuotes = False
+Selection.TypeText """"
+Options.AutoFormatAsYouTypeReplaceQuotes = True
+End Sub
+
+
