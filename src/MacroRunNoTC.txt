@@ -1,0 +1,89 @@
+Sub MacroRunNoTC()
+' Paul Beverley - Version 01.01.22
+' Runs an analysis on track-accepted text
+
+myMacro = "RepeatedWordsInParagraphs"
+
+myScreenOff = True
+
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
+Selection.HomeKey Unit:=wdStory
+Set myDoc = ActiveDocument
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set rng = ActiveDocument.Content
+rng.Text = rngOld.Text
+Application.Run MacroName:=myMacro
+Set rng = ActiveDocument.Content
+If rng.HighlightColorIndex > 0 Then
+  For ip = 1 To rng.Paragraphs.count
+    Set myPar = rng.Paragraphs(ip)
+    If myPar.Range.HighlightColorIndex > 0 Then
+      For iw = 1 To myPar.Range.Words.count
+        Set wd = myPar.Range.Words(iw)
+        If wd.HighlightColorIndex > 9999 Then
+          For ic = 1 To wd.Characters.count
+            Set ch = wd.Characters(ic)
+            If ch.HighlightColorIndex > 0 Then
+              rngOld.Paragraphs(ip).Range.Words(iw).Characters(ic).HighlightColorIndex _
+                  = ch.HighlightColorIndex
+            End If
+            DoEvents
+          Next ic
+        Else
+          If wd.HighlightColorIndex > 0 Then
+            rngOld.Paragraphs(ip).Range.Words(iw).HighlightColorIndex _
+                = wd.HighlightColorIndex
+          End If
+        End If
+        DoEvents
+      Next iw
+    End If
+    DoEvents
+  Next ip
+End If
+
+If rng.Font.ColorIndex > 0 Then
+  For ip = 1 To rng.Paragraphs.count
+    Set myPar = rng.Paragraphs(ip)
+    If myPar.Range.Font.ColorIndex > 0 Then
+      For iw = 1 To myPar.Range.Words.count
+        Set wd = myPar.Range.Words(iw)
+        If wd.Font.ColorIndex > 9999 Then
+          For ic = 1 To wd.Characters.count
+            Set ch = wd.Characters(ic)
+            If ch.Font.ColorIndex > 0 Then
+              rngOld.Paragraphs(ip).Range.Words(iw).Characters(ic).Font.ColorIndex _
+                  = ch.Font.ColorIndex
+            End If
+            DoEvents
+          Next ic
+        Else
+          If wd.Font.ColorIndex > 0 Then
+            rngOld.Paragraphs(ip).Range.Words(iw).Font.ColorIndex _
+                = wd.Font.ColorIndex
+          End If
+        End If
+        DoEvents
+      Next iw
+    End If
+    DoEvents
+  Next ip
+End If
+
+ActiveDocument.Close SaveChanges:=False
+myDoc.Activate
+Application.ScreenUpdating = True
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+
+
+

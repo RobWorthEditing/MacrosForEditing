@@ -1,0 +1,23 @@
+Sub ParagraphLineLengthHighlighter()
+' Paul Beverley - Version 11.01.22
+' Highlights any paragraphs longer than a number of lines
+
+maxLines = 15
+
+myColour = wdYellow
+
+Set rng = ActiveDocument.Content
+rng.Collapse wdCollapseEnd
+rng.Start = rng.End - 3
+If Left(rng.Text, 1) <> vbCr Then rng.InsertAfter Text:=vbCr
+
+For Each myPar In ActiveDocument.Paragraphs
+  myPar.Range.Select
+  Selection.Collapse wdCollapseStart
+  Selection.MoveDown , maxLines
+  If myPar.Range.End > Selection.Start Then _
+       myPar.Range.HighlightColorIndex = myColour
+  DoEvents
+Next myPar
+End Sub
+

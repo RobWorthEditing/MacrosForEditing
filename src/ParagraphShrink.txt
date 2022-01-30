@@ -1,0 +1,10 @@
+Sub ParagraphShrink()
+' Paul Beverley - Version 06.01.22
+' Shrinks the current paragraph (for use with CitationAlyse)
+
+mySize = 6
+Selection.Expand wdParagraph
+Selection.Range.Font.Size = mySize
+Selection.Collapse wdCollapseEnd
+End Sub
+

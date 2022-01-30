@@ -1,0 +1,326 @@
+Sub CitationListEdit()
+' Paul Beverley - Version 29.12.21
+' Edits citation+references list
+
+myPrompt = myPrompt & "1 = Create a copy" & vbCr
+myPrompt = myPrompt & "2 = Tidy list" & vbCr & vbCr
+
+myPrompt = myPrompt & "3 = Alphabetic sort" & vbCr
+myPrompt = myPrompt & "4 = Sort by year" & vbCr & vbCr
+
+myPrompt = myPrompt & "5 = Delete all initials" & vbCr
+myPrompt = myPrompt & "6 = Sort by surname before year" & vbCr & vbCr
+
+myPrompt = myPrompt & "7 = Sort by underlined word" & vbCr
+myPrompt = myPrompt & "8 = Underline surname before year" & vbCr
+myPrompt = myPrompt & "9 = Underline first surname" & vbCr
+myPrompt = myPrompt & "10 (.) = Underline this name" & vbCr
+' myPrompt = myPrompt & "8 = " & vbCr
+
+myScreenOff = True
+
+Do
+  myInput = InputBox(myPrompt, "CitationListEdit")
+  If myInput = "." Then myInput = "10"
+  myNumber = Int(Val(myInput))
+  If myNumber = 0 Then Beep: Exit Sub
+  If myNumber > 10 Then Beep
+Loop Until myNumber < 11
+
+If myNumber > 2 And myNumber < 10 Then
+  If Selection.End = Selection.Start Then
+    Set rng = ActiveDocument.Content
+    Beep
+    myResponse = MsgBox("The WHOLE file?!", _
+         vbQuestion + vbYesNo)
+    If myResponse = vbNo Then Exit Sub
+  Else
+  'Extend selection to nearest para
+    Set rng = Selection.Range.Duplicate
+    rng.Collapse wdCollapseStart
+    rng.Expand wdParagraph
+    Selection.Start = rng.Start
+    Set rng = Selection.Range.Duplicate
+    If Right(rng.Text, 1) <> vbCr Then
+      rng.Collapse wdCollapseEnd
+      rng.Expand wdParagraph
+      Selection.End = rng.End
+    End If
+  End If
+End If
+
+If myScreenOff = True Then Application.ScreenUpdating = False
+Select Case myNumber
+
+Case 1:
+  ' Create a copy
+  Set rng = ActiveDocument.Content
+  Documents.Add
+  Selection.FormattedText = rng.FormattedText
+  myColour = RGB(255, 255, 200)
+
+  With ActiveDocument.Styles(wdStyleNormal).ParagraphFormat
+      .Shading.BackgroundPatternColor = myColour
+  End With
+
+
+Case 2:  ' Tidy list
+  ' Spaces at start of line
+  FRs = "#^p |^p#^p |^p#"
+  ' Multiple spaces
+  FRs = FRs & "#~([!^32^t])^32^32([!^32^t])|\1^32\2#"
+  ' Remove parentheses from year
+  FRs = FRs & "#~\(([(0-9)]{4})\)|\1#"
+  ' Tabs and manual line breaks
+  FRs = FRs & "#^t|^32#^11|^p#"
+
+  FandR = Split(FRs, "#")
+  For i = 1 To UBound(FandR)
+    myFR = FandR(i)
+    If Len(myFR) > 2 Then
+      doWild = False
+      If Left(myFR, 1) = "~" Then
+        doWild = True
+        myFR = Mid(myFR, 2)
+      End If
+      If Left(myFR, 1) <> ChrW(124) And _
+           InStr(myFR, ChrW(124)) > 0 Then
+        barpos = InStr(myFR, ChrW(124))
+        myFind = Left(myFR, barpos - 1)
+        myRep = Mid(myFR, barpos + 1)
+        With rng.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .Text = myFind
+          .Wrap = wdFindStop
+          .Forward = True
+          .Replacement.Text = myRep
+          .MatchWildcards = doWild
+          .Execute Replace:=wdReplaceAll
+        End With
+        DoEvents
+      End If
+    End If
+  Next i
+  Beep
+
+
+Case 3:
+' Alphabetic sort
+  rng.Sort ExcludeHeader:=False, FieldNumber:="Paragraphs", _
+       CaseSensitive:=True, SortOrder:=wdSortOrderAscending, _
+      SortFieldType:=wdSortFieldAlphanumeric
+
+
+Case 4: ' Sort by year
+  For Each myPara In rng.Paragraphs
+    myText = myPara.Range.Text
+    For i = 2 To Len(myText) - 3
+      myYearText = Mid(myText, i, 5)
+      If InStr("abcdefghijkl", Right(myYearText, 1)) = 0 Then _
+           myYearText = Left(myYearText, 4)
+      myYear = Val(myYearText)
+      If myYear > 1000 And Left(myYearText, 1) <> " " Then
+        myPara.Range.InsertBefore Text:="]" & myYearText & "["
+        Exit For
+      End If
+      DoEvents
+    Next i
+    DoEvents
+  Next myPara
+  Selection.Sort
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\][0-9a-h]@\["
+    .Wrap = wdFindStop
+    .Forward = True
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+  Beep
+
+
+Case 5: ' Delete all initials
+  FRs = "#~<[A-Z]{1,3} |#"
+  FRs = FRs & "#~<[A-Z].[A-Z].[A-Z]. |#"
+  FRs = FRs & "#~<[A-Z].[A-Z]. |#"
+  FRs = FRs & "#~<[A-Z]. |#"
+
+  FandR = Split(FRs, "#")
+  For i = 1 To UBound(FandR)
+    myFR = FandR(i)
+    If Len(myFR) > 2 Then
+      doWild = False
+      If Left(myFR, 1) = "~" Then
+        doWild = True
+        myFR = Mid(myFR, 2)
+      End If
+      If Left(myFR, 1) <> ChrW(124) And _
+           InStr(myFR, ChrW(124)) > 0 Then
+        barpos = InStr(myFR, ChrW(124))
+        myFind = Left(myFR, barpos - 1)
+        myRep = Mid(myFR, barpos + 1)
+        With rng.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .Text = myFind
+          .Wrap = wdFindStop
+          .Forward = True
+          .Replacement.Text = myRep
+          .MatchWildcards = doWild
+          .Execute Replace:=wdReplaceAll
+        End With
+        DoEvents
+      End If
+    End If
+  Next i
+
+
+Case 6:
+' Sort by word before year
+  For Each myPara In rng.Paragraphs
+    numWds = myPara.Range.Words.count
+    For i = 1 To numWds
+      wd = myPara.Range.Words(i)
+      myYear = Val(wd)
+        If myYear > 1000 Then
+          For j = i - 1 To 1 Step -1
+            myName = Trim(myPara.Range.Words(j))
+            myCap = Left(myName, 1)
+            isCap = (UCase(myCap) = myCap) And (LCase(myCap) <> myCap)
+            isName = isCap And Len(myName) > 1
+            If isName Then
+              myPara.Range.InsertBefore Text:="]" & _
+                   myPara.Range.Words(j) & "["
+              Exit For
+            End If
+          Next j
+          Exit For
+        End If
+        DoEvents
+      DoEvents
+    Next i
+  Next myPara
+  
+  rng.Sort
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\]*\["
+    .Wrap = wdFindStop
+    .Forward = True
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+
+
+Case 7:  ' Sort by underlined word
+  For Each myPara In rng.Paragraphs
+    If myPara.Range.Font.Underline > 0 Then
+      For Each myWd In myPara.Range.Words
+        If myWd.Font.Underline > 0 Then
+          myPara.Range.InsertBefore Text:="]" & myWd.Text & "["
+          Exit For
+        End If
+        DoEvents
+      Next myWd
+      DoEvents
+    Else
+      myPara.Range.InsertBefore Text:="]" & _
+           myPara.Range.Words(1) & "["
+    End If
+  Next myPara
+  rng.Sort
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\]*\["
+    .Wrap = wdFindStop
+    .Forward = True
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+
+
+Case 8: ' Underline word before date
+  For Each myPara In rng.Paragraphs
+    myPara.Range.Font.Underline = False
+    numWds = myPara.Range.Words.count
+    For i = 1 To numWds
+      wd = myPara.Range.Words(i)
+      myYear = Val(wd)
+        If myYear > 1000 Then
+          For j = i - 1 To 2 Step -1
+            myName = Trim(myPara.Range.Words(j))
+            myCap = Left(myName, 1)
+            isCap = (UCase(myCap) = myCap) And (LCase(myCap) <> myCap)
+            isName = isCap And Len(myName) > 1
+            If isName Then
+              myPara.Range.Words(j).Font.Underline = True
+              Exit For
+            End If
+          Next j
+          Exit For
+        End If
+        DoEvents
+      DoEvents
+    Next i
+  Next myPara
+  Beep
+
+
+Case 9:
+' Underline first surname
+  For Each myPara In rng.Paragraphs
+    myPara.Range.Font.Underline = False
+    For i = 1 To myPara.Range.Words.count
+      wd = Len(myPara.Range.Words(i))
+      myCap = Left(myPara.Range.Words(i), 1)
+      isAcap = (LCase(myCap) <> myCap)
+      If Len(Trim(myPara.Range.Words(i))) > 1 And isAcap Then
+        If i = 1 Then isAcap = False
+        Exit For
+      End If
+    Next i
+    If isAcap Then myPara.Range.Words(i).Font.Underline = True
+    DoEvents
+  Next myPara
+  Beep
+
+
+Case 10:
+' Underline this name
+  Set rng = Selection.Range.Duplicate
+  rng.Expand wdWord
+  Set rng2 = rng.Duplicate
+  rng2.Expand wdParagraph
+  rng2.Font.Underline = False
+  rng.Font.Underline = True
+End Select
+
+
+' Remove blank lines at the top (only after a sort
+If Selection.Start = Selection.End And myNumber < 9 _
+     And myNumber > 4 Then
+  Set para2 = ActiveDocument.Paragraphs(1)
+  Do While Len(para2.Range.Text) < 3
+    para2.Range.Delete
+  Loop
+  rng.InsertAfter Text:=vbCr
+End If
+If myNumber < 9 Then Beep
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+

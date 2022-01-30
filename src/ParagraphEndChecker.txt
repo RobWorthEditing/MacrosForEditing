@@ -1,6 +1,5 @@
-
 Sub ParagraphEndChecker()
-' Paul Beverley - Version 15.06.21
+' Paul Beverley - Version 06.01.22
 ' Highlights the end of all possibly punctuation-less paragraphs
 
 myMainHighlight = wdBrightGreen
@@ -15,12 +14,19 @@ myLightColour = wdGray25
 underlineLineFeeds = True
 underlineQuoteNoPunct = False
 
-minWords = 8
-' To not highlight heading ends, ignore short "paragraphs".
+myScreenOff = True
+
+' To not highlight headings, ignore short "paragraphs".
+minWords = 10
 
 myOKChars = ".!?:…" & ChrW(8221) & ChrW(8217)
 Dim i As Long
 Dim j As Long
+
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
 
 If addLightColour = True Then
   oldColour = Options.DefaultHighlightColorIndex
@@ -40,7 +46,7 @@ If addLightColour = True Then
     .MatchSoundsLike = False
     .Execute Replace:=wdReplaceAll
   End With
-  If ActiveDocument.Endnotes.Count > 0 Then
+  If ActiveDocument.Endnotes.count > 0 Then
     Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
     With rng.Find
       .ClearFormatting
@@ -57,7 +63,7 @@ If addLightColour = True Then
       .Execute Replace:=wdReplaceAll
     End With
   End If
-  If ActiveDocument.Footnotes.Count > 0 Then
+  If ActiveDocument.Footnotes.count > 0 Then
     Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
     With rng.Find
       .ClearFormatting
@@ -83,7 +89,10 @@ ActiveDocument.TrackRevisions = False
 If Selection.Start <> Selection.End Then
     myResponse = MsgBox("Remove existing highlights?", vbQuestion _
           + vbYesNoCancel, "ParagraphEndChecker")
-  If myResponse <> vbYes Then Exit Sub
+  If myResponse <> vbYes Then
+    Application.ScreenUpdating = True
+    Exit Sub
+  End If
   Set rng = ActiveDocument.Content
   For Each myPar In ActiveDocument.Paragraphs
     rng.Start = myPar.Range.End - 3
@@ -94,9 +103,9 @@ If Selection.Start <> Selection.End Then
   Next myPar
 Else
   Set rng = ActiveDocument.Content
-  i = ActiveDocument.Paragraphs.Count
+  i = ActiveDocument.Paragraphs.count
   For Each myPar In ActiveDocument.Paragraphs
-    If myPar.Range.Words.Count > minWords + 2 Then
+    If myPar.Range.Words.count > minWords + 2 Then
       rng.Start = myPar.Range.End - 2
       rng.End = myPar.Range.End - 1
       If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
@@ -126,10 +135,10 @@ Else
     StatusBar = sps & j & "0"
     DoEvents
   Next myPar
-  If ActiveDocument.Footnotes.Count > 0 Then
+  If ActiveDocument.Footnotes.count > 0 Then
     Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
     Set nts = ActiveDocument.StoryRanges(wdFootnotesStory)
-    i = nts.Paragraphs.Count
+    i = nts.Paragraphs.count
     For Each myPar In nts.Paragraphs
       rng.Start = myPar.Range.End - 2
       rng.End = myPar.Range.End - 1
@@ -151,10 +160,10 @@ Else
       StatusBar = sps & j & "0"
     Next myPar
   End If
-  If ActiveDocument.Endnotes.Count > 0 Then
+  If ActiveDocument.Endnotes.count > 0 Then
     Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
     Set nts = ActiveDocument.StoryRanges(wdEndnotesStory)
-    i = nts.Paragraphs.Count
+    i = nts.Paragraphs.count
     For Each myPar In nts.Paragraphs
       rng.Start = myPar.Range.End - 2
       rng.End = myPar.Range.End - 1
@@ -210,7 +219,12 @@ If underlineQuoteNoPunct = True Then
 End If
 ActiveDocument.TrackRevisions = myTrack
 Beep
+Application.ScreenUpdating = True
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
-
-
 

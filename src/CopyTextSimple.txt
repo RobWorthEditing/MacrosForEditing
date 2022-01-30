@@ -1,15 +1,17 @@
+
 Sub CopyTextSimple()
-' Paul Beverley - Version 03.02.20
+' Paul Beverley - Version 10.01.22
 ' Creates a text-only copy, with some features preserved
-' Used to be called CopyTextWithSomeFeatures
 
 doItalic = True
 doBold = True
-doSub = True
-doSuper = True
-
+doSub = False
+doSuper = False
 
 myColour = wdGray25
+
+myScreenOff = True
+
 myComments = ""
 Set rngOld = ActiveDocument.Content
 Documents.Add
@@ -18,9 +20,9 @@ rng.FormattedText = rngOld.FormattedText
 rng.Revisions.AcceptAll
 If numberCmnts > 0 Then ActiveDocument.DeleteAllComments
 
-wds1 = rng.Words.Count
+wds1 = rng.Words.count
 rng.Font.Hidden = False
-wds2 = rng.Words.Count
+wds2 = rng.Words.count
 If wds2 <> wds1 Then
   WordBasic.EditUndo
   myResponse = MsgBox("Original contains " & wds2 - wds1 & _
@@ -47,7 +49,12 @@ If wds2 <> wds1 Then
   End If
 End If
 
-numNotes = ActiveDocument.Endnotes.Count
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
+
+numNotes = ActiveDocument.Endnotes.count
 If numNotes > 0 Then
   myComments = myComments & "| endnotes = yes (" _
        & Trim(Str(numNotes)) & ")" & vbCr
@@ -63,7 +70,7 @@ If numNotes > 0 Then
   Next j
 End If
 
-numNotes = ActiveDocument.Footnotes.Count
+numNotes = ActiveDocument.Footnotes.count
 If numNotes > 0 Then
   myComments = myComments & "| footnotes = yes (" _
        & Trim(Str(numNotes)) & ")" & vbCr
@@ -80,7 +87,7 @@ If numNotes > 0 Then
 End If
 
 ' copy all the textboxes to the end of the text
-shCount = ActiveDocument.Shapes.Count
+shCount = ActiveDocument.Shapes.count
 tbCount = 0
 If shCount > 0 Then
   Selection.EndKey Unit:=wdStory
@@ -88,7 +95,7 @@ If shCount > 0 Then
   For j = 1 To shCount
     Set shp = ActiveDocument.Shapes(j)
     If shp.Type <> 24 And shp.Type <> 3 Then
-      If shp.TextFrame.hasText Then
+      If shp.TextFrame.HasText Then
         Set rng = shp.TextFrame.TextRange
         If Len(rng.Text) > 1 Then
           tbCount = tbCount + 1
@@ -126,7 +133,7 @@ With rng.Find
   .Replacement.ClearFormatting
   .Text = ". . ."
   .Wrap = wdFindContinue
-  .Replacement.Text = "..."
+  .Replacement.Text = "…"
   .Execute Replace:=wdReplaceAll
 End With
 
@@ -204,7 +211,7 @@ If doSuper = True Then
 End If
 
 ' Copy pure text after the end of the formatted text
-EndNow = ActiveDocument.range.End
+endNow = ActiveDocument.Range.End
 Set rngNew = ActiveDocument.Content
 rngNew.Collapse wdCollapseEnd
 rngNew.Text = rng.Text
@@ -213,7 +220,7 @@ rngNew.Text = rng.Text
 Set rng = ActiveDocument.Content
 rng.Collapse wdCollapseStart
 ' One character less, to avoid the safety newline
-rng.End = EndNow - 1
+rng.End = endNow - 1
 rng.Delete
 
 Set rng = ActiveDocument.Content
@@ -398,5 +405,13 @@ If tbCount = 0 Then
   End With
 End If
 Beep
+Application.ScreenUpdating = True
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
+
 

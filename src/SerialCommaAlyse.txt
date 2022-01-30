@@ -1,0 +1,183 @@
+Sub SerialCommaAlyse()
+' Paul Beverley - Version 25.01.22
+' Highlights things that might be lists with serial commas (or not)
+
+testRange = 50
+myColourNS = wdYellow
+myColourS = wdBrightGreen
+
+oldColour = Options.DefaultHighlightColorIndex
+
+CR = vbCr
+CR2 = CR & CR
+myRslt = "Rough indication:" & CR2
+
+Application.ScreenUpdating = False
+On Error GoTo ReportIt
+
+st = Selection.Start
+en = Selection.End
+Set rng = ActiveDocument.Content
+myTot = rng.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^&!"
+  .MatchWildcards = True
+
+  .Text = "[a-zA-Z\-]{1,}, [a-zA-Z\-]{1,}, and "
+  .Execute Replace:=wdReplaceAll
+  i = rng.End - myTot
+  If i > 0 Then WordBasic.EditUndo
+  .Text = "[a-zA-Z\-]{1,}, [a-zA-Z\-]{1,}, or "
+  .Execute Replace:=wdReplaceAll
+  j = rng.End - myTot
+  If j > 0 Then WordBasic.EditUndo
+  DoEvents
+  myRslt = myRslt & "Serial comma" & vbTab & Trim(Str(i + j)) & CR
+  
+  .Text = "[a-zA-Z\-]{1,}, [a-zA-Z\-]{1,} and "
+  .Execute Replace:=wdReplaceAll
+  i = ActiveDocument.Range.End - myTot
+  If i > 0 Then WordBasic.EditUndo
+  .Text = "[a-zA-Z\-]{1,}, [a-zA-Z\-]{1,} or "
+  .Execute Replace:=wdReplaceAll
+  j = ActiveDocument.Range.End - myTot
+  If j > 0 Then WordBasic.EditUndo
+End With
+DoEvents
+myRslt = myRslt & "No serial comma" & vbTab & Trim(Str(i + j)) & CR2
+Beep
+myResponse = MsgBox(myRslt & "Run full test?", vbQuestion + vbYesNo, "SerialCommaAlyse")
+If myResponse <> vbYes Then Exit Sub
+
+Set rng = ActiveDocument.Content
+If st = en Then
+  myResponse = MsgBox("Scan the whole document?!", vbQuestion + vbYesNo, "SerialCommaAlyse")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  rng.Start = st
+  rng.End = en
+End If
+
+Documents.Add
+Selection.Text = rng.Text
+Selection.HomeKey Unit:=wdStory
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = " and "
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+Application.ScreenUpdating = True
+StatusBar = "Testing serial AND"
+Application.ScreenUpdating = False
+Do While rng.Find.Found = True
+  endNow = rng.End
+  startNow = rng.Start
+  rng.Collapse wdCollapseStart
+  rng.Start = rng.Start - 1
+  gotComma = (rng.Text = ",")
+  rng.Collapse wdCollapseStart
+  If rng.Start > testRange Then
+    rng.Start = rng.Start - testRange
+  Else
+    rng.Start = 0
+  End If
+  If InStr(rng, ",") > 0 And InStr(rng, ".") = 0 Then
+    rng.End = endNow
+    If gotComma = True Then
+      rng.HighlightColorIndex = myColourS
+    Else
+      rng.HighlightColorIndex = myColourNS
+    End If
+    rng.Start = startNow - 1
+    If Left(rng, 1) <> "," Then rng.Start = rng.Start + 1
+    rng.Font.Bold = True
+  End If
+  rng.Start = endNow
+  rng.Find.Execute
+  DoEvents
+Loop
+Application.ScreenUpdating = True
+StatusBar = "Testing serial OR"
+Application.ScreenUpdating = False
+Beep
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = " or "
+  .Replacement.Text = ""
+  .Execute
+End With
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  endNow = rng.End
+  startNow = rng.Start
+  rng.Collapse wdCollapseStart
+  rng.Start = rng.Start - 1
+  gotComma = (rng.Text = ",")
+  rng.Collapse wdCollapseStart
+  If rng.Start > testRange Then
+    rng.Start = rng.Start - testRange
+  Else
+    rng.Start = 0
+  End If
+  If InStr(rng, ",") > 0 And InStr(rng, ".") = 0 Then
+    rng.End = endNow
+    If gotComma = True Then
+      rng.HighlightColorIndex = myColourS
+    Else
+      rng.HighlightColorIndex = myColourNS
+    End If
+    rng.Start = startNow - 1
+    If Left(rng, 1) <> "," Then rng.Start = rng.Start + 1
+    rng.Font.Bold = True
+  End If
+  rng.Start = endNow
+  rng.Find.Execute
+  DoEvents
+Loop
+StatusBar = ""
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .Replacement.Font.Bold = True
+  .MatchWildcards = True
+
+  Options.DefaultHighlightColorIndex = myColourS
+  .Text = "[a-zA-Z\-]{1,}, [a-zA-Z\-]{1,}, and "
+  .Execute Replace:=wdReplaceAll
+  .Text = "[a-zA-Z\-]{1,}, [a-zA-Z\-]{1,}, or "
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  Options.DefaultHighlightColorIndex = myColourNS
+  .Text = "[a-zA-Z\-]{1,}, [a-zA-Z\-]{1,} and "
+  .Execute Replace:=wdReplaceAll
+  .Text = "[a-zA-Z\-]{1,}, [a-zA-Z\-]{1,} or "
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Application.ScreenUpdating = True
+Options.DefaultHighlightColorIndex = oldColour
+Beep
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+

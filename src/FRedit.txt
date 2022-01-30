@@ -1,8 +1,7 @@
 Sub FRedit()
-' Paul Beverley - Version 03.05.21
+' Paul Beverley - Version 06.01.22
 ' Scripted find and replace
-' ©2009-2021 Paul Beverley
-' #1003
+' ©2009-2022 Paul Beverley
 
 useReverseStrikeFeature = False
 
@@ -27,6 +26,8 @@ caseCode = ChrW(172)
 
 maxLines = 2000
 ' the maximum number of F&R lines in your list
+
+myScreenOff = True
 
 CR = vbCr: CR2 = CR & CR
 Set rng = ActiveDocument.Content
@@ -54,7 +55,6 @@ ReDim fFontSize(maxLines) As Integer, rFontSize(maxLines) As Integer
 ReDim styleArray(maxLines, 4) As String, funct(maxLines, 18) As Boolean
 
 timeStart = Timer
-
 For i = 1 To 30
   myspaces = myspaces & ">   "
 Next i
@@ -81,6 +81,7 @@ Else
 End If
 
 If debugging = False Then On Error GoTo ReportIt
+If myScreenOff = True Then Application.ScreenUpdating = False
 
 ' Remember which is the currently active file
 Set startFile = ActiveDocument
@@ -89,7 +90,7 @@ Set startFile = ActiveDocument
 startIsListFile = False
 
 ' How many Word files are loaded?
-numDocs = Documents.Count
+numDocs = Documents.count
 If numDocs = 1 Then myError = 11: GoTo myErrorReport
 NoOfLists = 0
 NoOfTexts = 0
@@ -163,6 +164,7 @@ If mlb > 0 Then
   MsgBox "Beware: FRedit list contains manual line breaks!"
   Application.Run MacroName:="ShowFormatting"
   MsgBox "I've turned Show Formatting on, so you can see."
+  Application.ScreenUpdating = True
   Exit Sub
 End If
 
@@ -172,7 +174,7 @@ FRitem = 0
 fNotes = False: eNotes = False: Etext = True: BoxText = False
 
 ' FRitem is used to count the actual lines that are F&R commands
-lastLine = ActiveDocument.Paragraphs.Count
+lastLine = ActiveDocument.Paragraphs.count
 For i = 1 To lastLine
   ' Look through the list for things that aren't actual F&Rs
   Do
@@ -196,6 +198,7 @@ For i = 1 To lastLine
               MsgBox "Please switch track changes off!", _
                    vbOKOnly + vbExclamation, "FRedit"
               theText.Activate
+              Application.ScreenUpdating = True
               Exit Sub
             End If
           Case "yes"
@@ -203,6 +206,7 @@ For i = 1 To lastLine
               MsgBox "Please switch track changes on!", _
                    vbOKOnly + vbExclamation, "FRedit"
               theText.Activate
+              Application.ScreenUpdating = True
               Exit Sub
             End If
           Case Else
@@ -378,7 +382,7 @@ For i = 1 To lastLine
       rSize = rng.Font.Size
       rHiColour = rng.HighlightColorIndex
       rTxtColour = rng.Font.Color
-      trackIt = Not (rng.Font.StrikeThrough)
+      trackit = Not (rng.Font.StrikeThrough)
     End If
     
     FRitem = FRitem + 1
@@ -411,7 +415,7 @@ For i = 1 To lastLine
     funct(FRitem, 14) = rSmall
     funct(FRitem, 15) = fAllcaps
     funct(FRitem, 16) = rAllcaps
-    funct(FRitem, 17) = trackIt
+    funct(FRitem, 17) = trackit
     funct(FRitem, 18) = fDstrike
 
     ' ^p is not allowed in wildcard searches!
@@ -471,9 +475,9 @@ For FRitem = 1 To lastItem
   rSmall = funct(FRitem, 14)
   fAllcaps = funct(FRitem, 15)
   rAllcaps = funct(FRitem, 16)
-  trackIt = funct(FRitem, 17)
+  trackit = funct(FRitem, 17)
   fDstrike = funct(FRitem, 18)
-  If trackNow = True Then ActiveDocument.TrackRevisions = trackIt
+  If trackNow = True Then ActiveDocument.TrackRevisions = trackit
   If fText = isMacro Then
     Application.Run MacroName:=rText
   Else
@@ -509,11 +513,11 @@ For FRitem = 1 To lastItem
 
     For hit = 1 To 4
       If hit = 1 Then
-        If Not (fNotes = True And ActiveDocument.Footnotes.Count _
+        If Not (fNotes = True And ActiveDocument.Footnotes.count _
              > 0) Then hit = 2
       End If
       If hit = 2 Then
-        If Not (eNotes = True And ActiveDocument.Endnotes.Count _
+        If Not (eNotes = True And ActiveDocument.Endnotes.count _
              > 0) Then hit = 3
       End If
       If hit = 3 Then
@@ -522,7 +526,7 @@ For FRitem = 1 To lastItem
       goes = 1
       If hit = 4 Then
         If BoxText = True Then
-          goes = ActiveDocument.Shapes.Count
+          goes = ActiveDocument.Shapes.count
         Else
           hit = 5
         End If
@@ -583,6 +587,7 @@ For FRitem = 1 To lastItem
                     If Len(myPar.Range.Text) > 1 Then myPar.Range.Font.Emboss = True
                   End If
                 End If
+                DoEvents
               Next myPar
             End If
             StatusBar = myspaces & "F&Ring line: " & Str(FRitem) & _
@@ -605,7 +610,7 @@ For FRitem = 1 To lastItem
               .Replacement.Text = rText
               .MatchWildcards = mchWild
               .MatchCase = mchCase
-            DoEvents
+              DoEvents
     
               If fStyle > "" Or rstyle > "" Then
                 If rstyle = "" Then rstyle = myBaseStyle
@@ -738,7 +743,7 @@ Else
   End If
 End If
 ActiveDocument.TrackRevisions = myTrack
-
+Application.ScreenUpdating = True
 Exit Sub
 
 ' Warn the user about problems that the macro has detected
@@ -750,7 +755,7 @@ If myError <= 6 Or (myError > 11 And myError < 17) _
 End If
 Select Case myError
   Case 2: myPrompt = "No matching replace text"
-          Selection.MoveUp Unit:=wdLine, Count:=1
+          Selection.MoveUp Unit:=wdLine, count:=1
           Selection.Expand wdParagraph
   Case 4: myPrompt = "A 'Count =' line should say 'yes' or 'no'."
   Case 5: myPrompt = "Sorry, Word can't use ^p in a wildcard search." _
@@ -801,6 +806,7 @@ Options.DefaultHighlightColorIndex = oldColour
 ActiveDocument.TrackRevisions = myTrack
 
 If NoOfLists > 0 Then theList.Activate
+Application.ScreenUpdating = True
 Exit Sub
 
 ' Errors that Word generates end up here
@@ -824,7 +830,7 @@ Set rng = ActiveDocument.Content
 gottit = False
 Dim myLine As Single
 myLine = 1
-For j = 1 To ActiveDocument.Paragraphs.Count
+For j = 1 To ActiveDocument.Paragraphs.count
   myTxt = ActiveDocument.Paragraphs(j)
   If Asc(myTxt) <> Asc("|") And Len(myTxt) > 2 Then
     If InStr(myTxt, "|") > 0 Then
@@ -854,6 +860,7 @@ If errNow = 5623 Then myError = 22: GoTo myErrorReport
 If errNow = 5692 Then myError = 23: GoTo myErrorReport
 If errNow = 5624 Then myError = 24: GoTo myErrorReport
 ' Display Word's error message
+Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub

@@ -1,5 +1,5 @@
 Sub CommentCollectTabulated()
-' Paul Beverley - Version 23.03.21
+' Paul Beverley - Version 14.01.22
 ' Collects comments into a table
 
 sortOnColumn = 0
@@ -11,7 +11,9 @@ s = ChrW(160)
 s = s & s & s & s & s
 myspaces = s & s & s & s & s & s & s & s
 
-totCmnts = ActiveDocument.Comments.Count
+myScreenOff = True
+
+totCmnts = ActiveDocument.Comments.count
 Selection.HomeKey Unit:=wdStory
 Selection.EndKey Unit:=wdStory
 If totCmnts = 0 Then
@@ -22,14 +24,18 @@ End If
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
+
 ReDim pageNo(totCmnts) As String
 ReDim lineNo(totCmnts) As String
 For i = 1 To totCmnts
-  Selection.GoTo what:=wdGoToComment, Count:=i
+  Selection.GoTo what:=wdGoToComment, count:=i
   pageNo(i) = Trim(Str(Selection.Range.Information(wdActiveEndAdjustedPageNumber)))
   lineNo(i) = Trim(Str(Selection.Range.Information(wdFirstCharacterLineNumber)))
   DoEvents
-  Debug.Print "Counting: ", pageNo(i)
 Next i
 
 Selection.HomeKey Unit:=wdStory
@@ -37,7 +43,7 @@ Set rng = ActiveDocument.Content
 rng.Copy
 Documents.Add
 Selection.Paste
-totCmnts = ActiveDocument.Comments.Count
+totCmnts = ActiveDocument.Comments.count
 
 Dim cmnt As Word.Comment
 ReDim lineNum(totCmnts) As Integer
@@ -46,7 +52,7 @@ maxHeadNo = Val(Right(maxHeading, 1))
 hdStart = Left(maxHeading, InStr(maxHeading, " ") - 1)
 
 For i = 1 To totCmnts
-  Selection.GoTo what:=wdGoToComment, Count:=i
+  Selection.GoTo what:=wdGoToComment, count:=i
   pn = pageNo(i)
   ln = lineNo(i)
   Set cmnt = ActiveDocument.Comments(i)
@@ -59,8 +65,9 @@ For i = 1 To totCmnts
 
 '  Selection.GoTo what:=wdGoToComment, Count:=i
   Set rng = ActiveDocument.Range(0, Selection.End)
-  paraNum = rng.Paragraphs.Count
+  paraNum = rng.Paragraphs.count
   For j = paraNum - 1 To 1 Step -1
+    Debug.Print ActiveDocument.Paragraphs(j).Range.Text
     myStyle = ActiveDocument.Paragraphs(j).Range.Style
     If InStr(myStyle, hdStart) > 0 Then
       hdLevel = Val(Right(myStyle, 1))
@@ -70,7 +77,7 @@ For i = 1 To totCmnts
       End If
     End If
     DoEvents
-    Debug.Print "Reading: ", pageNo(i)
+'    Debug.Print "Reading: ", pageNo(i)
   Next j
 
 
@@ -217,5 +224,12 @@ End With
 Selection.HomeKey Unit:=wdStory
 Beep
 ActiveDocument.TrackRevisions = myTrack
+Application.ScreenUpdating = True
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
 

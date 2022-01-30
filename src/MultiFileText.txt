@@ -1,5 +1,5 @@
 Sub MultiFileText()
-' Paul Beverley - Version 18.03.21
+' Paul Beverley - Version 05.01.22
 ' Collects text plus simple formatting from multiple files
 
 spaceEquations = True
@@ -9,7 +9,8 @@ addFilename = True
 convertMathsItems = True
 remindAboutCancel = False
 
-On Error GoTo ReportIt
+myScreenOff = True
+
 CR2 = vbCr & vbCr
 Dim allMyFiles(200) As String
 Set rng = ActiveDocument.Content
@@ -34,9 +35,9 @@ If InStr(LCase(rng.Text), ".doc") = 0 _
   If remindAboutCancel = True Then myResponse = _
        MsgBox("Navigate to the required folder; then press 'Cancel'" _
       , , "Multifile Text Collection")
-  docCount = Documents.Count
+  docCount = Documents.count
   Dialogs(wdDialogFileOpen).Show
-  If Documents.Count > docCount Then ActiveDocument.Close
+  If Documents.count > docCount Then ActiveDocument.Close
   dirPath = CurDir()
   ChDir dirPath
 ' Read the names of all the files in this directory
@@ -62,7 +63,7 @@ If InStr(LCase(rng.Text), ".doc") = 0 _
   Selection.HomeKey Unit:=wdStory
   Selection.TypeText dirPath
 ' Go back until you hit myDelimiter
-  Selection.MoveStartUntil cset:=myDelimiter, Count:=wdBackward
+  Selection.MoveStartUntil cset:=myDelimiter, count:=wdBackward
   dirName = Selection
   Selection.HomeKey Unit:=wdStory
 
@@ -84,6 +85,11 @@ End If
 ' Pick up the folder name and the filenames from the file list
 numFiles = 0
 
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
+
 myFolder = ""
 For Each myPara In ActiveDocument.Paragraphs
   myPara.Range.Select
@@ -92,7 +98,7 @@ For Each myPara In ActiveDocument.Paragraphs
   If myFolder = "" Then
     myFolder = lineText
     Selection.Collapse wdCollapseEnd
-    Selection.MoveStartUntil cset:=myDelimiter, Count:=wdBackward
+    Selection.MoveStartUntil cset:=myDelimiter, count:=wdBackward
     Selection.MoveStart , -1
     myDelimiter = Left(Selection, 1)
   Else
@@ -109,53 +115,39 @@ Selection.HomeKey Unit:=wdStory
 
 Set alltextDoc = Documents.Add
 Set alltextRng = ActiveDocument.Content
-Selection.TypeText "Loading first file" & vbCr & vbCr
 Selection.HomeKey Unit:=wdStory
-ActiveDocument.Paragraphs(1).Range.Bold = True
-ActiveDocument.Paragraphs(1).Range.Font.Size = 40
-If InAMac = False Then
-  ActiveDocument.ActiveWindow.WindowState = wdWindowStateNormal
-  Application.Move Left:=20, Top:=2
-  Application.Resize Width:=1000, Height:=250
-End If
 gotLanguage = False
 
 For i = 1 To numFiles
-  alltextDoc.Paragraphs(1).Range = allMyFiles(i) & vbCr
 ' Get the folder name, and then the text for the files in the list
+  StatusBar = allMyFiles(i)
   thisFile = myFolder & myDelimiter & allMyFiles(i)
   Set myDoc = Application.Documents.Open(FileName:=thisFile)
-  If InAMac = False Then
-    ActiveDocument.ActiveWindow.WindowState = wdWindowStateNormal
-    Application.Move Left:=20, Top:=300
-    Application.Resize Width:=1000, Height:=200
-  End If
+
   If gotLanguage = False Then
     Selection.MoveEnd , 1
     myLanguage = Selection.Range.LanguageID
     gotLanguage = True
   End If
-  StatusBar = allMyFiles(i)
-  numEqns = ActiveDocument.OMaths.Count
+  numEqns = ActiveDocument.OMaths.count
   If numEqns > 0 And spaceEquations = True Then
     For Each myMath In ActiveDocument.OMaths
       myMath.Range.InsertBefore Text:=" "
       DoEvents
       numEqns = numEqns - 1
-      Debug.Print numEqns
     Next myMath
   End If
   DoEvents
   If acceptTCs = True Then myDoc.Revisions.AcceptAll
   myDoc.TrackRevisions = False
   If listOff = True Then myDoc.ConvertNumbersToText
-  If ActiveDocument.Endnotes.Count > 0 Then
+  If ActiveDocument.Endnotes.count > 0 Then
     Set thisDocRange = myDoc.Content
     thisDocRange.Collapse wdCollapseEnd
     thisDocRange.FormattedText = _
          myDoc.StoryRanges(wdEndnotesStory).FormattedText
   End If
-  If ActiveDocument.Footnotes.Count > 0 Then
+  If ActiveDocument.Footnotes.count > 0 Then
     Set thisDocRange = myDoc.Content
     thisDocRange.Collapse wdCollapseEnd
     thisDocRange.FormattedText = _
@@ -163,7 +155,7 @@ For i = 1 To numFiles
   End If
 
   ' copy all the textboxes to the end of the text
-  shCount = myDoc.Shapes.Count
+  shCount = myDoc.Shapes.count
   If shCount > 0 Then
     Selection.EndKey Unit:=wdStory
     Selection.TypeText vbCr & vbCr
@@ -179,12 +171,12 @@ For i = 1 To numFiles
     Next
   End If
 
+  StatusBar = allMyFiles(i)
   Selection.HomeKey Unit:=wdStory
   If addFilename = True Then Selection.TypeText CR2 & "[[[[ " & _
        allMyFiles(i) & " ]]]]]" & CR2
   If convertMathsItems = True Then
-    Application.Visible = False
-    numMaths = ActiveDocument.OMaths.Count
+    numMaths = ActiveDocument.OMaths.count
     If numMaths > 0 Then
       For Each myMath In ActiveDocument.OMaths
         myMath.Range.Select
@@ -196,7 +188,6 @@ For i = 1 To numFiles
         Selection.Start = startHere
       Next myMath
     End If
-    Application.Visible = True
   End If
   
   myDoc.Fields.Unlink
@@ -237,21 +228,12 @@ For i = 1 To numFiles
     .Execute Replace:=wdReplaceAll
   End With
 
-' Hide the screen to avoid mouse movement
-  Application.Visible = False
   Set rng = ActiveDocument.Content
   alltextRng.End = alltextDoc.Range.End
   alltextRng.Start = alltextDoc.Range.End
   alltextRng.Text = rng.Text
   myDoc.Close SaveChanges:=wdDoNotSaveChanges
-
-' Show the screen again
-  Application.Visible = True
 Next i
-
-alltextDoc.Paragraphs(1).Range.Select
-Selection.Delete
-alltextDoc.Paragraphs(2).Range.Delete
 
 Set rng = alltextDoc.Content
 rng.LanguageID = myLanguage
@@ -297,51 +279,35 @@ With rng.Find
   .Replacement.Text = ""
   .Execute Replace:=wdReplaceAll
   
-  .ClearFormatting
-  .Replacement.ClearFormatting
   .Text = "yxzu"
   .Replacement.Text = ""
   .Execute Replace:=wdReplaceAll
   
-  .ClearFormatting
-  .Replacement.ClearFormatting
   .Text = "bqqb"
   .Replacement.Text = ""
   .Execute Replace:=wdReplaceAll
   
-  .ClearFormatting
-  .Replacement.ClearFormatting
   .Text = "zwvf"
   .Replacement.Text = ""
   .Execute Replace:=wdReplaceAll
   
-  .ClearFormatting
-  .Replacement.ClearFormatting
   .Text = "qiwv"
   .Replacement.Text = ""
   .Execute Replace:=wdReplaceAll
   
-  .ClearFormatting
-  .Replacement.ClearFormatting
   .Text = "pqqp"
   .Replacement.Text = ""
   .Execute Replace:=wdReplaceAll
   
-  .ClearFormatting
-  .Replacement.ClearFormatting
   .Text = "xhwc"
   .Replacement.Text = ""
   .Execute Replace:=wdReplaceAll
   
-  .ClearFormatting
-  .Replacement.ClearFormatting
   .Text = "yvxz"
   .Replacement.Text = ""
   .Execute Replace:=wdReplaceAll
 
 ' Remove optional hyphens
-  .ClearFormatting
-  .Replacement.ClearFormatting
   .Text = Chr(172)
   .MatchWildcards = False
   .MatchCase = True
@@ -370,9 +336,6 @@ If InAPC = True Then
   Application.Resize Width:=1000, Height:=500
 End If
 Beep
-MsgBox "Please now WAIT until the flashing cursor returns." & vbCr _
-    & vbCr & "Not doing so can cause Word to crash." & vbCr & _
-    vbCr & " If unsure, only try pressing the cursor right key."
 With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -383,6 +346,10 @@ With Selection.Find
   .Replacement.Text = ""
   .Execute
 End With
+Selection.Collapse wdCollapseEnd
+
+Application.ScreenUpdating = True
+
 If totCharsNow - totChars <> numFiles Then
   Beep
   myTime = Timer

@@ -1,5 +1,5 @@
 Sub CitationAlyse()
-' Paul Beverley - Version 22.12.21
+' Paul Beverley - Version 26.01.22
 ' Checks citations against references
 
 myFontColour = wdColorBlue
@@ -9,20 +9,46 @@ includeNotes = True
 
 CR = vbCr
 CR2 = CR & CR
+myScreenOff = False
+
+Dim myCol(4)
+myCol(0) = wdYellow
+myCol(1) = wdBrightGreen
+myCol(2) = wdPink
+myCol(3) = wdTurquoise
+myCol(4) = wdGray25
 
 ' If text is selected, sort it
 If Selection.Start <> Selection.End Then
-  myResponse = MsgBox("Sort selection?", vbQuestion _
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.Expand wdParagraph
+  Selection.Start = rng.Start
+  Set rng = Selection.Range.Duplicate
+  If Right(rng.Text, 1) <> vbCr Then
+    rng.Collapse wdCollapseEnd
+    rng.Expand wdParagraph
+    Selection.End = rng.End
+  End If
+  
+  myResponse = MsgBox("Sort selection by year?", vbQuestion _
        + vbOK, "CitationAlyse")
   If myResponse <> vbOK Then Exit Sub
+  If myScreenOff = True Then
+    Application.ScreenUpdating = False
+    On Error GoTo ReportIt
+  End If
   Dim myPara As Paragraph
   Set rng = Selection.Range.Duplicate
   For Each myPara In rng.Paragraphs
     myText = myPara.Range.Text
     For i = 2 To Len(myText) - 3
-      myYear = Val(Trim(Mid(myText, i, 4)))
-      If myYear > 1000 Then
-        myPara.Range.InsertBefore Text:="]" & Trim(Str(myYear)) & "["
+      myYearText = Mid(myText, i, 5)
+      If InStr("abcdefghijkl", Right(myYearText, 1)) = 0 Then _
+           myYearText = Left(myYearText, 4)
+      myYear = Val(myYearText)
+      If myYear > 1000 And Left(myYearText, 1) <> " " Then
+        myPara.Range.InsertBefore Text:="]" & myYearText & "["
         Exit For
       End If
       DoEvents
@@ -33,14 +59,15 @@ If Selection.Start <> Selection.End Then
   With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
-    .Text = "]^#^#^#^#["
+    .Text = "\][0-9a-h]@\["
     .Wrap = wdFindStop
     .Forward = True
     .Replacement.Text = ""
-    .MatchWildcards = False
+    .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
     DoEvents
   End With
+  Application.ScreenUpdating = True
   Exit Sub
 End If
 
@@ -88,13 +115,13 @@ DoEvents
 
 ' Find and replace to create easy-to-search text
 myList = "#ü|uu#û|qcq#~<([A-Z]{2}).|\1# in press| 2999#/| #" & _
-     "~<([A-Z]).|\1#(| #)| #:| #;| #,| #" & _
-     "~<([A-Z])> |\1ü#~<([A-Z]{2})> |\1ü#" & _
-     "#.|ü#~, ([!0-9])|ü\1#(|ü#)|ü#[|ü#]|ü#" & _
-     " et alii|üetüalüü# et al|üetüal# & |üandü#-|û#" & _
+     "~<([A-Z]).|\1#(| #)| #:| #;| #, | #" & _
+     "~<([A-Z])> ([A-Z])|\1ü\2#~<([A-Z]{2})> ([A-Z])|\1ü\2#" & _
+     "#.|ü#(|ü#)|ü#[|ü#]|ü#" & _
+     " et alii|üetüal# et al|üetüal# & |üandü#-|û#" & _
      "~<de la |DeüLaü#~<De la |DeüLaü#~<De La |DeüLaü#" & _
-     "~([a-zA-Z]) e |\1üeü#~([a-zA-Z]) y |\1üyü#~<van |Vanü#~<de |Deü#" & _
-     "~([a-zA-Z]) and |\1üandü#~<von |Vonü#~<van |Vanü#~<de |Deü#" & _
+     " e |üeü# y |üyü#~<van |Vanü#~<de |Deü#" & _
+     " and |üandü#~<von |Vonü#~<van |Vanü#~<de |Deü#" & _
      "~<El |Elü#~<del |Delü#~<Del |Delü#~<la |Laü#~<La |Laü#" & _
      "~<le |Leü#~<di |Diü#~<dos |Dosü#~<la |Laü#~<le |Leü#" & _
      "~<der |Derü#üvon |üVonü#üvan |üVanü#üde |üDeü#üder |üDerü#" & _
@@ -230,17 +257,57 @@ For i = 1 To UBound(FandR)
   End If
 Next i
 
-Selection.WholeStory
-Selection.Sort SortOrder:=wdSortOrderAscending, _
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending, _
      SortFieldType:=wdSortFieldAlphanumeric
 
 ' Remove duplicates
-For j = ActiveDocument.Paragraphs.count To 2 Step -1
+numPars = ActiveDocument.Paragraphs.count
+For j = numPars To 2 Step -1
   Set rng1 = ActiveDocument.Paragraphs(j).Range
   Set rng2 = ActiveDocument.Paragraphs(j - 1).Range
   If rng1 = rng2 Then rng1.Delete
   DoEvents
 Next j
+
+' Highlight multiple part citations
+numPars = ActiveDocument.Paragraphs.count
+Set rng = ActiveDocument.Content
+allText = rng
+myStrike = False
+
+For i = 1 To numPars
+  myText = ActiveDocument.Paragraphs(i).Range.Text
+  numTimes = Len(Replace(allText, myText, myText & "!")) - Len(allText)
+  If numTimes > 1 And Len(myText) > 2 Then
+    addCol = Int(5 * Rnd())
+    baseCol = Int(5 * Rnd())
+    Set rng = ActiveDocument.Content
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = Replace(myText, vbCr, "")
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .MatchWildcards = False
+      .Execute
+      DoEvents
+    End With
+    Do While rng.Find.Found
+      rng.HighlightColorIndex = myCol(baseCol)
+      For j = 1 To rng.Characters.count
+        If (j Mod 5) < 2 Then
+          rng.Characters(j).HighlightColorIndex = myCol(addCol)
+        End If
+      Next j
+      DoEvents
+      rng.Collapse wdCollapseEnd
+      rng.Find.Execute
+    Loop
+  End If
+  DoEvents
+Next i
+Options.DefaultHighlightColorIndex = oldColour
 
 Selection.EndKey Unit:=wdStory
 Selection.TypeText Text:=vbCr
@@ -311,6 +378,80 @@ Set para2 = ActiveDocument.Paragraphs(2)
 Do While Len(para2.Range.Text) < 3
   para2.Range.Delete
 Loop
+
+' Add year at beginning of line
+Set rng = ActiveDocument.Content
+For Each myPara In rng.Paragraphs
+  myText = myPara.Range.Text
+  For i = 2 To Len(myText) - 3
+    myYearText = Mid(myText, i, 5)
+    If InStr("abcdefghijkl", Right(myYearText, 1)) = 0 Then _
+         myYearText = Left(myYearText, 4)
+    myYear = Val(myYearText)
+    If myYear > 1000 And Left(myYearText, 1) <> " " Then
+      myPara.Range.InsertBefore Text:="]" & myYearText & "["
+      Exit For
+    End If
+    DoEvents
+  Next i
+  DoEvents
+Next myPara
+
+' Sort
+If rng.Words(1) = "Citation " Then
+  rng.Start = rng.Paragraphs(1).Range.End
+End If
+rng.Sort
+DoEvents
+If rng.End = ActiveDocument.Content.End Then _
+     rng.InsertAfter Text:=vbCr
+numPars = rng.Paragraphs.count
+myStart = 5
+If numPars < myStart Then myStart = numPars
+For i = myStart To 1 Step -1
+  Set rng2 = rng.Paragraphs(i).Range
+  If Len(rng2.Text) < 2 Then rng2.Delete
+Next i
+
+' Add blank line at year change
+Set rng = ActiveDocument.Content
+wasYear = ""
+For i = rng.Paragraphs.count To 1 Step -1
+  myYear = Left(rng.Paragraphs(i).Range.Text, 5)
+  If myYear <> wasYear Then _
+       rng.Paragraphs(i).Range.InsertAfter Text:=vbCr
+  wasYear = myYear
+  DoEvents
+Next i
+
+' Remove the year markers
+myBar = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+myBar = "^p" & myBar & myBar & "^p"
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p^p"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = myBar
+  .Replacement.Highlight = False
+  .Replacement.Font.Color = wdColorAutomatic
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\][0-9a-h]@\["
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+ActiveDocument.Paragraphs(2).Range.Text = ""
 Beep
 Application.ScreenUpdating = True
 Exit Sub

@@ -1,20 +1,15 @@
 Sub WordPairAlyse()
-' Paul Beverley - Version 22.12.21
+' Paul Beverley - Version 20.01.22
 ' Creates a file of all the adjacent word pairs
 
 ' Ignore these words
 nonWords = "a,as"
 
-addAtestPair = True
-
 myScreenOff = True
 
 Set FUT = ActiveDocument
-At = LCase(FUT.Content.Text)
 
-If addAtestPair = True Then
-  At = "aatest word and aatestword " & At
-End If
+At = LCase(FUT.Content.Text)
 
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
 If doingSeveralMacros = False Then
@@ -23,7 +18,11 @@ If doingSeveralMacros = False Then
        + vbYesNoCancel, "WordPairAlyse")
   If myResponse <> vbYes Then Exit Sub
 End If
-If myScreenOff = True Then Application.ScreenUpdating = False
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
+
 startTime = Timer
 chs = " , . ! : ; [ ] { } ( ) / \ + "
 chs = chs & ChrW(8220) & " "
@@ -153,10 +152,10 @@ If Len(myResult) > 0 Then
   Set rng = ActiveDocument.Content
   If Len(rng.Paragraphs(1)) < 3 Then rng.Paragraphs(1).Range.Delete
 Else
-  Selection.TypeText "No word pairs found" & vbCr
+  Selection.TypeText vbCr & "No word pairs found" & vbCr
 End If
 Selection.HomeKey Unit:=wdStory
-Selection.TypeText "Word pair inconsistencies?" & vbCr
+Selection.TypeText "Word pair inconsistencies" & vbCr
 ActiveDocument.Paragraphs(1).Style = _
      ActiveDocument.Styles(wdStyleHeading1)
 timNow = Timer

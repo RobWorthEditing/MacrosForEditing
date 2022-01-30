@@ -1,5 +1,5 @@
 Sub NumberIncrement()
-' Paul Beverley - Version 31.07.21
+' Paul Beverley - Version 25.01.22
 ' Adds one to the following number (or increases the letter)
 
 myJump = 1
@@ -8,10 +8,14 @@ goNext = False
 
 lookAfterSelection = True
 
-trackIt = True
+trackit = True
 
 doLettersToo = True
 searchRange = 150
+
+
+Application.ScreenUpdating = False
+On Error GoTo ReportIt
 
 If lookAfterSelection = False Then
   Selection.Collapse wdCollapseStart
@@ -21,7 +25,7 @@ End If
 
 searchChars = "0123456789"
 myTrack = ActiveDocument.TrackRevisions
-If trackIt = False Then ActiveDocument.TrackRevisions = False
+If trackit = False Then ActiveDocument.TrackRevisions = False
 
 i = 0
 myStart = Selection.Start
@@ -61,8 +65,15 @@ If doLettersToo = True Then
   Selection.TypeText ChrW(AscW(Selection) + 1)
   Selection.MoveLeft , 1
 End If
+
+Application.ScreenUpdating = True
 ActiveDocument.TrackRevisions = myTrack
 If goNext = True Then Call FindFwd
-End Sub
+Exit Sub
 
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
 

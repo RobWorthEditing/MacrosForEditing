@@ -1,136 +1,153 @@
 Sub HighlightFindUp()
-' Paul Beverley - Version 27.11.19
+' Paul Beverley - Version 27.01.22
 ' Selects the previous piece of highlighted text
 
-nowColour = Selection.range.HighlightColorIndex
-If Selection.End <> Selection.Start And nowColour > 0 Then
-  Selection.Start = Selection.End - 1
-  myColour = Selection.range.HighlightColorIndex
+nowColour = Selection.Range.HighlightColorIndex
+mixCol = 9999999
+
+myScreenOff = True
+
+If nowColour = mixCol Then
+  Set rng = Selection.Range.Duplicate
+  rng.End = rng.Start + 1
+  nowColour = rng.HighlightColorIndex
+End If
+If Selection.Start <> Selection.End And nowColour = wdNoHighlight Then _
+     Selection.Collapse wdCollapseStart
+
+If Selection.Start <> Selection.End Then
+  If myScreenOff = True Then
+    Application.ScreenUpdating = False
+    On Error GoTo ReportIt
+  End If
+' Find this colour only
+  findAny = False
+  Set rng = Selection.Range.Duplicate
+  rng.End = rng.Start + 1
+  myColour = rng.HighlightColorIndex
   Do
-    Selection.MoveStart , -1
-    Selection.MoveEnd , -1
-    nowColour = Selection.range.HighlightColorIndex
-  Loop Until nowColour <> myColour Or Selection.Start = 0
+    rng.Start = rng.Start - 1
+    rng.End = rng.End - 1
+    nowColour = rng.HighlightColorIndex
+    DoEvents
+  Loop Until nowColour <> myColour Or rng.Start = 0
+  i = 1
+  doneBeep = False
   Do
-    Selection.MoveStart , -1
-    Selection.MoveEnd , -1
-    nowColour = Selection.range.HighlightColorIndex
-  Loop Until nowColour = myColour Or nowColour = 0 _
-        Or Selection.Start = 0
-  If nowColour = myColour Then
-    st = Selection.End
-    Do
-      Selection.MoveStart , -1
-      Selection.MoveEnd , -1
-      If Selection.Start = 0 Then
-        Selection.End = 1
+    rng.Start = rng.Start - 1
+    rng.End = rng.End - 1
+    nowColour = rng.HighlightColorIndex
+    DoEvents
+    i = i + 1
+    If i Mod 100 = 0 Then
+      DoEvents
+    End If
+    If i > 1000 Then
+      If doneBeep = False Then
         Beep
-        GoTo ClearUp
+        doneBeep = True
       End If
-      nowColour = Selection.range.HighlightColorIndex
-    Loop Until nowColour <> myColour Or Selection.Start = 0
-    Selection.End = st
-    Selection.MoveStart , 1
-    GoTo ClearUp
+      If i Mod 100 = 0 Then StatusBar = "This takes time, sorry:   " & Str(i)
+    End If
+  Loop Until nowColour = myColour Or rng.Start = 0
+' Find where this colour stops
+  If nowColour = myColour Then
+    en = rng.End
+    Do
+      rng.Start = rng.Start - 1
+      rng.End = rng.End - 1
+      nowColour = rng.HighlightColorIndex
+      DoEvents
+    Loop Until nowColour <> myColour
+    rng.Start = rng.Start + 1
+    adsgf = rng.Start
+    rng.End = en
+    rng.Select
   End If
 Else
-  myColour = 0
-End If
-Selection.Collapse wdCollapseStart
-Selection.MoveStart , -1
-If Selection.range.HighlightColorIndex <> wdNoHighlight Then
-  Selection.Collapse wdCollapseStart
-  With Selection.Find
+' Find any colour
+  Application.ScreenUpdating = False
+  findAny = True
+  Set rng = Selection.Range.Duplicate
+  Selection.MoveStart , -1
+  nowColour = Selection.Range.HighlightColorIndex
+  If nowColour > 0 Then
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ""
+      .Wrap = wdFindStop
+      .Forward = False
+      .Highlight = False
+      .Replacement.Text = ""
+      .Execute
+      DoEvents
+      If .Found = False Then
+        Beep
+        rng.Start = myEnd
+      End If
+    End With
+    DoEvents
+    rng.Collapse wdCollapseStart
+  End If
+  With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = ""
-    .Replacement.Text = ""
     .Wrap = wdFindStop
     .Forward = False
     .Highlight = True
-    .MatchWildcards = False
+    .Replacement.Text = ""
     .Execute
+    DoEvents
+    If .Found = False Then
+      Beep
+      rng.End = 0
+    End If
   End With
+  DoEvents
 End If
-Selection.Collapse wdCollapseStart
+rng.Select
 
-If Selection.Start = 0 Then
+' Flash the range
+Application.ScreenUpdating = True
+  For i = 1 To 2
+    DoEvents
+    myTime = Timer
+    Do
+    Loop Until Timer > myTime + 0.08
+    Selection.Collapse wdCollapseStart
+    DoEvents
+    myTime = Timer
+    Do
+    Loop Until Timer > myTime + 0.08
+    rng.Select
+  Next i
+If findAny = True Then
   Selection.Collapse wdCollapseStart
+Else
+  rng.Select
+End If
+If rng.Start = 0 Then
   Beep
-  GoTo ClearUp
+  Selection.Collapse wdCollapseStart
 End If
 
+' Clear up the F&R
 With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = ""
   .Replacement.Text = ""
-  .Forward = False
-  .Wrap = wdFindStop
-  .Highlight = True
-  .MatchWildcards = False
-  .Execute
-End With
-If Selection.Find.Found = False Then
-  Selection.Collapse wdCollapseStart
-  Beep
-  GoTo ClearUp
-End If
-
-nowColour = Selection.range.HighlightColorIndex
-If myColour = 0 Or nowColour = myColour Then
-  GoTo ClearUp
-End If
-
-'Searching for just one colour
-Do
-  Set rng = Selection.range.Duplicate
-  st = rng.End
-  lenSelection = Len(rng.Text)
-  For i = 0 To lenSelection - 1
-    nowColour = ActiveDocument.range(st - i - 1, _
-         st - i).HighlightColorIndex
-'      ActiveDocument.range(st - i - 1, st - i).Select
-    If nowColour = myColour Then
-      ActiveDocument.range(st - i - 1, st - i).Select
-      Exit For
-    End If
-  Next i
-  If Len(Selection) = 1 Then
-    Do
-      Selection.MoveStart , -1
-      selColour = Selection.range.HighlightColorIndex
-    Loop Until selColour <> nowColour Or Selection.Start = 0
-    Selection.MoveStart , 1
-    GoTo ClearUp
-  End If
-  Selection.Find.Execute
-Loop Until Selection.Find.Found = False
-Selection.Collapse wdCollapseStart
-
-ClearUp:
-Set rng = Selection.range.Duplicate
-For i = 1 To 3
-  rng.Select
-  DoEvents
-  myTime = Timer
-  Do
-  Loop Until Timer > myTime + 0.05
-  Selection.Collapse wdCollapseEnd
-  DoEvents
-  myTime = Timer
-  Do
-  Loop Until Timer > myTime + 0.05
-Next i
-If myColour > 0 Then Selection.MoveStart , -1
-If Selection.Start = 0 And selColour <> myColour Then
-  Selection.Collapse wdCollapseStart
-End If
-With Selection.Find
-  .Text = ""
-  .Replacement.Text = ""
-  .Forward = False
+  .Forward = True
   .Wrap = wdFindContinue
 End With
+Application.ScreenUpdating = True
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
 

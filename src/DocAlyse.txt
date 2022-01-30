@@ -1,9 +1,12 @@
+
 Sub DocAlyse()
-' Paul Beverley - Version 26.05.21
+' Paul Beverley - Version 24.01.22
 ' Analyses various aspects of a document
 
 ' prompts to count number of tests
 cc = 53
+
+myScreenOff = True
 
 Set FUT = ActiveDocument
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
@@ -14,6 +17,13 @@ If doingSeveralMacros = False Then
   If myResponse <> vbYes Then Exit Sub
 End If
 
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
+
+ss = "________________________________" & _
+     "__________________________________"
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
@@ -51,10 +61,8 @@ With rng.Find
   .Replacement.Font.Superscript = False
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
-End With
 funnyDegrees = (ActiveDocument.Range.End - myTot) / 3
 
-With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = " vbvb"
@@ -87,7 +95,7 @@ myRslt = ""
 Set rng = ActiveDocument.Content
 myTot = ActiveDocument.Range.End
 CR = vbCr: CR2 = CR & CR
-tr = Chr(9) & "0zczc" & CR: sp = "     "
+tr = Chr(9) & "0zczc" & CR: SP = "     "
 Selection.HomeKey Unit:=wdStory
 
 Set newDoc = ActiveDocument
@@ -95,8 +103,6 @@ Set newDoc = ActiveDocument
 ' Ten or 10
 cc = cc - 1
 DoEvents
-Selection.TypeText Text:="Test number: " & Trim(Str(cc)) & vbCr & vbCr
-newDoc.Paragraphs(1).Style = ActiveDocument.Styles(wdStyleHeading1)
 myTot = ActiveDocument.Range.End
 With rng.Find
   .ClearFormatting
@@ -119,7 +125,7 @@ If i + g > 0 Then myRslt = myRslt & "ten" & vbTab & _
 ' spelt-out lower-case numbers over nine
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "<[efnst][efghinorvwx]{2,4}ty"
 rng.Find.Execute Replace:=wdReplaceAll
 aa = ActiveDocument.Range.End - myTot
@@ -158,7 +164,7 @@ If aa + ab + ac + ad + ae + af > 0 Then myRslt = myRslt & _
 ' Four-digit numbers
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[!.]<[0-9]{4}>[!,]"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -201,7 +207,7 @@ End If
 ' Dates with 'mid' in front
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "mid [0-9]{4}"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -226,7 +232,7 @@ End If
 
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "mid [0-9]{2}[!0-9]"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -250,29 +256,27 @@ If i + g + k > 0 Then
 End If
 
 
-
 ' Serial comma/not serial comma
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
-rng.Find.Text = "[a-zA-Z\-]@, [a-zA-Z\-]@, and "
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
+rng.Find.Text = "[a-zA-Z\-]{1,}, [a-zA-Z\-]{1,}, and "
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
 If i > 0 Then WordBasic.EditUndo
 myRslt = myRslt & "serial comma" & vbTab & Trim(Str(i)) & CR
 
-rng.Find.Text = "[a-zA-Z\-]@, [a-zA-Z\-]@ and "
+rng.Find.Text = "[a-zA-Z\-]{1,}, [a-zA-Z\-]{1,} and "
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
 If i > 0 Then WordBasic.EditUndo
 myRslt = myRslt & "no serial comma" & vbTab & Trim(Str(i)) & CR2
 
 
-
 ' hard spaces
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "^s"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -288,12 +292,10 @@ myRslt = myRslt & "hard spaces" & vbTab & Trim(Str(i)) _
 
 
 
-
-
 ' Single/double quotes
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = ChrW(8216)
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -326,12 +328,10 @@ myRslt = myRslt & "straight double quote" & vbTab & _
      Trim(Str(i)) & CR2
 
 
-
-
 ' etc(.)
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "<etc[!.]"
 rng.Find.Execute Replace:=wdReplaceAll
 h = ActiveDocument.Range.End - myTot
@@ -357,11 +357,10 @@ If h + i + g + k > 0 Then myRslt = myRslt & "etc" & _
      Trim(Str(i - g - k)) & CR2
 
 
-
 ' et al(.)
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "<et al[!.]"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -377,12 +376,10 @@ If g + i + italEtAls > 0 Then myRslt = myRslt & "et al." _
      vbTab & Trim(Str(i)) & CR2
 
 
-
-
 ' i.e./ie
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "i.e."
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -403,7 +400,7 @@ If i + g > 0 Then myRslt = myRslt & "ie" & vbTab & Trim(Str(g)) & CR _
 ' e.g./eg
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "e.g."
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -422,7 +419,7 @@ If i + g > 0 Then myRslt = myRslt & "eg" & vbTab & Trim(Str(g)) & CR _
 ' Initials with surnames
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "<[A-Z]. [A-Z]. [A-Z][a-z]"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -477,7 +474,7 @@ aBit = aBit & "JLB Matekoni" & vbTab & Trim(Str(i + i2)) & _
 ' Convention for page numbers
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "<p. [1-9]"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -536,7 +533,7 @@ If k + i + g > 0 Then myRslt = myRslt & aBit
 ' Convention for ed/eds/edn
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "<ed>[!.]"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -580,7 +577,7 @@ If k + m + j + i + g + h > 0 Then myRslt = myRslt _
 ' Convention for am/pm
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[1-9][ap]m"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -613,11 +610,11 @@ If k + i + g + h > 0 Then myRslt = myRslt & aBit
 ' US/UK spelling
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[bpiv]our[ ,.s]"
 rng.Find.Execute Replace:=wdReplaceAll
-a = ActiveDocument.Range.End - myTot
-If a > 0 Then WordBasic.EditUndo
+A = ActiveDocument.Range.End - myTot
+If A > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = "[a-z]{3,}elling>"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -632,7 +629,7 @@ If f > 0 Then WordBasic.EditUndo
 
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[bpiv]or[ ,.s]"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -653,9 +650,9 @@ rng.Find.Execute Replace:=wdReplaceAll
 k = ActiveDocument.Range.End - myTot
 If k > 0 Then WordBasic.EditUndo
 
-If a + g + f + i + q + v + k > 0 Then myRslt = _
+If A + g + f + i + q + v + k > 0 Then myRslt = _
      myRslt & "UK spelling (appx)" & vbTab & _
-     Trim(Str(a + g + f)) & CR & _
+     Trim(Str(A + g + f)) & CR & _
      "US spelling (appx)" & vbTab & _
      Trim(Str(i - q + v + k)) & CR & _
      "(For a more accurate count, please use UKUScount.)" & CR2
@@ -665,7 +662,7 @@ If a + g + f + i + q + v + k > 0 Then myRslt = _
 ' US/UK punctuation
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[a-zA-Z]['""" & ChrW(8217) & ChrW(8221) & "][,.]"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -687,7 +684,7 @@ If i + k > 0 Then myRslt = myRslt & _
 ' Initial capital after colon?
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[a-zA-Z]: [A-Z][a-z]"
 rng.Find.Execute Replace:=wdReplaceAll
 dfgsdfg = ActiveDocument.Range.End
@@ -709,7 +706,7 @@ If i + j > 0 Then myRslt = myRslt & _
 ' is/iz
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "ise>"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -751,7 +748,7 @@ myRslt = myRslt & "-is- (very appx)" & vbTab & _
 
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "ize>"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -793,7 +790,7 @@ myRslt = myRslt & "-iz- (very appx)" & vbTab _
 ' data singular/plural
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "<data is>"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -818,7 +815,7 @@ l = i + g + h + k
 
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 ' If useVoice = True Then speech.Speak cc, SVSFPurgeBeforeSpeak
 rng.Find.Text = "<data are>"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -848,7 +845,7 @@ If l + i + h + g + k > 0 Then myRslt = myRslt & _
 ' Is "first order" hyphenated?
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[snrt][tdh] order"
 rng.Find.Execute Replace:=wdReplaceAll
 dfgsdfg = ActiveDocument.Range.End
@@ -870,7 +867,7 @@ If i + j > 0 Then myRslt = myRslt & _
 ' Is "three dimensional" hyphenated?
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[oweunvt ][eonrN1-4i] dimensional"
 rng.Find.Execute Replace:=wdReplaceAll
 dfgsdfg = ActiveDocument.Range.End
@@ -893,7 +890,7 @@ If i + j > 0 Then myRslt = myRslt & _
 ' Ellipsis, etc spacing
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 
 allChars = "/" & ChrW(8211) _
      & ChrW(8212) & "-" & ChrW(8230)
@@ -946,7 +943,7 @@ Next myGo
 ' Types of ellipsis
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = ChrW(8230)
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -974,7 +971,7 @@ End If
 ' line breaks
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "^l"
 rng.Find.MatchWildcards = False
 rng.Find.Execute Replace:=wdReplaceAll
@@ -984,7 +981,7 @@ If i > 0 Then WordBasic.EditUndo
 ' page breaks
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "^m"
 rng.Find.Execute Replace:=wdReplaceAll
 g = ActiveDocument.Range.End - myTot
@@ -1076,7 +1073,7 @@ If aBit > "" Then myRslt = myRslt & aBit & CR
 ' Chapter/chapter
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[!.] Chapter [0-9]"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -1095,7 +1092,7 @@ End If
 ' Section/section
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[!.] Section [0-9]"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -1115,7 +1112,7 @@ End If
 ' No./no.
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 ' If useVoice = True Then speech.Speak cc, SVSFPurgeBeforeSpeak
 rng.Find.Text = " No. [0-9]"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -1158,7 +1155,7 @@ End If
 
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = " Vol. [0-9]"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -1204,7 +1201,7 @@ End If
 aBit = ""
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 myTot = ActiveDocument.Range.End
 rng.Find.MatchWildcards = True
 rng.Find.Text = "<eq [0-9]"
@@ -1351,7 +1348,7 @@ If aBit > "" Then myRslt = myRslt & aBit & CR
 ' units
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[0-9][^32^160][kKcmM][NgAVm]>"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -1381,7 +1378,7 @@ End If
 ' Ok, OK, ok, okay
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 myTot = ActiveDocument.Range.End
 rng.Find.Text = "<OK>"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -1417,7 +1414,7 @@ myTot = ActiveDocument.Range.End
 ' Backward(s), forward(s) etc.
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 myTot = ActiveDocument.Range.End
 rng.Find.Text = "[abcdfiknoprtuw]{2,4}ward>"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -1439,7 +1436,7 @@ If i + j > 0 Then myRslt = myRslt & "back/for/toward etc." & _
 ' amid(st), among(st), while(st)
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "<amid>"
 rng.Find.Execute Replace:=wdReplaceAll
 g = ActiveDocument.Range.End - myTot
@@ -1481,7 +1478,7 @@ End If
 ' past participle -rnt -elt
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "sp[oi]@lt>"
 rng.Find.Execute Replace:=wdReplaceAll
 g = ActiveDocument.Range.End - myTot
@@ -1529,7 +1526,7 @@ If g + h + i + k + p + q + r + s > 0 Then myRslt = myRslt & _
 ' percentages
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 myTot = ActiveDocument.Range.End
 rng.Find.Text = "[0-9]%"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -1576,7 +1573,7 @@ End If
 ' Feet and inches
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 myTot = ActiveDocument.Range.End
 curlyOpt = Options.AutoFormatAsYouTypeReplaceQuotes
 Options.AutoFormatAsYouTypeReplaceQuotes = False
@@ -1614,7 +1611,7 @@ End If
 ' focus(s)
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "focus[ei]"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -1633,7 +1630,7 @@ If i + g > 0 Then myRslt = myRslt & "focus..." & _
 ' benefit(t)
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 myTot = ActiveDocument.Range.End
 rng.Find.Text = "benefit[ei]"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -1653,7 +1650,7 @@ If i + g > 0 Then myRslt = myRslt & "benefit..." & _
 ' co(-)oper...
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 myTot = ActiveDocument.Range.End
 rng.Find.Text = "co-op[ei]"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -1689,7 +1686,7 @@ If i + g > 0 Then myRslt = myRslt & "co-ord..." & _
 ' Can't, cannot can not
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 myTot = ActiveDocument.Range.End
 rng.Find.Text = "can[!a-z]t>"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -1716,7 +1713,7 @@ If i + h + g > 0 Then myRslt = myRslt & "can't" & _
 ' Wasn't, isn't, hasn't
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 myTot = ActiveDocument.Range.End
 rng.Find.Text = "[owh ][aie]sn[!a-z]t>"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -1739,7 +1736,7 @@ If i + h > 0 Then myRslt = myRslt & _
 ' Don't, won't
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[dw]on[!a-z]t>"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -1761,7 +1758,7 @@ If i + h > 0 Then myRslt = myRslt & _
 ' which/that
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "which"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -1783,7 +1780,7 @@ If i + h > 0 Then myRslt = myRslt & _
 ' Funny characters
 cc = cc - 1
 DoEvents
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = ChrW(178)
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
@@ -1880,7 +1877,7 @@ rng.ParagraphFormat.TabStops.Add Position:=CentimetersToPoints(4.5), _
 cc = cc - 1
 DoEvents
 Set rng = ActiveDocument.Content
-newDoc.Paragraphs(1).Range.Text = "Test number: " & Trim(Str(cc)) & vbCr
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -1891,11 +1888,7 @@ With rng.Find
   .Replacement.Font.Color = wdColorGray25
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
-End With
-
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
+  
   .Text = "^t^=zczc"
   .Wrap = wdFindContinue
   .Replacement.Text = ""
@@ -1904,8 +1897,6 @@ With rng.Find
 End With
 
 With Selection.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
   .Text = ""
   .Replacement.Text = ""
   .MatchWildcards = False
@@ -1913,7 +1904,7 @@ With Selection.Find
 End With
 
 Selection.HomeKey Unit:=wdStory
-newDoc.Paragraphs(1).Range.Text = "Docalyse" & vbCr
+StatusBar = "Docalyse" & vbCr
 Selection.HomeKey Unit:=wdStory
 
 If doingSeveralMacros = False Then
@@ -1921,5 +1912,12 @@ If doingSeveralMacros = False Then
 Else
   FUT.Activate
 End If
+Application.ScreenUpdating = True
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
 

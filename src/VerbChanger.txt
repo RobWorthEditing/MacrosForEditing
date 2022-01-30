@@ -1,5 +1,5 @@
 Sub VerbChanger()
-' Paul Beverley - Version 16.01.21
+' Paul Beverley - Version 03.01.22
 ' Changes "(to) splodge" <-> "(of/for) splodging"
 
 preps = "to of for "
@@ -68,5 +68,21 @@ ing:
   Selection.TypeText "ing"
   If InStr("an,ur,el,it", twoChars) > 0 Then Selection.MoveLeft , 3
 End If
+Set rng = Selection.Range.Duplicate
+rng.MoveStart , -1
+rng.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+  rng.MoveEnd , -1
+  DoEvents
+Loop
+myWord = rng.Text
+spellOK = Application.CheckSpelling(myWord)
+Set suggList = Application.GetSpellingSuggestions(myWord)
+If suggList.count > 0 And Not (spellOK) Then
+  Beep
+  rng.Text = suggList.Item(1).Name
+End If
+rng.Collapse wdCollapseStart
+rng.Select
 End Sub
 

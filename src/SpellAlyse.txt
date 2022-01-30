@@ -1,28 +1,30 @@
 Sub SpellAlyse()
-' Paul Beverley - Version 23.06.21
+' Paul Beverley - Version 23.12.21
 ' Complete spellchecking system
 
 ignoreNumbers = True
 
 spellingListName = "SpellAlyse"
-spellingFreqName = "SpellAlyseFrequencies"
+spellingFreqName = "SpellAlyse frequencies"
 ignoreDoc = "zzSwitchList"
 
-myFind = "´a,´e,¨a,¨e,¨o,¨u,ˆo,"
-myReplace = "á,é,ä,ë,ö,ü,ô,"
+myFind = "´a,´e,¨a,¨e,¨o,¨u,ˆo"
+myReplace = "á,é,ä,ë,ö,ü,ô"
 
 CR = vbCr
 CR2 = CR & CR
-sp = " "
-sp2 = sp & sp
+sp1 = " "
+sp2 = sp1 & sp1
 
-Dim lossLen As Long
-Dim newLen As Long
+myScreenOff = True
 
 Set FUT = ActiveDocument
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
 
-numParas = FUT.Paragraphs.Count
+Dim lossLen As Long
+Dim newLen As Long
+
+numParas = FUT.Paragraphs.count
 numWords = FUT.Content.ComputeStatistics(wdStatisticWords)
 myProfile = numWords / numParas
 
@@ -40,13 +42,15 @@ If doingSeveralMacros = False Then
        "SpellAlyse")
   If myResponse <> vbYes Then Exit Sub
 End If
+
+If myScreenOff = True Then Application.ScreenUpdating = False
 timeStart = Timer
 
 allExcepts = CR
 'Collect all words from all word lists
 For Each myDoc In Documents
   If InStr(myDoc.Name, ignoreDoc) = 0 Then
-    numParas = myDoc.Paragraphs.Count
+    numParas = myDoc.Paragraphs.count
     numWords = myDoc.Content.ComputeStatistics(wdStatisticWords)
     myProfile = numWords / numParas
     If myProfile < 1.01 Then
@@ -59,6 +63,7 @@ For Each myDoc In Documents
       End If
     End If
   End If
+  DoEvents
 Next myDoc
 
 ' Create a text-only copy in another file
@@ -69,20 +74,20 @@ Set rng = ActiveDocument.Content
 rng.LanguageID = thisLanguage
 rng.Text = rngOld.Text
 
-numNotes = FUT.Endnotes.Count
+numNotes = FUT.Endnotes.count
 If numNotes > 0 Then
   rng.Collapse wdCollapseEnd
   rng.Text = FUT.StoryRanges(wdEndnotesStory).FormattedText
 End If
 
-numNotes = FUT.Footnotes.Count
+numNotes = FUT.Footnotes.count
 If numNotes > 0 Then
   rng.Collapse wdCollapseEnd
   rng.Text = FUT.StoryRanges(wdFootnotesStory).FormattedText
 End If
 
 ' copy all the textboxes to the end of the text
-shCount = FUT.Shapes.Count
+shCount = FUT.Shapes.count
 If shCount > 0 Then
   Selection.EndKey Unit:=wdStory
   For j = 1 To shCount
@@ -116,13 +121,14 @@ End With
 
 ' Change ligature characters into character pairs
 myFind = myFind & "," & ChrW(-1280) & "," & ChrW(-1279) & _
-     "," & ChrW(-1278) & "," & ChrW(-1277) & "," _
-     & ChrW(-1276) & "'"
-myReplace = myReplace & ",ff,fi,fl,ffi,ffl,'"
+     "," & ChrW(-1278) & "," & ChrW(-1277) & "," & ChrW(-1276) _
+     & ",'," & ChrW(185) & "," & ChrW(178) & "," & ChrW(179)
+myReplace = myReplace & ",ff,fi,fl,ffi,ffl,', , , "
 fnd = Split(myFind, ",")
 rpl = Split(myReplace, ",")
 
 For i = 0 To UBound(fnd)
+sdfgsd = UBound(fnd)
   With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
@@ -133,6 +139,7 @@ For i = 0 To UBound(fnd)
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
   End With
+  DoEvents
 Next i
 
 Selection.HomeKey Unit:=wdStory
@@ -145,38 +152,33 @@ With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
    If ignoreNumbers = True Then
-     .Text = "[!a-zA-Z'" & ChrW(8217) _
+     .Text = "[!a-zA-Z^13'" & ChrW(8217) _
      & ChrW(248) & "-" & ChrW(591) _
      & ChrW(697) & "-" & ChrW(703) _
      & ChrW(7680) & "-" & ChrW(7935) & "]"
    Else
-     .Text = "[!a-zA-Z0-9'" & ChrW(8217) _
+     .Text = "[!a-zA-Z0-9^13'" & ChrW(8217) _
      & ChrW(248) & "-" & ChrW(591) _
      & ChrW(697) & "-" & ChrW(703) _
      & ChrW(7680) & "-" & ChrW(7935) & "]"
    End If
-  .Replacement.Text = sp
+  .Replacement.Text = sp1
   .Wrap = wdFindContinue
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
   DoEvents
 
-  If ignoreNumbers = True Then
-    .Text = "[!a-zA-Z'" & ChrW(8217) & "]"
-  Else
-    .Text = "[!a-zA-Z0-9'" & ChrW(8217) & "]"
-  End If
-  .Replacement.Text = sp
+  .Text = "^p"
+  .Replacement.Text = sp1
+  .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
   DoEvents
   
   .Text = "^t"
-  .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
   DoEvents
 
   .Text = "^p"
-  .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
   DoEvents
 End With
@@ -188,7 +190,7 @@ txt = rng.Text
 ' Ensure a single space between words
 Do
   nowLen = Len(txt)
-  txt = Replace(txt, sp2, sp)
+  txt = Replace(txt, sp2, sp1)
   DoEvents
 Loop Until Len(txt) = nowLen
 
@@ -197,15 +199,15 @@ erListFreq1 = ""
 erList2 = ""
 erListFreq2 = ""
 
-If Left(txt, 1) <> sp Then txt = sp & txt
+If Left(txt, 1) <> sp1 Then txt = sp1 & txt
 Do
   spPos = InStr(Mid(txt, 2), " ")
   wd = Trim(Left(txt, spPos))
   spOK = Application.CheckSpelling(wd, MainDictionary:=langText)
   spEX = InStr(allExcepts, CR & wd & CR)
   nowLen = Len(txt)
-  txt = Replace(txt, sp & wd & sp, sp)
-  txt = Replace(txt, sp & wd & sp, sp)
+  txt = Replace(txt, sp1 & wd & sp1, sp1)
+  txt = Replace(txt, sp1 & wd & sp1, sp1)
   lossLen = Len(txt)
   If spOK = False And spEX = False And Len(wd) > 2 Then
   ' record it as a spelling error
@@ -221,6 +223,7 @@ Do
     StatusBar = wd & numText
     Debug.Print wd & numText
   End If
+  DoEvents
 Loop Until Len(txt) < 5
 
 Selection.WholeStory
@@ -248,16 +251,19 @@ ActiveDocument.Paragraphs(1).Style = ActiveDocument.Styles(wdStyleHeading1)
 Documents.Add
 Selection.TypeText Replace(erListFreq2, CR2, CR)
 Selection.WholeStory
+DoEvents
 Selection.Sort SortOrder:=wdSortOrderAscending, _
      SortFieldType:=wdSortFieldAlphanumeric
-
+DoEvents
 Selection.EndKey Unit:=wdStory
 Selection.TypeText CR
 listStart = Selection.Start
 Selection.TypeText CR & Replace(erListFreq1, CR2, CR)
 Selection.Start = listStart
+DoEvents
 Selection.Sort SortOrder:=wdSortOrderAscending, _
      SortFieldType:=wdSortFieldAlphanumeric
+DoEvents
 
 Selection.WholeStory
 Selection.LanguageID = thisLanguage
@@ -268,6 +274,8 @@ ActiveDocument.Paragraphs(1).Style = ActiveDocument.Styles(wdStyleHeading1)
 Selection.Collapse wdCollapseStart
 
 erList.Activate
+Selection.HomeKey Unit:=wdStory
+Application.ScreenUpdating = True
 StatusBar = ""
 If doingSeveralMacros = False Then
   totTime = Int(10 * (Timer - timeStart) / 60) / 10
@@ -280,8 +288,9 @@ End If
 Exit Sub
 
 autoCorrect:
-allText = FUT.Content.Text
-If InStr(allText, "|") > 0 Then GoTo createListPair
+Application.ScreenUpdating = True
+alltext = FUT.Content.Text
+If InStr(alltext, "|") > 0 Then GoTo createListPair
 
 myResponse = MsgBox("Auto-create FRedit list items?", _
      vbQuestion + vbYesNoCancel, "SpellAlyse")
@@ -306,13 +315,14 @@ Do
   Set myPara = FUT.Paragraphs(i)
   wd = Replace(myPara.Range.Text, CR, "")
   If LCase(wd) = wd And wd <> "" Then
+    DoEvents
     spellOK = Application.CheckSpelling(wd, _
          MainDictionary:=langName)
     Set suggList = Application.GetSpellingSuggestions(wd, _
          MainDictionary:=langName)
     newWord = ""
     DoEvents
-    If suggList.Count > 0 And Not (spellOK) Then
+    If suggList.count > 0 And Not (spellOK) Then
       newWord = suggList.Item(1).Name
       If myRev = True Then
         Set rng = myPara.Range.Duplicate
@@ -324,6 +334,7 @@ Do
       End If
       myPara.Range.Select
       Selection.Collapse wdCollapseEnd
+      DoEvents
     End If
   End If
   DoEvents
@@ -332,6 +343,7 @@ ActiveDocument.TrackRevisions = False
 Exit Sub
 
 createListPair:
+Application.ScreenUpdating = True
 myResponse = MsgBox("Create exceptions and FRedit lists?", _
      vbQuestion + vbYesNoCancel, "SpellAlyse")
 If myResponse <> vbYes Then Exit Sub
@@ -340,12 +352,14 @@ Documents.Add
 Set eList = ActiveDocument
 Set eRng = ActiveDocument.Content
 Documents.Add
+DoEvents
 Set fList = ActiveDocument
 Set fRng = ActiveDocument.Content
-For i = 1 To FUT.Paragraphs.Count
+For i = 1 To FUT.Paragraphs.count
   Set pRng = FUT.Paragraphs(i).Range
   If InStr(pRng.Text, spellingListName) = 0 _
        And Len(pRng.Text) > 3 Then
+    DoEvents
     If InStr(pRng.Text, "|") > 0 Then
       fRng.Collapse wdCollapseEnd
       fRng.FormattedText = pRng.FormattedText
@@ -368,5 +382,12 @@ For i = 1 To FUT.Paragraphs.Count
   End If
   DoEvents
 Next i
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+
 End Sub
 

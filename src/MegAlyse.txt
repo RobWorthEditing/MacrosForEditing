@@ -1,13 +1,20 @@
 Sub MegAlyse()
-' Paul Beverley - Version 07.11.20
+' Paul Beverley - Version 20.01.22
 ' Launches a selected series of analysis macros
 
-myAlyses = "DocAlyse, HyphenAlyse, ProperNounAlyse, FullNameAlyse, SpellingErrorLister, CapitAlyse, WordPairAlyse"
-' myAlyses = "DocAlyse, HyphenAlyse, ProperNounAlyse, SpellingErrorLister"
+myAlyses = "ListAlyse, DocAlyse"
+myAlyses = "SpellAlyse, WordPairAlyse"
+myAlyses = "DocAlyse, HyphenAlyse, ProperNounAlyse, SpellAlyse"
+myAlyses = "SpellAlyse, ProperNounAlyseOO, ProperNounAlyse"
+myAlyses = "DocAlyse, HyphenAlyse, ProperNounAlyse, SpellAlyse, WordPairAlyse"
 
 saveResultsFiles = False
 
-myFolder = "C:\Users\User\Documents\"
+' On a Mac, you will need something like:
+myFolder = "/Users/Paul/My Documents/Macro_stuff/"
+
+' On Windows, you will need something like:
+myFolder = "C:\Documents and Settings\Paul\Macro_stuff\"
 
 myResponse = MsgBox("MegAlyse" & vbCr & vbCr & _
      "Run:      " & myAlyses & "?", vbQuestion _
@@ -25,13 +32,13 @@ Set testFile = ActiveDocument
 
 Selection.FormattedText = rng.FormattedText
 Selection.EndKey Unit:=wdStory
-If ActiveDocument.Endnotes.Count > 0 Then
+If ActiveDocument.Endnotes.count > 0 Then
   Set thisDocRange = testFile.Content
   thisDocRange.Collapse wdCollapseEnd
   thisDocRange.FormattedText = _
        testFile.StoryRanges(wdEndnotesStory).FormattedText
 End If
-If ActiveDocument.Footnotes.Count > 0 Then
+If ActiveDocument.Footnotes.count > 0 Then
   Set thisDocRange = testFile.Content
   thisDocRange.Collapse wdCollapseEnd
   thisDocRange.FormattedText = _
@@ -39,7 +46,7 @@ If ActiveDocument.Footnotes.Count > 0 Then
 End If
 
 ' copy all the textboxes to the end of the text
-shCount = testFile.Shapes.Count
+shCount = testFile.Shapes.count
 If shCount > 0 Then
   Selection.EndKey Unit:=wdStory
   Selection.TypeText Text:=vbCr & vbCr
@@ -72,7 +79,7 @@ thisArray = Split(myAlyses, ",")
 For i = 1 To UBound(thisArray) - 1
   rprt = thisArray(i) & " started?????: " & Left(Time, 5) & vbCr
   Debug.Print rprt
-  Application.Run macroName:=thisArray(i)
+  Application.Run MacroName:=thisArray(i)
   DoEvents
 Next i
 rprt = vbCr & "Finished at: " & Left(Time, 5)
