@@ -1,62 +1,78 @@
 Sub HyphenationToFRedit()
-' Paul Beverley - Version 13.05.16
-' Create a FRedit list from a HyphenAlyse file
+' Paul Beverley - Version 04.02.22
+' Creates FRedit items from HyphenAlyse or PropernounAlyse files
 
 makeListCaseInsensitive = True
 
-myList = "anti,eigen,hyper,inter,meta,mid,multi," _
+useProperNounToFRedit = True
+
+myList = "anti,cross,eigen,hyper,inter,meta,mid,multi," _
      & "non,over,post,pre,pseudo,quasi,semi,sub,super"
 
-cr = vbCr
+CR = vbCr
 inAtable = Selection.Information(wdWithInTable)
 If Not (inAtable) Then GoTo ProperNouns
-wantBoth = (Selection.Start = Selection.End)
-Set rng = Selection.range
-Selection.Expand wdParagraph
-startCell = Replace(Selection.Text, Chr(7), "")
+wantOthers = (Selection.Start = Selection.End)
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+' rng.Select
+startCell = Replace(rng.Text, Chr(7), "")
 startCell = Replace(startCell, Chr(13), "")
 isBlank = (Len(startCell) < 3)
-colNum = Selection.Cells(1).ColumnIndex
+colNum = rng.Cells(1).ColumnIndex
 
-Selection.Expand wdRow
-myCell = Split(Chr(7) & Selection, Chr(7))
-For i = 1 To 3
-  myCell(i) = Replace(myCell(i), Chr(13), "")
+rng.Expand wdRow
+myCell = Split(Chr(7) & rng.Text, Chr(7))
+For i = 1 To 4
+  myText = Replace(myCell(i), vbCr, "")
+'  myText = myCell(i)
+  sdfgs = Len(myText)
+  leadPos = InStr(myText, " . ")
+  If leadPos > 0 Then
+    myText = Left(myText, leadPos - 1)
+  End If
+  myCell(i) = myText
 Next i
 
+preWord = ""
 If Len(myCell(1)) > 2 Then
-  preWord = Selection.Words(1)
-  postWord = Trim(Selection.Words(3))
-Else
-  preWord = ""
+  myText = myCell(1)
+  spPos = InStr(myText, "-")
+  preWord = Left(myText, spPos - 1)
+  postWord = Mid(myText, spPos + 1)
 End If
-
-If preWord = "" And Len(myCell(2)) > 2 Then
-  Selection.Collapse wdCollapseStart
-  Selection.MoveRight wdCell, 1
-  preWord = Trim(Selection.Words(1))
-  postWord = Trim(Selection.Words(2))
+myText = myCell(2)
+If preWord = "" And myText > "" Then
+  spPos = InStr(myText, " ")
+  preWord = Left(myText, spPos - 1)
+  postWord = Mid(myText, spPos + 1)
 End If
-
+myText = myCell(4)
+If preWord = "" And myText > "" Then
+  spPos = InStr(myText, ChrW(8211))
+  preWord = Left(myText, spPos - 1)
+  postWord = Mid(myText, spPos + 1)
+End If
 If preWord = "" Then
   myList = "," & myList & ","
-  justWord = Trim(Left(myCell(3), InStr(myCell(3), ".") - 1))
+  myText = myCell(3)
   For i = 3 To 6
-    preWord = Left(justWord, i)
+    preWord = Left(myText, i)
     If InStr(myList, "," & preWord & ",") > 0 Then Exit For
   Next i
-  If i > 5 Then
+  If i > 6 Then
     Beep
     MsgBox ("Can't find this prefix")
     Exit Sub
   End If
-  postWord = Replace(justWord, preWord, "")
+  postWord = Replace(myText, preWord, "")
 End If
 
 Select Case colNum
   Case 1: myJoin = "-"
   Case 2: myJoin = " "
   Case 3: myJoin = ""
+  Case 4: myJoin = ChrW(8211)
   Case Else
     Beep
     MsgBox ("Something has gone wrong.")
@@ -67,6 +83,7 @@ targetWord = preWord & myJoin & postWord
 oneWord = preWord & postWord
 hyphWord = preWord & "-" & postWord
 twoWords = preWord & " " & postWord
+dashWords = preWord & ChrW(8211) & postWord
 
 myFRitem = ""
 If makeListCaseInsensitive = True Then
@@ -75,51 +92,68 @@ Else
   cs = ""
 End If
 
-If wantBoth Then
+If wantOthers Then
   If targetWord = oneWord Then
-    myFRitem = cs & twoWords & ChrW(124) & oneWord & cr & _
-         cs & hyphWord & ChrW(124) & oneWord & cr
+    myFRitem = cs & twoWords & ChrW(124) & oneWord & CR & _
+         cs & hyphWord & ChrW(124) & oneWord & CR & _
+         cs & dashWords & ChrW(124) & oneWord & CR
   End If
   If targetWord = twoWords Then
-    myFRitem = cs & oneWord & ChrW(124) & twoWords & cr & _
-         cs & hyphWord & ChrW(124) & twoWords & cr
+    myFRitem = cs & oneWord & ChrW(124) & twoWords & CR & _
+         cs & hyphWord & ChrW(124) & twoWords & CR & _
+         cs & dashWords & ChrW(124) & twoWords & CR
   End If
   If targetWord = hyphWord Then
-    myFRitem = cs & twoWords & ChrW(124) & hyphWord & cr & _
-         cs & oneWord & ChrW(124) & hyphWord & cr
+    myFRitem = cs & twoWords & ChrW(124) & hyphWord & CR & _
+         cs & oneWord & ChrW(124) & hyphWord & CR & _
+         cs & dashWords & ChrW(124) & hyphWord & CR
+  End If
+  If targetWord = dashWords Then
+    myFRitem = cs & twoWords & ChrW(124) & dashWords & CR & _
+         cs & oneWord & ChrW(124) & dashWords & CR & _
+         cs & hyphWord & ChrW(124) & dashWords & CR
   End If
 Else
   If targetWord = oneWord Then
     If myCell(1) > "" Then
-      myFRitem = myFRitem & cs & hyphWord & ChrW(124) & oneWord & cr
+      myFRitem = myFRitem & cs & hyphWord & ChrW(124) & oneWord & CR
     End If
     If myCell(2) > "" Then
-      myFRitem = myFRitem & cs & twoWords & ChrW(124) & oneWord & cr
+      myFRitem = myFRitem & cs & twoWords & ChrW(124) & oneWord & CR
+    End If
+    If myCell(4) > "" Then
+      myFRitem = myFRitem & cs & dashWords & ChrW(124) & oneWord & CR
     End If
     If InStr(myFRitem, ChrW(124)) = 0 Then
-      myFRitem = cs & hyphWord & ChrW(124) & oneWord & cr
+      myFRitem = cs & hyphWord & ChrW(124) & oneWord & CR
     End If
   End If
   If targetWord = twoWords Then
     If myCell(1) > "" Then
-      myFRitem = cs & hyphWord & ChrW(124) & twoWords & cr
+      myFRitem = cs & hyphWord & ChrW(124) & twoWords & CR
     End If
     If myCell(3) > "" Then
-      myFRitem = myFRitem & cs & oneWord & ChrW(124) & twoWords & cr
+      myFRitem = myFRitem & cs & oneWord & ChrW(124) & twoWords & CR
+    End If
+    If myCell(4) > "" Then
+      myFRitem = myFRitem & cs & dashWords & ChrW(124) & twoWords & CR
     End If
     If InStr(myFRitem, ChrW(124)) = 0 Then
-      myFRitem = cs & hyphWord & ChrW(124) & twoWords & cr
+      myFRitem = cs & hyphWord & ChrW(124) & twoWords & CR
     End If
   End If
   If targetWord = hyphWord Then
     If myCell(2) > "" Then
-      myFRitem = cs & twoWords & ChrW(124) & hyphWord & cr
+      myFRitem = cs & twoWords & ChrW(124) & hyphWord & CR
     End If
     If myCell(3) > "" Then
-      myFRitem = cs & oneWord & ChrW(124) & hyphWord & cr
+      myFRitem = cs & oneWord & ChrW(124) & hyphWord & CR
+    End If
+    If myCell(4) > "" Then
+      myFRitem = cs & dashWords & ChrW(124) & hyphWord & CR
     End If
     If InStr(myFRitem, ChrW(124)) = 0 Then
-      myFRitem = cs & oneWord & ChrW(124) & hyphWord & cr
+      myFRitem = cs & oneWord & ChrW(124) & hyphWord & CR
     End If
   End If
 End If
@@ -146,38 +180,42 @@ Else
   End If
   Selection.Expand wdParagraph
   If Len(Selection) > 1 Then Selection.Collapse wdCollapseEnd
-  Selection.TypeText Text:=myFRitem
+  Selection.TypeText myFRitem
 End If
 thisDoc.Activate
 Exit Sub
 
 ProperNouns:
-Selection.Expand wdParagraph
-Selection.Collapse wdCollapseStart
-Selection.Expand wdWord
-myWord = Trim(Selection)
-myFRitem = myWord & "|" & myWord & vbCr
-
-gottaFReditList = False
-Set thisDoc = ActiveDocument
-For Each myWnd In Application.Windows
-  myWnd.Document.Activate
-  Set rng = ActiveDocument.Content
-' Finding a '|' in the first 250 characters means it's a list
-  rng.End = rng.Start + 250
-  If InStr(rng.Text, "|") > 0 Then
-    gottaFReditList = True
-    Exit For
+If useProperNounToFRedit = True Then
+  Call ProperNounToFRedit
+Else
+  Selection.Expand wdParagraph
+  Selection.Collapse wdCollapseStart
+  Selection.Expand wdWord
+  myWord = Trim(Selection)
+  myFRitem = myWord & "|" & myWord & vbCr
+  
+  gottaFReditList = False
+  Set thisDoc = ActiveDocument
+  For Each myWnd In Application.Windows
+    myWnd.Document.Activate
+    Set rng = ActiveDocument.Content
+  ' Finding a '|' in the first 250 characters means it's a list
+    rng.End = rng.Start + 250
+    If InStr(rng.Text, "|") > 0 Then
+      gottaFReditList = True
+      Exit For
+    End If
+  Next myWnd
+  If gottaFReditList = False Then
+    thisDoc.Activate
+    MsgBox "Can't find a FRedit list file"
+    Exit Sub
   End If
-Next myWnd
-If gottaFReditList = False Then
+  Selection.Expand wdParagraph
+  If Len(Selection) > 1 Then Selection.Collapse wdCollapseEnd
+  Selection.TypeText myFRitem
   thisDoc.Activate
-  MsgBox "Can't find a FRedit list file"
-  Exit Sub
 End If
-Selection.Expand wdParagraph
-If Len(Selection) > 1 Then Selection.Collapse wdCollapseEnd
-Selection.TypeText Text:=myFRitem
-thisDoc.Activate
 End Sub
 

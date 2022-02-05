@@ -1,43 +1,37 @@
 Sub ProperNounToFRedit()
-' Paul Beverley - Version 16.01.21
+' Paul Beverley - Version 04.02.22
 ' Picks up alternative spellings in a PN query list for a FRedit list
 
 Set thisDoc = ActiveDocument
-Selection.Expand wdWord
-Do While InStr(" ", Right(Selection.Text, 1)) > 0
-  Selection.MoveEnd , -1
-  DoEvents
+Set rng = Selection.Range.Duplicate
+rng.Expand wdWord
+myRepl = Trim(rng.Text)
+
+rng.Expand wdParagraph
+rng.Collapse wdCollapseStart
+rng.End = rng.End - 1
+rng.Expand wdParagraph
+sdfsd = rng.Text
+myFandRs = ""
+Do While Len(rng.Text) > 2
+  myFind = Trim(rng.Words(3))
+  If myFind = "=" Then myFind = Trim(rng.Words(5))
+  myFandRs = myFandRs & myFind & "|" & myRepl & vbCr
+  rng.Collapse wdCollapseStart
+  rng.End = rng.End - 1
+  rng.Expand wdParagraph
 Loop
 Set rng = Selection.Range.Duplicate
-rep = Selection.Text
-
-myInit = Left(Selection, 1)
-myFandRs = ""
-Selection.Collapse wdCollapseStart
-For i = 1 To 15
-  Selection.MoveLeft wdWord, 1
-  If Left(Selection, 1) = myInit Then
-    Selection.Expand wdWord
-    Do While InStr(" ", Right(Selection.Text, 1)) > 0
-      Selection.MoveEnd , -1
-      DoEvents
-    Loop
-    myFandRs = Selection & "|" & rep & vbCr
-    Exit For
-  End If
-Next i
-rng.Select
-Selection.Collapse wdCollapseEnd
-For i = 1 To 15
-  Selection.MoveRight wdWord, 1
-  If Left(Selection, 1) = myInit Then
-    Selection.Expand wdWord
-    Selection.MoveEndWhile cset:=" ", Count:=wdBackward
-    myFandRs = myFandRs & Selection & "|" & rep & vbCr
-    Exit For
-  End If
-Next i
-Selection.Collapse wdCollapseEnd
+rng.Expand wdParagraph
+rng.Collapse wdCollapseEnd
+rng.Expand wdParagraph
+Do While Len(rng.Text) > 2
+  myFind = Trim(rng.Words(3))
+  If myFind = "=" Then myFind = Trim(rng.Words(5))
+  myFandRs = myFandRs & myFind & "|" & myRepl & vbCr
+  rng.Collapse wdCollapseEnd
+  rng.Expand wdParagraph
+Loop
 
 gottaFReditList = False
 Set thisDoc = ActiveDocument
@@ -56,6 +50,8 @@ If gottaFReditList = False Then
   Exit Sub
 End If
 
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseEnd
 Selection.TypeText Text:=myFandRs
 thisDoc.Activate
 End Sub

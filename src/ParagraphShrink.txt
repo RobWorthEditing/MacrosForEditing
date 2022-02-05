@@ -1,10 +1,18 @@
 Sub ParagraphShrink()
-' Paul Beverley - Version 06.01.22
+' Paul Beverley - Version 03.02.22
 ' Shrinks the current paragraph (for use with CitationAlyse)
 
 mySize = 6
-Selection.Expand wdParagraph
-Selection.Range.Font.Size = mySize
-Selection.Collapse wdCollapseEnd
+
+' myHighlight = wdYellow
+myHighlight = wdNoHighlight
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+rng.Font.Size = mySize
+If myHighlight > 0 Then rng.HighlightColorIndex = myHighlight
+rng.Collapse wdCollapseEnd
+rng.Select
 End Sub
+
 

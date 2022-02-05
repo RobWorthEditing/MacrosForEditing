@@ -1,6 +1,6 @@
 Sub FReditListProcess()
-' Paul Beverley - Version 13.05.16
-' Tidy up a spelling FRedit list from cursor downwards
+' Paul Beverley - Version 02.02.22
+' Tidies up a spelling FRedit list from cursor downwards
 
 makeCopyingNotTracked = True
 ' lightHighlight = wdGray25
@@ -13,6 +13,9 @@ strongHighlight = wdBrightGreen
 changeColour = wdColorDarkBlue
 minLength = 7
 
+Application.ScreenUpdating = False
+On Error GoTo ReportIt
+
 myResponse = MsgBox("Any case? (Yes)" & vbCr & vbCr & "or Case Sensitive? (No)", _
       vbQuestion + vbYesNoCancel, "FRedit List Process")
 If myResponse = vbCancel Then Exit Sub
@@ -22,8 +25,8 @@ Selection.Expand wdParagraph
 Do While Len(Selection) > 1
   Selection.Expand wdParagraph
   Selection.End = Selection.Start + 1
-  nowHighlight = Selection.range.HighlightColorIndex
-  nowColour = Selection.range.Font.Color
+  nowHighlight = Selection.Range.HighlightColorIndex
+  nowColour = Selection.Range.Font.Color
   Selection.Expand wdParagraph
   Selection.MoveEnd , -1
   padPos = InStr(Selection, ChrW(124))
@@ -31,7 +34,7 @@ Do While Len(Selection) > 1
     ' Check if text colour is not black
     doCopy = (nowColour <> wdBlack And nowColour <> wdColorAutomatic)
     ' Check if it is highlighted
-    If Selection.range.HighlightColorIndex > 0 Then doCopy = True
+    If Selection.Range.HighlightColorIndex > 0 Then doCopy = True
     ' Check if italic, bold or underline
     If Selection.Font.Italic Then doCopy = True
     If Selection.Font.Bold Then doCopy = True
@@ -78,18 +81,18 @@ Do While Len(Selection) > 1
         Selection.Expand wdParagraph
         Selection.Font.StrikeThrough = True
         If oldWord <> newWord Then
-          Selection.range.HighlightColorIndex = lightHighlight
-          Selection.range.Font.Color = lightColour
+          Selection.Range.HighlightColorIndex = lightHighlight
+          Selection.Range.Font.Color = lightColour
       ' Next line is: ~<errorword>|correctword
           Selection.Collapse wdCollapseEnd
           Selection.TypeText Text:="~<" & oldWord & ">" & _
                ChrW(124) & newWord & vbCr
           Selection.MoveLeft , 2
           Selection.Expand wdParagraph
-          Selection.range.HighlightColorIndex = nowHighlight
-          Selection.range.Font.Color = nowColour
+          Selection.Range.HighlightColorIndex = nowHighlight
+          Selection.Range.Font.Color = nowColour
         Else
-          Selection.range.HighlightColorIndex = nowHighlight
+          Selection.Range.HighlightColorIndex = nowHighlight
         End If
         Selection.Collapse wdCollapseStart
       Else
@@ -98,15 +101,15 @@ Do While Len(Selection) > 1
         If doAnyCase = True Then Selection.TypeText Text:=ChrW(172)
         Selection.TypeText Text:=oldWord & ChrW(124) & "^&"
         Selection.Expand wdParagraph
-        Selection.range.HighlightColorIndex = lightHighlight
+        Selection.Range.HighlightColorIndex = lightHighlight
       ' Next line is: ~<errorword>|correctword
         Selection.Collapse wdCollapseEnd
         Selection.TypeText Text:="~<" & oldWord & ">" & ChrW(124) _
              & newWord & vbCr
         Selection.MoveLeft , 2
         Selection.Expand wdParagraph
-        Selection.range.HighlightColorIndex = strongHighlight
-        Selection.range.Font.Color = changeColour
+        Selection.Range.HighlightColorIndex = strongHighlight
+        Selection.Range.Font.Color = changeColour
 '        Selection.range.Font.Color = nowColour
       End If
     End If
@@ -117,11 +120,26 @@ Do While Len(Selection) > 1
   If InStr(Selection, ChrW(124)) = 0 Then
     Selection.Delete
     Selection.MoveLeft , 1
+  Else
+  Application.ScreenUpdating = True
+  DoEvents
+  Application.ScreenUpdating = False
   End If
   
   Selection.MoveDown , 1
   Selection.Expand wdParagraph
 Loop
 Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , -1
+Selection.MoveLeft , 1
+Beep
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
+
+
 

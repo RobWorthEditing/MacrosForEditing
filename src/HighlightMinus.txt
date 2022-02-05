@@ -1,15 +1,41 @@
 Sub HighlightMinus()
-' Paul Beverley - Version 24.03.21
+' Paul Beverley - Version 03.02.22
 ' Removes or adds highlight in a choice of colours
 
-colourOffToo = True
-uLineOffToo = True
-strikeThroughToo = True
+doUnderlinesToo = True
 
-colourOffToo = True
-uLineOffToo = True
-strikeThroughToo = True
-removeShadingToo = False
+addWarning = True
+
+Set rng = ActiveDocument.Content
+If Selection.Text = rng.Text Then
+  If addWarning = True Then
+    Beep
+    myResponse = MsgBox("Remove colour, highlight (and underlining)?", _
+         vbQuestion + vbYesNoCancel, "HighlightMinus")
+    If myResponse <> vbYes Then Exit Sub
+  End If
+
+  Set rng = ActiveDocument.Content
+  rng.HighlightColorIndex = wdNoHighlight
+  rng.Font.Color = wdColorAutomatic
+  If doUnderlinesToo = True Then rng.Font.Underline = False
+  
+  If ActiveDocument.Footnotes.count > 0 Then
+    Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    rng.HighlightColorIndex = wdNoHighlight
+    rng.Font.Color = wdColorAutomatic
+    If doUnderlinesToo = True Then rng.Font.Underline = False
+  End If
+  
+  If ActiveDocument.Endnotes.count > 0 Then
+    Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    rng.HighlightColorIndex = wdNoHighlight
+    rng.Font.Color = wdColorAutomatic
+    If doUnderlinesToo = True Then rng.Font.Underline = False
+  End If
+  Selection.HomeKey Unit:=wdStory
+  Exit Sub
+End If
 
 Dim myCol(9)
 myCol(0) = wdNoHighlight
@@ -64,30 +90,10 @@ If Selection.Start = Selection.End Then
   End If
   Selection.End = wasEnd
 Else
-  ' if some text is selected ...
-  ' As long as it's not the whole text that's been selected,
+  ' if some text is selected
   ' record the current selection range
-  If colourOffToo = True Then
-  ' If all text is selected, take off colouration AND patterning
-    If Selection.Range.Words.Count = ActiveDocument.Words.Count Then
-      If strikeThroughToo = True Then
-        Selection.Range.Font.StrikeThrough = False
-      End If
-      If uLineOffToo = True Then
-'        Selection.range.Font.Underline = True
-        Selection.Range.Font.Underline = False
-      End If
-      Selection.Range.Font.Color = wdColorAutomatic
-      Selection.Range.HighlightColorIndex = wdNoHighlight
-      If removeShadingToo = True Then Selection.Shading.BackgroundPatternColor _
-           = wdColorAutomatic
-    End If
-  End If
-  If Not (Selection.Start = 0 And Selection.End = _
-       ActiveDocument.Range.End) Then
-    ActiveDocument.Variables("selStart") = Selection.Start
-    ActiveDocument.Variables("selEnd") = Selection.End
-  End If
+  ActiveDocument.Variables("selStart") = Selection.Start
+  ActiveDocument.Variables("selEnd") = Selection.End
   nowCol = 0
 End If
 ActiveDocument.Variables("colNum") = nowCol
@@ -105,7 +111,7 @@ Exit Sub
 LineClear:
 Selection.HomeKey Unit:=wdLine
 clearStart = Selection.Start
-Selection.MoveDown Unit:=wdLine, Count:=1
+Selection.MoveDown Unit:=wdLine, count:=1
 Selection.HomeKey Unit:=wdLine
 Set rng = Selection.Range
 rng.Start = clearStart

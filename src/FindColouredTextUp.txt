@@ -1,8 +1,8 @@
 Sub FindColouredTextUp()
-' Paul Beverley - Version 28.02.12
+' Paul Beverley - Version 03.02.22
 ' Find coloured text
-' <Ctrl-Shift-PageUp>
-Dim v As Variable: Dim rng As Range
+
+Dim v As Variable, rng As Range
 ' Check what the background (black) colour is
 Set rng = ActiveDocument.Content
 rng.Collapse wdCollapseEnd
@@ -38,15 +38,17 @@ Do
   Set rng2 = ActiveDocument.Content
   rng.End = Selection.End
   With rng.Find
-   .ClearFormatting
-   .Replacement.ClearFormatting
-   .Text = ""
-   .Font.Color = myBlack
-   .Wrap = False
-   .Replacement.Text = ""
-   .Forward = False
-   .MatchWildcards = False
-   .Execute
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Color = myBlack
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = False
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
   End With
 ' Examine the character before the beginning of the find
   rng2.Start = rng.Start - 1
@@ -85,7 +87,7 @@ If searchColour = 0 Then
    .Replacement.ClearFormatting
    .Text = ""
    .Font.Color = myBlack
-   .Wrap = False
+   .Wrap = wdFindStop
    .Replacement.Text = ""
    .Forward = False
    .MatchWildcards = False
@@ -116,7 +118,7 @@ Else
    .Replacement.ClearFormatting
    .Text = ""
    .Font.Color = searchColour
-   .Wrap = False
+   .Wrap = wdFindStop
    .Replacement.Text = ""
    .Forward = False
    .MatchWildcards = False
@@ -125,6 +127,25 @@ Else
 End If
 
 finish:
+If searchColour = 0 Then
+  rng2.Start = rng.End
+  rng2.Select
+Else
+  Set rng2 = rng.Duplicate
+End If
+' Flash the range
+For i = 1 To 3
+  DoEvents
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.06
+  Selection.Collapse wdCollapseStart
+  DoEvents
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.08
+  rng2.Select
+Next i
 rng.Collapse wdCollapseStart
 rng.Select
 If Selection.Start = initialPosition Then Beep

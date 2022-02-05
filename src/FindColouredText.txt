@@ -1,8 +1,8 @@
 Sub FindColouredText()
-' Paul Beverley - Version 28.02.12
+' Paul Beverley - Version 03.02.12
 ' Finds coloured text
 
-Dim v As Variable: Dim rng As Range
+Dim v As Variable, rng As Range
 ' Check what the background (black) colour is
 Set rng = ActiveDocument.Content
 rng.Collapse wdCollapseEnd
@@ -39,15 +39,17 @@ Do
   Set rng2 = ActiveDocument.Content
   rng.Start = Selection.End
   With rng.Find
-   .ClearFormatting
-   .Replacement.ClearFormatting
-   .Text = ""
-   .Font.Color = myBlack
-   .Wrap = False
-   .Replacement.Text = ""
-   .Forward = True
-   .MatchWildcards = False
-   .Execute
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Color = myBlack
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
   End With
 ' Examine the character after the end of the find
   rng2.Start = rng.End
@@ -82,15 +84,17 @@ If searchColour = 0 Then
   Set rng2 = ActiveDocument.Content
   rng.Start = Selection.End
   With rng.Find
-   .ClearFormatting
-   .Replacement.ClearFormatting
-   .Text = ""
-   .Font.Color = myBlack
-   .Wrap = False
-   .Replacement.Text = ""
-   .Forward = True
-   .MatchWildcards = False
-   .Execute
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Color = myBlack
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
   End With
   If rng.Find.Found = True Then
   ' Examine the character after the end of the find
@@ -117,17 +121,37 @@ Else
    .Replacement.ClearFormatting
    .Text = ""
    .Font.Color = searchColour
-   .Wrap = False
+   .Wrap = wdFindStop
    .Replacement.Text = ""
    .Forward = True
    .MatchWildcards = False
    .Execute
   End With
 End If
+rng.Select
 
 finish:
-rng.Start = rng.End
-rng.Select
+If searchColour = 0 Then
+  rng2.End = rng.Start
+  rng2.Select
+Else
+  Set rng2 = rng.Duplicate
+End If
+' Flash the range
+For i = 1 To 3
+  DoEvents
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.06
+  Selection.Collapse wdCollapseStart
+  DoEvents
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.08
+  rng2.Select
+Next i
+Selection.Collapse wdCollapseEnd
 If Selection.End = initialPosition Then Beep
 End Sub
+
 

@@ -1,11 +1,16 @@
 Sub CitationAlyse()
-' Paul Beverley - Version 26.01.22
+' Paul Beverley - Version 02.02.22
 ' Checks citations against references
 
 myFontColour = wdColorBlue
 myDateColour = wdColorRed
 
 includeNotes = True
+
+notNames = "In From For Act Jan January Feb February "
+notNames = notNames & " Mar March Apr April May June "
+notNames = notNames & " July Aug August Sept September Oct "
+notNames = notNames & " October Nov November Dec December "
 
 CR = vbCr
 CR2 = CR & CR
@@ -14,7 +19,7 @@ myScreenOff = False
 Dim myCol(4)
 myCol(0) = wdYellow
 myCol(1) = wdBrightGreen
-myCol(2) = wdPink
+myCol(2) = wdRed
 myCol(3) = wdTurquoise
 myCol(4) = wdGray25
 
@@ -378,6 +383,13 @@ Set para2 = ActiveDocument.Paragraphs(2)
 Do While Len(para2.Range.Text) < 3
   para2.Range.Delete
 Loop
+
+notNames = notNames & " "
+For i = ActiveDocument.Paragraphs.count To 2 Step -1
+  Set rng = ActiveDocument.Paragraphs(i).Range
+  If InStr(notNames, rng.Words(1).Text) > 0 And _
+       rng.Words.count = 3 Then rng.Delete
+Next i
 
 ' Add year at beginning of line
 Set rng = ActiveDocument.Content

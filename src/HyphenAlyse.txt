@@ -1,5 +1,5 @@
 Sub HyphenAlyse()
-' Paul Beverley - Version 18.12.21
+' Paul Beverley - Version 04.02.22
 ' Creates a frequency list of all possible hyphenations
 
 myList = "anti,cross,eigen,hyper,inter,meta,mid,multi," _
@@ -33,6 +33,7 @@ Documents.Add
 Selection.FormattedText = rng.FormattedText
 Selection.HomeKey Unit:=wdStory
 Application.ScreenUpdating = False
+On Error GoTo ReportIt
 
 Set rng = ActiveDocument.Content
 With rng.Find
@@ -347,10 +348,12 @@ For i = 1 To tb.Rows.count
 Next i
 
 For i = 1 To tb.Rows.count
-    s = 0
-    If Len(tb.Cell(i, 1).Range.Text) > 2 Then s = s + 1
-    If Len(tb.Cell(i, 3).Range.Text) > 2 Then s = s + 1
-    If Len(tb.Cell(i, 4).Range.Text) > 2 Then s = s + 1
+  s = 0
+  If Len(tb.Cell(i, 1).Range.Text) > 2 Then s = s + 1
+  If Len(tb.Cell(i, 3).Range.Text) > 2 Then s = s + 1
+  If Len(tb.Cell(i, 4).Range.Text) > 2 Then s = s + 1
+  If Len(tb.Cell(i, 2).Range.Text) > 2 And _
+       Len(tb.Cell(i, 4).Range.Text) > 2 Then s = 2
   If s > 1 Then
     For j = 1 To 4
       tb.Cell(i, j).Range.Font.ColorIndex = wdRed
