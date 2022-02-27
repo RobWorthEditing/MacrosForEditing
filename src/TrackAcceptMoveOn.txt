@@ -1,14 +1,39 @@
 Sub TrackAcceptMoveOn()
-' Paul Beverley - Version 15.06.21
+' Paul Beverley - Version 19.02.22
 ' Accepts change and moves to the next
 
+addHighlight = False
+myColour = wdYellow
+addColour = True
+myFontColour = wdRed
+
 On Error GoTo ReportIt
+If Selection.Start <> Selection.End Then
+  myTrack = ActiveDocument.TrackRevisions
+  ActiveDocument.TrackRevisions = False
+  If addHighlight = True Then _
+       Selection.Range.HighlightColorIndex = myColour
+  If addColour = True Then _
+       Selection.Range.Font.ColorIndex = myFontColour
+  ActiveDocument.TrackRevisions = myTrack
+End If
+hereNow = Selection.Start
 Application.Run MacroName:="AcceptChangesSelected"
-Application.Run MacroName:="NextChangeOrComment"
+i = 0
+Do
+  hereNow = Selection.Start
+  Application.Run MacroName:="NextChangeOrComment"
+  inAComment = Selection.Information(wdInCommentPane)
+  DoEvents
+  i = i + 1
+Loop Until Not inAComment Or i > 10
+If Selection.Start < hereNow Or i > 10 Then Beep
 Exit Sub
+
 ReportIt:
-Beep
+On Error GoTo 0
+Application.Run MacroName:="NextChangeOrComment"
+If Selection.Start < hereNow And _
+     Selection.Start > 0 Then Beep
 End Sub
-
-
 

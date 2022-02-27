@@ -1,6 +1,5 @@
-
 Sub DocAlyse()
-' Paul Beverley - Version 24.01.22
+' Paul Beverley - Version 08.02.22
 ' Analyses various aspects of a document
 
 ' prompts to count number of tests
@@ -1864,6 +1863,9 @@ End If
 myRslt = myRslt & CR
 
 Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="DocAlyse" & vbCr & vbCr
+newDoc.Paragraphs(1).Style = ActiveDocument.Styles(wdStyleHeading1)
+
 newDoc.Paragraphs(3).Range.Select
 Selection.End = newDoc.Content.End
 Selection.TypeText CR & myRslt & CR2
@@ -1903,8 +1905,6 @@ With Selection.Find
   .Execute
 End With
 
-Selection.HomeKey Unit:=wdStory
-StatusBar = "Docalyse" & vbCr
 Selection.HomeKey Unit:=wdStory
 
 If doingSeveralMacros = False Then

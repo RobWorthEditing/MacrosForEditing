@@ -1,0 +1,47 @@
+Sub SigloSmallCaps()
+' Paul Beverley - Version 24.02.22
+' Finds "siglo" and small-caps the IVX following
+
+doFootnotes = Selection.Information(wdInFootnote)
+doEndnotes = Selection.Information(wdInEndnote)
+
+Set rng = ActiveDocument.Content
+
+If doFootnotes Then Set rng = _
+     ActiveDocument.StoryRanges(wdFootnotesStory)
+
+If doEndnotes Then Set rng = _
+     ActiveDocument.StoryRanges(wdEndnotesStory)
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[Ss]igl[os ]{2,3}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  ' move to the following word
+  rng.MoveStart wdWord, 1
+  rng.MoveEnd wdWord, 1
+  ' Check that the word only contains letters V, I and X
+  myText = Replace(rng.Text, "V", "")
+  myText = Replace(myText, "I", "")
+  myText = Replace(myText, "X", "")
+  If UCase(myText) = LCase(myText) Then
+    rng.Text = LCase(rng)
+    rng.Font.SmallCaps = True
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+rng.Select
+Beep
+End Sub
+
+

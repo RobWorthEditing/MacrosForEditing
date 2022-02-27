@@ -1,5 +1,5 @@
 Sub MultiSwitch()
-' Paul Beverley - Version 13.11.21
+' Paul Beverley - Version 07.02.22
 ' Scripted word/phrase switching
 
 maxWords = 9
@@ -9,14 +9,16 @@ myListName = "zzSwitchList"
 minChars = 3
 includeApostrophe = True
 
+linksOFF = True
+
 Set thisDoc = ActiveDocument
 
 ' If you want to load the SwitchList file automatically...
 
-' On Windows, it will need to be something like this:
+' On Windows, you will need something like this:
 ' Documents.Open FileName:= "C:\Documents and Settings\Paul\My Documents\zzSwitchList.docx"
 
-' On a Mac, it will need to be something like this:
+' On a Mac, you will need something like this:
 ' Documents.Open FileName:= "/Users/Paul/My Documents/Macro stuff/zzSwitchList.docx"
 
 CR = vbCr
@@ -24,6 +26,7 @@ CR2 = CR & CR
 Dim myStr(20) As String
 Dim endStr(20) As Long
 thisDoc.Activate
+
 ' Read the context, noting if the word is selected
 wasSelected = (Selection.End > Selection.Start)
 If wasSelected = True Then
@@ -52,13 +55,13 @@ iMax = maxWords
 
 Set rng = Selection.Range.Duplicate
 rng.Collapse wdCollapseStart
-rng.MoveEnd Unit:=wdWord, Count:=maxWords
-numTCs = rng.Revisions.Count
+rng.MoveEnd Unit:=wdWord, count:=maxWords
+numTCs = rng.Revisions.count
 If numTCs > 0 Then
   rng.Revisions.AcceptAll
-  rng.MoveEnd Unit:=wdWord, Count:=maxWords
+  rng.MoveEnd Unit:=wdWord, count:=maxWords
 End If
-wdsLeft = rng.Words.Count
+wdsLeft = rng.Words.count
 If maxWords > wdsLeft Then maxWords = wdsLeft
 For i = 1 To maxWords
   endStr(i) = rng.Words(i).End
@@ -67,7 +70,7 @@ For i = 1 To maxWords
     Exit For
   End If
   If Right(rng.Words(i), 1) = " " Then endStr(i) = endStr(i) - 1
- ' Debug.Print rng.Words(i), Asc(rng.Words(i))
+'  Debug.Print rng.Words(i)
   myStr(i) = Left(rng, endStr(i) - rng.Start)
   DoEvents
 Next i
@@ -78,7 +81,7 @@ iMax = maxWords
 
 ' Find the zzSwitchList file
 gottaList = False
-For i = 1 To Documents.Count
+For i = 1 To Documents.count
   Set dcu = Documents(i)
   If InStr(dcu.Name, myListName) > 0 Then
     Set listDoc = dcu
@@ -95,16 +98,14 @@ End If
 listDoc.Activate
 
 ' Just in case the switch list has any URLs
-Set rng = ActiveDocument.Content
-rng.Fields.Unlink
-
-Selection.HomeKey Unit:=wdStory
-Selection.End = 2
-If UCase(Selection) <> LCase(Selection) Then
-  Selection.HomeKey Unit:=wdStory
-  Selection.TypeText Text:=CR2
+If linksOFF = True Then
+  Set rngList = ActiveDocument.Content
+  rngList.Fields.Unlink
 End If
-Selection.Collapse wdCollapseStart
+
+Set rng = ActiveDocument.Content
+rng.End = 2
+If rng.Text <> CR2 Then rng.InsertBefore Text:=CR2
 
 ' Try to locate the selected text in the switch list
 Set rng = ActiveDocument.Content
@@ -120,15 +121,15 @@ If lfPos > 0 Then
 End If
 
 For i = iMax To 1 Step -1
-'For i = maxWords To 1 Step -1
   myPos = InStr(allWords, CR2 & myStr(i) & CR)
   If myPos > 0 Then
     allWords = Mid(allWords, myPos + 1)
     gottaMatch = True
     numWords = i
-    
   'Display the options
     numAlts = 1
+    endPos = InStr(allWords, CR2)
+    allWords = Left(allWords, endPos + 2)
     altText = Split(allWords, Chr(13))
     j = 0
     Do
@@ -203,7 +204,6 @@ Set r = Selection.Range
 Dim gotFormat As Boolean
 gotFormat = r.Font.Bold Or r.Font.Italic Or r.Font.SmallCaps _
      Or r.Font.Underline Or r.Font.Superscript Or r.Font.Subscript
-
 If AscW(Selection) = 172 Or gotFormat Then
   useFormat = True
   If AscW(Selection) = 172 Then Selection.MoveStart , 1
@@ -219,22 +219,19 @@ If Selection.Information(wdInCommentPane) = 0 And _
      Selection.Information(wdInFootnote) = 0 And _
      Selection.Information(wdInEndnote) = 0 Then
 
-numCmts = ActiveDocument.Comments.Count
+numCmts = ActiveDocument.Comments.count
   If numCmts > 0 Then
   ' Find scope of (range covered by) the next comment
     Set rng = Selection.Range.Duplicate
     rng.Collapse wdCollapseStart
     rng.Start = 0
-    cmtNumber = rng.Comments.Count + 1
+    cmtNumber = rng.Comments.count + 1
     If cmtNumber <= numCmts Then
       Set nextCmtRange = ActiveDocument.Comments(cmtNumber).Scope
       
     ' Does the scope of that comment overlap the current word?
       Set rng = Selection.Range.Duplicate
       rng.Expand wdWord
-
-      Debug.Print rng.Start, rng.End
-      Debug.Print nextCmtRange.Start, nextCmtRange.End
       If rng.End > nextCmtRange.Start Then
         Beep
         rng.Select
@@ -250,13 +247,13 @@ End If
 myTrack = ActiveDocument.TrackRevisions
 myState = ActiveWindow.View.ShowInsertionsAndDeletions
 If noTrack Then ActiveDocument.TrackRevisions = False
+Selection.Delete
 If useFormat = True Then
   Selection.Paste
 Else
-  Selection.Text = myNewItem
+  Selection.TypeText Text:=myNewItem
 End If
 Selection.Start = startNow
-' Selection.Style = nowStyle
 textEnd = Selection.End
 If InStr(Selection, "^p") > 0 Then
   numCRs = 0

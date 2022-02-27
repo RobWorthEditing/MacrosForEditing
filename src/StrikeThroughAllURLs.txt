@@ -1,8 +1,8 @@
 Sub StrikeThroughAllURLs()
-' Paul Beverley - Version 27.06.17
+' Paul Beverley - Version 24.02.22
 ' Strikes through all URLs to protect them from changes
 
-charsInURLs = "[%./:a-zA-Z0-9_\-+\?=]"
+charsInURLs = "[%./:a-zA-Z0-9_\-+\?=&,]"
 
 myFind = "[wh][wt][wt][ps.]" & charsInURLs & "{1,}"
 
@@ -13,6 +13,16 @@ oldColour = Options.DefaultHighlightColorIndex
 Options.DefaultHighlightColorIndex = myColour
 
 Set rng = ActiveDocument.Content
+
+doFootnotes = Selection.Information(wdInFootnote)
+doEndnotes = Selection.Information(wdInEndnote)
+
+If doFootnotes Then Set rng = _
+     ActiveDocument.StoryRanges(wdFootnotesStory)
+
+If doEndnotes Then Set rng = _
+     ActiveDocument.StoryRanges(wdEndnotesStory)
+
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -27,8 +37,8 @@ With rng.Find
   .MatchWholeWord = False
   .MatchSoundsLike = False
   .Execute Replace:=wdReplaceAll
+  DoEvents
 End With
 Options.DefaultHighlightColorIndex = oldColour
-
 End Sub
 

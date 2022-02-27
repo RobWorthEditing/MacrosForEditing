@@ -1,0 +1,126 @@
+Sub FindInProximity()
+' Paul Beverley - Version 12.02.22
+' Finds certain words within a given word range
+
+mainWord = "diff"
+nearWord1 = "size"
+nearWord2 = ""
+distance = 20
+
+' Check file for alternative variable settings
+myFileName = "zzSwitchList"
+Set nowDoc = ActiveDocument
+For Each myWnd In Application.Windows
+  If InStr(myWnd.Document.Name, myFileName) Then
+    myWnd.Activate
+    allText = ActiveDocument.Content
+  ' First variable
+    myVariable = "main = "
+    myPos = InStr(LCase(allText), myVariable)
+    If myPos > 0 Then
+      myData = Mid(allText, myPos + Len(myVariable) + 1)
+      endPos = InStr(myData, Chr(34)) - 1
+      If endPos >= 0 Then myData = Left(myData, endPos)
+      mainWord = myData
+    End If
+  ' Second variable
+    myVariable = "near1 = "
+    myPos = InStr(LCase(allText), myVariable)
+    If myPos > 0 Then
+      myData = Mid(LCase(allText), myPos + Len(myVariable) + 1)
+      endPos = InStr(myData, Chr(34)) - 1
+      If endPos >= 0 Then myData = Left(myData, endPos)
+      nearWord1 = myData
+    End If
+  ' Third variable
+    myVariable = "near2 = "
+    myPos = InStr(LCase(allText), myVariable)
+    If myPos > 0 Then
+      myData = Mid(allText, myPos + Len(myVariable) + 1)
+      endPos = InStr(myData, Chr(34)) - 1
+      If endPos >= 0 Then myData = Left(myData, endPos)
+      nearWord2 = myData
+    End If
+  ' Fourth (number) variable
+    myVariable = "distance = "
+    myPos = InStr(allText, myVariable)
+    If myPos > 0 Then distance = Val(Mid(allText, myPos + Len(myVariable)))
+  End If
+Next myWnd
+
+nowDoc.Activate
+
+' Is the selection in a field; if so, escape
+numFields = Selection.Range.Fields.count
+If numFields > 0 Then
+  Selection.Range.Fields(numFields).Select
+End If
+Selection.Collapse wdCollapseEnd
+Set rng = ActiveDocument.Content
+Set rng2 = ActiveDocument.Content
+rng.Start = Selection.End
+' Go and find the first occurrence
+With rng.Find
+  .Text = mainWord
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  If LCase(mainWord) = mainWord Then
+    .MatchCase = False
+  Else
+    .MatchCase = True
+  End If
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  Set rng2 = rng.Duplicate
+  rng2.MoveEnd wdWord, distance
+  rng2.MoveStart wdWord, -distance
+  If LCase(nearWord1) = nearWord1 Then
+    wordPos1 = InStr(LCase(rng2), nearWord1)
+  Else
+    wordPos1 = InStr(rng2, nearWord1)
+  End If
+  If LCase(nearWord2) = nearWord2 Then
+    wordPos2 = InStr(LCase(rng2), nearWord2)
+  Else
+    wordPos2 = InStr(rng2, nearWord2)
+  End If
+  found1 = (wordPos1 > 0) Or (nearWord1 = "")
+  found2 = (wordPos2 > 0) Or (nearWord2 = "")
+' If found then select it...
+' ...but if either word is null, don't alter the selection
+  If nearWord1 = "" Then wordPos1 = rng.Start - rng2.Start
+  If nearWord2 = "" Then wordPos2 = rng.Start - rng2.Start
+  If found1 And found2 Then
+    nearWord1Start = rng2.Start + wordPos1
+    nearWord2Start = rng2.Start + wordPos2
+    If nearWord1Start < rng.Start Then rng.Start = nearWord1Start - 1
+    If nearWord2Start < rng.Start Then rng.Start = nearWord2Start - 1
+    nearWord1End = rng2.Start + wordPos1 + Len(nearWord1)
+    nearWord2End = rng2.Start + wordPos2 + Len(nearWord2)
+    If nearWord1End > rng.End Then rng.End = nearWord1End - 1
+    If nearWord2End > rng.End Then rng.End = nearWord2End - 1
+    If rng.Fields.count > 0 Then
+      myTest = LCase(rng.Text)
+      myWdPos1 = InStr(myTest, LCase(nearWord1))
+      myWdPosMain = InStr(myTest, LCase(mainWord))
+      If myWdPos1 > 1 Then
+        rng.Start = rng.Start + myWdPos1 + 1
+      Else
+        If myWdPosMain > 1 Then rng.Start = rng.Start + myWdPosMain + 1
+      End If
+    End If
+    rng.Select
+    Exit Sub
+  End If
+  rng.Find.Execute
+Loop
+Beep
+rng.Select
+End Sub
+
