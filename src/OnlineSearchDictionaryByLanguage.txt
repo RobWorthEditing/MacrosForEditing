@@ -1,33 +1,6 @@
-Sub OnlineSearchDictionaryByLanguage()
-' Version 2022-03-08
-' Adapted by Rob Worth from Fetch macros by Paul Beverley
-    
-' Launches web browser to search online dictionary based on the LanguageID of the selected text
-    
-' To add another language and dictionary find the LanguageID from the link below
-' and add the search url from the dictionary you require
-' then copy one of the ElseIf line pairs from the code below and add it in.
-' List of LanguageID constants at https://docs.microsoft.com/en-us/office/vba/api/word.wdlanguageid
-    
-If Len(Selection) = 1 Then Selection.Expand wdWord
-
-' Chooses dictionary url based on the LanguageID of the selection
-' The default is the OED at lexico.com if no language detected
-If Selection.Range.LanguageID = wdEnglishUS Then
-    dictionaryUrl = "https://www.merriam-webster.com/dictionary/"
-ElseIf Selection.Range.LanguageID = wdEnglishAUS Then
-    dictionaryUrl = "https://www.macquariedictionary.com.au/features/word/search/"
-Else
-    dictionaryUrl = "https://www.lexico.com/definition/"
-End If
-
-searchSelection = Trim(Selection)
-searchSelection = Replace(searchSelection, " ", "+")
-searchSelection = Replace(searchSelection, "&", "%26")
-searchSelection = Replace(searchSelection, ChrW(8217),        '")
-Set newLink = ActiveDocument.Hyperlinks.Add(Anchor:=Selection.Range, _
-    Address:=dictionaryUrl & searchSelection)
-newLink.Follow
-ActiveDocument.Undo
-
-End Sub
+Sub OnlineSearchDictionaryByLanguage()' Version 2022-03-21' Adapted by Rob Worth from Fetch macros by Paul Beverley    ' Launches web browser to search online dictionary based on the LanguageID of the selected text    ' To add another language and dictionary find the LanguageID from the link below' and add the search url from the dictionary you require' then copy one of the ElseIf line pairs from the code below and add it in.' List of LanguageID constants at https://docs.microsoft.com/en-us/office/vba/api/word.wdlanguageid    If Len(Selection) = 1 Then Selection.Expand wdWordmyLanguage = Selection.Range.LanguageID' Chooses dictionary url based on the LanguageID of the selection' The default is the OED at lexico.com if no language detectedSelect Case myLanguage    Case wdEnglishUS        dictionaryUrl = "https://www.merriam-webster.com/dictionary/"    Case wdEnglishAUS        dictionaryUrl = "https://www.macquariedictionary.com.au/features/word/search/"
+    Case wdGerman
+        dictionaryUrl = "https://www.duden.de/suchen/dudenonline/"
+    Case wdAustrian
+        dictionaryUrl = "https://www.duden.de/suchen/dudenonline/"
+    Case Else        dictionaryUrl = "https://www.lexico.com/definition/"End SelectsearchSelection = Trim(Selection)searchSelection = Replace(searchSelection, " ", "+")searchSelection = Replace(searchSelection, "&", "%26")searchSelection = Replace(searchSelection, ChrW(8217), "'")Set newLink = ActiveDocument.Hyperlinks.Add(Anchor:=Selection.Range, _    Address:=dictionaryUrl & searchSelection)newLink.FollowActiveDocument.UndoEnd Sub
