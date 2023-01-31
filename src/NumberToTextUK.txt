@@ -1,6 +1,6 @@
 Sub NumberToTextUK()
-' Paul Beverley - Version 06.04.20
-' Convert next number into text
+' Paul Beverley - Version 24.06.22
+' Converts next number into text
 
 oldFind = Selection.Find.Text
 oldReplace = Selection.Find.Replacement.Text
@@ -10,16 +10,16 @@ Selection.Collapse wdCollapseEnd
 With Selection.Find
   .ClearFormatting
   .Text = "[0-9]{1,6}"
-  .Forward = True
   .Replacement.Text = ""
+  .Forward = True
   .MatchWildcards = True
   .Execute
 End With
 
-startHere = Selection.Start
+startNum = Selection.Start
 
 ' Create a field containing the digits and a special format code
-Selection.Fields.Add range:=Selection.range, _
+Selection.Fields.Add Range:=Selection.Range, _
    Type:=wdFieldEmpty, Text:="= " + Selection + " \* CardText", _
    PreserveFormatting:=True
 
@@ -33,7 +33,7 @@ DoEvents
 Selection.PasteSpecial Link:=False, DataType:=wdPasteText, _
    Placement:=wdInLine, DisplayAsIcon:=False
 
-Selection.Start = startHere
+Selection.Start = startNum
 numWords = Selection
 If Right(numWords, 4) <> "dred" Then numWords = _
      Replace(numWords, "hundred", "hundred and")
@@ -43,12 +43,24 @@ Else
   If Right(numWords, 4) <> "sand" Then numWords = _
        Replace(numWords, "thousand", "thousand and")
 End If
-Selection.TypeText Text:=numWords
+Selection.TypeText numWords
 
 With Selection.Find
   .Text = oldFind
   .Replacement.Text = oldReplace
   .MatchWildcards = False
 End With
+
+Set rng = Selection.Range.Duplicate
+rng.MoveStart , -1
+ch1 = rng.Text
+rng.MoveStart , 1
+rng.MoveEnd , 1
+ch2 = rng.Text
+If (UCase(ch1) <> LCase(ch1)) And (UCase(ch2) <> LCase(ch2)) Then
+  Selection.TypeText Text:=" "
+End If
+Set rng = ActiveDocument.Range(Start:=startNum - 1, End:=startNum)
+If rng.Text <> " " Then rng.InsertBefore Text:=" "
 End Sub
 

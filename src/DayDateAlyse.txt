@@ -1,0 +1,60 @@
+Sub DayDateAlyse()
+' Paul Beverley - Version 10.04.22
+' Lists words out of a proper noun frequency list
+
+myWds = " Mon Tue Tues Wed Weds Thu Thurs Fri Sat Sun X "
+myWds = myWds & " Jan Feb Mar Apr May Jun Jul Aug Sep Sept Oct Nov Dec X "
+myWds = myWds & " January February March April May June "
+myWds = myWds & " July August September October November December "
+
+
+' Main program
+Set rng = ActiveDocument.Content
+myWds = Replace(myWds, "  ", " ")
+myWds = Trim(Replace(myWds, "  ", " "))
+myWds = Replace(myWds, " ", " .,")
+
+wd = Split(myWds, ",")
+
+For i = 0 To UBound(wd)
+  blah = wd(i)
+  With rng.Find
+    .Text = "^13" & wd(i) & "*[0-9]{1,}"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .Execute
+    
+    DoEvents
+    If .Found = True Then
+      wd(i) = Mid(rng.Text, 2)
+    Else
+      wd(i) = Replace(wd(i), " .", "")
+    End If
+  End With
+  DoEvents
+Next i
+
+myResult = ""
+For i = 0 To UBound(wd)
+  If wd(i) = "X" Then wd(i) = ""
+  myResult = myResult & wd(i) & vbCr
+Next i
+Documents.Add
+Selection.TypeText Text:=myResult
+For Each pr In ActiveDocument.Paragraphs
+  txt = pr.Range.Text
+  txt = Left(Right(txt, 2), 1)
+  num = Val(txt)
+  If num = 0 And txt <> "0" Then pr.Range.Font.Color = wdColorGray25
+  DoEvents
+Next pr
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText "DayDate Analysis" & vbCr & vbCr
+Set rng = ActiveDocument.Content.Paragraphs(1).Range
+rng.Style = ActiveDocument.Styles(wdStyleHeading1)
+Beep
+End Sub
+
+
+

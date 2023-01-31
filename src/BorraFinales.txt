@@ -1,0 +1,15 @@
+Sub BorraFinales()
+' FinalCharDelete()
+' Paul Beverley - Version 14.01.21
+' Borra la letra final de una palabra o borra el signo de puntuación si el cursor está justo delante.
+
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+ Selection.MoveEnd, -1
+ DoEvents
+Loop
+Selection.Collapse wdCollapseEnd
+Selection.TypeBackspace
+End Sub
+
+

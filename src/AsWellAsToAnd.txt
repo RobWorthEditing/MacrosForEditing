@@ -1,0 +1,24 @@
+Sub AsWellAsToAnd()
+' Paul Beverley - Version 24.09.22
+' Changes 'as well as' to 'and', and the comma, if necessary
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+rng.Start = Selection.Start
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ", as well as"
+  .Replacement.Text = " and"
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceOne
+  
+  .Text = "as well as"
+  .Replacement.Text = "and"
+  .Forward = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceOne
+End With
+End Sub
+

@@ -1,5 +1,5 @@
 Sub SelectSentence()
-' Paul Beverley - Version 05.02.22
+' Paul Beverley - Version 12.11.22
 ' Selects the current sentence + next sentence right
 
 If Selection.Start = Selection.End Then
@@ -12,6 +12,10 @@ If InStr(rng, vbCr) = 0 Then
   rng.Collapse wdCollapseEnd
   rng.Expand wdSentence
   Selection.End = rng.End
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.Expand wdSentence
+  Selection.Start = rng.Start
 Else
   rng.MoveStart , -1
   If Left(rng, 1) = vbCr Then

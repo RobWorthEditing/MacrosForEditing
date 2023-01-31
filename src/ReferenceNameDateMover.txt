@@ -1,0 +1,137 @@
+Sub ReferenceNameDateMover()
+' Paul Beverley - Version 16.03.22
+' Moves forename/initials to before surname or move year to end
+
+myExtraText = "City, State: Publisher, "
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Set rng = Selection.Range.Duplicate
+  Selection.Collapse wdCollapseStart
+Else
+  GoTo doYear
+End If
+If Val(rng) > 0 Then GoTo doYear
+
+' Find the comma
+Dim wd(10) As String
+Selection.MoveEnd wdWord, 4
+commaPos = InStr(Selection, ", ")
+Selection.MoveStart , commaPos + 1
+Selection.Collapse wdCollapseStart
+Selection.MoveEnd wdWord, 6
+For i = 1 To 6
+  wd(i) = Selection.Range.Words(i)
+  DoEvents
+Next i
+
+deleteFstop = False
+'For i = 1 To 6
+'  Debug.Print wd(i) & "|";
+'  DoEvents
+'Next i
+' Debug.Print vbCr
+For i = 1 To 6
+  Debug.Print wd(i - 1), wd(i)
+  If LCase(wd(i)) = UCase(wd(i)) And wd(i) <> ". " Then Exit For
+  If Len(wd(i - 1)) > 1 And wd(i) = ". " Then
+    deleteFstop = True
+    Exit For
+  End If
+  If wd(i) = ". " And Len(wd(i - 1)) > 1 And Right(wd(i - 1), 1) <> " " Then
+    i = i - 1
+    Exit For
+  End If
+  DoEvents
+Next i
+If i = 7 Then
+  Beep
+  MsgBox ("Can't find where the name ends, sorry")
+  Exit Sub
+End If
+Selection.Collapse wdCollapseStart
+Selection.MoveEnd wdWord, i - 1
+
+needSpace = (Right(Selection, 1) <> " ")
+Selection.Cut
+If deleteFstop = True Then
+  Selection.MoveEnd , 2
+  Selection.Delete
+End If
+rng.Select
+Selection.Collapse wdCollapseStart
+Selection.Paste
+If needSpace Then Selection.TypeText Text:=" "
+
+rng.Collapse wdCollapseEnd
+rng.MoveEnd , 3
+If Right(rng, 3) = ", ," Then rng.Text = ","
+Exit Sub
+
+doYear:
+If Selection.Start = Selection.End Then
+  yrText = rng.Text
+  ' Delete the year text (and full stop)
+  rng.Start = rng.Start - 2
+  rng.End = rng.End + 2
+  If Right(rng.Text, 1) <> "." Then rng.MoveEnd , -1
+  rng.Delete
+
+  ' Find the end of the para
+  rng.Expand wdParagraph
+  rng.Collapse wdCollapseEnd
+  rng.MoveStart , -2
+  rng.MoveEnd , -1
+  ' Add a full stop if necessary
+  If rng.Text <> "." Then
+    rng.Collapse wdCollapseEnd
+    rng.InsertAfter Text:="."
+  End If
+  rng.Collapse wdCollapseStart
+  rng.InsertBefore Text:=" (" & yrText & ")"
+  rng.Collapse wdCollapseEnd
+  rng.Select
+Else
+  Set rng = Selection.Range.Duplicate
+  rng.MoveEnd , -1
+  If InStr(rng.Text, " ") = 0 Then GoTo addCSP
+  ' Is there a ")" at the end?
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseEnd
+  Do
+    rng.MoveStart , -1
+    DoEvents
+  Loop Until Asc(Left(rng.Text, 1)) > 47
+  rng.Collapse wdCollapseStart
+  rng.Expand wdWord
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd , 1
+  If rng.Text <> ")" Then rng.InsertAfter Text:=")"
+  
+  ' Add "(" at the beginning
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.Expand wdWord
+  rng.Collapse wdCollapseStart
+  rng.InsertBefore Text:="("
+  ' Remove "(" from middle
+  Set rng = Selection.Range.Duplicate
+  parenPos = InStr(rng, "(")
+  If parenPos > 0 Then
+    rng.MoveStart , parenPos - 1
+    rng.End = rng.Start + 1
+    rng.Delete
+    rng.MoveStart , -1
+    rng.InsertBefore Text:=","
+  End If
+End If
+Selection.Collapse wdCollapseEnd
+Exit Sub
+
+addCSP:
+Selection.Collapse wdCollapseStart
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+Selection.TypeText Text:=myExtraText
+End Sub
+

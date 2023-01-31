@@ -1,0 +1,33 @@
+Sub HighlightMissingDialoguePunctuation()
+' Paul Beverley - Version 22.09.22
+' Highlights missing dialogue punctuation (from an idea by Katherine Kirk)
+
+myColour = wdYellow
+
+ActiveDocument.TrackRevisions = False
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^$"""
+  .Replacement.Highlight = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  
+  .Replacement.ClearFormatting
+  .Text = "'"
+  .Replacement.Text = "'"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "([a-z]" & ChrW(8217) & "[!a-z])"
+  .Replacement.Highlight = True
+  .Replacement.Text = "\1"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

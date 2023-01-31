@@ -1,0 +1,25 @@
+Sub AbbreviationAdd()
+' Paul Beverley - Version 15.06.22
+' Creates an abbreviation of roughly selected text (in parenthesis)
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+rng.MoveEnd , -1
+rng.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+  rng.MoveEnd , -1
+  DoEvents
+Loop
+Selection.Collapse wdCollapseStart
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+rng.Start = Selection.Start
+myAbbr = ""
+For Each wd In rng.Words
+  myAbbr = myAbbr & UCase(Left(wd, 1))
+Next wd
+rng.Select
+Selection.Collapse wdCollapseEnd
+Selection.TypeText Text:=" (" & myAbbr & ")"
+End Sub
+

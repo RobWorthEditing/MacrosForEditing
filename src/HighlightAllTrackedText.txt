@@ -1,19 +1,43 @@
 Sub HighlightAllTrackedText()
-' Paul Beverley - Version 30.07.21
+' Paul Beverley - Version 15.04.22
 ' Highlights all tracked text
 
+myColour = wdYellow
 ActiveDocument.TrackRevisions = False
 For Each rev In ActiveDocument.Range.Revisions
   Set rng = rev.Range
   rng.Start = rng.Start - 1
   rng.End = rng.End + 1
-  rng.HighlightColorIndex = wdYellow
+  rng.HighlightColorIndex = myColour
   DoEvents
   i = i + 1
   If i Mod 20 = 1 Then rng.Select
 Next rev
+If ActiveDocument.Footnotes.count > 0 Then
+  For Each rev In ActiveDocument.StoryRanges(wdFootnotesStory).Revisions
+    Set rng = rev.Range
+    rng.Start = rng.Start - 1
+    rng.End = rng.End + 1
+    rng.HighlightColorIndex = myColour
+    DoEvents
+    i = i + 1
+    If i Mod 20 = 1 Then rng.Select
+  Next rev
+End If
+  
+If ActiveDocument.Endnotes.count > 0 Then
+  For Each rev In ActiveDocument.StoryRanges(wdEndnotesStory).Revisions
+    Set rng = rev.Range
+    rng.Start = rng.Start - 1
+    rng.End = rng.End + 1
+    rng.HighlightColorIndex = myColour
+    DoEvents
+    i = i + 1
+    If i Mod 20 = 1 Then rng.Select
+  Next rev
+End If
+
 Beep
 Selection.HomeKey Unit:=wdStory
 End Sub
-
 

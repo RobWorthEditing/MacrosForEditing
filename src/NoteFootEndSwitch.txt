@@ -1,0 +1,51 @@
+
+Sub NoteFootEndSwitch()
+' Paul Beverley - Version 22.11.22
+' Switches individual footnote <-> endnote (in note or in text)
+
+If Selection.StoryType = wdFootnotesStory Then
+  Selection.Footnotes.Convert
+  Exit Sub
+End If
+
+If Selection.StoryType = wdEndnotesStory Then
+  Selection.Endnotes.Convert
+  Exit Sub
+End If
+
+'If in main text, find the next foot/endnote marker
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^2"
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+
+If Selection.Find.Found = True Then
+  If Selection.Footnotes.count > 0 Then
+    ActiveDocument.ActiveWindow.View.SeekView = wdSeekFootnotes
+    Selection.Footnotes.Convert
+    rng.Select
+    Exit Sub
+  End If
+  
+  If Selection.Endnotes.count > 0 Then
+    ActiveDocument.ActiveWindow.View.SeekView = wdSeekEndnotes
+    Selection.Endnotes.Convert
+    rng.Select
+    Exit Sub
+  End If
+Else
+  Beep
+End If
+End Sub
+
+

@@ -1,0 +1,113 @@
+Sub HeadingStylesAutomatic()
+' Paul Beverley - Version 13.12.22
+' Automatically adds styles to headings
+
+
+maxWords = 10
+convertAutoLists = False
+removeSectionNumbers = True
+
+ActiveDocument.Paragraphs(1).Range.Style = "Title"
+' nmlSize = ActiveDocument.Styles(wdStyleNormal).Font.Size
+nmlSize = 12
+
+If convertAutoLists = True Then Call AutoListOff
+myBullets = "*-–—•"
+bannedLastChars = ":;-/_"
+allHeads = "abstract, conclusions, discussion, introduction,"
+allHeads = allHeads & "materials and methods, references, results,"
+allHeads = allHeads & "results and discussion, results with discussion"
+
+h1 = "Heading 1"
+h2 = "Heading 2"
+h3 = "Heading 3"
+
+
+allHeads = Replace("," & allHeads & ",", " ", "")
+For i = 2 To ActiveDocument.Paragraphs.count
+  Set pa = ActiveDocument.Paragraphs(i).Range
+  Set rngText = pa.Duplicate
+  rngText.MoveEnd , -1
+'  rngText.Select
+  If rngText.Text > "" Then
+    Do While LCase(rngText.Characters(1)) = UCase(rngText.Characters(1))
+      rngText.MoveStart , 1
+      DoEvents
+    Loop
+    totWords = rngText.Words.count
+    gotNumbers = False
+    myCap = rngText.Characters(1)
+    lastChar = rngText.Characters.Last
+    doThisOne = (myCap = UCase(myCap)) And _
+         (LCase(rngText) <> UCase(rngText)) _
+         And (InStr(bannedLastChars, lastChar) = 0)
+ '        Debug.Print rngText, doThisOne
+         adsfgvsdf = 0
+  Else
+    doThisOne = False
+  End If
+  If Not (totWords > maxWords) And _
+       pa.Information(wdWithInTable) = False And _
+       doThisOne = True Then
+    fstChar = pa.Characters.First
+    fstWord = Trim(pa.Words.First)
+    wd2 = ""
+    wd3 = ""
+    wd4 = ""
+    wd5 = ""
+    If pa.Words.count > 1 Then wd2 = pa.Words(2)
+    If pa.Words.count > 2 Then wd3 = pa.Words(3)
+    If pa.Words.count > 3 Then wd4 = pa.Words(4)
+    If pa.Words.count > 4 Then wd5 = pa.Words(5)
+    ' Try to exclude things that are not headings
+    ' or are *already* Heading styles
+'     Debug.Print pa.Style, (InStr(pa.Style, "Heading") = 0), (InStr(LCase(pa.Style), "list") = 0), (InStr(myBullets, fstChar) = 0)
+    If InStr(pa.Style, "Heading") = 0 And _
+         InStr(LCase(pa.Style), "list") = 0 And _
+         InStr(myBullets, fstChar) = 0 Then
+' Debug.Print fstWord, wd2, wd3, wd4, wd5
+      myText = LCase(Replace(Trim(pa), vbCr, ""))
+      myText = Replace(myText, " ", "")
+      If InStr(allHeads, myText) > 0 Then
+        pa.Style = h1
+      Else
+        ' Add more definitions of heading 1
+        Set rng = pa.Duplicate
+        rng.MoveEnd , -1
+        Debug.Print rng.Text
+        If rng.Font.Size > nmlSize And rng.Font.Bold = True Then pa.Style = h1
+        If rng.Font.Size = nmlSize And rng.Font.Bold = True Then pa.Style = h2
+        If rng.Font.Size = nmlSize And rng.Font.Italic = True Then pa.Style = h3
+        If Val(fstWord) > 0 Then
+          gotNumbers = True
+          If wd2 = "." Then
+            If wd4 = "." Then
+              If Val(wd5) > 0 Then
+                pa.Style = h3
+              Else
+                pa.Style = h2
+              End If
+            Else
+              If Val(wd3) > 0 Then
+                pa.Style = h2
+              Else
+                pa.Style = h1
+              End If
+            End If
+          Else
+            pa.Style = h1
+          End If
+        End If
+      End If
+    End If
+  End If
+  If removeSectionNumbers = True And gotNumbers = True Then
+    rngText.Collapse wdCollapseStart
+    rngText.Start = pa.Start
+    If InStr(rngText, ".") Then rngText.Delete
+  End If
+  DoEvents
+Next i
+Beep
+End Sub
+

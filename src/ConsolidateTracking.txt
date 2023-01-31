@@ -1,10 +1,24 @@
 Sub ConsolidateTracking()
-' Paul Beverley - Version 12.11.14
+' Paul Beverley - Version 24.09.22
 ' Turns split tracking into a single change
 
 If Selection.Start = Selection.End Then
-  Selection.Words(1).Select
-  Selection.MoveEnd , -1
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.Start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Start = startNow
 End If
 Selection.Cut
 Selection.Paste

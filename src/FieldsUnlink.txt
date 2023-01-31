@@ -1,46 +1,45 @@
 Sub FieldsUnlink()
-' Paul Beverley - Version 09.05.19
-' Selective field removal
+' Paul Beverley - Version 30.11.22
+' Unlinks all fields except equations
 
 doubleCheck = False
 
 If doubleCheck = True Then
-  myResponse = MsgBox("Unlink all field except equations?", vbQuestion + vbYesNo)
+  myResponse = MsgBox("Unlink all fields except equations?", vbQuestion + vbYesNo)
   If myResponse = vbNo Then Exit Sub
 End If
 
-myCount = ActiveDocument.Fields.Count
+linksDeleted = 0
 ' Do main text first
-For Each fld In ActiveDocument.Fields
-  If fld.Type <> 58 Then
-    fld.Unlink
-    i = i + 1
-    myCount = myCount - 1
-    StatusBar = "Links:  " & Str(myCount)
+For i = ActiveDocument.Fields.count To 1 Step -1
+  If ActiveDocument.Fields(i).Type <> 58 Then
+    linksDeleted = linksDeleted + 1
+    ActiveDocument.Fields(i).Unlink
+    If i Mod 50 = 0 Then StatusBar = "Links:  " & Str(i)
   End If
-Next fld
+  DoEvents
+Next i
 
 ' Now do the textboxes, if there are any
-If ActiveDocument.Shapes.Count > 0 Then
-  For shp = 1 To ActiveDocument.Shapes.Count
+If ActiveDocument.Shapes.count > 0 Then
+  For shp = 1 To ActiveDocument.Shapes.count
   ' Only check the text box if it has any text in it
     If ActiveDocument.Shapes(shp).Type <> 24 And _
          ActiveDocument.Shapes(shp).Type <> 3 Then
-      If ActiveDocument.Shapes(shp).TextFrame.hasText Then
+      If ActiveDocument.Shapes(shp).TextFrame.HasText Then
         Set rng = ActiveDocument.Shapes(shp).TextFrame.TextRange
         For Each fld In rng.Fields
           If fld.Type <> 58 Then
             fld.Unlink
-            i = i + 1
-            myCount = myCount - 1
-            StatusBar = "Links:  " & Str(myCount)
+            linksDeleted = linksDeleted + 1
           End If
         Next fld
       End If
     End If
   Next shp
+  DoEvents
 End If
 StatusBar = ""
-MsgBox ("Fields unlinked: " & Str(i))
+MsgBox ("Fields unlinked: " & Str(linksDeleted))
 End Sub
 

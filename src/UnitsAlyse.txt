@@ -1,0 +1,100 @@
+
+Sub UnitsAlyse()
+' Paul Beverley - Version 07.03.22
+' Counts the number of items that look like units
+
+allFinds = ""
+Application.ScreenUpdating = False
+On Error GoTo ReportIt
+
+' Collect all, e.g. 42kJ
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[0-9]{1,}[a-zA-Z]{1,}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  Do
+    rng.MoveStart , 1
+    myTest = Left(rng.Text, 1)
+    DoEvents
+  Loop Until LCase(myTest) <> UCase(myTest)
+  allFinds = allFinds & rng.Text & "9" & rng.Text & vbCr
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+
+' Collect all, e.g. 42 kJ
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[0-9]{1,} [a-zA-Z]{1,}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.MoveStart , 1
+  Do
+    rng.MoveStart , 1
+    myTest = Left(rng.Text, 1)
+    DoEvents
+  Loop Until LCase(myTest) <> UCase(myTest)
+  allFinds = allFinds & rng.Text & "9 " & rng.Text & vbCr
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+Documents.Add
+Selection.TypeText Text:=allFinds
+Set rng = ActiveDocument.Content
+
+' Sort into order
+rng.Sort , CaseSensitive:=True
+Application.ScreenUpdating = True
+
+' Count the number of each
+Application.ScreenUpdating = False
+myResults = ""
+myTextWas = ""
+numFinds = 0
+For Each myPara In ActiveDocument.Paragraphs
+  myText = Replace(myPara.Range.Text, vbCr, "")
+  numPos = InStr(myText, "9")
+  If numPos > 0 Then
+    myText = Mid(myText, numPos + 1)
+    If myTextWas = "" Then myTextWas = myText
+    If myText = myTextWas Then
+      numFinds = numFinds + 1
+    Else
+      myResults = myResults & "1" & myTextWas & " . . . " & _
+           Trim(Str(numFinds)) & vbCr
+      myTextWas = myText
+      numFinds = 1
+    End If
+  End If
+  DoEvents
+Next myPara
+Set rng = ActiveDocument.Content
+rng.Delete
+Selection.TypeText Text:=myResults
+Application.ScreenUpdating = False
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+
+

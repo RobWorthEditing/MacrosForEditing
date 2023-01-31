@@ -1,0 +1,99 @@
+Sub CapperMax()
+' Paul Beverley - Version 04.11.22
+' Uppercases initial letter of all major words (title case)
+
+doTrack = True
+
+' If it's mostly capitals, lowercase them all first
+deCapitate = False
+
+' List of lowercase words *not* to be uppercased
+lclist = " a an and as at by for from if in is it into of "
+lclist = lclist & " on or s that the to with "
+
+uppercaseAfterHyphen = False
+' uppercaseAfterHyphen = True
+
+' uppercaseAfterColon = False
+uppercaseAfterColon = True
+
+' Create a range from the selection but whole words
+' or whole paragraph, if nothing was selected
+If Selection.Start = Selection.End Then
+  Set rng = Selection.Range.Duplicate
+  rng.Expand wdParagraph
+Else
+  Set rng = Selection.Range.Duplicate
+  If Right(rng.Text, 1) = vbCr Then rng.MoveEnd , -1
+  rng.Collapse wdCollapseEnd
+  rng.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Collapse wdCollapseStart
+  Selection.Expand wdWord
+  rng.Start = Selection.Start
+End If
+rng.Select
+Selection.Collapse wdCollapseEnd
+hereNow = Selection.End
+
+lclist = " " & lclist & " "
+myTrack = ActiveDocument.TrackRevisions
+If doTrack = False Then ActiveDocument.TrackRevisions = False
+
+If deCapitate = True Then
+  numUC = 0
+  allLine = rng.Text
+  For i = 1 To Len(allLine)
+    ch = Mid(allLine, i, 1)
+    If LCase(ch) <> UCase(ch) And LCase(ch) <> ch Then numUC = numUC + 1
+  Next i
+  If numUC > rng.Characters.count / 2 Then _
+       rng.Text = Left(allLine, 1) & LCase(Mid(allLine, 2))
+  Selection.Start = hereNow
+End If
+numWds = rng.Words.count
+wasChar = ""
+wasWdr = ""
+'  Debug.Print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+'  Debug.Print "wd.Text", "wasChar", "wasWd", "init"
+For i = 1 To numWds
+  Set wd = rng.Words(i)
+  tst = LCase(Trim(wd.Text))
+  init = Left(wd.Text, 1)
+  Debug.Print wd.Text, wasChar, wasWd, init
+  myCap = UCase(init)
+  If InStr(lclist, " " & tst & " ") = 0 And myCap <> init _
+       And init <> ChrW(8216) And init <> ChrW(8220) Then
+    If (wasChar = "-" And uppercaseAfterHyphen = True) _
+         Or (wasChar = ":" And uppercaseAfterColon = True) _
+         Or InStr(":-", wasChar) = 0 Or InStr(wasWd, ":") > 0 _
+         Then wd.Characters(1) = myCap
+  End If
+  ' Fudge to be sure to initial cap after a :
+  If (InStr(wasWd, ":") > 0 And uppercaseAfterColon = True) _
+       Then wd.Characters(1) = myCap
+  DoEvents
+  wasChar = init
+  wasWd = wd.Text
+Next i
+If uppercaseAfterColon = True Then
+  wasChar = ""
+  For i = 1 To numWds
+    Set wd = rng.Words(i)
+    If wd.Text = ": " Then
+      nextWd = rng.Words(i + 1).Text
+      myInit = Left(nextWd, 1)
+      If LCase(myInit) = myInit Then _
+           rng.Words(i + 1).Characters(1).Text = UCase(myInit)
+    End If
+  Next i
+End If
+ActiveDocument.TrackRevisions = myTrack
+myInit = rng.Characters(1)
+If UCase(myInit) <> myInit Then _
+     rng.Characters(1) = UCase(myInit)
+End Sub
+

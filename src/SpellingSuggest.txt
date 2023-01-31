@@ -1,14 +1,15 @@
 Sub SpellingSuggest()
-' Paul Beverley - Version 19.06.21
+' Paul Beverley - Version 06.12.22
 ' Checks/corrects spellings or adds/subtracts FRedit suggested change
 
 If LCase(Selection) = UCase(Selection) Then Selection.MoveLeft , 1
-Selection.Expand wdWord
-Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
-  Selection.MoveEnd , -1
+Set rngWd = Selection.Range.Duplicate
+rngWd.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rngWd.Text, 1)) > 0
+  rngWd.MoveEnd , -1
   DoEvents
 Loop
-myWord = Selection
+myWord = rngWd
 newWord = myWord
 
 ' Check spelling language
@@ -17,9 +18,15 @@ Set rng = ActiveDocument.Content
 rng.End = rng.Start + 1
 langName = Languages(rng.LanguageID).NameLocal
 
+rng.End = ActiveDocument.Content.End
+rng.Start = ActiveDocument.Content.End - 2
+langName1 = Languages(rng.LanguageID).NameLocal
+langName2 = Languages(Selection.LanguageID).NameLocal
+StatusBar = langName & "    " & langName1 & "    " & langName2
+
 Set rng = Selection.Range.Duplicate
 rng.Expand wdParagraph
-wdsInPara = rng.Words.Count
+wdsInPara = rng.Words.count
 myPara = rng
 initChar = Left(myWord, 1)
 lastChar = Right(myWord, 1)
@@ -27,8 +34,7 @@ lastChar = Right(myWord, 1)
 spellOK = Application.CheckSpelling(myWord, MainDictionary:=langName)
 Set suggList = Application.GetSpellingSuggestions(myWord, _
      MainDictionary:=langName)
-
-If suggList.Count > 0 And Not (spellOK) Then _
+If suggList.count > 0 And Not (spellOK) Then _
      newWord = suggList.Item(1).Name
 
 ' If initial letter is a capital keep the capital
@@ -40,18 +46,16 @@ If LCase(lastChar) <> lastChar Then _
      newWord = UCase(newWord)
 
 ' If it's the only word in the para (a FRedit list)
-If wdsInPara < 3 Then
+If wdsInPara < 3 And ActiveDocument.Words.count > 10 Then
   oldWord = Selection.Text
   Selection.Collapse wdCollapseEnd
   If Asc(Selection) = 32 Then
     Selection.MoveEnd , 1
     oldWord = oldWord & "^32"
     newWord = newWord & "^32"
-    Else
-    oldWord = oldWord & ">"
   End If
   Selection.Expand wdParagraph
-  Selection.TypeText "~<" & oldWord & "|" & newWord & CR
+  Selection.TypeText ChrW(172) & oldWord & "|" & newWord & CR
   Selection.MoveRight , 1
   If newWord = myWord Then Beep
 Else
@@ -61,7 +65,7 @@ Else
     Do
     Loop Until Timer > myTime + 0.2
     Beep
-    Selection.TypeText newWord
+    rngWd.Text = newWord
   Else
     spellOK = Application.CheckSpelling(myWord, _
          MainDictionary:=langName)
@@ -74,6 +78,9 @@ Else
         myTime = Timer
         Do
         Loop Until Timer > myTime + 0.2
+        Beep
+        Do
+        Loop Until Timer > myTime + 0.4
         Beep
         If langName = "English (United States)" _
              And Application.CheckSpelling(myWord, _

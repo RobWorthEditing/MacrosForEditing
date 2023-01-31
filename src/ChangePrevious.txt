@@ -5,6 +5,7 @@ Sub ChangePrevious()
 On Error GoTo theEnd
 Do
   Application.Run MacroName:="PreviousChangeOrComment"
+  DoEvents
 Loop While Selection.Information(wdInCommentPane)
 Exit Sub
 

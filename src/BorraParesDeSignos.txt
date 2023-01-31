@@ -1,0 +1,92 @@
+Sub BorraParesDeSignos()
+' Sub ParenthesesEtcPairDelete()
+' Paul Beverley - Version 09.03.21
+' Elimina los pares de paréntesis, comillas, exclamaciones, etc. Para que funcione, el cursor debe estar pegado al primer signo.
+
+numChars = 20
+numWords = 60
+
+op = ""
+cl = ""
+
+If Selection.Start = Selection.End Then Selection.End = Selection.Start + numChars
+
+If op = "" And InStr(Selection, """") > 0 Then
+ op = """"
+ cl = """"
+End If
+
+If op = "" And InStr(Selection, "[") > 0 Then
+ op = "["
+ cl = "]"
+End If
+
+If op = "" And InStr(Selection, "{") > 0 Then
+ op = "{"
+ cl = "}"
+End If
+
+If op = "" And InStr(Selection, "<") > 0 Then
+ op = "<"
+ cl = ">"
+End If
+
+If op = "" And InStr(Selection, "(") > 0 Then
+ op = "("
+ cl = ")"
+End If
+
+If op = "" And InStr(Selection, ChrW(8220)) > 0 Then
+ op = ChrW(8220)
+ cl = ChrW(8221)
+End If
+
+If op = "" And InStr(Selection, ChrW(8216)) > 0 Then
+ op = ChrW(8216)
+ cl = ChrW(8217)
+End If
+
+If op = "" And InStr(Selection, ",") > 0 Then
+ op = ","
+ cl = ","
+End If
+
+If op = "" And InStr(Selection, """) > 0 Then
+ op = """
+ cl = """
+End If
+
+If op = "" And InStr(Selection, "¡") > 0 Then
+ op = "¡"
+ cl = "!"
+End If
+
+If op = "" And InStr(Selection, "¿") > 0 Then
+ op = "¿"
+ cl = "?"
+End If
+
+If cl = "" Then
+ Beep
+ MsgBox "Acerca el cursor al signo que quieras eliminar."
+ Exit Sub
+End If
+Selection.Collapse wdCollapseStart
+Selection.MoveEnd wdWord, numWords
+If InStr(Selection, cl) = 0 Then
+ Beep
+ Exit Sub
+End If
+Selection.Collapse wdCollapseStart
+
+Selection.MoveEndUntil cset:=op, Count:=wdForward
+Selection.Collapse wdCollapseEnd
+Selection.MoveEnd, 1
+Selection.Delete
+Selection.MoveEndUntil cset:=cl, Count:=wdForward
+Selection.Collapse wdCollapseEnd
+Selection.MoveEnd, 1
+Selection.Delete
+End Sub
+
+

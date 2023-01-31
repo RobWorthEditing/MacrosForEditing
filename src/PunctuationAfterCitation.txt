@@ -1,0 +1,21 @@
+Sub PunctuationAfterCitation()
+' Paul Beverley - Version 17.10.22
+' Moves the next punctuation mark to after the citation
+
+Selection.Collapse wdCollapseStart
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+rng.Start = Selection.Start
+paraEnd = rng.End
+periodPos = InStr(rng, ".")
+rng.MoveStart , periodPos - 1
+rng.End = rng.Start + 1
+rng.Cut
+rng.End = paraEnd
+closeParenPos = InStr(rng, ")")
+rng.MoveStart , closeParenPos
+rng.Collapse wdCollapseStart
+rng.Select
+Selection.Paste
+End Sub
+

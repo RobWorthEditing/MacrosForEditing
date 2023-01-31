@@ -1,5 +1,5 @@
 Sub NotesCopyToInline()
-' Paul Beverley - Version 24.11.20
+' Paul Beverley - Version 18.01.23
 ' Copies notes into inline notes in brackets
 
 ' Guillemets
@@ -15,51 +15,39 @@ Sub NotesCopyToInline()
 myOpen = "<"
 myClose = ">"
 
-Selection.HomeKey Unit:=wdStory
-With Selection.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "^2"
-  .Wrap = wdFindContinue
-  .Replacement.Text = ""
-  .Forward = True
-  .MatchWildcards = True
-  .MatchWholeWord = False
-  .MatchSoundsLike = False
-  .Execute
-End With
-If ActiveDocument.Endnotes.Count > 0 Then
-  For i = 1 To ActiveDocument.Endnotes.Count
-    Set en = ActiveDocument.Endnotes(i).Range
-    Selection.Collapse wdCollapseEnd
-    myStart = Selection.Start + 1
-    Selection.TypeText Text:=myOpen & myClose
-    Selection.MoveLeft , 1
-    en.Copy
-    Selection.Paste
-    Selection.Start = myStart
-    Selection.Range.Font.ColorIndex = wdBlue
-    Selection.Collapse wdCollapseEnd
-    Selection.Find.Execute
-    DoEvents
-  Next i
-End If
+' If Word throws up and error 4605 about pasting
+' increase the delay value to, say, 1000
+myDelay = 500
 
-If ActiveDocument.Footnotes.Count > 0 Then
-  For i = 1 To ActiveDocument.Footnotes.Count
-    Set fn = ActiveDocument.Footnotes(i).Range
-    Selection.Collapse wdCollapseEnd
-    myStart = Selection.Start + 1
-    Selection.TypeText Text:=myOpen & myClose
-    Selection.MoveLeft , 1
-    fn.Copy
-    Selection.Paste
-    Selection.Start = myStart
-    Selection.Range.Font.ColorIndex = wdBlue
-    Selection.Collapse wdCollapseEnd
-    Selection.Find.Execute
-    DoEvents
-  Next i
+If ActiveDocument.Endnotes.count > 0 Then
+  For Each myNote In ActiveDocument.Endnotes
+    myNote.Range.Copy
+    myEnd = myNote.Footnotes(1).Reference.End
+    Set rng = ActiveDocument.Range(myEnd, myEnd)
+    rng.InsertAfter Text:=myClose
+    rng.Collapse wdCollapseStart
+    For i = 1 To myDelay
+      DoEvents
+    Next i
+    rng.Paste
+    rng.Collapse wdCollapseStart
+    rng.InsertAfter Text:=myOpen
+  Next myNote
+End If
+If ActiveDocument.Footnotes.count > 0 Then
+  For Each myNote In ActiveDocument.Footnotes
+    myNote.Range.Copy
+    myEnd = myNote.Reference.End
+    Set rng = ActiveDocument.Range(myEnd, myEnd)
+    rng.InsertAfter Text:=myClose
+    rng.Collapse wdCollapseStart
+    For i = 1 To myDelay
+      DoEvents
+    Next i
+    rng.Paste
+    rng.Collapse wdCollapseStart
+    rng.InsertAfter Text:=myOpen
+  Next myNote
 End If
 End Sub
 

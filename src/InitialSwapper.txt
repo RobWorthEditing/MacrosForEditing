@@ -1,47 +1,56 @@
 Sub InitialSwapper()
-' Paul Beverley - Version 16.01.21
-' Swaps initials and surname
+' Paul Beverley - Version 06.06.22
+' Swaps initials and surname (P.E. Beverley -> Beverley, P.E.)
 
-commaAtEnd = False
+' Expand selection to single or whole words
+myStart = Selection.Start - 1
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 1
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Selection.Start = myStart
+Selection.MoveStart wdWord, -1
 
-Selection.Collapse wdCollapseStart
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[A-Z.^32\-]{1,}"
+  .Forward = False
+  .MatchWildcards = True
+  .Execute
+  DoEvents
+End With
 
-' Find end of surname
-Selection.MoveEndUntil cset:=" ", Count:=wdForward
-Selection.Start = Selection.End - 1
-If Selection = "," Then Selection.MoveEnd , -1
-surnameEnd = Selection.End
-Selection.MoveStartUntil cset:=" ", Count:=wdBackward
-If commaAtEnd Then Selection.MoveEnd , -1
-mySurname = Selection
-lenSurname = Len(Selection)
-endInitials = Selection.Start - 1
-foundEnd = False
-Do
-  startInitials = Selection.Start
-  Selection.MoveLeft wdWord, 1
-  Selection.End = startInitials
-  Debug.Print Selection & "|"
-  If Selection = "and " Then foundEnd = True
-  If Selection = "& " Then foundEnd = True
-  If Selection = ", " Then foundEnd = True
-  If Selection = "., " Then foundEnd = True
-  If Len(Selection) > 3 Then
-    foundEnd = True
-    Do While InStr(" ", Left(Selection.Text, 1)) = 0
-      Selection.MoveStart , 1
-      DoEvents
-    Loop
-    startInitials = Selection.Start + 1
-  End If
+If Left(rng.Text, 1) = " " Then rng.MoveStart , 1
+rng.Cut
+Selection.Collapse wdCollapseEnd
+Selection.MoveEnd , 1
+If Selection = "," Then
+  Selection.Collapse wdCollapseEnd
+Else
   Selection.Collapse wdCollapseStart
-Loop Until foundEnd
-Selection.End = endInitials
-Selection.Start = startInitials
-myInitials = Selection
-Selection.End = surnameEnd
-myNewName = mySurname & ", " & myInitials
-' If commaAtEnd Then myNewName = myNewName & ","
-Selection.TypeText Text:=mySurname & ", " & myInitials
+  Selection.TypeText Text:=","
+End If
+Selection.TypeText Text:=" "
+Selection.Paste
+Set rng = Selection.Range.Duplicate
+rng.MoveStart , -1
+rng.MoveEnd , 1
+If rng.Text = "  " Then rng.Text = " "
+
+' Dummy find to reset the Find parameters
+With rng.Find
+  .Text = " "
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
 End Sub
 

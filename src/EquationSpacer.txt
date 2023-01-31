@@ -1,14 +1,17 @@
 Sub EquationSpacer()
-' Paul Beverley - Version 10.02.17
+' Paul Beverley - Version 06.12.22
 ' Adds spaces either side of equations that butt up to some text
+
+myEEColour = wdYellow
+doHighlight = True
 
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
-numMaths = ActiveDocument.InlineShapes.Count
+numMaths = ActiveDocument.InlineShapes.count
 If numMaths > 0 = True Then
   For Each myMath In ActiveDocument.InlineShapes
-    Set rng = myMath.range.Duplicate
-    myColour = myMath.range.HighlightColorIndex
+    Set rng = myMath.Range.Duplicate
+    myColour = myMath.Range.HighlightColorIndex
     myEnd = rng.End
     myStart = rng.Start
     rng.Start = myEnd
@@ -20,7 +23,7 @@ If numMaths > 0 = True Then
       rng.Font.Color = wdColorPink
       rng.Start = rng.Start - 1
       rng.HighlightColorIndex = wdNoHighlight
-      myMath.range.HighlightColorIndex = myColour
+      myMath.Range.HighlightColorIndex = myColour
       spacesAdded = spacesAdded + 1
     End If
     rng.Start = myStart - 1
@@ -34,7 +37,33 @@ If numMaths > 0 = True Then
     End If
   Next myMath
 End If
-MsgBox spacesAdded & " spaces added to MathType equations"
+numEqns = ActiveDocument.OMaths.count
+eeSpacesAdded = 0
+If numEqns > 0 Then
+  Set rng = ActiveDocument.Content
+  For Each myMath In ActiveDocument.OMaths
+    Set rngMath = myMath.Range.Duplicate
+    rng.End = rngMath.Start
+    rng.Start = rng.End - 1
+    If LCase(rng) <> UCase(rng) Then
+      rng.Text = rng.Text & " "
+      If doHighlight = True Then rng.HighlightColorIndex = myEEColour
+      eeSpacesAdded = eeSpacesAdded + 1
+    End If
+    rng.End = rngMath.End + 1
+    rng.Start = rng.End - 1
+    If LCase(rng) <> UCase(rng) Then
+      rng.Text = " " & rng.Text
+      If doHighlight = True Then rng.HighlightColorIndex = myEEColour
+      eeSpacesAdded = eeSpacesAdded + 1
+    End If
+    DoEvents
+  Next myMath
+End If
 ActiveDocument.TrackRevisions = myTrack
+myMsg = vbCr
+If spacesAdded > 0 Then myMsg = spacesAdded & " spaces added to MathType equations" & vbCr & myMsg
+If eeSpacesAdded > 0 Then myMsg = eeSpacesAdded & " spaces added to Equation Editor equations" & vbCr & myMsg
+MsgBox myMsg
 End Sub
 

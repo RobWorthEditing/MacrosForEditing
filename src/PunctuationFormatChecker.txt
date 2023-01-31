@@ -1,5 +1,5 @@
 Sub PunctuationFormatChecker()
-' Paul Beverley - Version 06.08.15
+' Paul Beverley - Version 28.11.22
 ' Variously highlight italic/roman punctuation
 
 markAllItalicCommas = True
@@ -16,6 +16,8 @@ romanColonColour = wdRed
 mainPunctuationColour = wdBrightGreen
 
 markCommas = True
+markPeriods = True
+markFullStops = True
 markColons = True
 markSemicolons = True
 markParens = True
@@ -28,6 +30,7 @@ markDoubleQuotes = True
 p = ""
 If markCommas = True Then p = p & ","
 If markColons = True Then p = p & "\:"
+If markPeriods = True Or markFullStops = True Then p = p & "."
 If markSemicolons = True Then p = p & "\;"
 If markParens = True Then p = p & "\(\)"
 If markQMs = True Then p = p & "\?"
@@ -64,7 +67,7 @@ With rng.Find
   .Replacement.ClearFormatting
   .Text = myFind
   .Font.Italic = True
-  .Wrap = False
+  .Wrap = wdFindStop
   .Replacement.Text = ""
   .Forward = True
   .MatchWildcards = True
@@ -109,6 +112,7 @@ Do While rng.Find.Found = True
   End If
   rng.Collapse wdCollapseEnd
   rng.Find.Execute
+  DoEvents
 Loop
 
 ' Check bold punctuation
@@ -119,7 +123,7 @@ With rng.Find
   .Replacement.ClearFormatting
   .Text = myFind
   .Font.Bold = True
-  .Wrap = False
+  .Wrap = wdFindStop
   .Replacement.Text = ""
   .Forward = True
   .MatchWildcards = True
@@ -148,6 +152,7 @@ Do While rng.Find.Found = True
     rng2.MoveEnd , 1
     isAlpha = UCase(Right(rng2, 1)) <> LCase(Right(rng2, 1))
     isNumber = (InStr(allNumbers, Right(rng2, 1)) > 0)
+    DoEvents
   Loop Until isAlpha Or isNumber
 
   postBold = rng2.Font.Bold
@@ -164,25 +169,26 @@ Do While rng.Find.Found = True
   End If
   rng.Collapse wdCollapseEnd
   rng.Find.Execute
+  DoEvents
 Loop
 myMsg = "Finished!"
 
 ' Check headword colons
 If markBoldHeadwordColons Or markRomanHeadwordColons Then
-  For Each myPara In ActiveDocument.Paragraphs
-    i = myPara.Range.Words.Count
-    Set rng = myPara.Range.Words(1)
+  For Each myPar In ActiveDocument.Paragraphs
+    i = myPar.Range.Words.count
+    Set rng = myPar.Range.Words(1)
     firstBold = rng.Font.Bold
-    Set rng = myPara.Range.Words(i)
+    Set rng = myPar.Range.Words(i)
     lastBold = rng.Font.Bold
     If firstBold And Not (lastBold) Then
-      colonPos = InStr(myPara, ":")
-      If colonPos > 0 And colonPos < Len(myPara) - 6 Then
-        Set rng = myPara.Range.Characters(colonPos)
+      colonPos = InStr(myPar, ":")
+      If colonPos > 0 And colonPos < Len(myPar) - 6 Then
+        Set rng = myPar.Range.Characters(colonPos)
         colonBold = rng.Font.Bold
-        Set rng2 = myPara.Range.Characters(colonPos - 1)
+        Set rng2 = myPar.Range.Characters(colonPos - 1)
         previousBold = rng2.Font.Bold
-        Set rng2 = myPara.Range.Characters(colonPos + 3)
+        Set rng2 = myPar.Range.Characters(colonPos + 3)
         followingBold = rng2.Font.Bold
         rng.MoveStart , -1
         rng.MoveEnd , 2
@@ -199,20 +205,21 @@ If markBoldHeadwordColons Or markRomanHeadwordColons Then
         End If
       End If
     End If
-  Next myPara
+    DoEvents
+  Next myPar
 
 ' Prepare prompt
   Select Case boldColonColour
-    Case wdYellow: boldColour = "Yellow"
-    Case wdRed: boldColour = "Red"
-    Case wdTurquoise: boldColour = "Turquoise"
-    Case wdBrightGreen: boldColour = "Bright green"
-    Case wdGreen: boldColour = "Green"
-    Case wdGray25: boldColour = "Light grey"
-    Case wdGray50: boldColour = "Dark grey"
-    Case wdDarkYellow: boldColour = "Dark yellow"
-    Case wdPink: boldColour = "Pink"
-    Case Else: boldColour = "Unknown colour"
+    Case wdYellow: BoldColour = "Yellow"
+    Case wdRed: BoldColour = "Red"
+    Case wdTurquoise: BoldColour = "Turquoise"
+    Case wdBrightGreen: BoldColour = "Bright green"
+    Case wdGreen: BoldColour = "Green"
+    Case wdGray25: BoldColour = "Light grey"
+    Case wdGray50: BoldColour = "Dark grey"
+    Case wdDarkYellow: BoldColour = "Dark yellow"
+    Case wdPink: BoldColour = "Pink"
+    Case Else: BoldColour = "Unknown colour"
   End Select
   Select Case romanColonColour
     Case wdYellow: romanColour = "Yellow"
@@ -228,7 +235,7 @@ If markBoldHeadwordColons Or markRomanHeadwordColons Then
   End Select
   myMsg = myMsg & vbCr & vbCr
   If markBoldHeadwordColons Then
-    myMsg = myMsg & boldColour & " = bold " & vbCr
+    myMsg = myMsg & BoldColour & " = bold " & vbCr
   End If
   If markRomanHeadwordColons Then
     myMsg = myMsg & romanColour & " = roman " & vbCr

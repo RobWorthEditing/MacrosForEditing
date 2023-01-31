@@ -1,24 +1,41 @@
 Sub SingleQuotesDoubleTopical()
-' Paul Beverley - Version 19.11.19
-' Changes double quotes around current text to singles
+' Paul Beverley - Version 14.01.23
+' Changes single quotes around current text to doubles
 
-myRange = 60
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8216)
+  .Wrap = wdFindContinue
+  .Forward = False
+  .Replacement.Text = ChrW(8220)
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceOne
+  DoEvents
+End With
 
-Selection.MoveStartUntil cset:=ChrW(8216) & "'", Count:=wdBackward
-If Len(Selection) > myRange Then
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8217) & "[!a-zA-Z]"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute
+  DoEvents
+End With
+If rng.Find.Found Then
+  rng.MoveEnd , -1
+  rng.Text = ChrW(8221)
+  rng.Collapse wdCollapseEnd
+  rng.Select
+Else
   Beep
-  Exit Sub
 End If
-Selection.Collapse wdCollapseStart
-Selection.MoveStart , -1
-Selection.TypeText Text:=ChrW(8220)
-Selection.MoveEndUntil cset:=ChrW(8217) & "'", Count:=wdForward
-If Len(Selection) > myRange Then
-  Beep
-  Exit Sub
-End If
-Selection.Collapse wdCollapseEnd
-Selection.MoveEnd , 1
-Selection.TypeText Text:=ChrW(8221)
 End Sub
 

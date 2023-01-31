@@ -1,0 +1,55 @@
+Sub WelcheKorrigiere()
+' Paul Beverley - Version 02.08.22
+' Finds "welche" after a comma and corrects it
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ",[ acdhifmrtuü]{1,}welch[emnrs]{1,2}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+' Note where the end of the found item is
+  endNow = rng.End
+  rng.MoveStart , 2
+  rng.Select
+  Select Case rng.Text
+    Case "welcher": rng.Text = "der"
+    Case "auf welcher": rng.MoveStart , 4: rng.Text = "der"
+    Case "mit welcher": rng.MoveStart , 4: rng.Text = "der"
+    Case "welches": rng.Text = "das"
+    Case "auf welches": rng.MoveStart , 4: rng.Text = "das"
+    Case "durch welches": rng.MoveStart , 6: rng.Text = "das"
+    Case "für welches": rng.MoveStart , 4: rng.Text = "das"
+    Case "welchen": rng.Text = "denen"
+    Case "auf welchen": rng.MoveStart , 4: rng.Text = "den"
+    Case "mit welchen": rng.MoveStart , 4: rng.Text = "denen"
+    Case "durch welchen": rng.MoveStart , 6: rng.Text = "den"
+    Case "für welchen": rng.MoveStart , 4: rng.Text = "den"
+    Case "welchem": rng.Text = "dem"
+    Case "auf welchem": rng.MoveStart , 4: rng.Text = "dem"
+    Case "mit welchem": rng.MoveStart , 4: rng.Text = "dem"
+    Case "welche": rng.Text = "die"
+    Case "auf welche": rng.MoveStart , 4: rng.Text = "die"
+    Case "durch welche": rng.MoveStart , 6: rng.Text = "die"
+    Case "für welche": rng.MoveStart , 4: rng.Text = "die"
+  End Select
+  rng.Start = endNow
+  rng.End = endNow
+  rng.Find.Execute
+  DoEvents
+Loop
+MsgBox "Changed: " & myCount
+End Sub
+
+
+

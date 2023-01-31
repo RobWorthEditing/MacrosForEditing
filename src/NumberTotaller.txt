@@ -1,0 +1,61 @@
+Sub NumberTotaller()
+' Paul Beverley - Version 30.11.22
+' Sums the numbers within the selected text (or checks the sum)
+
+myError = 0.0001
+
+If Selection.Start = Selection.End Then
+  Beep
+  myResponse = MsgBox("Please select an area of text", _
+     vbExclamation, "NumberTotaller")
+  Exit Sub
+End If
+Set rng = Selection.Range.Duplicate
+myEnd = rng.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9,.]{1,}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+allNumText = ""
+Do While rng.Find.Found = True
+  If InStr(",.", rng.Characters.Last) > 0 Then rng.MoveEnd , -1
+  If rng.End <> rng.Start Then
+    allNumText = allNumText & "!" & rng.Text
+  Else
+    rng.MoveStart , 1
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.End = myEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+
+allNumText = Replace(allNumText, ",", "")
+myNum = Split(allNumText, "!")
+numCount = UBound(myNum)
+fstNum = Val(myNum(1))
+lastNum = Val(myNum(numCount))
+For i = 1 To UBound(myNum)
+  myTot = myTot + Val(myNum(i))
+Next i
+Beep
+If Abs(myTot - 2 * fstNum) < myError Or _
+     Abs(myTot - 2 * lastNum) < myError Then
+Else
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+  myResponse = MsgBox("Total = " & Str(myTot), vbOKOnly, "NumberTotaller")
+End If
+End Sub
+

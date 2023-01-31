@@ -1,0 +1,359 @@
+Sub MultiSearchUp()
+' Paul Beverley - Version 28.05.22
+' Searches for a set of words in proximity
+
+myRange = 15
+
+searchUp = True
+
+Dim freq(8) As Integer
+CR = vbCr: CR2 = CR & CR
+Application.ScreenUpdating = False
+On Error GoTo ReportIt
+
+restart:
+Set rng = Selection.Range.Duplicate
+If rng.Start = rng.End Then rng.Expand wdParagraph
+DoEvents
+posPlus = InStr(rng, "+")
+If posPlus > 1 And rng.Words.count < 20 Then
+  myTest = Mid(rng, posPlus - 1, 3)
+  If LCase(myTest) <> UCase(myTest) Then
+    pbMultiSearch = Replace(rng.Text, vbCr, "")
+    Beep
+    myTime = Timer
+    Do
+    Loop Until Timer > myTime + 0.2
+    Beep
+    Exit Sub
+  End If
+End If
+posOR = InStr(rng, "_")
+If posOR > 1 And rng.Words.count < 20 Then
+  myTest = Mid(rng, posOR - 1, 3)
+  If LCase(myTest) <> UCase(myTest) Then
+    If Right(pbMultiSearch, 1) = "_" And _
+         LCase(theMultiSearch) = theMultiSearch Then
+      Beep
+      myResponse = MsgBox("Your criterion is all lowercase." _
+           & CR2 & "Only capital letters are case-checked.", vbOKOnly, "MultiSearch")
+      Exit Sub
+    End If
+    pbMultiSearch = Replace(rng.Text, vbCr, "")
+    Beep
+    myTime = Timer
+    Do
+    Loop Until Timer > myTime + 0.2
+    Beep
+    Exit Sub
+  End If
+End If
+
+' Check for a null search criterion
+If pbMultiSearch = "" Then
+  Beep
+  Application.ScreenUpdating = True
+  Call MultiSearchLoader
+  Exit Sub
+End If
+theMultiSearch = pbMultiSearch
+If Right(pbMultiSearch, 1) = "_" Then
+  theMultiSearch = Left(pbMultiSearch, Len(pbMultiSearch) - 1)
+  checkCaps = True
+  If LCase(theMultiSearch) = theMultiSearch Then
+    Beep
+    myResponse = MsgBox("Your criterion is all lowercase." _
+       & CR2 & "Only capital letters are case-checked.", vbOKOnly, "pbMultiSearch")
+  End If
+Else
+  checkCaps = False
+End If
+' Search for the words
+sch = Split("+" & theMultiSearch, "+")
+numSch = UBound(sch)
+
+inText = True
+If rng.Information(wdInEndnote) = True Then
+  Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  inText = False
+End If
+If rng.Information(wdInFootnote) = True Then
+  Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+  inText = False
+End If
+If inText = True Then Set rng = ActiveDocument.Content
+
+If searchUp = True Then
+  rng.End = Selection.Start
+  allTextToEnd = LCase(rng.Text)
+  totLen = Len(allTextToEnd)
+Else
+  rng.Start = Selection.End
+  allTextToEnd = LCase(rng.Text)
+  totLen = Len(allTextToEnd)
+End If
+gottaSingle = False
+doSch = 1
+lowestFreq = 99999
+numORs = 0
+For i = 1 To numSch
+  sc = LCase(sch(i))
+  freq(i) = Len(Replace(allTextToEnd, sc, sc & "!")) - totLen
+  If InStr(sc, "_") = 0 Then
+    gottaSingle = True
+    If freq(i) = 0 Then
+      Beep
+      Application.ScreenUpdating = True
+      Exit Sub
+    End If
+    If freq(i) <= lowestFreq Then lowestFreq = freq(i): doSch = i
+  Else
+    numORs = numORs + 1
+    If numORs > 1 Then
+      Beep
+      Application.ScreenUpdating = True
+      myResponse = MsgBox("Sorry, the search criterion is too complex:" _
+          & CR2 & pbMultiSearch, vbOKOnly, "MultiSearch")
+      Exit Sub
+    End If
+  End If
+  DoEvents
+Next i
+
+mySearch = sch(doSch)
+inText = True
+If rng.Information(wdInEndnote) = True Then
+  Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  inText = False
+End If
+If rng.Information(wdInFootnote) = True Then
+  Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+  inText = False
+End If
+If inText = True Then Set rng = ActiveDocument.Content
+If searchUp = True Then
+  rng.End = Selection.Start
+Else
+  rng.Start = Selection.End
+End If
+
+selStartNow = Selection.Start
+selEndNow = Selection.End
+veryEnd = rng.End
+' Search just as an 'OR' function
+If gottaSingle = False Then
+  schOR = Split("_" & theMultiSearch, "_")
+  numSchOR = UBound(schOR)
+  If searchUp = True Then
+    bestFind = 0
+    bestFindWas = 0
+  Else
+    bestFind = veryEnd
+    bestFindWas = veryEnd
+  End If
+  For i = 1 To numSchOR
+    Set rng2 = rng.Duplicate
+    gotOne = False
+    Do While gotOne = False
+      gotOne = True
+      With rng2.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = schOR(i)
+        .Wrap = wdFindStop
+        .Replacement.Text = ""
+        If searchUp = True Then
+          .Forward = False
+        Else
+          .Forward = True
+        End If
+        .MatchWildcards = False
+        .MatchCase = False
+        .MatchWholeWord = False
+        .Execute
+      End With
+      If checkCaps = True Then
+        For k = 1 To Len(schOR(i))
+          c = Mid(schOR(i), k, 1)
+          If UCase(c) = c Then
+            If c <> Mid(rng2.Text, k, 1) Then gotOne = False _
+                 : Exit For
+          End If
+        Next k
+      End If
+      DoEvents
+    Loop
+    If gotOne = True Then
+      If searchUp = True Then
+        If rng2.Start > bestFind Then
+          bestFind = rng2.Start
+          nearestItem = i
+          nearestItemStart = rng2.Start
+        End If
+      Else
+        If rng2.Start < bestFind Then
+          bestFind = rng2.Start
+          nearestItem = i
+          nearestItemStart = rng2.Start
+        End If
+      End If
+    End If
+  Next i
+  If bestFind = bestFindWas Then
+    Beep
+  Else
+    Selection.Start = nearestItemStart
+    Selection.End = Selection.Start + Len(schOR(nearestItem))
+  End If
+  Application.ScreenUpdating = True
+  Set rng = Selection.Range.Duplicate
+  Selection.Collapse wdCollapseEnd
+  rng.Select
+  Exit Sub
+Else
+' Search using the least common 'AND' item
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = mySearch
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    If searchUp = True Then
+      .Forward = False
+    Else
+      .Forward = True
+    End If
+    .MatchWildcards = False
+    .MatchCase = False
+    .MatchWholeWord = False
+    .Execute
+    DoEvents
+  End With
+  Do While rng.Find.Found = True
+    rng.MoveStart wdWord, -myRange
+    rng.MoveEnd wdWord, myRange
+    thisText = rng.Text
+    deffoGood = True
+    ' Check each of the AND items,
+    ' e.g. (Smith_Brown)+(2004)+(et al)
+    For i = 1 To numSch
+      sc = sch(i)
+      If InStr(sc, "_") = 0 Then
+      ' This is an AND item
+        If checkCaps = False Then
+          If InStr(LCase(thisText), LCase(sch(i))) = 0 Then
+            deffoGood = False
+            Exit For
+          End If
+        Else
+        ' Where is this item in the selected text?
+          myPos = InStr(LCase(thisText), LCase(sch(i)))
+          For k = 1 To Len(sch(i))
+            c = Mid(sch(i), k, 1)
+            If UCase(c) = c And myPos + k > 1 Then
+            ' If the capital letter isn't capital in the text
+            ' then it's a no-no
+              If c <> Mid(thisText, myPos + k - 1, 1) Then
+                deffoGood = False
+                Exit For
+              End If
+            End If
+          Next k
+        End If
+      Else
+      ' This is an OR item, e.g. "Smith_Brown"
+        gotOne = False
+        wd = Split("_" & sch(i), "_")
+        numWds = UBound(wd)
+        For j = 1 To numWds
+          If checkCaps = False Then
+            If InStr(LCase(thisText), LCase(wd(j))) > 0 Then
+              gotOne = True
+              Exit For
+            End If
+          Else
+          ' Check the caps match
+            myPos = InStr(LCase(thisText), LCase(wd(j)))
+            If myPos > 0 Then
+              gotOne = True
+              For k = 1 To Len(wd(j))
+                c = Mid(wd(j), k, 1)
+                If UCase(c) = c And myPos + k > 1 Then
+                  If c <> Mid(thisText, myPos + k - 1, 1) Then
+                    gotOne = False
+                    Exit For
+                  End If
+                End If
+              Next k
+            End If
+          End If
+        Next j
+        If gotOne = False Then deffoGood = False
+      End If
+    Next i
+    If deffoGood = True Then
+    ' Now decide what extent of the text to display selected
+      mk = Split("_" & Replace(LCase(theMultiSearch), "+", "_"), "_")
+      numWds = UBound(mk)
+      allText = LCase(rng)
+      firstChar = Len(rng)
+      lastChar = 0
+      For j = 1 To numWds
+        myLeft = InStr(allText, LCase(mk(j)))
+        myRight = 0
+        If myLeft > 0 Then
+          myRight = myLeft + Len(mk(j))
+          If myLeft < firstChar Then firstChar = myLeft
+          If myRight > lastChar Then lastChar = myRight
+        End If
+        DoEvents
+      Next j
+      rng.End = rng.Start + lastChar - 1
+      rng.MoveStart , firstChar - 1
+      rng.Select
+      If selStartNow = Selection.Start _
+           And selEndNow = Selection.End Then
+        If searchUp = True Then
+          Selection.Collapse wdCollapseStart
+          Selection.MoveEnd wdWord, -myRange - 1
+        Else
+          Selection.Collapse wdCollapseEnd
+          Selection.MoveStart wdWord, myRange + 1
+        End If
+        GoTo restart
+      End If
+      Exit Sub
+    End If
+    If searchUp = True Then
+      rng.Collapse wdCollapseStart
+    Else
+      rng.Collapse wdCollapseEnd
+    End If
+    wasStart = rng.Start
+    rng.Find.Execute
+    DoEvents
+    If rng.Start = wasStart Then
+      If searchUp = True Then
+        rng.MoveStart wdWord, -1
+        rng.Collapse wdCollapseStart
+      Else
+        rng.MoveEnd wdWord, 1
+        rng.Collapse wdCollapseEnd
+      End If
+      rng.Collapse wdCollapseEnd
+      rng.Find.Execute
+      DoEvents
+    End If
+    lastTimeStart = rng.Start
+  Loop
+End If
+Beep
+Application.ScreenUpdating = True
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+

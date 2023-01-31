@@ -1,0 +1,16 @@
+Sub SentenceReverse()
+' Paul Beverley - Version 02.10.22
+' Switches the order of the two sentences in the bullet point
+
+myBullet = Chr(149)
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+s1 = Trim(Mid(rng.Sentences(1).Text, 3))
+s2 = rng.Sentences(2).Text
+newtext = Replace(myBullet & " " & s2 & " " & s1, vbCr, "")
+rng.Text = newtext & vbCr
+End Sub
+
+
+

@@ -1,0 +1,23 @@
+
+Sub TracksInlineToggle()
+' Paul Beverley - Version 07.03.22
+' Toggles track change deletions between bubbles and inline
+
+' At the top of the VBA macros file insert:
+' Private pbBalloons As Boolean
+
+With ActiveWindow.View.RevisionsFilter
+  .Markup = wdRevisionsMarkupAll
+  .View = wdRevisionsViewFinal
+End With
+
+If pbBalloons = False Then
+  Application.Run MacroName:="UseBalloons"
+  pbBalloons = True
+Else
+  Application.Run MacroName:="NoInsertionDeletionBalloons"
+  pbBalloons = False
+End If
+End Sub
+
+

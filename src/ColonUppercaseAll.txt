@@ -1,0 +1,36 @@
+Sub ColonUppercaseAll()
+' Paul Beverley - Version 23.07.22
+'  Changes the initial letter after every colon to lowercase
+
+showHowMany = True
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[a-zA-Z]: [a-z]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  endNow = rng.End
+  rng.MoveStart , 2
+  rng.Text = UCase(rng.Text)
+  If myCount Mod 50 = 0 Then rng.Select
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Selection.HomeKey Unit:=wdStory
+If showHowMany = True Then MsgBox "Changed: " & myCount
+End Sub
+
+
+

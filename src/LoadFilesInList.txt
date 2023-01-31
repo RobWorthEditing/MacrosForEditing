@@ -1,0 +1,45 @@
+Sub LoadFilesInList()
+' Paul Beverley - Version 29.06.22
+' Loads a series of files in a Word file list
+
+myMarker = "!!Here!!"
+
+' Loads the first file in the list
+' Searches for the text in myMarker
+' Loads each of the other files
+' Jumps back to the first file
+
+Dim myFile(100) As String
+numFiles = 0
+For Each myPara In ActiveDocument.Paragraphs
+  myName = myPara.Range.Text
+  Debug.Print myName
+  If InStr(myName, ".docx") > 0 Then
+    numFiles = numFiles + 1
+    myName = Replace(myName, vbCr, "")
+    myFile(numFiles) = myName
+    DoEvents
+  End If
+Next myPara
+
+Documents.Open fileName:=myFile(1)
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myMarker
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+
+Set myLeadFile = ActiveDocument
+For i = 2 To numFiles
+  Documents.Open fileName:=myFile(i)
+  DoEvents
+Next i
+myLeadFile.Activate
+End Sub
+

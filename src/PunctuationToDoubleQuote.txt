@@ -39,7 +39,7 @@ With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = ch
-  .Replacement.Text = "'"
+  .Replacement.Text = """"
   .Execute Replace:=wdReplaceOne
 End With
 Selection.Collapse wdCollapseEnd

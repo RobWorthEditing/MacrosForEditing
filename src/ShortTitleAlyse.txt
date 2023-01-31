@@ -1,0 +1,162 @@
+Sub ShortTitleAlyse()
+' Paul Beverley - Version 17.03.22
+' Analyses short titles
+
+myFontColour = wdColorBlue
+myDateColour = wdColorRed
+
+
+Set rng = ActiveDocument.Content
+noteStart = InStr(rng, vbCr & vbCr & vbCr)
+rng.Start = noteStart - 1
+If rng.End - noteStart < 100 Then noteStart = 0
+
+If noteStart = 0 Then
+  myResponse = MsgBox("Please separate footnotes" & _
+       " and references with two blank lines.", _
+       vbOK, "ShortTitleAlyse")
+  Exit Sub
+End If
+
+' Make sure each not has a space
+For Each par In rng.Paragraphs
+  myLine = par.Range.Text
+  If Asc(myLine) <> 32 And Len(myLine) > 2 Then _
+       par.Range.InsertBefore Text:=" "
+Next par
+
+' Copy into a new blank file
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set rng = ActiveDocument.Content
+rng.FormattedText = rngOld.FormattedText
+
+' Colour the notes
+Set rng = ActiveDocument.Content
+noteStart = InStr(rng, vbCr & vbCr & vbCr)
+rng.Start = noteStart - 1
+rng.Font.Color = myFontColour
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p"
+  .Font.Underline = True
+  .Replacement.Text = "^pzczc"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+
+' Years in red
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{4}>"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Replacement.Font.Color = wdColorRed
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "See "
+  .Replacement.Text = "^pzczc "
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "^13[^2 ]"
+  .Replacement.Text = "^pzczc "
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+' Drop each author name onto a new line
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Replacement.Text = "^p^&"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Set rng = ActiveDocument.Content
+rng.Sort
+Do
+  i = i + 1
+  DoEvents
+Loop Until rng.Paragraphs(i).Range.Words.count > 2
+rng.Paragraphs(i).Range.Select
+Selection.Start = 0
+Selection.Delete
+Set rng = ActiveDocument.Content
+zcPos = InStr(rng, "zczc")
+rng.Start = zcPos - 1
+rng.Delete
+
+Set rng = ActiveDocument.Content
+With rng.ParagraphFormat
+  .LeftIndent = CentimetersToPoints(1)
+  .SpaceBeforeAuto = False
+  .SpaceAfterAuto = False
+  .FirstLineIndent = CentimetersToPoints(-1)
+  .SpaceAfter = 12
+  .LineUnitAfter = 0
+End With
+
+myBar = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+myBar = myBar & myBar & "^p"
+
+Set rng = ActiveDocument.Content
+numParas = rng.Paragraphs.count
+
+ReDim auNames(numParas) As String
+For i = 1 To numParas
+  auNames(i) = rng.Paragraphs(i).Range.Words(1)
+Next i
+  
+gotArun = False
+nameWas = rng.Words(1)
+runStart = 0
+For i = 1 To numParas - 2
+  name1 = auNames(i)
+  name2 = auNames(i + 1)
+  name3 = auNames(i + 2)
+  If name1 <> name2 And name2 = name3 Then
+    Set rng = ActiveDocument.Paragraphs(i + 1).Range
+    rng.InsertBefore Text:="zczc"
+  End If
+  If name1 = name2 And name2 <> name3 Then
+    Set rng = ActiveDocument.Paragraphs(i + 2).Range
+    rng.InsertBefore Text:="zczc"
+  End If
+  DoEvents
+Next i
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "zczczczc"
+  .Wrap = wdFindContinue
+  .Replacement.Text = myBar
+  .Replacement.Font.Underline = False
+  .Replacement.Font.Color = wdColorAutomatic
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  .Text = "zczc"
+  .Execute Replace:=wdReplaceAll
+End With
+Beep
+End Sub
+

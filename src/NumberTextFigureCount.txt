@@ -1,0 +1,214 @@
+Sub NumberTextFigureCount()
+' Paul Beverley - Version 14.01.23
+' Counts numbers as figures vs. words
+
+noCount = "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec,"
+noCount = noCount & "hou,min,sec,day,"
+
+maxFigs = 3
+' 3 = 0-999
+' 2 = 0-99
+' 1 = 0-9
+
+Select Case maxFigs
+  Case 1: mySearch = "<[0-9] "
+  Case 2: mySearch = "<[0-9]{1,2} "
+  Case 3: mySearch = "<[0-9]{1,3} "
+End Select
+noCount = "," & noCount
+CR = vbCr
+
+'Application.ScreenUpdating = False
+'On Error GoTo ReportIt
+
+'Use FindAndDo to check and count each 1-, 2- or 3-digit number
+' that's NOT followed by Jan-Dec or units
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = mySearch
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+numFigs = 0
+Do While rng.Find.Found = True
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd , 3
+  myTest = "," & rng.Text & ","
+  If InStr(noCount, myTest) = 0 Then numFigs = numFigs + 1
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+
+myRslt = "Numbers as digits" & vbTab & _
+     Trim(Str(numFigs)) & CR
+
+Set rng = ActiveDocument.Content
+myTot = ActiveDocument.Range.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<ten "
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^&x"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+aa = ActiveDocument.Range.End - myTot
+If aa > 0 Then WordBasic.EditUndo
+
+' spelt-out lower-case numbers over nine
+DoEvents
+' Find twenty, thirty etc
+rng.Find.Text = "<[efnst][efghinorvwx]{2,4}ty "
+rng.Find.Execute Replace:=wdReplaceAll
+ab = ActiveDocument.Range.End - myTot
+If ab > 0 Then WordBasic.EditUndo
+DoEvents
+
+rng.Find.Text = "<eleven "
+rng.Find.Execute Replace:=wdReplaceAll
+ac = ActiveDocument.Range.End - myTot
+If ac > 0 Then WordBasic.EditUndo
+DoEvents
+
+rng.Find.Text = "<twelve "
+rng.Find.Execute Replace:=wdReplaceAll
+ad = ActiveDocument.Range.End - myTot
+If ad > 0 Then WordBasic.EditUndo
+
+rng.Find.Text = "<[efnst][efghinuorvwx]{2,4}teen "
+rng.Find.Execute Replace:=wdReplaceAll
+ae = ActiveDocument.Range.End - myTot
+If ae > 0 Then WordBasic.EditUndo
+DoEvents
+
+rng.Find.Text = "<hundred>"
+rng.Find.Execute Replace:=wdReplaceAll
+af = ActiveDocument.Range.End - myTot
+
+If af > 0 Then WordBasic.EditUndo
+myRslt11Plus = "Spelt-out numbers (eleven etc.)" & vbTab & _
+     Trim(Str(ab + ac + ad + ae + af)) & CR
+
+myRslt10 = "Spelt-out numbers (ten)" & vbTab & _
+     Trim(Str(aa)) & CR
+
+myCount = 0
+rng.Find.Text = "<one "
+rng.Find.Execute Replace:=wdReplaceAll
+x = ActiveDocument.Range.End - myTot
+If x > 0 Then WordBasic.EditUndo
+myCount = myCount + x
+DoEvents
+
+rng.Find.Text = "<two "
+rng.Find.Execute Replace:=wdReplaceAll
+x = ActiveDocument.Range.End - myTot
+If x > 0 Then WordBasic.EditUndo
+myCount = myCount + x
+DoEvents
+
+rng.Find.Text = "<three "
+rng.Find.Execute Replace:=wdReplaceAll
+x = ActiveDocument.Range.End - myTot
+If x > 0 Then WordBasic.EditUndo
+myCount = myCount + x
+
+rng.Find.Text = "<four "
+rng.Find.Execute Replace:=wdReplaceAll
+x = ActiveDocument.Range.End - myTot
+If x > 0 Then WordBasic.EditUndo
+myCount = myCount + x
+DoEvents
+
+rng.Find.Text = "<five "
+rng.Find.Execute Replace:=wdReplaceAll
+x = ActiveDocument.Range.End - myTot
+If x > 0 Then WordBasic.EditUndo
+myCount = myCount + x
+
+rng.Find.Text = "<four "
+rng.Find.Execute Replace:=wdReplaceAll
+x = ActiveDocument.Range.End - myTot
+If x > 0 Then WordBasic.EditUndo
+myCount = myCount + x
+DoEvents
+
+rng.Find.Text = "<four "
+rng.Find.Execute Replace:=wdReplaceAll
+x = ActiveDocument.Range.End - myTot
+If x > 0 Then WordBasic.EditUndo
+myCount = myCount + x
+
+rng.Find.Text = "<five "
+rng.Find.Execute Replace:=wdReplaceAll
+x = ActiveDocument.Range.End - myTot
+If x > 0 Then WordBasic.EditUndo
+myCount = myCount + x
+DoEvents
+
+rng.Find.Text = "<six "
+rng.Find.Execute Replace:=wdReplaceAll
+x = ActiveDocument.Range.End - myTot
+If x > 0 Then WordBasic.EditUndo
+myCount = myCount + x
+
+rng.Find.Text = "<seven "
+rng.Find.Execute Replace:=wdReplaceAll
+x = ActiveDocument.Range.End - myTot
+If x > 0 Then WordBasic.EditUndo
+myCount = myCount + x
+DoEvents
+
+rng.Find.Text = "<eight "
+rng.Find.Execute Replace:=wdReplaceAll
+x = ActiveDocument.Range.End - myTot
+If x > 0 Then WordBasic.EditUndo
+myCount = myCount + x
+
+rng.Find.Text = "<nine "
+rng.Find.Execute Replace:=wdReplaceAll
+x = ActiveDocument.Range.End - myTot
+If x > 0 Then WordBasic.EditUndo
+myCount = myCount + x
+DoEvents
+Selection.Collapse wdCollapseStart
+myRslt = myRslt & "Spelt-out numbers (one-nine)" & vbTab & _
+     Trim(Str(myCount)) & CR
+myRslt = myRslt & myRslt10 & myRslt11Plus
+Beep
+' MsgBox myRslt
+Documents.Add
+Selection.TypeText Text:="NumberTextFigureCount" & CR & CR
+Selection.Collapse wdCollapseEnd
+startTable = Selection.End
+ActiveDocument.Paragraphs(1).Style = _
+     ActiveDocument.Styles(wdStyleHeading1)
+Selection.TypeText Text:=myRslt
+Selection.Start = startTable
+Selection.End = ActiveDocument.Range.End
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+Selection.Tables(1).Style = "Table Grid"
+Selection.Tables(1).AutoFitBehavior (wdAutoFitContent)
+Selection.Tables(1).Borders(wdBorderTop).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderRight).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+Selection.Tables(1).Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+Selection.HomeKey Unit:=wdStory
+Exit Sub
+
+' Switch the screen back on if there's an error
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+End Sub
+

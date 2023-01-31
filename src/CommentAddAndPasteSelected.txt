@@ -1,0 +1,16 @@
+Sub CommentAddAndPasteSelected()
+' Paul Beverley - Version 22.10.22
+' Copies text, adds a comment and pastes text
+
+introText = ""
+' introText = "Suggested alternative: "
+
+If Selection.Start = Selection.End Then Selection.Expand wdSentence
+Selection.Copy
+Set cmt = Selection.Comments.Add(Range:=Selection.Range)
+If introText > "" Then Selection.TypeText Text:=introText
+Selection.Paste
+ActiveWindow.ActivePane.Close
+cmt.Edit
+End Sub
+

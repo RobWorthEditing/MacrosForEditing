@@ -1,12 +1,13 @@
 Sub HyphenAlyse()
-' Paul Beverley - Version 04.02.22
+' Paul Beverley - Version 04.04.22
 ' Creates a frequency list of all possible hyphenations
 
 myList = "anti,cross,eigen,hyper,inter,meta,mid,multi," _
      & "non,over,post,pre,pseudo,quasi,semi,sub,super"
     
-deleteTableBorders = True
 includeNumbers = True
+
+deleteTableBorders = True
 lighterColour = wdGray25
 ' lighterColour = wdColor50
 
@@ -150,6 +151,7 @@ For i = 1 To UBound(pref)
       myPairs = myPairs + 1
       pr(myPairs) = wd
       allPreWords = allPreWords & wd & ","
+      allWords = allWords & wd & ","
       If myPairs Mod 10 = 0 Then
         If doingSeveralMacros = False Then _
              Debug.Print wd, myPairs
@@ -165,14 +167,14 @@ Next i
 ' Collect word pairs with each prefix, e.g. "mid height"
 For i = 1 To UBound(pref)
   hPos = Len(pref(i))
-  allPreWords = ","
-  
+  Debug.Print allWords
+  Debug.Print vbTab & allPreWords
   If includeNumbers = True Then
     schStr = "<" & pref(i) & " [0-9a-z]{2,}"
   Else
     schStr = "<" & pref(i) & " [a-z]{2,}"
   End If
-
+Debug.Print pref(i)
   Set rng = ActiveDocument.Content
   With rng.Find
     .ClearFormatting
@@ -348,13 +350,13 @@ For i = 1 To tb.Rows.count
 Next i
 
 For i = 1 To tb.Rows.count
-  s = 0
-  If Len(tb.Cell(i, 1).Range.Text) > 2 Then s = s + 1
-  If Len(tb.Cell(i, 3).Range.Text) > 2 Then s = s + 1
-  If Len(tb.Cell(i, 4).Range.Text) > 2 Then s = s + 1
+  S = 0
+  If Len(tb.Cell(i, 1).Range.Text) > 2 Then S = S + 1
+  If Len(tb.Cell(i, 3).Range.Text) > 2 Then S = S + 1
+  If Len(tb.Cell(i, 4).Range.Text) > 2 Then S = S + 1
   If Len(tb.Cell(i, 2).Range.Text) > 2 And _
-       Len(tb.Cell(i, 4).Range.Text) > 2 Then s = 2
-  If s > 1 Then
+       Len(tb.Cell(i, 4).Range.Text) > 2 Then S = 2
+  If S > 1 Then
     For j = 1 To 4
       tb.Cell(i, j).Range.Font.ColorIndex = wdRed
     Next j
@@ -421,9 +423,9 @@ If doingSeveralMacros = False Then
   Loop Until Timer > myTime + 0.2
   Beep
   m = Int(timGone / 60)
-  s = Int(timGone) - m * 60
+  S = Int(timGone) - m * 60
   timeAll = "Time:  " & Trim(Str(m)) & " m " & _
-       Trim(Str(s)) & " s"
+       Trim(Str(S)) & " s"
   Selection.HomeKey Unit:=wdStory
   numPairs = ActiveDocument.Tables(1).Rows.count
   MsgBox "Items:  " & Trim(Str(numPairs)) & vbCr & vbCr _

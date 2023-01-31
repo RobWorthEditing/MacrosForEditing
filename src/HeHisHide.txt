@@ -1,0 +1,13 @@
+Sub HeHisHide()
+' Paul Beverley - Version 08.06.22
+' Adds StrikeThrough to any 'He' or 'His' as first word of sentence
+
+For Each sn In ActiveDocument.Content.Sentences
+  fstWd = Trim(sn.Words(1).Text)
+  If fstWd = "He" Or fstWd = "His" Then
+    sn.Words(1).Font.StrikeThrough = True
+  End If
+  DoEvents
+Next sn
+End Sub
+

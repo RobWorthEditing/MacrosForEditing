@@ -1,0 +1,11 @@
+Sub MarkupModeSwitch()
+' Paul Beverley - Version 12.10.22
+' Switches between inline and in-balloon markup
+
+If ActiveWindow.View.MarkupMode = wdInLineRevisions Then
+  ActiveWindow.View.MarkupMode = wdBalloonRevisions
+Else
+  ActiveWindow.View.MarkupMode = wdInLineRevisions
+End If
+End Sub
+

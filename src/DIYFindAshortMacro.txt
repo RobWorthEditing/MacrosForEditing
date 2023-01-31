@@ -1,3 +1,4 @@
+
 Sub DIYFindAshortMacro()
 ' Paul Beverley - Version 24.11.20
 ' Finds a macro shorter than a certain length
@@ -5,7 +6,8 @@ Sub DIYFindAshortMacro()
 myLen = 20
 
 Set rng = ActiveDocument.Content
-rng.Start = Selection.Start
+myStart = Selection.Start
+rng.Start = myStart
 
 With rng.Find
   .ClearFormatting
@@ -19,5 +21,22 @@ With rng.Find
 End With
 
 Do While rng.Find.Found = True
-  rng.MoveEnd Unit:=wdParagraph, Count:=myLen
-  If InStr(rng.Text, "End Sub"
+  rng.MoveEnd Unit:=wdParagraph, count:=myLen
+  If InStr(rng.Text, "End" & " Sub") Then
+    rng.Select
+    Selection.Collapse wdCollapseStart
+    Selection.MoveDown Unit:=wdLine, count:=myLen
+    Selection.MoveUp Unit:=wdLine, count:=myLen
+    myResponse = MsgBox("Fancy this one?", vbQuestion + vbYesNo)
+    If myResponse = vbYes Then
+      Selection.Collapse wdCollapseStart
+      Exit Sub
+    End If
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+End Sub
+
+

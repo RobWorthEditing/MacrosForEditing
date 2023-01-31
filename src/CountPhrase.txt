@@ -1,5 +1,5 @@
 Sub CountPhrase()
-' Paul Beverley - Version 16.01.21
+' Paul Beverley - Version 19.07.22
 ' Counts this word or phrase
 
 doFormatCount = True
@@ -13,6 +13,8 @@ If Selection.Start = Selection.End Then
     DoEvents
   Loop
 End If
+
+If InStr(Selection, " ") = 0 Then justOneWord = True
 
 oldStart = Selection.Start
 oldEnd = Selection.End
@@ -30,7 +32,7 @@ InANote = Selection.Information(wdInFootnote)
 If InANote = True Then
   lineJump = 0
   Do
-    Selection.MoveUp Unit:=wdLine, Count:=1
+    Selection.MoveUp Unit:=wdLine, count:=1
     lineJump = lineJump + 1
   Loop Until Selection.Information(wdInFootnote) = False
   oldStart = Selection.Start
@@ -38,35 +40,35 @@ If InANote = True Then
 End If
 
 Set rng = ActiveDocument.Content
-aT = rng.Text
+at = rng.Text
 myTot = ActiveDocument.Range.End
 
 ntsText = ""
 ' Are there any footnotes?
-If ActiveDocument.Footnotes.Count > 0 Then
+If ActiveDocument.Footnotes.count > 0 Then
   ntsText = ntsText & ActiveDocument.StoryRanges(wdFootnotesStory).Text
-  aT = aT & ntsText
+  at = at & ntsText
 End If
 
-If ActiveDocument.Endnotes.Count > 0 Then
+If ActiveDocument.Endnotes.count > 0 Then
   ntsText = ntsText & ActiveDocument.StoryRanges(wdEndnotesStory).Text
-  aT = aT & ntsText
+  at = at & ntsText
 End If
 
-aT = Replace(aT, Chr(2), "")
+at = Replace(at, Chr(2), "")
 
 ' Count all occurences
-aTlcase = LCase(aT)
-myTot = Len(aT)
+aTlcase = LCase(at)
+myTot = Len(at)
 
 allCount = Len(Replace(aTlcase, LCase(myPhrase), myPhrase & "!")) - myTot
 
-myText = "All: " & Str(allCount) & CR
+myText = "Any case:  " & Str(allCount) & CR
 
 ' Count case sensitively
-caseCount = Len(Replace(aT, myPhrase, myPhrase & "!")) - myTot
+caseCount = Len(Replace(at, myPhrase, myPhrase & "!")) - myTot
 
-myText = myText & "Case sensitive: " & Str(caseCount) & CR2
+myText = myText & "Exact same case: " & Str(caseCount) & CR2
 
 If doFormatCount = True Then
   oldFind = Selection.Find.Text
@@ -146,30 +148,36 @@ If doCountWhole = True Then
   
   chars = Split(chs, " ")
   For i = 1 To UBound(chars)
-    aT = Replace(aT, chars(i), " ")
+    at = Replace(at, chars(i), " ")
   Next i
-  p = " " & myPhrase & " "
-  aTlcase = LCase(aT)
-  myTot = Len(aT)
   
   ' Count as whole words (case sensitive)
-  wholeWdCaseCount = Len(Replace(aT, p, _
+  If justOneWord Then
+    p = " " & myPhrase & " "
+    at = Replace(at, " ", "  ")
+    aTlcase = LCase(at)
+    myTot = Len(at)
+    wholeWdCaseCount = Len(Replace(at, p, _
+         p & "!")) - myTot
+    wholeWdNoCaseCount = Len(Replace(aTlcase, LCase(p), _
        p & "!")) - myTot
-  wholeWdNoCaseCount = Len(Replace(aTlcase, LCase(p), _
-       p & "!")) - myTot
-  myText = myText & "Whole words (case sensitive):" & _
-         Str(wholeWdCaseCount) & CR
-  myText = myText & "Whole words (case INsensitive):" & _
-         Str(wholeWdNoCaseCount) & CR
+    myText = myText & "Whole words (Any case):" & _
+           Str(wholeWdNoCaseCount) & CR
+    myText = myText & "Whole words (Exact same case):" & _
+           Str(wholeWdCaseCount) & CR
+    titleText = "Characters searched:  """
+  Else
+    titleText = "Phrase searched:  """
+  End If
 End If
 
 printResult:
 Selection.End = oldStart
-Selection.MoveRight Unit:=wdCharacter, Count:=1
+Selection.MoveRight Unit:=wdCharacter, count:=1
 Selection.Start = oldStart
 Selection.End = oldEnd
 
-myText = "Word searched:  " & myPhrase & CR2 & myText
+myText = titleText & myPhrase & """" & CR2 & myText
 MsgBox myText, 0, "CountPhrase"
 End Sub
 

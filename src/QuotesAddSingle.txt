@@ -1,0 +1,37 @@
+Sub QuotesAddSingle()
+' Paul Beverley - Version 08.12.22
+' Puts single quotes round the current word or phrase
+
+addHighlight = True
+myColour = wdBrightGreen
+
+' singles
+myOpen = ChrW(8216)
+myClose = ChrW(8217)
+
+If Selection = "." Then Selection.MoveLeft , 1
+Set rng = Selection.Range.Duplicate
+myEnd = rng.End
+rng.Collapse wdCollapseStart
+rng.Expand wdWord
+rng.Collapse wdCollapseStart
+rng.InsertBefore Text:=myOpen
+If addHighlight = True Then
+  rng.HighlightColorIndex = myColour
+End If
+rng.Start = myEnd
+rng.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+  rng.MoveEnd , -1
+  DoEvents
+Loop
+rng.Collapse wdCollapseEnd
+rng.InsertAfter Text:=myClose
+If addHighlight = True Then
+  rng.HighlightColorIndex = myColour
+End If
+rng.Collapse wdCollapseEnd
+rng.Select
+End Sub
+
+

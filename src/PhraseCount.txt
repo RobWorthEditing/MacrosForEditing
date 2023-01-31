@@ -1,7 +1,8 @@
 Sub PhraseCount()
-' Paul Beverley - Version 19.05.21
+' Paul Beverley - Version 22.12.22
 ' Counts each of a list of words/phrases
 
+phraseLenMax = 4
 ignoreDoc = "zzSwitchList"
 
 Set testDoc = ActiveDocument
@@ -13,10 +14,10 @@ allTextLC = LCase(allText)
 For Each myDoc In Documents
   If InStr(myDoc.Name, ignoreDoc) = 0 _
        And InStr(myDoc.Name, testName) = 0 Then
-    numParas = myDoc.Paragraphs.Count + 1
+    numParas = myDoc.Paragraphs.count + 1
     numWords = myDoc.Content.ComputeStatistics(wdStatisticWords)
     myProfile = numWords / numParas
-    If myProfile < 1.01 Then
+    If myProfile < phraseLenMax + 1 Then
       Set listDoc = myDoc
       listDoc.Activate
       myResponse = MsgBox("Count items in this list?", vbQuestion _

@@ -1,0 +1,10 @@
+Sub SmartEditing()
+' Paul Beverley - Version 16.04.22
+' Switches off Microsoft's so-called "smart" editing features
+
+Options.SmartParaSelection = False
+Options.PasteSmartCutPaste = False
+Options.SmartCursoring = False
+Options.AutoWordSelection = False
+End Sub
+

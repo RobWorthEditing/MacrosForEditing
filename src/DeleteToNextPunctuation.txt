@@ -1,0 +1,44 @@
+Sub DeleteToNextPunctuation()
+' Paul Beverley - Version 20.07.22
+' Deletes from end of current word to the next punctuation mark
+
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+If UCase(Selection) = LCase(Selection) Then _
+     Selection.Collapse wdCollapseStart
+myEnd = Selection.End
+Selection.Collapse wdCollapseEnd
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[:;,.\!\?^13]"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+  DoEvents
+End With
+If Selection.Start = myEnd Then
+  Selection.Collapse wdCollapseEnd
+  Selection.Find.Execute
+End If
+Selection.Collapse wdCollapseStart
+Selection.Start = myEnd
+qt = Selection.Characters(2)
+If qt = ChrW(8217) Or qt = ChrW(8221) Then
+  Selection.Delete
+  Selection.MoveRight , 1
+  Selection.TypeText Text:=qt
+Else
+  Selection.Delete
+End If
+End Sub
+

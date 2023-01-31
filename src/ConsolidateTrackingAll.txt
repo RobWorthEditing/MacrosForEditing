@@ -1,0 +1,25 @@
+Sub ConsolidateTrackingAll()
+' Paul Beverley - Version 17.09.22
+' Consolidates tracking on all words within selection or all text
+
+ActiveDocument.TrackRevisions = True
+If Selection.Start <> Selection.End Then
+  Set rng = Selection
+Else
+  myResponse = MsgBox("Work on WHOLE text?!", _
+         vbQuestion + vbYesNoCancel, "ConsolidateTrackingAll")
+    If myResponse <> vbYes Then Exit Sub
+    Set rng = ActiveDocument.Content
+    If Selection.Information(wdInFootnote) = True Then _
+         Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    If Selection.Information(wdInEndnote) = True Then _
+         Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+End If
+
+For Each wd In rng.Words
+  If wd.Revisions.count > 1 Then
+    wd.Text = wd.Text
+  End If
+Next
+End Sub
+

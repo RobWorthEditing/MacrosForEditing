@@ -1,5 +1,5 @@
 Sub ParagraphEndChecker()
-' Paul Beverley - Version 06.01.22
+' Paul Beverley - Version 12.08.22
 ' Highlights the end of all possibly punctuation-less paragraphs
 
 myMainHighlight = wdBrightGreen
@@ -109,7 +109,7 @@ Else
       rng.Start = myPar.Range.End - 2
       rng.End = myPar.Range.End - 1
       If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
-      If rng = " " Then rng.Delete:  ng.Start = rng.Start - 1
+      If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
       If rng.Text = ChrW(2) Then
          rng.Start = rng.Start - 1
          rng.End = rng.End - 1

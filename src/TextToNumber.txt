@@ -1,11 +1,15 @@
+
 Sub TextToNumber()
-' Paul Beverley - Version 15.10.21
+' Paul Beverley - Version 20.07.22
 ' Finds numbers expressed in words + converts to figures
 
 myUnits = ":one:two:three:four:five:six:seven:eight:nine:ten"
 myTens = ":ten:twenty:thirty:forty:fifty:sixty:seventy:eighty:ninety:hundred"
 myTeens = ":eleven:twelve:thirteen:fourteen:fifteen:sixteen:seventeen:eighteen:nineteen"
 allNumberWords = myUnits & myTens & myTeens & ":a:and:-:"
+
+mySmart = Options.SmartCutPaste
+Options.SmartCutPaste = False
 
 Dim wd(6) As String
 Set rng = Selection.Range.Duplicate
@@ -15,7 +19,7 @@ rng.Collapse wdCollapseStart
 gottaWord = False
 For i = 1 To 50
   rng.MoveEnd wdWord, 1
-    thisWord = Trim(rng.Words(rng.Words.Count))
+    thisWord = Trim(rng.Words(rng.Words.count))
   If InStr("aand-", thisWord) = 0 And InStr(allNumberWords, _
        ":" & thisWord & ":") > 0 Then
     If Right(Trim(rng.Text), 6) = "no-one" Then
@@ -52,29 +56,30 @@ Loop
 gotEnd = False
 Do While gotEnd = False
   rng.MoveEnd wdWord, 1
-  lastWord = Trim(rng.Words(rng.Words.Count))
+  lastWord = Trim(rng.Words(rng.Words.count))
   If InStr(allNumberWords, ":" & lastWord & ":") = 0 Then
     gotEnd = True
     rng.MoveEnd wdWord, -1
   End If
   DoEvents
 Loop
-
+rng.Select
 fstWd = Trim(rng.Words(1))
 If InStr("and", fstWd) > 0 Then rng.MoveStart wdWord, 1
 
 ' To catch 'a', 'an', and 'and' as final word
-lastWd = Trim(rng.Words(rng.Words.Count))
+lastWd = Trim(rng.Words(rng.Words.count))
 If InStr("and", lastWd) > 0 Then rng.MoveEnd wdWord, -1
 
 ' Catch missing "and" for American usage, e.g. "two hundred fifty-two"
 rText = rng.Text
-If InStr(rText, "hundred") > 0 And InStr(rText, "hundred and") = 0 Then
+If lastWd <> "hundred" And InStr(rText, "hundred") > 0 And _
+     InStr(rText, "hundred and") = 0 Then
   rng.Text = Replace(rText, "hundred", "hundred and")
 End If
 
 allWords = rng.Text
-numWords = rng.Words.Count
+numWords = rng.Words.count
 Dim n(6) As Integer
 For i = 1 To numWords
   wdPos = InStr(allNumberWords, ":" & Trim(rng.Words(i)) & ":")
@@ -147,5 +152,7 @@ Loop
 rng.Select
 Selection.Delete
 Selection.TypeText Trim(Str(myResult))
+Options.SmartCutPaste = mySmart
 End Sub
+
 

@@ -1,0 +1,25 @@
+Sub OddQuoteSpacingCorrectAll()
+' Paul Beverley - Version 16.11.22
+' Corrects the odd spacing on quotation marks (due to RTL fonts)
+
+If ActiveDocument.Footnotes.count > 0 Then
+  ActiveDocument.StoryRanges(wdFootnotesStory).Select
+  Selection.LtrRun
+End If
+If ActiveDocument.Endnotes.count > 0 Then
+  ActiveDocument.StoryRanges(wdEndnotesStory).Select
+  Selection.LtrRun
+End If
+ActiveDocument.StoryRanges(wdMainTextStory).Select
+Selection.LtrRun
+Selection.Collapse wdCollapseStart
+If ActiveDocument.Comments.count > 0 Then
+  ActiveDocument.ActiveWindow.View.SplitSpecial = wdPaneComments
+  ActiveDocument.StoryRanges(wdCommentsStory).Select
+  Selection.LtrRun
+  ActiveDocument.ActiveWindow.View.SplitSpecial = wdPaneNone
+End If
+ActiveDocument.StoryRanges(wdMainTextStory).Select
+Selection.Collapse wdCollapseStart
+End Sub
+

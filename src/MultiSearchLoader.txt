@@ -1,0 +1,142 @@
+Sub MultiSearchLoader()
+' Paul Beverley - Version 31.05.22
+' Loads text segments into MultiSearch
+
+restartKeys = "1."
+ANDkeys = "2+"
+ORkeys = "3-/"
+capsKeys = "6*"
+editKeys = "0"
+
+myListName = "zzzSwitchList"
+
+Set rng = Selection.Range.Duplicate
+If rng.Start = rng.End Then rng.Expand wdParagraph
+posPlus = InStr(rng, "+")
+If posOR > 1 And rng.Words.count < 20 Then
+  myTest = Mid(rng, posOR - 1, 3)
+  If LCase(myTest) <> UCase(myTest) Then
+    If Right(pbMultiSearch, 1) = "_" And _
+         LCase(theMultiSearch) = theMultiSearch Then
+      Beep
+      myResponse = MsgBox("Your criterion is all lowercase." _
+           & CR2 & "Only capital letters are case-checked.", vbOKOnly, "MultiSearch")
+      Exit Sub
+    End If
+    pbMultiSearch = Replace(rng.Text, vbCr, "")
+    Beep
+    myTime = Timer
+    Do
+    Loop Until Timer > myTime + 0.2
+    Beep
+    Exit Sub
+  End If
+End If
+posOR = InStr(rng, "_")
+If posOR > 1 And rng.Words.count < 20 Then
+  myTest = Mid(rng, posOR - 1, 3)
+  If LCase(myTest) <> UCase(myTest) Then
+    pbMultiSearch = Replace(rng.Text, vbCr, "")
+    Beep
+    myTime = Timer
+    Do
+    Loop Until Timer > myTime + 0.2
+    Beep
+    Exit Sub
+  End If
+End If
+
+theMultiSearch = pbMultiSearch
+If Right(pbMultiSearch, 1) = "_" Then
+  theMultiSearch = Left(pbMultiSearch, Len(pbMultiSearch) - 1)
+  checkCaps = True
+  capsText = "Ignore caps  ["
+Else
+  checkCaps = False
+  capsText = "Check Caps  ["
+End If
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+End If
+
+CR = vbCr: CR2 = CR & CR
+
+Dim sch(4) As String
+newText = LCase(Selection.Text)
+
+Do
+  myText = InputBox("RESTART  [" & restartKeys & "]" _
+     & CR2 & "AND   [" & ANDkeys & "]" & CR2 & "OR   [" & _
+     ORkeys & "]" & CR2 & capsText & capsKeys & "]" & _
+     CR2 & "EDIT  [" & editKeys & "]" & CR, _
+     "MultiSearchLoader", pbMultiSearch)
+  DoEvents
+  If myText = "" Then Beep: Exit Sub
+Loop Until InStr(restartKeys & ANDkeys & ORkeys & capsKeys _
+     & editKeys, myText) > 0 Or Len(myText) > 3
+If Len(myText) = 1 Then
+  If InStr(ANDkeys, myText) > 0 Then pbMultiSearch = pbMultiSearch & _
+       "+" & newText
+  If InStr(ORkeys, myText) > 0 Then pbMultiSearch = pbMultiSearch & _
+       "_" & newText
+  If InStr(restartKeys, myText) > 0 Then pbMultiSearch = newText
+  If InStr(capsKeys, myText) > 0 Then
+    If checkCaps = True Then
+      If Right(pbMultiSearch, 1) = "_" Then _
+      pbMultiSearch = Left(pbMultiSearch, Len(pbMultiSearch) - 1)
+    Else
+      pbMultiSearch = pbMultiSearch & "_"
+    End If
+    If pbMultiSearch = LCase(pbMultiSearch) And checkCaps = False Then
+      myResponse = _
+           MsgBox("But your search criterion has no capital letters!" _
+           & CR2 & "Edit the criterion?", _
+           vbQuestion + vbYesNo, pbMultiSearch)
+      If myResponse <> vbYes Then Exit Sub
+      myText = editKeys
+    Else
+      Beep
+      myTime = Timer
+      Do
+      Loop Until Timer > myTime + 0.2
+      Beep
+    End If
+    Exit Sub
+  End If
+  If InStr(editKeys, myText) > 0 Then
+    ' Try to find a suitable file
+    ' Find the zzSwitchList file
+    gottaList = False
+    For i = 1 To Documents.count
+      Set dcu = Documents(i)
+      If InStr(dcu.Name, myListName) > 0 Then
+        gottaList = True
+        dcu.Activate
+        Exit For
+      End If
+      If Len(dcu.Content) < 200 Then
+        gottaList = True
+        dcu.Activate
+        Exit For
+      End If
+    Next i
+    If gottaList = False Then Documents.Add
+    Selection.HomeKey Unit:=wdStory
+    Selection.TypeText Text:=pbMultiSearch & vbCr
+    Selection.MoveLeft , 1
+  End If
+  Exit Sub
+End If
+If Len(myText) > 3 Then
+  pbMultiSearch = myText
+  Call MultiSearch
+Else
+  Beep
+End If
+End Sub
+

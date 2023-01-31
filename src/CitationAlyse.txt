@@ -1,5 +1,5 @@
 Sub CitationAlyse()
-' Paul Beverley - Version 02.02.22
+' Paul Beverley - Version 23.07.22
 ' Checks citations against references
 
 myFontColour = wdColorBlue
@@ -8,9 +8,12 @@ myDateColour = wdColorRed
 includeNotes = True
 
 notNames = "In From For Act Jan January Feb February "
-notNames = notNames & " Mar March Apr April May June "
-notNames = notNames & " July Aug August Sept September Oct "
-notNames = notNames & " October Nov November Dec December "
+notNames = notNames & " Mar March Apr April NotMay June "
+notNames = notNames & " July Aug August Sept September Oct Initially "
+notNames = notNames & " October Nov November Dec December Finally "
+notNames = notNames & " Also As Conversely Correspondingly Consequently "
+notNames = notNames & " Equally Furthermore Lastly Moreover However "
+notNames = notNames & " Secondly Thirdly Similarly Additionally "
 
 CR = vbCr
 CR2 = CR & CR
@@ -117,13 +120,46 @@ If gotEnds = True And includeNotes = True Then
 End If
 DoEvents
 
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[a-z] \([A-Z]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  endNow = rng.End
+  rng.MoveStart wdWord, -1
+  rng.MoveEnd wdCharacter, -1
+  rng.Select
+  rng.Text = LCase(rng.Text)
+  rng.MoveStart wdWord, -1
+  rng.Select
+  myMidWord = Left(rng, 3)
+  If myMidWord = "und" Or myMidWord = "and" Then
+    rng.MoveStart wdWord, -1
+    rng.Text = LCase(rng.Text)
+  End If
+  rng.Select
+  rng.Start = endNow + 2
+  rng.End = endNow + 2
+  rng.Find.Execute
+  DoEvents
+Loop
+
 
 ' Find and replace to create easy-to-search text
 myList = "#ü|uu#û|qcq#~<([A-Z]{2}).|\1# in press| 2999#/| #" & _
      "~<([A-Z]).|\1#(| #)| #:| #;| #, | #" & _
      "~<([A-Z])> ([A-Z])|\1ü\2#~<([A-Z]{2})> ([A-Z])|\1ü\2#" & _
      "#.|ü#(|ü#)|ü#[|ü#]|ü#" & _
-     " et alii|üetüal# et al|üetüal# & |üandü#-|û#" & _
+     " et alii|üetüal# et al|üetüal# & |üandü# und |üandü#-|û#" & _
      "~<de la |DeüLaü#~<De la |DeüLaü#~<De La |DeüLaü#" & _
      " e |üeü# y |üyü#~<van |Vanü#~<de |Deü#" & _
      " and |üandü#~<von |Vonü#~<van |Vanü#~<de |Deü#" & _
@@ -387,8 +423,8 @@ Loop
 notNames = notNames & " "
 For i = ActiveDocument.Paragraphs.count To 2 Step -1
   Set rng = ActiveDocument.Paragraphs(i).Range
-  If InStr(notNames, rng.Words(1).Text) > 0 And _
-       rng.Words.count = 3 Then rng.Delete
+  If InStr(notNames, rng.Words(1).Text) > 0 Then _
+       rng.Words(1).Delete
 Next i
 
 ' Add year at beginning of line

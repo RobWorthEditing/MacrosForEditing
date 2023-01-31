@@ -1,0 +1,58 @@
+Sub DeCifrasALetras()
+' Paul Beverley - Versión 06.04.20
+' Cambia la cifra del número (del 1 al 20) por la palabra
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+' Find a number (six figures max)
+Selection.End = Selection.Start
+With Selection.Find
+.ClearFormatting
+.Text = "[0-9]{1,5}"
+.Replacement.Text = ""
+.MatchWildcards = True
+.Forward = True
+.Execute
+End With
+
+myNum = Val(Selection)
+Select Case myNum
+ Case 1: myText = "uno"
+ Case 2: myText = "dos"
+ Case 3: myText = "tres"
+ Case 4: myText = "cuatro"
+ Case 5: myText = "cinco"
+ Case 6: myText = "seis"
+ Case 7: myText = "siete"
+ Case 8: myText = "ocho"
+ Case 9: myText = "nueve"
+ Case 10: myText = "diez"
+ Case 11: myText = "once"
+ Case 12: myText = "doce"
+ Case 13: myText = "trece"
+ Case 14: myText = "catorce"
+ Case 15: myText = "quince"
+ Case 16: myText = "dieciséis"
+ Case 17: myText = "diecisiete"
+ Case 18: myText = "dieciocho"
+ Case 19: myText = "diecinueve"
+ Case 20: myText = "veinte"
+ 
+ Case Else: myText = ""
+End Select
+If myText = "" Then
+ Beep
+ Selection.Collapse wdCollapseEnd
+Else
+ Selection.TypeText Text:=myText
+End If
+
+With Selection.Find
+.Text = oldFind
+.Replacement.Text = oldReplace
+.MatchWildcards = False
+End With
+End Sub
+
+

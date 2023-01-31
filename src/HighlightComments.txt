@@ -1,0 +1,24 @@
+Sub HighlightComments()
+' Paul Beverley - Version 16.11.22
+' Highlights all comments with certain specific prefixes
+
+wholeComment = True
+myPrefixA = "AQ:"
+myPrefixB = "TS:"
+myColourA = wdBrightGreen
+myColourB = wdYellow
+
+For Each cmt In ActiveDocument.Comments
+  Set rng = cmt.Range
+  If InStr(rng, myPrefixA) = 1 Then
+    If wholeComment = False Then rng.End = rng.Start + Len(myPrefixA)
+    rng.HighlightColorIndex = myColourA
+  End If
+  If InStr(rng, myPrefixB) = 1 Then
+    If wholeComment = False Then rng.End = rng.Start + Len(myPrefixB)
+    rng.HighlightColorIndex = myColourB
+  End If
+  DoEvents
+Next cmt
+End Sub
+

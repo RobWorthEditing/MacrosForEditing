@@ -1,13 +1,17 @@
 Sub WordPairPunctuate()
-' Paul Beverley - Version 16.01.21
+' Paul Beverley - Version 31.08.22
 ' Makes word pair hyphenated or single word
 
+trackIt = False
 reverseOrder = True
 
 varExists = False
 For Each v In ActiveDocument.Variables
   If v.Name = "pairWord" Then varExists = True: Exit For
 Next v
+
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
 
 If varExists = False Then ActiveDocument.Variables.Add _
      "pairWord", "Dummy%Dummy"
@@ -79,5 +83,6 @@ Selection.End = myEnd
 Selection.TypeText Replace(newWord, "|", "")
 Selection.Start = myStart
 Selection.Collapse wdCollapseStart
+ActiveDocument.TrackRevisions = myTrack
 End Sub
 

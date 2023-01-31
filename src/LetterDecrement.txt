@@ -9,8 +9,9 @@ If doTrack = False Then ActiveDocument.TrackRevisions = False
 Selection.Collapse wdCollapseStart
 Do While UCase(ChrW(AscW(Selection))) = LCase(ChrW(AscW(Selection)))
   Selection.MoveRight , 1
+  DoEvents
 Loop
-Selection.End = Selection.Start + 1
+Selection.End = Selection.Start + 2
 Selection.TypeText Text:=ChrW(AscW(Selection) - 1)
 Selection.MoveLeft , 1
 ActiveDocument.TrackRevisions = myTrack

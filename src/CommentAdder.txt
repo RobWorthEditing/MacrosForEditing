@@ -1,10 +1,13 @@
+
 Sub CommentAdder()
-' Paul Beverley - Version 02.11.21
+' Paul Beverley - Version 23.08.22
 ' Adds a comment off a menu
 
 useCommentPane = False
 paneZoom = 240
 
+addItalic = True
+addbold = True
 
 ' myDefaultSelect = "sentence"
 myDefaultSelect = "word"
@@ -12,22 +15,24 @@ myDefaultSelect = "word"
 ' useDoubleQuotes = False
 useDoubleQuotes = True
 
-addJustPageNum = True
+addJustPageNum = False
 addPageAndLineNum = False
 
 maxLen = 100
 
 cm = "Start\"
 cm = cm & ",Dummy\"
+cm = cm & "a '[]' is something I’ve /got/ and */you’d/* like, 'yes'?\"
 cm = cm & "l '[]' is not in the references list.\"
 cm = cm & "L AU: '[]' is not in the references list. (But '[]|', is.)\"
 cm = cm & "c '[]' - Not cited in the text.\"
-cm = cm & "h '[]' - Have I caught the intended meaning?\"
-cm = cm & "r '[]' - Will the readers know what this means? If so, fine.\"
+cm = cm & "h '[]' - Have I caught the *intended* meaning? /Well?!/\"
+cm = cm & "r '[]' - Will the /readers/ know what this means? If so, fine.\"
 cm = cm & "R AU: '[]' - Will readers know what '|' refers to? If so, that's fine.\"
 cm = cm & "s '[]' - Sorry, but I can't work out the intended meaning here. Is it something like '[]|'?\"
 
 maxLenPrompt = 100
+
 
 If Selection.Start = Selection.End Then
   If InStr(myDefaultSelect, "nten") > 0 Then
@@ -83,6 +88,8 @@ indx = indx
 
 myPrompt = Replace(myPrompt, "[]", "") _
      & vbCr & "Comment?"
+myPrompt = Replace(myPrompt, "/", "")
+myPrompt = Replace(myPrompt, "*", "")
 
 Do
   myCode = InputBox(myPrompt, "CommentAdder")
@@ -94,6 +101,8 @@ If myCode = "" Then Exit Sub
 If Selection.Start = Selection.End Then Selection.MoveEnd , 1
 Selection.Copy
 Application.ScreenUpdating = False
+On Error GoTo ReportIt
+
 Set myComment = Selection.Comments.Add(Range:=Selection.Range)
 myComment.Edit
 myFontSize = myComment.Range.Font.Size
@@ -138,6 +147,60 @@ Selection.Collapse wdCollapseStart
 Selection.TypeText Text:=myPLtext
 Selection.Expand wdParagraph
 Selection.Range.Font.Size = myFontSize
+
+Set rng = Selection.Range.Duplicate
+
+' Add italic
+If addItalic = True Then
+  italicPos = InStr(Selection, "/")
+  Do While italicPos > 0
+    If italicPos > 0 Then
+      Selection.MoveStart , italicPos - 1
+      Selection.End = Selection.Start + 1
+      Selection.Delete
+      rng.Select
+      Selection.MoveStart , italicPos - 1
+      italicEndPos = InStr(Selection, "/")
+      If italicPos > 0 Then
+        Selection.End = Selection.Start + italicEndPos
+        Selection.Font.Italic = True
+        Selection.Collapse wdCollapseEnd
+        Selection.MoveStart , -1
+        Selection.Delete
+      End If
+    End If
+    rng.Select
+    italicPos = InStr(Selection, "/")
+  Loop
+End If
+
+' Add bold
+If addbold = True Then
+  rng.Select
+  boldPos = InStr(Selection, "*")
+  Do While boldPos > 0
+    If boldPos > 0 Then
+      Selection.MoveStart , boldPos - 1
+      Selection.End = Selection.Start + 1
+      Selection.Delete
+      rng.Select
+      Selection.MoveStart , boldPos - 1
+      boldEndPos = InStr(Selection, "*")
+      If boldPos > 0 Then
+        Selection.End = Selection.Start + boldEndPos
+        Selection.Font.Bold = True
+        Selection.Collapse wdCollapseEnd
+        Selection.MoveStart , -1
+        Selection.Delete
+      End If
+    End If
+    rng.Select
+    boldPos = InStr(Selection, "*")
+  Loop
+End If
+
+' Now position the cursor
+rng.Select
 cursorPos = InStr(Selection, "|")
 If cursorPos > 0 Then
   Selection.Collapse wdCollapseEnd
@@ -157,11 +220,18 @@ Else
   Selection.MoveEnd , -1
   Selection.Collapse wdCollapseEnd
 End If
+
 If useCommentPane = False Then
   ActiveWindow.ActivePane.Close
 Else
   Application.ActiveWindow.View.Zoom.Percentage = paneZoom
 End If
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
 
 

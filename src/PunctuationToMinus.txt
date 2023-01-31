@@ -6,7 +6,7 @@ trackit = False
 
 myChar = ChrW(8722)
 
-searchChars = "-" & ChrW(8711) & ChrW(8712) & Chr(30)
+searchChars = "-" & ChrW(8211) & ChrW(8212) & Chr(30)
 
 myTrack = ActiveDocument.TrackRevisions
 If trackit = False Then ActiveDocument.TrackRevisions = False

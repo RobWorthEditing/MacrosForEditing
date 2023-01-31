@@ -1,0 +1,25 @@
+
+Sub StylesPaneCustomize()
+' Paul Beverley - Version 12.01.21
+' Moves the Styles pane where and how you want
+
+h = 600
+w = 400
+
+' doSetUp = True
+doSetUp = False
+
+If doSetUp = True Then
+  w = Application.CommandBars("Styles").Width
+  h = Application.CommandBars("Styles").Height
+  MsgBox "H: " & h & vbCr & vbCr & "W: " & w
+  Exit Sub
+End If
+
+  'Application.CommandBars("Styles").Position = msoBarRight
+  'Application.CommandBars("Styles").Position = msoBarLeft
+  Application.CommandBars("Styles").Position = msoBarFloating
+  Application.CommandBars("Styles").Height = h
+  Application.CommandBars("Styles").Width = w
+End Sub
+

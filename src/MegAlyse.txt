@@ -2,10 +2,13 @@ Sub MegAlyse()
 ' Paul Beverley - Version 20.01.22
 ' Launches a selected series of analysis macros
 
+' Works with: AccentAlyse, CapitAlyse, CenturyAlyse, DocAlyse,
+' FullNameAlyse, HyphenAlyse, ListAlyse, ProperNounAlyse,
+' SpecialSortsLister, SpellAlyse, SpellingErrorListerBilingual,
+' WordPairAlyse
+
 myAlyses = "ListAlyse, DocAlyse"
 myAlyses = "SpellAlyse, WordPairAlyse"
-myAlyses = "DocAlyse, HyphenAlyse, ProperNounAlyse, SpellAlyse"
-myAlyses = "SpellAlyse, ProperNounAlyseOO, ProperNounAlyse"
 myAlyses = "DocAlyse, HyphenAlyse, ProperNounAlyse, SpellAlyse, WordPairAlyse"
 
 saveResultsFiles = False

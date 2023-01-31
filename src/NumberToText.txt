@@ -1,5 +1,5 @@
 Sub NumberToText()
-' Paul Beverley - Version 15.06.19
+' Paul Beverley - Version 24.06.22
 ' Converts next number into text
 
 oldFind = Selection.Find.Text
@@ -18,9 +18,9 @@ With Selection.Find
   .MatchAllWordForms = False
   .Execute
 End With
-
+startNum = Selection.Start
 ' Create a field containing the digits and a special format code
-Selection.Fields.Add range:=Selection.range, _
+Selection.Fields.Add Range:=Selection.Range, _
    Type:=wdFieldEmpty, Text:="= " + Selection + " \* CardText", _
    PreserveFormatting:=True
 
@@ -33,11 +33,22 @@ DoEvents
 ' Paste the text as unformatted, replacing the field
 Selection.PasteSpecial Link:=False, DataType:=wdPasteText, _
    Placement:=wdInLine, DisplayAsIcon:=False
-Selection.MoveRight , 1
+
 With Selection.Find
   .Text = oldFind
   .Replacement.Text = oldReplace
   .MatchWildcards = False
 End With
+Set rng = Selection.Range.Duplicate
+rng.MoveStart , -1
+ch1 = rng.Text
+rng.MoveStart , 1
+rng.MoveEnd , 1
+ch2 = rng.Text
+If (UCase(ch1) <> LCase(ch1)) And (UCase(ch2) <> LCase(ch2)) Then
+  Selection.TypeText Text:=" "
+End If
+Set rng = ActiveDocument.Range(Start:=startNum - 1, End:=startNum)
+If rng.Text <> " " Then rng.InsertBefore Text:=" "
 End Sub
 

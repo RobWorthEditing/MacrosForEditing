@@ -1,12 +1,14 @@
+
 Sub DictionaryMultipleFetch()
-' Paul Beverley - Version 17.06.21
+' Paul Beverley - Version 24.10.22
 ' Launches selected text to dictionary.com and other dictionaries
 
-numSites = 3
+numSites = 4
 ReDim mySite(numSites) As String
 mySite(1) = "http://dictionary.com/browse/"
-mySite(2) = "https://en.oxforddictionaries.com/definition/"
+mySite(2) = "https://dictionary.cambridge.org/dictionary/english/"
 mySite(3) = "https://www.collinsdictionary.com/dictionary/english/"
+mySite(4) = "https://books.google.com/ngrams/graph?content="
 
 If Len(Selection) = 1 Then Selection.Expand wdWord
 mySubject = Trim(Selection)

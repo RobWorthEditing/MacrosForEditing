@@ -1,0 +1,12 @@
+
+Sub CommentDeleteMoveNext()
+' Paul Beverley - Version 17.05.22
+' Deletes  current comment and moves to the next comment
+
+Application.Run MacroName:="RejectChangesSelected"
+hereNow = Selection.Start
+Selection.GoTo What:=wdGoToComment, Which:=wdGoToNext
+If Selection.Start = hereNow Then Beep
+End Sub
+
+

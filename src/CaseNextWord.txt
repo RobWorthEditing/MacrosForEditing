@@ -1,53 +1,50 @@
 Sub CaseNextWord()
-' Paul Beverley - Version 27.10.21
+' Paul Beverley - Version 20.04.22
 ' Changes case of initial letter of next word or selection
 
-trackIt = True
-' If an area of text is selected (more than one character) ...
+trackit = True
+' If an area of text is selected
 If Selection.End > Selection.Start Then
-  myText = Selection
-  myUpper = True
-  ' Count numbers of upper and lower case characters
-  ' to decide which way to switch the case.
-  myUpper = 0: myLower = 0
-  For myCount = 1 To Len(myText)
-    myChar = Asc(Mid(myText, myCount, 1))
-    If myChar > 96 And myChar < 123 Then myLower = myLower + 1
-    If myChar > 64 And myChar < 91 Then myUpper = myUpper + 1
-  Next myCount
-  If myUpper = 0 Then
-    Selection.Range.Case = wdTitleWord
-  Else
-    Selection.Range.Case = wdLowerCase
-  End If
-Else
-
-' If no text is selected ...
-' Find next word start
-  Set rng = Selection.Range.Duplicate
-  rng.End = rng.End + 1
-  Do While UCase(rng) <> LCase(rng) Or InStr("0123456789", rng) > 0
-    rng.Start = rng.Start + 1
-    rng.End = rng.End + 1
-    DoEvents
-  Loop
-  Do While UCase(rng) = LCase(rng)
-    rng.Start = rng.Start + 1
-    rng.End = rng.End + 1
-    DoEvents
-  Loop
-  rng.Select
-  If trackIt = False Then
-    Selection.Range.Case = wdToggleCase
-    Selection.MoveRight Unit:=wdCharacter, Count:=1
-  Else
-    myChar = Selection
-    If UCase(myChar) = myChar Then
-      myChar = LCase(myChar)
+  If trackit = False Then
+    myText = Selection
+    If LCase(myText) = myText Then
+      Selection.Range.Case = wdTitleWord
     Else
-      myChar = UCase(myChar)
+      Selection.Range.Case = wdLowerCase
     End If
-    Selection.Text = myChar
+  Else
+    Set rng = Selection.Range.Duplicate
+    If LCase(rng.Text) = rng.Text Then
+      For wd = 2 To rng.Words.count
+        ch = rng.Words(wd).Characters(1)
+        rng.Words(wd).Characters(1) = UCase(ch)
+      Next wd
+    Else
+      For wd = 2 To rng.Words.count
+        ch = rng.Words(wd).Characters(1)
+        rng.Words(wd).Characters(1) = LCase(ch)
+      Next wd
+    End If
+  End If
+  
+Else
+' If no text is selected
+  Selection.MoveStart wdWord
+  Selection.MoveEnd , 1
+  If LCase(Selection) = UCase(Selection) Then
+    Selection.MoveStart wdWord
+    Selection.MoveEnd , 1
+  End If
+  If trackit = False Then
+    Selection.Range.Case = wdToggleCase
+    Selection.MoveRight Unit:=wdCharacter, count:=1
+  Else
+    m = Selection.Text
+    If UCase(m) = m Then
+      Selection.Text = LCase(m)
+    Else
+      Selection.Text = UCase(m)
+    End If
     Selection.Collapse wdCollapseEnd
   End If
 End If

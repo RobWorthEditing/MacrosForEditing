@@ -1,15 +1,16 @@
 Sub PunctuationSwap()
-' Paul Beverley - Version 13.01.22
+' Paul Beverley - Version 04.06.22
 ' Swaps the next punctuation mark
-
 
 mySwaps = ".|,  ,|.  ;|:  :|;  ?|!  !|? " & _
      " (|[  )|]  [|(  ]|) "
 
-doCaseSwap = ",.;:"
-
 doQuoteSwap = True
 
+doCaseSwap = ",.;:"
+
+Application.ScreenUpdating = False
+On Error GoTo ReportIt
 If doQuoteSwap = True Then
   mySwaps = mySwaps & """|'  '|""  " & ChrW(8216) & "|" & ChrW(8220) _
        & "  " & ChrW(8220) & "|" & ChrW(8216) & "  "
@@ -18,9 +19,21 @@ If doQuoteSwap = True Then
        & "  " & ChrW(8221) & "|" & ChrW(8217) & "  "
 End If
 
-If Selection.Start <> Selection.End And InStr(doCaseSwap, Selection) > 0 Then
+If Selection.Start <> Selection.End And InStr(doCaseSwap, _
+     Selection) > 0 Then
   Selection.Move wdWord, 1
-  Call CaseNextChar
+  Selection.MoveEnd , 1
+  If UCase(Selection) = LCase(Selection) Then
+    Selection.MoveEnd , 1
+    Selection.MoveStart , 1
+  End If
+  If Asc(Selection) > 96 Then
+    Selection = UCase(Selection)
+  Else
+    Selection = LCase(Selection)
+  End If
+  Selection.Collapse wdCollapseEnd
+  Application.ScreenUpdating = True
   Exit Sub
 End If
 
@@ -31,30 +44,40 @@ For i = 0 To UBound(mySplit)
 Next i
 myTargets = Trim(myTargets)
 
-Set rng = ActiveDocument.Content
-rng.Start = Selection.End
-
-myEnd = rng.Characters.count
-If myEnd > 100 Then myEnd = 100
-For i = 1 To myEnd
-  ch = rng.Characters(i)
-  Debug.Print ch, AscW(ch)
+theEnd = ActiveDocument.Content.End
+myLen = 100
+If Selection.End + myLen > theEnd Then
+  myLen = theEnd - Selection.End
+End If
+Selection.End = Selection.Start + myLen
+myText = Selection.Text
+For i = 1 To myLen
+  ch = Mid(myText, i, 1)
+' Debug.Print ch, AscW(ch)
   If InStr(myTargets, ch) > 0 Then
     ptr = InStr(mySwaps, ch & "|")
     If ch = ChrW(8217) Then
-      ch2 = rng.Characters(i + 1)
-      Debug.Print ch2
-      If UCase(ch2) <> LCase(ch2) Then ptr = 0
+      ch2 = Mid(Selection.Text, i + 1, 1)
+      If InStr("tsvlr", ch2) > 0 Then ptr = 0
     End If
     If ptr > 0 Then
-      rng.Start = rng.Start + i - 1
-      rng.End = rng.Start + 1
+      Selection.Start = Selection.Start + i - 1
+      Selection.End = Selection.Start + 1
       newChar = Mid(mySwaps, ptr + 2, 1)
-      rng.Text = newChar
-      rng.Select
+      Selection.Text = newChar
+      Application.ScreenUpdating = True
+      If InStr(doCaseSwap, ch) = 0 Then _
+           Selection.Collapse wdCollapseEnd
       Exit Sub
     End If
   End If
 Next i
+Application.ScreenUpdating = True
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
 

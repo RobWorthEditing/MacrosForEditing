@@ -1,9 +1,11 @@
 Sub MultiSwitch()
-' Paul Beverley - Version 07.02.22
+' Paul Beverley - Version 03.10.22
 ' Scripted word/phrase switching
 
-maxWords = 9
+maxWords = 5
 myListName = "zzSwitchList"
+
+commentNearCheck = True
 
 ' Set min number of chars for an abbreviation
 minChars = 3
@@ -11,36 +13,50 @@ includeApostrophe = True
 
 linksOFF = True
 
+' addOriginal = True
+addOriginal = False
+
 Set thisDoc = ActiveDocument
 
 ' If you want to load the SwitchList file automatically...
 
-' On Windows, you will need something like this:
-' Documents.Open FileName:= "C:\Documents and Settings\Paul\My Documents\zzSwitchList.docx"
+' On a Mac, you will need
+myList = "/Users/Paul/My Documents/Macro stuff/zzSwitchList.docx"
 
-' On a Mac, you will need something like this:
-' Documents.Open FileName:= "/Users/Paul/My Documents/Macro stuff/zzSwitchList.docx"
+' On Windows, you will need something like this:
+myList = "C:\Documents and Settings\Paul\My Documents\zzSwitchList.docx"
+
 
 CR = vbCr
 CR2 = CR & CR
 Dim myStr(20) As String
 Dim endStr(20) As Long
-thisDoc.Activate
+
+' Just in case they are using "smart" cut/opaste option
+mySmartOpt = Options.SmartCutPaste
+Options.SmartCutPaste = False
 
 ' Read the context, noting if the word is selected
 wasSelected = (Selection.End > Selection.Start)
 If wasSelected = True Then
   maxWords = 1
 Else
+  myTest = Selection.Text
+  If LCase(myTest) = UCase(myTest) Then Selection.MoveLeft , 1
   Selection.Expand wdWord
 End If
+inAComment = Selection.Information(wdInCommentPane)
+'If inAComment = True Then
+' ' cmtText = Selection.Comments(1).Range.Words.count
+'  numWds = Selection.Comments(1).Range.Words.count
+'  If numWds = 1 Then Selection.InsertAfter Text:=" "
+'End If
 
 ' If no word selected
 Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
   Selection.MoveEnd , -1
   DoEvents
 Loop
-
 okChars = ".,;:" & Chr(13) & ChrW(8211) & ChrW(8212) & ChrW(8221)
 If InStr(okChars, Left(Selection, 1)) > 0 Then
   Selection.Collapse wdCollapseStart
@@ -57,12 +73,16 @@ Set rng = Selection.Range.Duplicate
 rng.Collapse wdCollapseStart
 rng.MoveEnd Unit:=wdWord, count:=maxWords
 numTCs = rng.Revisions.count
+
+
 If numTCs > 0 Then
   rng.Revisions.AcceptAll
   rng.MoveEnd Unit:=wdWord, count:=maxWords
 End If
+
 wdsLeft = rng.Words.count
 If maxWords > wdsLeft Then maxWords = wdsLeft
+If Asc(rng.Words(wdsLeft)) = 13 Then maxWords = maxWords - 1
 For i = 1 To maxWords
   endStr(i) = rng.Words(i).End
   If rng.Words(i) = vbCr Then
@@ -70,7 +90,6 @@ For i = 1 To maxWords
     Exit For
   End If
   If Right(rng.Words(i), 1) = " " Then endStr(i) = endStr(i) - 1
-'  Debug.Print rng.Words(i)
   myStr(i) = Left(rng, endStr(i) - rng.Start)
   DoEvents
 Next i
@@ -90,12 +109,30 @@ For i = 1 To Documents.count
   End If
 Next i
 If gottaList = False Then
-  Beep
-  myResponse = MsgBox("Please open the " & myListName & _
+  Documents.Open FileName:=myList
+'  Beep
+'  myResponse = MsgBox("Please open the " & myListName & _
        " file.", vbOKOnly, "MultiSwitch")
-  Exit Sub
+'  Options.SmartCutPaste = mySmartOpt
+'  Exit Sub
+Else
+  listDoc.Activate
 End If
-listDoc.Activate
+' Check if list has LFs
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(11)
+  .Replacement.Text = ""
+  .Execute
+  DoEvents
+  If .Found Then
+    Beep
+    MsgBox "The switch list must use paragraphs, not line breaks!"
+    ActiveWindow.ActivePane.View.ShowAll = True
+    Exit Sub
+  End If
+End With
 
 ' Just in case the switch list has any URLs
 If linksOFF = True Then
@@ -117,11 +154,12 @@ If lfPos > 0 Then
   Beep
   Application.Run "ShowFormatting"
   MsgBox "The switch list must use paragraphs, not line breaks!"
+  Options.SmartCutPaste = mySmartOpt
   Exit Sub
 End If
 
 For i = iMax To 1 Step -1
-  myPos = InStr(allWords, CR2 & myStr(i) & CR)
+  myPos = InStr(allWords, CR2 & Replace(myStr(i), CR, "") & CR)
   If myPos > 0 Then
     allWords = Mid(allWords, myPos + 1)
     gottaMatch = True
@@ -169,6 +207,7 @@ If gottaMatch = False Then
   Do
   Loop Until Timer > myTime + 0.2
   Beep
+  Options.SmartCutPaste = mySmartOpt
   Exit Sub
   Else
   Selection.Start = myPos + 20
@@ -185,6 +224,7 @@ If numAlts > 1 And wasSelected = False Then
   myChoice = Val(myResponse)
   If myChoice > numAlts Or myChoice = 0 Then
     thisDoc.Activate
+    Options.SmartCutPaste = mySmartOpt
     Exit Sub
   End If
 Else
@@ -203,7 +243,8 @@ myNewItem = Selection
 Set r = Selection.Range
 Dim gotFormat As Boolean
 gotFormat = r.Font.Bold Or r.Font.Italic Or r.Font.SmallCaps _
-     Or r.Font.Underline Or r.Font.Superscript Or r.Font.Subscript
+     Or r.Font.Underline Or r.Font.Superscript Or r.Font.Subscript _
+     Or r.InlineShapes.count > 0
 If AscW(Selection) = 172 Or gotFormat Then
   useFormat = True
   If AscW(Selection) = 172 Then Selection.MoveStart , 1
@@ -219,8 +260,8 @@ If Selection.Information(wdInCommentPane) = 0 And _
      Selection.Information(wdInFootnote) = 0 And _
      Selection.Information(wdInEndnote) = 0 Then
 
-numCmts = ActiveDocument.Comments.count
-  If numCmts > 0 Then
+  numCmts = ActiveDocument.Comments.count
+  If numCmts > 0 And commentNearCheck = True Then
   ' Find scope of (range covered by) the next comment
     Set rng = Selection.Range.Duplicate
     rng.Collapse wdCollapseStart
@@ -238,6 +279,7 @@ numCmts = ActiveDocument.Comments.count
         myResponse = MsgBox("Selection contains a comment. Word might crash!" _
              & CR2 & "Please use a manual change.", _
              vbOKOnly, "MultiSwitch")
+        Options.SmartCutPaste = mySmartOpt
         Exit Sub
       End If
     End If
@@ -325,10 +367,20 @@ Else
   Selection.MoveEnd 1
   Selection.Delete
 End If
+If addOriginal = True Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Collapse wdCollapseEnd
+  Selection.TypeText Text:=" (" & myStr(1) & ")"
+End If
 
 If noTrack Then
   ActiveDocument.TrackRevisions = myTrack
   ActiveWindow.View.ShowInsertionsAndDeletions = myState
 End If
+Options.SmartCutPaste = mySmartOpt
 End Sub
 

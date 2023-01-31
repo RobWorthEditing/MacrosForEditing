@@ -1,0 +1,32 @@
+Sub FourDigitHundreds()
+' Paul Beverley - Version 04.10.22
+' Changes four-figure numbers to words
+
+Set rng = Selection.Range.Duplicate
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^#"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+rng.MoveEnd , 4
+ch = Right(rng, 1)
+If InStr("0123456789", ch) = 0 Then rng.MoveEnd , -1
+myNum = rng
+myNum = Replace(myNum, ",", "")
+If Right(myNum, 2) <> "00" Then
+  rng.Select
+  Beep
+  Exit Sub
+End If
+rng.Text = Left(myNum, 2) & " hundred"
+rng.Collapse wdCollapseStart
+rng.Select
+Application.Run macroName:="Normal.NewMacros.NumberToTextCMOS"
+End Sub
+

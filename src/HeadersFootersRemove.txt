@@ -1,0 +1,16 @@
+Sub HeadersFootersRemove()
+' Paul Beverley - Version 11.11.22
+' Removes all headers and footers in all sections
+
+For Each mySec In ActiveDocument.Sections
+  For Each myHead In mySec.Headers
+    If myHead.Exists Then myHead.Range.Text = ""
+  Next myHead
+  For Each myFoot In mySec.Footers
+    If myFoot.Exists Then myFoot.Range.Text = ""
+  Next myFoot
+Next mySec
+End Sub
+
+
+

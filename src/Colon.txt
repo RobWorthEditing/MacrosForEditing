@@ -1,9 +1,8 @@
 Sub Colon()
-' Paul Beverley - Version 19.06.19
-' Make adjacent words into colon separated
-' <Shift-Ctrl-Alt-;>
+' Paul Beverley - Version 23.01.23
+' Makes adjacent words into colon separated
 
-upperCaseAfter = False
+uppercaseAfter = False
 
 newBit = ": "
 myQuotes = Chr(34) & Chr(39) & ChrW(8220) & ChrW(8216)
@@ -17,6 +16,8 @@ If Selection = ChrW(8217) Then myStart = myStart + 1
 Do
   Selection.MoveRight 1
   DoEvents
+  If Selection.Start = ActiveDocument.Content.End - 1 _
+     Then Beep: Exit Sub
 Loop Until LCase(Selection) <> UCase(Selection) Or Asc(Selection) = 1
 myEnd = Selection.Start
 Set rng = ActiveDocument.Content
@@ -25,7 +26,7 @@ rng.Start = myStart
 wasMiddle = rng
 lastChar = Right(rng, 1)
 
-If upperCaseAfter = False Then
+If uppercaseAfter = False Then
   If LCase(Selection) <> Selection Then
   ' It needs lowercasing
     Selection.Start = Selection.Start - 1
@@ -35,7 +36,7 @@ If upperCaseAfter = False Then
     newLetter = LCase(Selection)
     If InStr(myQuotes, preChar) > 0 Then
       Selection.Delete
-      Selection.TypeText Text:=newLetter
+      Selection.TypeText newLetter
       Selection.End = myEnd - 1
     Else
       newBit = newBit & newLetter
@@ -55,7 +56,7 @@ Else
     newLetter = UCase(Selection)
     If InStr(myQuotes, preChar) > 0 Then
       Selection.Delete
-      Selection.TypeText Text:=newLetter
+      Selection.TypeText newLetter
       Selection.End = myEnd - 1
     Else
       newBit = newBit & newLetter
@@ -68,7 +69,7 @@ Else
 End If
 Selection.Start = myStart
 Selection.Delete
-Selection.TypeText Text:=newBit
-Selection.MoveRight Count:=2
+Selection.TypeText newBit
+Selection.MoveRight count:=1
 End Sub
 

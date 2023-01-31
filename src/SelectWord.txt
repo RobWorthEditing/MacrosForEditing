@@ -1,5 +1,5 @@
 Sub SelectWord()
-' Paul Beverley - Version 14.01.21
+' Paul Beverley - Version 04.01.23
 ' Selects current word, and then those before it
 
 If Selection.Start = Selection.End Then
@@ -10,11 +10,11 @@ If Selection.Start = Selection.End Then
     DoEvents
   Loop
   If Len(Selection) <> lenNow Then Exit Sub
-
-  Selection.MoveStart , -1
-  preChar = Left(Selection, 1)
-  Selection.MoveStart , 1
-  If preChar = " " Then Exit Sub
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.MoveStart , -1
+  preChar = rng.Text
+  If LCase(preChar) = UCase(preChar) Then Exit Sub
 End If
 
 Selection.MoveStart , -1

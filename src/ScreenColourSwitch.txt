@@ -1,0 +1,33 @@
+Sub ScreenColourSwitch()
+' Paul Beverley - Version 01.01.23
+' Switches colour text and background on/off
+
+myBackColour = wdColorLightBlue
+' myForeColour = wdColorYellow
+myForeColour = RGB(255, 255, 240)
+
+With ActiveDocument.Styles(wdStyleNormal).ParagraphFormat
+  myColourNow = .Shading.BackgroundPatternColor
+  If myColourNow = wdColorAutomatic Then
+    .Shading.BackgroundPatternColor = myBackColour
+  Else
+    .Shading.BackgroundPatternColor = wdColorAutomatic
+  End If
+End With
+
+With ActiveDocument.Styles(wdStyleNormal).Font
+  If myColourNow = wdColorAutomatic Then
+    .Color = myForeColour
+    myColNew = myBackColour
+  Else
+    myColNew = RGB(255, 255, 255)
+    .Color = wdAuto
+  End If
+End With
+With ActiveDocument.Background.Fill
+  .ForeColor.RGB = myColNew
+  .Visible = msoTrue
+  .Solid
+End With
+End Sub
+

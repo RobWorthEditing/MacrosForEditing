@@ -1,0 +1,101 @@
+Sub CapperMin()
+' Paul Beverley - Version 12.11.22
+' Lowercases initial letter of capitalised words (sentence case)
+
+doTrack = True
+
+' If it's mostly capitals lowercase them all first
+deCapitate = True
+
+uppercaseAfterColon = False
+' uppercaseAfterColon = True
+
+' List of (starts of) words *not* to be lowercased
+notLC = " Brit United Kingd States America Engl Welsh Wales "
+notLC = notLC & " Scot Irel Irish Europ France French "
+
+' Create a range from the selection but whole words
+' or whole paragraph, if nothing was selected
+If Selection.Start = Selection.End Then
+  Set rng = Selection.Range.Duplicate
+  rng.Expand wdParagraph
+Else
+  Set rng = Selection.Range.Duplicate
+  rng.MoveEnd , -1
+  rng.Collapse wdCollapseEnd
+  rng.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Collapse wdCollapseStart
+  Selection.Expand wdWord
+  rng.Start = Selection.Start
+End If
+rng.Select
+Selection.Collapse wdCollapseEnd
+hereNow = Selection.End
+
+notLC = " " & notLC & " "
+myTrack = ActiveDocument.TrackRevisions
+If doTrack = False Then ActiveDocument.TrackRevisions = False
+
+If deCapitate = True Then
+  numUC = 0
+  allLine = rng.Text
+  For i = 1 To Len(allLine)
+    ch = Mid(allLine, i, 1)
+    If LCase(ch) <> UCase(ch) And LCase(ch) <> ch Then numUC = numUC + 1
+  Next i
+  If numUC > rng.Characters.count / 2 Then _
+       rng.Text = Left(allLine, 1) & LCase(Mid(allLine, 2))
+  Selection.Start = hereNow
+End If
+numWds = rng.Words.count
+wdWas = ""
+For i = 2 To numWds
+  Set wd = rng.Words(i)
+  init = Left(wd.Text, 1)
+  myLC = LCase(init)
+  doLC = True
+  myWd = Trim(wd.Text)
+  numUC = 0
+  If uppercaseAfterColon = True And wdWas = ": " Then
+    If init = LCase(init) Then wd.Characters(1) = UCase(init)
+  Else
+    If myLC <> init And UCase(myWd) <> myWd _
+       And init <> ChrW(8216) Then
+      For j = 1 To Len(myWd)
+        ch = Mid(myWd, j, 1)
+        If ch = UCase(ch) And LCase(ch) <> ch Then numUC = numUC + 1
+        If InStr(notLC, " " & Left(myWd, j) & " ") > 0 Then
+          doLC = False
+          Exit For
+        End If
+        DoEvents
+      Next j
+      If doLC = True And numUC < 2 _
+        And myWd <> "I" Then wd.Characters(1) = myLC
+    End If
+  End If
+  DoEvents
+  wdWas = wd.Text
+Next i
+If uppercaseAfterColon = False Then
+  wasChar = ""
+  For i = 1 To numWds
+    Set wd = rng.Words(i)
+    If wd.Text = ": " Then
+      nextWd = rng.Words(i + 1).Text
+      myInit = Left(nextWd, 1)
+      If UCase(myInit) = myInit Then _
+           rng.Words(i + 1).Characters(1).Text = LCase(myInit)
+    End If
+  Next i
+End If
+myInit = rng.Characters(1)
+If UCase(myInit) <> myInit Then _
+     rng.Characters(1) = UCase(myInit)
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

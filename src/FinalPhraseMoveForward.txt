@@ -1,0 +1,30 @@
+Sub FinalPhraseMoveForward()
+' Paul Beverley - Version 11.08.22
+' Cuts the final phrase of a sentence and pulls it to just after the cursor-word
+
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Selection.Collapse wdCollapseEnd
+Set rng = Selection.Range.Duplicate
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[!,]@."
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+rng.MoveEnd , -1
+rng.Cut
+rng.MoveStart , -1
+rng.Delete
+If Selection <> "," Then Selection.TypeText Text:=" "
+Selection.Paste
+End Sub
+

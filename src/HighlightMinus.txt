@@ -1,36 +1,48 @@
 Sub HighlightMinus()
-' Paul Beverley - Version 03.02.22
+' Paul Beverley - Version 15.04.22
 ' Removes or adds highlight in a choice of colours
 
 doUnderlinesToo = True
+doColourOffToo = True
+strikeThroughToo = True
 
 addWarning = True
+
+doParagraph = True
+' False means act on current line
 
 Set rng = ActiveDocument.Content
 If Selection.Text = rng.Text Then
   If addWarning = True Then
     Beep
-    myResponse = MsgBox("Remove colour, highlight (and underlining)?", _
+    myResponse = MsgBox("Remove colour, highlight, strike-through (and underlining)?", _
          vbQuestion + vbYesNoCancel, "HighlightMinus")
-    If myResponse <> vbYes Then Exit Sub
+    If myResponse <> vbYes Then
+      doUnderlinesToo = False
+      doColourOffToo = False
+      strikeThroughToo = False
+    End If
   End If
 
   Set rng = ActiveDocument.Content
   rng.HighlightColorIndex = wdNoHighlight
-  rng.Font.Color = wdColorAutomatic
+  If doColourOffToo = True Then rng.Font.Color = wdColorAutomatic
+  If strikeThroughToo = True Then rng.Font.StrikeThrough = False
   If doUnderlinesToo = True Then rng.Font.Underline = False
   
   If ActiveDocument.Footnotes.count > 0 Then
     Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
     rng.HighlightColorIndex = wdNoHighlight
-    rng.Font.Color = wdColorAutomatic
+    If doColourOffToo = True Then rng.Font.Color = wdColorAutomatic
+    If strikeThroughToo = True Then rng.Font.StrikeThrough = False
     If doUnderlinesToo = True Then rng.Font.Underline = False
   End If
   
   If ActiveDocument.Endnotes.count > 0 Then
     Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
     rng.HighlightColorIndex = wdNoHighlight
-    rng.Font.Color = wdColorAutomatic
+    If strikeThroughToo = True Then rng.Font.StrikeThrough = False
+    If doColourOffToo = True Then rng.Font.Color = wdColorAutomatic
     If doUnderlinesToo = True Then rng.Font.Underline = False
   End If
   Selection.HomeKey Unit:=wdStory
@@ -109,15 +121,20 @@ ActiveDocument.TrackRevisions = myTrack
 Exit Sub
 
 LineClear:
-Selection.HomeKey Unit:=wdLine
-clearStart = Selection.Start
-Selection.MoveDown Unit:=wdLine, count:=1
-Selection.HomeKey Unit:=wdLine
+If doParagraph = True Then
+  Selection.Expand wdParagraph
+Else
+  Selection.HomeKey Unit:=wdLine
+  clearStart = Selection.Start
+  Selection.MoveDown Unit:=wdLine, count:=1
+  Selection.HomeKey Unit:=wdLine
+End If
 Set rng = Selection.Range
 rng.Start = clearStart
 ActiveDocument.Variables("selStart") = clearStart
 ActiveDocument.Variables("selEnd") = Selection.End
 rng.HighlightColorIndex = wdNoHighlight
 ActiveDocument.TrackRevisions = myTrack
+Selection.Collapse wdCollapseEnd
 End Sub
 

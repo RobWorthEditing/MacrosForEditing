@@ -1,0 +1,44 @@
+Sub FindAndDoRng()
+' Paul Beverley - Version 08.08.22
+' Finds something specific and does things to each one
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "o"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+' If you want to count them...
+  myCount = myCount + 1
+' Note where the end of the found item is
+  Set rngWas = rng.Duplicate
+' make sure you're past
+  rngWas.MoveEnd , 1
+  rngWas.Collapse wdCollapseEnd
+  
+' rng.Select
+  If myCount Mod 20 = 0 Then rng.Select
+  rng.Text = "ooo"
+  rng.Font.Italic = True
+  
+  ' Restart searching AFTER the previous occurrence
+  rng.End = rngWas.End
+  rng.Collapse wdCollapseEnd
+  
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+  DoEvents
+Loop
+MsgBox "Changed: " & myCount
+End Sub
+
+

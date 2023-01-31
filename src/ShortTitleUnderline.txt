@@ -1,0 +1,18 @@
+Sub ShortTitleUnderline()
+' Paul Beverley - Version 16.03.22
+' Underlines the current author name(s)
+
+Selection.Expand wdWord
+Set rng = Selection.Range.Duplicate
+Do
+  rng.Move wdWord, 1
+  rng.MoveEnd , 1
+  Debug.Print rng
+Loop Until UCase(rng) = LCase(rng) And rng <> "-"
+rng.MoveEnd , -1
+rng.Start = Selection.Start
+rng.Select
+Selection.Range.Font.Underline = True
+End Sub
+
+

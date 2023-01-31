@@ -1,15 +1,16 @@
 Sub TrackOnOffVisibleMac()
-' Paul Beverley - Version 07.03.19
+' Paul Beverley - Version 27.09.22
 ' Switches tracking on/off with visible background
 
-myBright = 255
 myColNumber = 200
 myColour = RGB(255, 255, myColNumber)
 
+Set rng = ActiveDocument.Content
 If ActiveDocument.TrackRevisions = False Then
   ActiveDocument.TrackRevisions = True
   ActiveDocument.Styles(wdStyleNormal).ParagraphFormat.Shading.BackgroundPatternColor _
-       = RGB(255, 255, myBright)
+        = wdColorAutomatic
+  rng.Font.Shading.BackgroundPatternColor = wdColorAutomatic
   Beep
 Else
   ActiveDocument.TrackRevisions = False
@@ -22,4 +23,6 @@ Else
   Beep
 End If
 End Sub
+
+
 

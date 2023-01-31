@@ -1,0 +1,46 @@
+Sub BibleGatewayFetch()
+' Paul Beverley - Version 10.09.22
+' Launches Bible references on BibleGateway
+
+mySite = "https://www.biblegateway.com/passage/?search="
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "'", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.MoveStart , -2
+  If InStr("123", Left(Selection.Text, 1)) = 0 Then _
+    Selection.MoveStart , 2
+    Selection.MoveEnd , 1
+  myChar = Right(Selection.Text, 1)
+  Do While InStr("0123456789.:- ", myChar) > 0
+    Selection.MoveEnd , 1
+    myChar = Right(Selection.Text, 1)
+    Debug.Print myChar
+    If LCase(myChar) <> UCase(myChar) Then Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.Start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Start = startNow
+End If
+
+Selection.Copy
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubject, ChrW(8217), "'")
+ActiveDocument.FollowHyperlink Address:=mySite & mySubject
+Selection.Collapse wdCollapseEnd
+End Sub
+

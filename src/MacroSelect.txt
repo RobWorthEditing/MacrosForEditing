@@ -1,10 +1,11 @@
 Sub MacroSelect()
-' Paul Beverley - Version 20.01.21
+' Paul Beverley - Version 12.01.23
 ' Selects the current macro text
 
 oldFind = Selection.Find.Text
 oldReplace = Selection.Find.Replacement.Text
 Selection.Start = Selection.End
+Selection.MoveUp , 3
 With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting

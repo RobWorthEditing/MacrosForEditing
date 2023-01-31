@@ -1,9 +1,22 @@
 Sub AcceptSpecificTrackChange()
-' Paul Beverley - Version 02.03.11
+' Paul Beverley - Version 02.04.11
 ' Accept all occurrences of one specific track change
-' Alt-Ctrl-Shift-f10
+' Alt - Ctrl - Shift - f10
 
-myType = Selection.Range.Revisions.Item(1).FormatDescription
+On Error GoTo ReportIt
+'WordBasic.PreviousChangeOrComment
+restart:
+thisRev = ActiveDocument.Range(0, _
+     Selection.Range.Revisions(1).Range.End).Revisions.count
+Do
+  i = thisRev
+  Set myRev = ActiveDocument.Revisions(i)
+  myRev.Range.Select
+  myType = myRev.FormatDescription
+  thisRevString = InputBox(myType, "Accept this change?", Trim(Str(i)))
+  If thisRevString = "" Then Exit Sub
+  thisRev = Val(thisRevString)
+Loop Until i = thisRev
 
 theEnd = ActiveDocument.Content.End
 i = 0
@@ -18,6 +31,18 @@ For Each rev In ActiveDocument.Range.Revisions
        & Str(theEnd - rng.End)
 Next rev
 StatusBar = "Accepted track changes:  " & Str(i)
-beep
+Exit Sub
+
+ReportIt:
+' There are no files open at all
+If Err.Number = 5941 Then
+  WordBasic.NextChangeOrComment
+  Beep
+  Resume restart
+Else
+' Display Word's error message
+  On Error GoTo 0
+  Resume
+End If
 End Sub
 

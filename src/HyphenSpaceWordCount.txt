@@ -1,6 +1,6 @@
 Sub HyphenSpaceWordCount()
-' Paul Beverley - Version 14.01.21
-' Count hyphenated word forms
+' Paul Beverley - Version 25.04.22
+' Counts hyphenated word forms
 
 If Len(Selection) = 1 Then Selection.Expand wdWord
 Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
@@ -11,7 +11,7 @@ Loop
 startHere = Selection.Start
 selText = Selection
 mySplit = InStr(selText, " ") + InStr(selText, "-") _
-     + InStr(selText, ChrW(8211))
+     + InStr(selText, ChrW(8211)) + InStr(selText, "/")
 If mySplit = 0 Then
   If Len(Selection) = 1 Then
     Selection.Expand wdWord
@@ -49,13 +49,14 @@ Else
   myText = Trim(Selection)
   hyphenPos = InStr(myText, "-")
   spacePos = InStr(myText, " ")
+  slashPos = InStr(myText, "/")
   enPos = InStr(myText, ChrW(8211))
-  markerPos = hyphenPos + spacePos + enPos
+  markerPos = hyphenPos + spacePos + enPos + slashPos
   wd1 = Left(myText, markerPos - 1)
   wd2 = Mid(myText, markerPos + 1)
 End If
 
-chs = " , . ! : ; [ ] { } ( ) / \ + "
+chs = " , . ! : ; [ ] { } ( ) \ + "
 chs = chs & ChrW(8220) & " "
 chs = chs & ChrW(8221) & " "
 chs = chs & ChrW(8201) & " "
@@ -93,13 +94,17 @@ hyphenCount = Len(Replace(allText, p, p & "!")) - myTot
 p = wd1 & ChrW(8211) & wd2
 dashCount = Len(Replace(allText, p, p & "!")) - myTot
 
+p = wd1 & "/" & wd2
+slashCount = Len(Replace(allText, p, p & "!")) - myTot
+
 p = wd1 & wd2
 oneWordCount = Len(Replace(allText, p, p & "!")) - myTot
 
 myResult = wd1 & wd2 & ":   " & Str(oneWordCount) & vbCr
 myResult = myResult & wd1 & " " & wd2 & ":   " & Str(spaceCount) & vbCr
 myResult = myResult & wd1 & "-" & wd2 & ":   " & Str(hyphenCount) & vbCr
-myResult = myResult & wd1 & "<dash>" & wd2 & ":   " & Str(dashCount)
+myResult = myResult & wd1 & "<dash>" & wd2 & ":   " & Str(dashCount) & vbCr
+myResult = myResult & wd1 & "/" & wd2 & ":   " & Str(slashCount)
 
 MsgBox myResult, 0, "HyphenSpaceWordCount"
 End Sub

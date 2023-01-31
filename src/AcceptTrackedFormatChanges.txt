@@ -1,0 +1,30 @@
+Sub AcceptTrackedFormatChanges()
+' Paul Beverley - Version 21.06.22
+' Accepts just the formatting track changes
+
+' Save the current state of things
+filterview = ActiveWindow.View.RevisionsFilter.View
+comshow = ActiveWindow.View.ShowComments
+inkshow = ActiveWindow.View.ShowInkAnnotations
+indelshow = ActiveWindow.View.ShowInsertionsAndDeletions
+formshow = ActiveWindow.View.ShowFormatChanges
+
+' Hide all except formatting TCs
+With ActiveWindow.View
+  .ShowComments = False
+  .ShowInkAnnotations = False
+  .ShowInsertionsAndDeletions = False
+  .ShowFormatChanges = True
+End With
+ActiveDocument.AcceptAllRevisionsShown
+
+' Set things back as they were
+With ActiveWindow.View
+  .ShowComments = comshow
+  .ShowInkAnnotations = inkshow
+  .ShowInsertionsAndDeletions = indelshow
+  .ShowFormatChanges = formshow
+  .RevisionsFilter.View = filterview
+End With
+End Sub
+

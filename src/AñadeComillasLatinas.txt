@@ -1,0 +1,24 @@
+Sub AñadeComillasLatinas()
+' Paul Beverley - Version 14.01.21
+' Pone comillas latinas o españolas a la selección
+
+myEnd = Selection.End
+If Selection = "." Then Selection.MoveLeft, 1
+Selection.Collapse wdCollapseStart
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+Selection.TypeText """
+Selection.Start = myEnd
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+ Selection.MoveEnd, -1
+ DoEvents
+Loop
+If isNumber Then
+ Selection.MoveEndWhile cset:="0123456789.", Count:=wdForward
+End If
+Selection.Collapse wdCollapseEnd
+Selection.TypeText """
+End Sub
+
+

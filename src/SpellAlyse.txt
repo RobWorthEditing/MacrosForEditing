@@ -1,5 +1,5 @@
 Sub SpellAlyse()
-' Paul Beverley - Version 23.12.21
+' Paul Beverley - Version 02.03.22
 ' Complete spellchecking system
 
 ignoreNumbers = True
@@ -43,7 +43,10 @@ If doingSeveralMacros = False Then
   If myResponse <> vbYes Then Exit Sub
 End If
 
-If myScreenOff = True Then Application.ScreenUpdating = False
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
 timeStart = Timer
 
 allExcepts = CR
@@ -117,18 +120,22 @@ With rng.Find
   .Replacement.Text = ""
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
+  
+  .Text = "([!a-zA-Z])['" & ChrW(8216) & "]"
+  .Replacement.Text = "\1"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
 End With
 
 ' Change ligature characters into character pairs
 myFind = myFind & "," & ChrW(-1280) & "," & ChrW(-1279) & _
      "," & ChrW(-1278) & "," & ChrW(-1277) & "," & ChrW(-1276) _
-     & ",'," & ChrW(185) & "," & ChrW(178) & "," & ChrW(179)
-myReplace = myReplace & ",ff,fi,fl,ffi,ffl,', , , "
+     & "," & ChrW(185) & "," & ChrW(178) & "," & ChrW(179)
+myReplace = myReplace & ",ff,fi,fl,ffi,ffl, , , , , "
 fnd = Split(myFind, ",")
 rpl = Split(myReplace, ",")
 
 For i = 0 To UBound(fnd)
-sdfgsd = UBound(fnd)
   With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
@@ -165,6 +172,10 @@ With rng.Find
   .Replacement.Text = sp1
   .Wrap = wdFindContinue
   .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+       
+  .Text = "([a-zA-Z])['" & ChrW(8217) & "][!a-zA-Z]"
+  .Replacement.Text = "\1 "
   .Execute Replace:=wdReplaceAll
   DoEvents
 
@@ -289,8 +300,8 @@ Exit Sub
 
 autoCorrect:
 Application.ScreenUpdating = True
-alltext = FUT.Content.Text
-If InStr(alltext, "|") > 0 Then GoTo createListPair
+allText = FUT.Content.Text
+If InStr(allText, "|") > 0 Then GoTo createListPair
 
 myResponse = MsgBox("Auto-create FRedit list items?", _
      vbQuestion + vbYesNoCancel, "SpellAlyse")
@@ -388,6 +399,5 @@ ReportIt:
 Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
-
 End Sub
 

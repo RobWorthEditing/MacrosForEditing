@@ -1,0 +1,55 @@
+Sub SomethingFetchAlt()
+' Paul Beverley - Version 27.08.22
+' Launches selected text to Xyz website.
+
+' mySite = "https://www.merriam-webster.com/": numTabs = 0: myWait = 0.9
+' mySite = "http://google.com/": numTabs = 0: myWait = 0.5
+' mySite = "https://dictionary.com/": numTabs = 11: myWait = 2
+' mySite = "http://thesaurus.com/browse/": numTabs = 11: myWait = 1.5
+mySite = "https://www.macquariedictionary.com.au": numTabs = 0: myWait = 2.5
+' mySite = "https://premium.oxforddictionaries.com/definition/english": numTabs = 99: myWait = 5
+testMode = False
+' testMode = True
+
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.Start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Start = startNow
+End If
+
+Selection.Copy
+ActiveDocument.FollowHyperlink Address:=mySite
+If testMode = True Then
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+  Exit Sub
+End If
+myTime = Timer
+Do
+Loop Until Timer > myTime + myWait
+For i = 1 To numTabs
+  SendKeys "{TAB}"
+Next i
+SendKeys "^v"
+SendKeys "{ENTER}"
+End Sub
+
+
+

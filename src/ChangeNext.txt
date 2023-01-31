@@ -1,11 +1,22 @@
 Sub ChangeNext()
-' Paul Beverley - Version 30.05.20
+' Paul Beverley - Version 29.08.20
 ' Finds next change (but not comment)
 
 Set rng = Selection.Range.Duplicate
 On Error GoTo theEnd
+foundList = " "
 Do
   Application.Run macroName:="NextChangeOrComment"
+  hereNow = Str(Selection.Start)
+  Debug.Print hereNow
+  If Selection.Start > 0 Then
+    If InStr(foundList, " " & hereNow & " ") > 0 Then
+      Beep
+      MsgBox "No tracked changes found"
+      Exit Sub
+    End If
+    foundList = foundList & hereNow & " "
+  End If
   If Selection.Start < rng.Start And Not _
        (Selection.Information(wdInCommentPane)) Then
     Selection.EndKey Unit:=wdStory
@@ -13,6 +24,7 @@ Do
     Selection.Collapse wdCollapseEnd
     Beep
   End If
+  DoEvents
 Loop While Selection.Information(wdInCommentPane)
 Exit Sub
 

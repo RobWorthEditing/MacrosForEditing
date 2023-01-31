@@ -1,9 +1,14 @@
 Sub FindSamePlace()
-' Paul Beverley - Version 17.12.21
+' Paul Beverley - Version 19.11.22
 ' Finds the same place in another file
 
+' selectCurrentWord = True
 selectCurrentWord = False
-selectCurrentWord = True
+
+' Select whole words
+wholeWordsSelect = True
+' wholeWordsSelect = False
+
 
 ' onlyLookInTheseFiles = "_PB"
 onlyLookInTheseFiles = ""
@@ -41,6 +46,21 @@ If Selection.Start = Selection.End Then
     Selection.MoveDown Unit:=wdLine, count:=1, _
          Extend:=wdExtend
     repeatedSearch = (Len(Selection) > 2 * myStep)
+  End If
+Else
+  If wholeWordsSelect = True Then
+    Set rng = Selection.Range.Duplicate
+    rng.Collapse wdCollapseEnd
+    rng.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+      rng.MoveEnd , -1
+      DoEvents
+    Loop
+    Selection.Collapse wdCollapseStart
+    Selection.Expand wdWord
+    Selection.Collapse wdCollapseStart
+    rng.Start = Selection.Start
+    rng.Select
   End If
 End If
 
@@ -122,8 +142,7 @@ For i = 1 To totWnds - 1
   If myDoc.FullName <> thisDoc.FullName And doThis And _
       InStr(myDoc.Name, notThisFile) = 0 Then
     If thisName = tryThisName Then tryThisName = ""
-    myDoc.Activate
-    Set rng = ActiveDocument.Content
+    Set rng = Documents(myDoc).Content
     With rng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
@@ -140,6 +159,7 @@ For i = 1 To totWnds - 1
       .Execute
     End With
     If rng.Find.Found = True Then
+      myDoc.Activate
       If myWnd.WindowState = 2 Then _
            myWnd.WindowState = wdWindowStateNormal
       rng.Select

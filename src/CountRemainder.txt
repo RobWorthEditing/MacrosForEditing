@@ -1,5 +1,5 @@
 Sub CountRemainder()
-' Paul Beverley - Version 13.01.21
+' Paul Beverley - Version 29.04.22
 ' Counts words below the cursor
 
 altDisplay = False
@@ -43,9 +43,10 @@ Else
   If wordsLeft < 1000 Then wordsToGo = "0" & wordsToGo
 End If
 pCent = Trim(Str(Int(wordsLeft / wordsTotal * 100)))
-MsgBox wordsToGo & "   left, out of   " & Trim(totWords) & vbCr & vbCr _
-      & readWords & "   done." & vbCr & vbCr & "To go: " _
-      & pCent & " %"
+  myResponse = MsgBox(wordsToGo & "   left, out of   " & Trim(totWords) & vbCr _
+      & vbCr & readWords & "   done." & vbCr & vbCr & "To go: " _
+      & pCent & " %", vbOKOnly, "CountRemainder")
+
 Exit Sub
 
 ReportIt:

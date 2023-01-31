@@ -1,5 +1,5 @@
 Sub CommentCollectTabulated()
-' Paul Beverley - Version 14.01.22
+' Paul Beverley - Version 18.01.23
 ' Collects comments into a table
 
 sortOnColumn = 0
@@ -10,6 +10,10 @@ maxHeading = "Heading 1"
 s = ChrW(160)
 s = s & s & s & s & s
 myspaces = s & s & s & s & s & s & s & s
+
+' If Word throws up and error 4605 about pasting
+' increase the delay value to, say, 1000
+myDelay = 500
 
 myScreenOff = True
 
@@ -32,16 +36,21 @@ End If
 ReDim pageNo(totCmnts) As String
 ReDim lineNo(totCmnts) As String
 For i = 1 To totCmnts
-  Selection.GoTo what:=wdGoToComment, count:=i
+  Selection.GoTo What:=wdGoToComment, count:=i
   pageNo(i) = Trim(Str(Selection.Range.Information(wdActiveEndAdjustedPageNumber)))
   lineNo(i) = Trim(Str(Selection.Range.Information(wdFirstCharacterLineNumber)))
-  DoEvents
+  For i = 1 To myDelay
+    DoEvents
+  Next i
 Next i
 
 Selection.HomeKey Unit:=wdStory
 Set rng = ActiveDocument.Content
 rng.Copy
 Documents.Add
+For i = 1 To myDelay
+  DoEvents
+Next i
 Selection.Paste
 totCmnts = ActiveDocument.Comments.count
 
@@ -52,7 +61,7 @@ maxHeadNo = Val(Right(maxHeading, 1))
 hdStart = Left(maxHeading, InStr(maxHeading, " ") - 1)
 
 For i = 1 To totCmnts
-  Selection.GoTo what:=wdGoToComment, count:=i
+  Selection.GoTo What:=wdGoToComment, count:=i
   pn = pageNo(i)
   ln = lineNo(i)
   Set cmnt = ActiveDocument.Comments(i)
@@ -98,6 +107,9 @@ ActiveDocument.StoryRanges(wdCommentsStory).Copy
 
 ' Replace whole text with just the (augmented) comments
 Selection.WholeStory
+For i = 1 To myDelay
+  DoEvents
+Next i
 Selection.Paste
 Selection.WholeStory
 ' Remove hidden page references

@@ -1,7 +1,6 @@
 Sub Comma()
-' Paul Beverley - Version 19.06.19
+' Paul Beverley - Version 23.01.23
 ' Make adjacent words into comma separated
-' <Ctrl-Alt-,>
 
 newBit = ", "
 myQuotes = Chr(34) & Chr(39) & ChrW(8220) & ChrW(8216)
@@ -15,6 +14,8 @@ If Selection = ChrW(8217) Then myStart = myStart + 1
 Do
   Selection.MoveRight 1
   DoEvents
+  If Selection.Start = ActiveDocument.Content.End - 1 _
+     Then Beep: Exit Sub
 Loop Until LCase(Selection) <> UCase(Selection) Or Asc(Selection) = 1
 myEnd = Selection.Start
 Set rng = ActiveDocument.Content

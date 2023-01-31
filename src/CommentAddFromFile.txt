@@ -1,0 +1,60 @@
+Sub CommentAddFromFile()
+' Paul Beverley - Version 01.08.22
+' Adds a comment from a file of ready-made comments
+
+myPartFilename = "mark"
+myMarker = "|"
+deleteHeader = True
+
+attachToSentence = False
+' False means attach comment to paragraph
+' But it will attach to a word instead of a paragraph if...
+attachToWord = True
+
+
+Selection.Expand wdParagraph
+Selection.MoveEnd , -1
+If deleteHeader = True Then
+  colonPos = InStr(Selection, ": ")
+  If colonPos > 0 Then Selection.MoveStart , colonPos + 1
+End If
+Selection.Copy
+markerPos = InStr(Selection.Text, myMarker)
+moveCursor = Len(Selection) - markerPos
+gottaDoc = False
+For Each myDoc In Documents
+  myName = myDoc.Name
+  If InStr(myName, myPartFilename) > 0 Then
+    gottaDoc = True
+    Exit For
+  End If
+Next myDoc
+If gottaDoc = False Then
+  Beep
+  myResponse = MsgBox("Can't find a file with part name:" & _
+       vbCr & vbCr & myPartFilename, vbOKOnly, "CommentAddFromFile")
+  Exit Sub
+End If
+myDoc.Activate
+If Selection.Start = Selection.End Then
+  If attachToSentence = True Then
+    Selection.Expand wdSentence
+  Else
+    If attachToWord = True Then
+      Selection.Expand wdWord
+    Else
+      Selection.Expand wdParagraph
+    End If
+  End If
+End If
+Set cmt = Selection.Comments.Add(Range:=Selection.Range)
+Selection.Paste
+ActiveDocument.ActiveWindow.View.SplitSpecial = wdPaneNone
+cmt.Edit
+If markerPos > 0 Then
+  Selection.MoveLeft , moveCursor
+  Selection.MoveStart , -1
+  Selection.Delete
+End If
+End Sub
+

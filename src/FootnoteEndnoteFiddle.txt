@@ -1,0 +1,136 @@
+Sub FootnoteEndnoteFiddle()
+' Paul Beverley - Version 24.01.23
+' Tidies up start/end of each footnote or endnote
+
+addFullStop = True
+myColour = wdYellow
+
+numFoots = ActiveDocument.Footnotes.count
+If numFoots > 0 Then
+  For i = 1 To numFoots
+    Set rng = ActiveDocument.Footnotes(i).Range
+    myEnd = rng.End
+    rng.End = rng.Start + 2
+    rng.Select
+  ' Remove leading space
+    Selection.HomeKey wdLine
+    Selection.End = Selection.Start + 1
+    If Selection.Text = " " Then
+      Selection.Delete
+      myEnd = myEnd - 1
+    End If
+    If rng.Text = " " Then
+      rng.Delete
+      myEnd = myEnd - 1
+    End If
+  ' Remove trailing space
+    rng.End = myEnd
+    rng.Start = myEnd - 1
+    If rng.Text = " " Then
+      rng.Delete
+      myEnd = myEnd - 1
+    End If
+  ' Remove trailing space again
+    rng.End = myEnd
+    rng.Start = myEnd - 1
+    If rng.Text = " " Then
+      rng.Delete
+      myEnd = myEnd - 1
+    End If
+  ' Remove extra blank line
+    rng.End = myEnd
+    rng.Start = myEnd - 1
+    If rng.Text = vbCr Then
+      rng.Delete
+      myEnd = myEnd - 1
+    End If
+  ' Add full stop if none
+    If addFullStop Then
+      rng.Start = 0
+      rng.End = myEnd
+      myLen = Len(rng.Text)
+      FSneeded = True
+      rng.Collapse wdCollapseEnd
+      For j = 1 To myLen - 2
+        rng.MoveStart , -1
+        If Left(rng.Text, 1) = "/" Then FSneeded = False: Exit For
+        If Asc(rng) = 32 Then Exit For
+      Next j
+      rng.Collapse wdCollapseEnd
+      rng.Start = myEnd - 1
+      If FSneeded = True And rng.Text <> "." And rng.Text <> "!" _
+           And rng.Text <> ")" And rng.Text <> ChrW(8221) _
+           Then
+        rng.InsertAfter Text:="."
+        rng.HighlightColorIndex = myColour
+      End If
+    End If
+    DoEvents
+  Next
+End If
+
+numEnds = ActiveDocument.Endnotes.count
+If numEnds > 0 Then
+  For i = 1 To numEnds
+    Set rng = ActiveDocument.Endnotes(i).Range
+    myEnd = rng.End
+    rng.End = rng.Start + 2
+    rng.Select
+  ' Remove leading space
+    Selection.HomeKey wdLine
+    Selection.End = Selection.Start + 1
+    If Selection.Text = " " Then
+      Selection.Delete
+      myEnd = myEnd - 1
+    End If
+    If rng.Text = " " Then
+      rng.Delete
+      myEnd = myEnd - 1
+    End If
+  ' Remove trailing space
+    rng.End = myEnd
+    rng.Start = myEnd - 1
+    If rng.Text = " " Then
+      rng.Delete
+      myEnd = myEnd - 1
+    End If
+  ' Remove trailing space again
+    rng.End = myEnd
+    rng.Start = myEnd - 1
+    If rng.Text = " " Then
+      rng.Delete
+      myEnd = myEnd - 1
+    End If
+  ' Remove extra blank line
+    rng.End = myEnd
+    rng.Start = myEnd - 1
+    If rng.Text = vbCr Then
+      rng.Delete
+      myEnd = myEnd - 1
+    End If
+  ' Add full stop if none
+    If addFullStop Then
+      rng.Start = 0
+      rng.End = myEnd
+      myLen = Len(rng.Text)
+      FSneeded = True
+      rng.Collapse wdCollapseEnd
+      For j = 1 To myLen - 2
+        rng.MoveStart , -1
+        If Left(rng.Text, 1) = "/" Then FSneeded = False: Exit For
+        If Asc(rng) = 32 Then Exit For
+      Next j
+      rng.Collapse wdCollapseEnd
+      rng.Start = myEnd - 1
+      If FSneeded = True And rng.Text <> "." And rng.Text <> "!" _
+           And rng.Text <> ")" And rng.Text <> ChrW(8221) _
+           Then
+        rng.InsertAfter Text:="."
+        rng.HighlightColorIndex = myColour
+      End If
+    End If
+    DoEvents
+  Next i
+End If
+End Sub
+

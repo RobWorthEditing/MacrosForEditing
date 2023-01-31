@@ -1,76 +1,66 @@
 Sub NumberDecrement()
-' Paul Beverley - Version 25.01.22
-' Subtracts one from the following number (or decreases the letter)
+' Paul Beverley - Version 18.01.23
+' Subtracts one from the next number after the cursor
 
 myJump = -1
 
 goNext = False
+' goNext = True
 
-lookAfterSelection = True
+trackIt = True
 
-trackit = True
+searchRange = 100
 
-doLettersToo = True
-searchRange = 150
+If goNext = True And Selection.Start <> _
+     Selection.End Then _
+     Selection.Collapse wdCollapseStart
 
-Application.ScreenUpdating = False
-On Error GoTo ReportIt
-
-If lookAfterSelection = False Then
-  Selection.Collapse wdCollapseStart
-Else
-  Selection.Collapse wdCollapseEnd
-End If
-
-searchChars = "0123456789"
 myTrack = ActiveDocument.TrackRevisions
-If trackit = False Then ActiveDocument.TrackRevisions = False
+If trackIt = False Then ActiveDocument.TrackRevisions = False
 
-i = 0
-myStart = Selection.Start
-Set rng = ActiveDocument.Range(myStart, myStart + 1)
-If Selection.End = Selection.Start Or Val(Selection) = 0 Then
-  While InStr(searchChars, rng.Text) = 0
+Set rng = Selection.Range.Duplicate
+rng.End = rng.Start + searchRange
+
+Do While InStr(" .", Left(rng, 1)) > 0
+  rng.MoveStart , 1
+Loop
+
+' Move selection to start of any number
+If Val(rng) = 0 Then
+  i = 0
+  allText = rng.Text
+  Do
     i = i + 1
-    rng.Start = myStart + i
-    rng.End = myStart + i + 1
-    DoEvents
     If i = searchRange Then
       Beep
-      GoTo CleanExit
+      rng.Start = rng.End - 1
+      rng.Select
+      Exit Sub
     End If
-  Wend
-  rng.Select
-  myEnd = Selection.Start
-  Set rng = ActiveDocument.Range(myEnd, myEnd + 1)
-  i = 0
-  While InStr(searchChars, rng.Text) > 0
-    i = i + 1
-    rng.Start = myEnd + i
-    rng.End = myEnd + i + 1
+    myTest = Mid(allText, i)
     DoEvents
-  Wend
-  Selection.End = myEnd + i
+  Loop Until Val(myTest) > 0 And Left(myTest, 1) <> " " _
+       And Left(myTest, 1) <> "."
+  Selection.MoveStart , i - 1
+  rng.MoveStart , i - 1
 End If
 
-Selection.TypeText Trim(Str(Val(Selection) + myJump))
-Selection.Start = myEnd
-Selection.End = myEnd
-doLettersToo = False
-
-CleanExit:
-If doLettersToo = True Then
-  Selection.End = Selection.Start + 1
-  Selection.TypeText ChrW(AscW(Selection) + 1)
-  Selection.MoveLeft , 1
+' Find end of number and increment (decrease) it
+i = 0
+allText = rng.Text
+Do
+  i = i + 1
+  myTest = Mid(allText, i, 1)
+  DoEvents
+Loop Until Val(myTest) = 0 And myTest <> "0"
+rng.End = rng.Start + i - 1
+rng.Select
+rng.Text = Trim(Str(Val(rng.Text) + myJump))
+If goNext = True Then
+  Do While Asc(Selection) > 47 And Asc(Selection) < 58
+    Selection.MoveRight , 1
+  Loop
+  Call FindFwd
 End If
-ActiveDocument.TrackRevisions = myTrack
-If goNext = True Then Call FindFwd
-Exit Sub
-
-ReportIt:
-Application.ScreenUpdating = True
-On Error GoTo 0
-Resume
 End Sub
 

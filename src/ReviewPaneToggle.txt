@@ -1,0 +1,19 @@
+
+Sub ReviewPaneToggle()
+' Paul Beverley - Version 03.03.22
+' Opens and closes the track change review pane
+
+useVertical = True
+
+If ActiveDocument.ActiveWindow.Panes.count > 1 Then
+  Application.Run MacroName:="Reviewingpane"
+Else
+  If useVertical = True Then
+    Application.Run MacroName:="Reviewingpanevertical"
+  Else
+    Application.Run MacroName:="Reviewingpanehorizontal"
+  End If
+End If
+End Sub
+
+

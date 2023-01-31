@@ -1,0 +1,33 @@
+Sub PunctuationToEmDash()
+' Paul Beverley - Version 19.11.21
+' Changes next hyphen/em/en dash to an em dash
+
+myDash = ChrW(8212) ' em dash
+
+trackit = True
+
+searchChars = "-~" & ChrW(8211) & ChrW(8212) & ChrW(8722) & Chr(30)
+
+myTrack = ActiveDocument.TrackRevisions
+If trackit = False Then ActiveDocument.TrackRevisions = False
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+If Len(rng) > 1000 Then rng.End = rng.Start + 1000
+
+For Each ch In rng.Characters
+  If InStr(searchChars, ch.Text) > 0 Then
+    ch.Select
+    gotChar = True
+    Exit For
+  Else
+  End If
+Next ch
+If gotChar = False Then
+  Beep
+Else
+  Selection.TypeText Text:=myDash
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+
+

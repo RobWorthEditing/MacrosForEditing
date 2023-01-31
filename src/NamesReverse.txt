@@ -1,0 +1,43 @@
+Sub NamesReverse()
+' Paul Beverley - Version 13.06.22
+' Switches two names and adds (or removes) the comma
+
+Selection.Expand wdWord
+Selection.MoveEnd wdWord, 1
+If InStr(Selection, ",") = 0 Then
+  Selection.Collapse wdCollapseStart
+  Selection.Expand wdWord
+  Selection.Cut
+  Selection.MoveRight wdWord, 1
+  Selection.MoveStart , -1
+  ch = Asc(Selection)
+  If ch = 32 Then
+    Selection.TypeText Text:=", "
+    Selection.Paste
+  Else
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=", "
+    Selection.Paste
+    Selection.MoveStart , -1
+    Selection.Delete
+  End If
+Else
+  ' Swap and remove comma
+  Selection.Cut
+  Selection.MoveEnd wdWord, 1
+  If Right(Selection, 1) = " " Then
+    Selection.Collapse wdCollapseEnd
+    Selection.Paste
+    Selection.MoveLeft , 1
+    Selection.MoveStart , -1
+    Selection.Delete
+  Else
+    Selection.Collapse wdCollapseEnd
+    Selection.TypeText Text:=" "
+    Selection.Paste
+    Selection.MoveStart , -2
+  Selection.Delete
+  End If
+End If
+End Sub
+

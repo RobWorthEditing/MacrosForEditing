@@ -16,7 +16,7 @@ allNumberItalic = wdGray25
 
 ' Various symbols - your choice
 variousSymbols1 = wdPink
-mySymbols1 = "[áÁàÀâÂäÄÃãÅåçÇéÉèÈêÊëËíÍìÌîÎñÑóÓòÒôÔöÖõÕøØßúÚùÙûÛüÜýÝÿŸ/-]"
+mySymbols1 = "[áÁàÀâÂäÄÃãÅåçÇéÉèÈêÊëËíÍìÌîÎñÑóÓòÒôÔöÖõÕøØßúÚùÙûÛüÜýÝÿŸ]"
 
 variousSymbols2 = wdYellow
 mySymbols2 = "[=\*\>\<+" & ChrW(8722) & "]"

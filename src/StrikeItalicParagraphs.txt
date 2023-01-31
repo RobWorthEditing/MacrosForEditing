@@ -1,0 +1,14 @@
+
+Sub StrikeItalicParagraphs()
+' Paul Beverley - Version 04.11.22
+' Add single strike to all italic paragraphs (headings)
+
+maxWords = 20
+
+For Each pa In ActiveDocument.Paragraphs
+  If pa.Range.Font.Italic = True And pa.Range.Words.count < maxWords Then _
+       pa.Range.Font.StrikeThrough = True
+  DoEvents
+Next pa
+End Sub
+

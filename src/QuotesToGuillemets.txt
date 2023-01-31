@@ -1,32 +1,59 @@
 Sub QuotesToGuillemets()
-' Paul Beverley - Version 26.11.20
-' Changes all curly double quotes to guillemets
+' Paul Beverley - Version 05.11.22
+' Changes all double and single quotes (inc. German) into guillemets
+
+doHighlight = False
 
 Options.AutoFormatAsYouTypeReplaceQuotes = False
 Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = ChrW(8220) & " "
+  .Text = "[" & ChrW(8222) & ChrW(8221) & ChrW(8220) & "]"
   .Wrap = wdFindContinue
-  .Replacement.Text = ChrW(171) & ChrW(160)
-  .Forward = True
+  .Replacement.Text = """"
+  .Replacement.Highlight = doHighlight
   .MatchCase = False
-  .MatchWildcards = False
+  .MatchWildcards = True
   .MatchWholeWord = False
   .MatchSoundsLike = False
   .Execute Replace:=wdReplaceAll
-  DoEvents
+  
+  .Text = "[" & ChrW(8216) & ChrW(8217) & ChrW(8218) & "]"
+  .Replacement.Text = "'"
+  .Execute Replace:=wdReplaceAll
+  
+Options.AutoFormatAsYouTypeReplaceQuotes = True
+  .Text = """"
+  .Replacement.Text = """"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "'"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "'"
+  .Execute Replace:=wdReplaceAll
+  
+Options.AutoFormatAsYouTypeReplaceQuotes = False
   .Text = ChrW(8220)
   .Replacement.Text = ChrW(171) & ChrW(160)
   .Execute Replace:=wdReplaceAll
-  .Text = " " & ChrW(8221)
-  .Replacement.Text = ChrW(160) & ChrW(187)
-  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
   .Text = ChrW(8221)
   .Replacement.Text = ChrW(160) & ChrW(187)
   .Execute Replace:=wdReplaceAll
+  
+  .Text = ChrW(8216)
+  .Replacement.Text = ChrW(8249) & ChrW(160)
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .MatchWildcards = True
+  .Text = "([a-zA-Z])" & ChrW(8217) & "([!a-zA-Z])"
+  .Replacement.Text = "\1" & ChrW(160) & ChrW(8250) & "\2"
+  .Execute Replace:=wdReplaceAll
 End With
-Options.AutoFormatAsYouTypeReplaceQuotes = False
+Options.AutoFormatAsYouTypeReplaceQuotes = True
 End Sub
 

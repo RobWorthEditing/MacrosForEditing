@@ -1,0 +1,33 @@
+Sub GoogleFetchSA()
+' Paul Beverley - Version 02.05.22
+' Launches selected text on Google
+
+mySite = "http://www.google.co.za/search?q="
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.Start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Start = startNow
+End If
+
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubject, ChrW(8217), "'")
+ActiveDocument.FollowHyperlink Address:=mySite & mySubject
+Selection.Collapse wdCollapseEnd
+End Sub
+

@@ -1,0 +1,25 @@
+Sub AllCapsToItalicNext()
+' Paul Beverley - Version 11.08.22
+' Finds next word in all caps and makes it italic
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[A-Z]{2,}>"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+If Selection.Find.Found = True Then
+  Selection.Text = LCase(Selection.Text)
+  Selection.Font.Italic = True
+  Selection.Collapse wdCollapseEnd
+Else
+  Beep
+End If
+End Sub
+

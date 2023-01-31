@@ -1,0 +1,153 @@
+Sub MultiFileCommentTabulated()
+' Paul Beverley - Version 28.04.22
+' Collects all comments in a set of files into one big table
+
+includeLineNo = True
+deleteFromName = "_teacher_notes"
+
+Dim allMyFiles(200) As String
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  myResponse = MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "Multifile Text Collection")
+  docCount = Documents.count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+
+  myResponse = MsgBox("Collect comments from ALL the files in" & _
+       " directory:" & dirName & " ?", vbQuestion + vbYesNoCancel, _
+       "Multifile Comment Collection")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  myResponse = MsgBox("Collect comments from the files listed here?", _
+  vbQuestion + vbYesNoCancel, "Multifile Comment Collection")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.Range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+Documents.Add
+Set myList = ActiveDocument
+Selection.TypeText Text:=vbCr
+For j = 1 To numFiles
+  thisFile = myFolder & myDelimiter & allMyFiles(j)
+  Set myDoc = Application.Documents.Open(fileName:=thisFile)
+  myDocName = myDoc.Name
+  myFileType = Mid(myDocName, InStr(myDocName, "."))
+  myDocName = Replace(myDocName, myFileType, "")
+  myDocName = Replace(myDocName, deleteFromName, "")
+  myList.Activate
+
+' Collect all the comments
+  totCmnts = myDoc.Comments.count
+  scopeTextWas = ""
+  myAllText = ""
+  If totCmnts > 0 Then
+    myDocName = myDocName & vbCr
+
+    For i = 1 To totCmnts
+      Set cmnt = myDoc.Comments(i)
+      inits = Replace(cmnt.Initial & ": ", "(", "")
+      scopeText = Replace(cmnt.Scope, vbTab, " | ")
+      scopeText = Replace(scopeText, vbCr, ChrW(182) & " ")
+      pageNo = Trim(Str(cmnt.Scope.Information(wdActiveEndAdjustedPageNumber)))
+      lineNo = Trim(Str(cmnt.Scope.Information(wdFirstCharacterLineNumber)))
+    ' Type the comment into the list
+      myRowText = myDocName & " p." & pageNo
+      If includeLineNo = True Then _
+           myRowText = myRowText & " l." & lineNo
+      If scopeTextWas <> scopeText Then
+        myRowText = myRowText & vbTab & scopeText & vbTab & _
+             inits & cmnt.Range.Text & vbTab
+      Else
+        myRowText = myRowText & vbTab & vbTab & vbTab & inits & cmnt.Range.Text
+      End If
+      myAllText = myAllText & myRowText & vbCr
+      scopeTextWas = scopeText
+      DoEvents
+      myDocName = ""
+    Next i
+    Selection.TypeText Text:=myAllText
+  End If
+  myDoc.Close SaveChanges:=wdDoNotSaveChanges
+  DoEvents
+Next j
+
+myList.Activate
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13[!^t^13]{1,}^13"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "^p^&"
+  .Replacement.Font.Bold = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Selection.HomeKey Unit:=wdStory
+Selection.MoveEnd , 1
+Selection.Delete
+Set rng = ActiveDocument.Content
+rng.ConvertToTable Separator:=wdSeparateByTabs
+For i = 1 To 1000
+DoEvents
+Next i
+Beep
+End Sub
+

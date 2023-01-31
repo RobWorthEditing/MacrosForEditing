@@ -2,11 +2,11 @@ Sub unHighlightExcept()
 ' Paul Beverley - Version 11.01.11
 ' Remove all highlights except one/two chosen colours
 keepColour1 = wdYellow
+keepColour2 = 0
 ' And another colour as well?
 ' keepColour2 = wdBrightGreen
-keepColour2 = wdTurquoise
+' keepColour2 = wdTurquoise
 ' keepColour2 = wdRed
-' keepColour2 = 0
 
 Set rng = ActiveDocument.Content
 theEnd = rng.End

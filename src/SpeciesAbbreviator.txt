@@ -1,0 +1,34 @@
+
+Sub SpeciesAbbreviator()
+' Paul Beverley - Version 12.03.22
+' Adds genus and species to the text, pulling data off a file
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Font.Italic = True
+  .Text = "[A-Z][a-z]{1,}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute
+End With
+
+myGenusList = "!"
+Do While rng.Find.Found = True
+  rng.Select
+  myGenus = rng.Text
+  If InStr(myGenusList, myGenus & "!") > 0 Then
+    rng.Text = Left(myGenus, 1) & "."
+  Else
+    myGenusList = myGenusList & myGenus & "!"
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+  Debug.Print myGenusList
+Loop
+End Sub
+
+

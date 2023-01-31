@@ -1,6 +1,5 @@
-
 Sub IZtoIS()
-' Paul Beverley - Version 11.03.21
+' Paul Beverley - Version 14.06.22
 ' Corrects text to give -is-, -ys- spellings
 
 promptForConfirmation = True
@@ -23,6 +22,7 @@ myZFile = "C:\Documents and Settings\Paul\My Documents\IZ_words.docx"
 
 ' On a Mac, it will need to be something like:
 myZFile = "/Users/Paul/My Documents/Macro stuff/IZ_words.docx"
+
 
 ExceptionZFile = "IZ_words"
 
@@ -89,13 +89,13 @@ totChanges = 0
 For hit = 1 To 4
   goes = 0
   If hit = 1 Then
-    thisMany = ActiveDocument.Endnotes.Count
+    thisMany = ActiveDocument.Endnotes.count
     If thisMany > 0 Then
       Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
     End If
   End If
   If hit = 2 Then
-    thisMany = ActiveDocument.Footnotes.Count
+    thisMany = ActiveDocument.Footnotes.count
     If thisMany > 0 Then
       Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
     End If
@@ -109,7 +109,7 @@ For hit = 1 To 4
   goes = 1
   someText = True
   If hit = 4 Then
-    thisMany = ActiveDocument.Shapes.Count
+    thisMany = ActiveDocument.Shapes.count
     goes = thisMany
   End If
   If goes > 0 And thisMany > 0 Then
@@ -150,7 +150,8 @@ For hit = 1 To 4
 
             Set rng1 = rng.Duplicate
             rng1.Expand wdWord
-            Do While InStr(ChrW(8217) & "' ", Right(rng1.Text, 1)) > 0
+            Do While InStr(ChrW(8217) & "' " & ChrW(160), _
+                 Right(rng1.Text, 1)) > 0
               rng1.MoveEnd , -1
               DoEvents
             Loop
@@ -207,6 +208,4 @@ If promptForConfirmation = True Then
   End If
 End If
 End Sub
-
-
 

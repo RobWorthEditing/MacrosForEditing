@@ -1,8 +1,6 @@
 Sub MacroFetchUpdate()
-' Paul Beverley - Version 18.02.21
+' Paul Beverley - Version 21.08.22
 ' Updates an existing macro, preserving the keystroke
-
-addPrompt = False
 
 Selection.Collapse wdCollapseStart
 Selection.Expand wdWord
@@ -16,6 +14,10 @@ Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
 Loop
 myMacroName = Selection
 
+Selection.Expand wdParagraph
+If InStr(Selection, "+") > 0 Then GoTo restoreKeystroke
+
+' Attempt to read keystroke
 myKeyString = ""
 For Each kb In KeyBindings
   If kb.KeyCategory = 2 Then  ' It's a Macro
@@ -28,43 +30,31 @@ For Each kb In KeyBindings
     End If
   End If
 Next kb
-
-If myKeyString = "" Then myKeyString = "Dummy"
-
 Debug.Print myKeyString
-Dim v As Variable
-varsExist = False
-For Each v In ActiveDocument.Variables
-  If v.Name = "myKeyString" Then varsExist = True: Exit For
-Next v
-If varsExist = False Then
-  ActiveDocument.Variables.Add "myMacroName", myMacroName
-  ActiveDocument.Variables.Add "myKeyString", myKeyString
-End If
-
-If myKeyString > "" And myKeyString <> "Dummy" Then
-  savedMacroName = ActiveDocument.Variables("myMacroName")
-  Debug.Print savedMacroName
+If myKeyString > "" Then
+  Documents.Add
+  Selection.TypeText Text:=myMacroName & vbTab & myKeyString & vbCr
+  Selection.HomeKey Unit:=wdStory
+  myResponse = MsgBox("Now, you need to..." _
+       & vbCr & vbCr & "1) Copy the text of the new version" _
+       & vbCr & vbCr & "2) Delete the existing copy of the macro" _
+       & vbCr & vbCr & "3) Paste the new version into Visual Basic (VBA)" _
+       & vbCr & vbCr & vbCr & "    Finally, rerun this macro", _
+       vbOKOnly, "MacroFetchUpdate")
 Else
-  savedMacroName = ""
+  MsgBox "Macro " & myMacroName & " has no keystroke assigned to it."
 End If
-If savedMacroName = "" Or savedMacroName = "Dummy" Then
-  myFolder = Left(myMacroName, 1)
-  myFullName = "http://www.wordmacrotools.com/macros/" & _
-       myFolder & "/" & myMacroName
-  ActiveDocument.FollowHyperlink Address:=myFullName
-  If addPrompt = True Then
-    MsgBox "1) Select and copy the text of the macro" _
-         & vbCr & vbCr & "2) Delete the existing copy of the macro" _
-         & vbCr & vbCr & "3) Paste the new macro into Visual Basic (VBA)" _
-         & vbCr & vbCr & vbCr & "Click OK when you've copied the macro."
-  End If
-  ActiveDocument.Variables("myMacroName") = myMacroName
-  ActiveDocument.Variables("myKeyString") = myKeyString
-  Exit Sub
-End If
+Call MacroFetch
+Exit Sub
 
-myKeyString = ActiveDocument.Variables("myKeyString")
+restoreKeystroke:
+dotPos = InStr(Selection, ".")
+If dotPos > 0 Then Selection.MoveStart , dotPos
+dotPos = InStr(Selection, ".")
+If dotPos > 0 Then Selection.MoveStart , dotPos
+tabPos = InStr(Selection, vbTab)
+Selection.MoveEnd , -1
+myKeyString = Mid(Selection, tabPos + 1)
 myResponse = MsgBox("Set keystroke for macro: " & myMacroName & _
      vbCr & vbCr & " to: " & myKeyString & "?", _
      vbQuestion + vbYesNoCancel, "MacroFetchUpdate")
@@ -172,8 +162,6 @@ If myResponse = vbYes Then
   MsgBox "Keystroke restored"
 Else
   Beep
-  ActiveDocument.Variables("myMacroName") = "Dummy"
 End If
-ActiveDocument.Variables("myMacroName") = "Dummy"
 End Sub
 

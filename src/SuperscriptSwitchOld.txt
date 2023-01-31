@@ -1,0 +1,6 @@
+Sub SuperscriptSwitchOld()
+' Paul Beverley - Version 05.09.11
+' Toggles superscript on/off
+
+Selection.Font.Superscript = Not Selection.Font.Superscript
+End Sub

@@ -1,11 +1,11 @@
 Sub FindAndDo()
-' Paul Beverley - Version 15.07.17
+' Paul Beverley - Version 08.08.22
 ' Finds something specific and does things to each one
 
 With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "<for>"
+  .Text = "e"
   .Wrap = wdFindStop
   .Replacement.Text = ""
   .Forward = True
@@ -20,18 +20,20 @@ Do While Selection.Find.Found = True
 ' If you want to count them...
   myCount = myCount + 1
 ' Note where the end of the found item is
-  endNow = Selection.End
+  Set rng = Selection.Range.Duplicate
+' and make sure you're past it
+  rng.MoveEnd , 1
+  rng.Collapse wdCollapseEnd
 
-  Selection.Start = Selection.Start + 1
-  Selection.End = Selection.Start + 1
-  Selection.TypeText ChrW(8211)
+' Do something with the thing you found
+  Selection.Font.Italic = True
   
-  ' Be sure you're past the previous occurrence
-  Selection.End = endNow
-  Selection.Collapse wdCollapseEnd
+' Restart search from after the previous occurrence
+  rng.Select
 
 ' Go and find the next occurrence (if there is one)
   Selection.Find.Execute
+  DoEvents
 Loop
 MsgBox "Changed: " & myCount
 End Sub

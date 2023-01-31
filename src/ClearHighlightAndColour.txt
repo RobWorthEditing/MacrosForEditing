@@ -1,0 +1,26 @@
+Sub ClearHighlightAndColour()
+' Paul Beverley - Version 28.01.22
+' Removes all highlighting, coloration and (optionally) underlining
+
+doUnderlinesToo = True
+
+Set rng = ActiveDocument.Content
+rng.HighlightColorIndex = wdNoHighlight
+rng.Font.Color = wdColorAutomatic
+If doUnderlinesToo = True Then rng.Font.Underline = False
+
+If ActiveDocument.Footnotes.count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+  rng.HighlightColorIndex = wdNoHighlight
+  rng.Font.Color = wdColorAutomatic
+  If doUnderlinesToo = True Then rng.Font.Underline = False
+End If
+
+If ActiveDocument.Endnotes.count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  rng.HighlightColorIndex = wdNoHighlight
+  rng.Font.Color = wdColorAutomatic
+  If doUnderlinesToo = True Then rng.Font.Underline = False
+End If
+End Sub
+

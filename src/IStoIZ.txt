@@ -1,5 +1,5 @@
 Sub IStoIZ()
-' Paul Beverley - Version 06.02.21
+' Paul Beverley - Version 14.06.22
 ' Corrects text to give -iz-, -yz- spellings
 
 promptForConfirmation = True
@@ -20,20 +20,21 @@ nonoStyles = "DisplayQuote,ReferenceList"
 
 closeExceptionsFile = True
 
+doTextBoxes = True
+
 ' Address where exceptions file is held
 ' On Windows, it will need to be something like:
 mySFile = "C:\Documents and Settings\Paul\My Documents\IS_words.docx"
 
 ' On a Mac, it will need to be something like:
-' mySFile = "/Users/Paul/My Documents/Macro stuff/IS_words.docx"
+' mySFile = "/Users/Paul/My Documents/Macro stuff/"
 
-
-
-mySFile = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\aaaStarterMacros\IS_words.docx"
 
 ExceptionSFile = "IS_words"
 
 ' Start of main program
+If doTextBoxes = True Then maxHits = 4 Else maxHits = 3
+
 nonoStyles = "," & nonoStyles & ","
 Set mainDoc = ActiveDocument
 
@@ -90,16 +91,16 @@ If myResponse = vbNo Then ActiveDocument.TrackRevisions = False
 totChanges = 0
 Selection.HomeKey Unit:=wdStory
 
-For hit = 1 To 4
+For hit = 1 To maxHits
   goes = 0
   If hit = 1 Then
-    If ActiveDocument.Endnotes.Count > 0 Then
+    If ActiveDocument.Endnotes.count > 0 Then
       Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
       goes = 1
     End If
   End If
   If hit = 2 Then
-    If ActiveDocument.Footnotes.Count > 0 Then
+    If ActiveDocument.Footnotes.count > 0 Then
       Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
       goes = 1
     End If
@@ -109,7 +110,7 @@ For hit = 1 To 4
     goes = 1
   End If
   If hit = 4 Then
-    goes = ActiveDocument.Shapes.Count
+    goes = ActiveDocument.Shapes.count
   End If
   If goes > 0 Then
     For myGo = 1 To goes
@@ -152,7 +153,8 @@ For hit = 1 To 4
   
             Set rng1 = rng.Duplicate
             rng1.Expand wdWord
-            Do While InStr(ChrW(8217) & "' ", Right(rng1.Text, 1)) > 0
+            Do While InStr(ChrW(8217) & "' " & ChrW(160), _
+                 Right(rng1.Text, 1)) > 0
               rng1.MoveEnd , -1
               DoEvents
             Loop

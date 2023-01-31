@@ -1,31 +1,40 @@
+
 Sub Italiciser()
-' Paul Beverley - Version 05.01.22
-' Toggles next character or selected text italic.
+' Paul Beverley - Version 03.06.22
+' Toggles italic for next character or selected text
 
 If Selection.End = Selection.Start Then
-  Selection.MoveEnd , 1
-  Selection.Font.Italic = Not (Selection.Font.Italic = True)
-  Selection.Collapse wdCollapseEnd
+  Application.Run macroName:="Italic"
 Else
-' How many italic/roman chars?
-  Set rng = Selection.Range.Duplicate
-  For i = 1 To Len(rng.Text)
-    isItalic = rng.Characters(i).Font.Italic
-    If isItalic Then charsItalic = charsItalic + 1
-  Next i
-  charsRoman = Len(Selection) - charsItalic
-' Change to italic or roman, accordingly
-  If charsItalic > charsRoman Then
-    Selection.Font.Italic = False
+' If it's a long selection, just change it
+  If Len(Selection) > 100 Then
+    Set firstChar = Selection.Range.Characters(1)
+    Selection.Font.Italic = Not (firstChar.Font.Italic)
   Else
-  ' Don't italicise following space or quote
-    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
-      rng.MoveEnd , -1
-      DoEvents
-    Loop
-    rng.Font.Italic = True
-    rng.Select
+  ' How many italic/roman chars?
+    Set rng = Selection.Range.Duplicate
+    charsItalic = 0
+    For i = 1 To Len(rng.Text)
+      isItalic = rng.Characters(i).Font.Italic
+      If isItalic Then charsItalic = charsItalic + 1
+    Next i
+    charsRoman = Len(Selection) - charsItalic
+  ' Change to italic or roman, accordingly
+    If charsItalic > charsRoman Then
+      Selection.Font.Italic = False
+    Else
+    ' Don't italicise following space or quote
+      If Len(Selection) > 1 Then
+        Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+          rng.MoveEnd , -1
+          DoEvents
+        Loop
+      End If
+      rng.Font.Italic = True
+      rng.Select
+    End If
   End If
 End If
 End Sub
+
 

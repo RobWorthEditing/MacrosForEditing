@@ -1,0 +1,48 @@
+Sub InitialSwapperReverse()
+' Paul Beverley - Version 06.06.22
+' Swaps initials and surname (Beverley, P.E. -> P.E. Beverley)
+
+' Expand selection to single or whole words
+myStart = Selection.Start - 1
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 1
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Selection.Start = myStart
+Selection.MoveStart wdWord, -1
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[A-Z.,^32\-]{1,}"
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+  DoEvents
+End With
+If Right(rng.Text, 1) = " " Then rng.MoveEnd , -1
+rng.Cut
+Selection.Collapse wdCollapseStart
+myStart = Selection.Start
+Selection.Paste
+Selection.TypeText Text:=" "
+Selection.Start = myStart
+Selection.End = Selection.Start + 2
+If Selection = ", " Then Selection.Delete
+
+' Dummy find to reset the Find parameters
+With rng.Find
+  .Text = " "
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+End Sub
+

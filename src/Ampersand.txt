@@ -1,19 +1,22 @@
 Sub Ampersand()
-' Paul Beverley - Version 06.03.18
-' Change ampersand to 'and'
+' Paul Beverley - Version 03.06.22
+' Changes next ampersand to 'and'
 
-startHere = Selection.Start
-  Selection.MoveRight , -1
-Do
-  Selection.MoveRight , 1
-  DoEvents
-  If Selection.Start > startHere + 400 Then
-    Beep
-    Selection.MoveEnd , 10
-    Exit Sub
-  End If
-Loop Until Selection = "&"
-Selection.MoveEnd wdCharacter, 1
-Selection.TypeText Text:="and"
+Selection.Collapse wdCollapseStart
+Set rng = Selection.Range.Duplicate
+If rng.End + 400 > ActiveDocument.Content.End Then
+  rng.End = ActiveDocument.Content.End
+Else
+  rng.End = rng.Start + 400
+End If
+charPos = InStr(rng, "&")
+If charPos > 0 Then
+  Selection.MoveStart , charPos - 1
+  Selection.End = Selection.Start + 1
+  Selection.TypeText "and"
+Else
+  Beep
+  MsgBox ("Can't see an ampersand!")
+End If
 End Sub
 

@@ -1,34 +1,6 @@
 Sub MacroFetch()
-' Paul Beverley - Version 21.02.21
+' Paul Beverley - Version 21.08.21
 ' Fetches the macro named in the clipboard or at the cursor
-
-Application.ScreenUpdating = False
-Documents.Add
-Selection.Paste
-theClip = ActiveDocument.Content.Text
-If Len(theClip) > 30 Then theClip = "??": ' Impossible macro name
-ActiveDocument.Close SaveChanges:=False
-Application.ScreenUpdating = True
-
-clipHasMacro = True
-ch1 = Left(theClip, 1)
-If LCase(ch1) = ch1 Then clipHasMacro = False
-For i = 1 To Len(theClip) - 3
-  ch = Mid(theClip, i, 1)
-  If LCase(ch) = UCase(ch) Then
-    clipHasMacro = False
-    Exit For
-  End If
-  DoEvents
-Next i
-
-If clipHasMacro = True And Len(theClip) > 2 Then
-  myMacroName = theClip
-  myFolder = Left(myMacroName, 1)
-  myFullName = "http://www.wordmacrotools.com/macros/" & _
-       myFolder & "/" & myMacroName
-  ActiveDocument.FollowHyperlink Address:=myFullName
-End If
 
 Selection.Collapse wdCollapseEnd
 Selection.Expand wdWord
@@ -42,24 +14,41 @@ Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
 Loop
 myMacroName = Selection
 
-gotMacro = True
+thisIsMacro = True
 ch1 = Left(myMacroName, 1)
-If LCase(ch1) = ch1 Then gotMacro = False
+If LCase(ch1) = ch1 Then thisIsMacro = False
 For i = 1 To Len(myMacroName) - 3
   ch = Mid(myMacroName, i, 1)
   If LCase(ch) = UCase(ch) Then
-    gotMacro = False
+    thisIsMacro = False
     Exit For
   End If
   DoEvents
 Next i
 
-If Len(myMacroName) > 3 And gotMacro = True Then
+GotMacro = True
+ch1 = Left(myMacroName, 1)
+If LCase(ch1) = ch1 Then GotMacro = False
+For i = 1 To Len(myMacroName) - 3
+  ch = Mid(myMacroName, i, 1)
+  If LCase(ch) = UCase(ch) Then
+    GotMacro = False
+    Exit For
+  End If
+  DoEvents
+Next i
+
+If Len(myMacroName) > 3 And GotMacro = True Then
   myFolder = Left(myMacroName, 1)
   myFullName = "http://www.wordmacrotools.com/macros/" & _
        myFolder & "/" & myMacroName
   ActiveDocument.FollowHyperlink Address:=myFullName
 End If
-ShowVisualBasicEditor = True
+If GotMacro = True Then
+  ShowVisualBasicEditor = True
+Else
+  Beep
+  MsgBox myMacroName & " ??  -  Are you sure this is a macro name?"
+End If
 End Sub
 

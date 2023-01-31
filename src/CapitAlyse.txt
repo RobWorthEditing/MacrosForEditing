@@ -1,6 +1,9 @@
 Sub CapitAlyse()
-' Paul Beverley - Version 07.09.21
+' Paul Beverley - Version 12.01.23
 ' Analyses capitalised words
+
+ignoreHeadings = True
+' ignoreHeadings = False
 
 ignoreWords = ",After,All,Although,Also,An,And,As,At,By,For,From,If,In,It,"
 ignoreWords = ignoreWords & "Of,On,Our,The,This,Those,There,These,They,Up,We,"
@@ -8,8 +11,15 @@ ignoreWords = ignoreWords & "Of,On,Our,The,This,Those,There,These,They,Up,We,"
 timeStart = Timer
 showTime = True
 
+myScreenOff = True
+
 Set FUT = ActiveDocument
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
+
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
 
 ' Count case after hyphenation
 myTot = ActiveDocument.Range.End
@@ -59,37 +69,33 @@ With rng.Find
   DoEvents
   
   .Text = "[.]{2,}"
-  .Wrap = wdFindContinue
   .Replacement.Text = "."
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
   DoEvents
   
   .Text = "(Figure [0-9]{1,}.[0-9]{1,})"
-  .Wrap = wdFindContinue
   .Replacement.Text = "\1. "
-  .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
   DoEvents
   
   .Text = "(Fig. [0-9]{1,}.[0-9]{1,})"
-  .Wrap = wdFindContinue
   .Replacement.Text = "\1. "
-  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "[^32]{1,}^13"
+  .Replacement.Text = "^p"
   .Execute Replace:=wdReplaceAll
   DoEvents
   
   .Text = "^13[0-9.\)^t^32" & ChrW(8211) & "]{1,}([A-Z])"
-  .Wrap = wdFindContinue
   .Replacement.Text = "^p\1"
-  .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
   DoEvents
   
   .Text = "^13[a-z][.\)\(^t^32" & ChrW(8211) & "]{1,}([A-Z])"
-  .Wrap = wdFindContinue
   .Replacement.Text = "^p\1"
-  .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
   DoEvents
   
@@ -110,14 +116,19 @@ With rng.Find
 End With
 StatusBar = "Preparing the text for searching..."
 
-For Each pa In ActiveDocument.Paragraphs
-  myText = pa
-  If Len(myText) > 3 Then
-    ch = Mid(myText, Len(myText) - 1, 1)
-    If InStr("!.?:", ch) = 0 Then pa.Range.Font.Underline = True
-  End If
-  i = i + 1: If i Mod 100 = 0 Then DoEvents
-Next pa
+' Underline headings to potentially ignore them
+If ignoreHeadings = True Then
+   maxWdsInHeading = 20
+   For Each pa In ActiveDocument.Paragraphs
+     myText = pa.Range.Text
+     wdsCount = pa.Range.Words.count
+     If Len(myText) > 3 And wdsCount < maxWdsInHeading Then
+       ch = Mid(myText, Len(myText) - 1, 1)
+       If InStr(".:", ch) = 0 Then pa.Range.Font.Underline = True
+     End If
+     i = i + 1: If i Mod 100 = 0 Then DoEvents
+   Next pa
+End If
 
 For Each se In ActiveDocument.Sentences
   If Len(se) > 4 Then
@@ -236,7 +247,7 @@ With rng.Find
   .Execute Replace:=wdReplaceAll
 End With
 Selection.HomeKey Unit:=wdStory
-Selection.MoveEndWhile cset:=vbCr, Count:=wdForward
+Selection.MoveEndWhile cset:=vbCr, count:=wdForward
 Selection.Delete
 Selection.TypeText "Capitalisation" & vbCr & vbCr
 ActiveDocument.Paragraphs(1).Style = _
@@ -263,6 +274,7 @@ If numCaps + numNoCaps > 0 Then
   Selection.HomeKey Unit:=wdStory
 End If
 
+Application.ScreenUpdating = True
 If doingSeveralMacros = False Then
   Beep
   myTime = Timer
@@ -277,5 +289,11 @@ If doingSeveralMacros = False Then
 Else
   FUT.Activate
 End If
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
 

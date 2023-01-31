@@ -1,5 +1,5 @@
 Sub Pluralise()
-' Paul Beverley - Version 14.01.21
+' Paul Beverley - Version 15.07.22
 ' Tries to make the current word plural
 
 Selection.Expand wdWord
@@ -7,21 +7,33 @@ Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
   Selection.MoveEnd , -1
   DoEvents
 Loop
-myWord = Selection
+MyWord = Selection
 Selection.Collapse wdCollapseEnd
 
-Select Case Right(myWord, 1)
-  Case "o":
-      Selection.TypeText "es"
-  Case "y":
-      Selection.MoveStart , -1
-      Selection.TypeText "ies"
+Select Case Right(MyWord, 2)
+  Case "ch":
+    Selection.TypeText Text:="es"
+  Case "sh":
+    Selection.TypeText Text:="es"
+  Case "oo":
+    Selection.TypeText Text:="s"
+  Case "eo":
+    Selection.TypeText Text:="s"
+  Case "ey":
+    Selection.MoveStart , -2
+    Selection.TypeText Text:="ies"
   Case Else
-      Selection.TypeText "s"
+    Select Case Right(MyWord, 1)
+      Case "o":
+        Selection.TypeText Text:="es"
+      Case "y":
+        Selection.MoveStart , -1
+        Selection.TypeText Text:="ies"
+      Case "s":
+        Selection.TypeText Text:="es"
+      Case Else
+        Selection.TypeText Text:="s"
+    End Select
 End Select
-Selection.MoveStart , -3
-If Selection = "chs" Then Selection.TypeText "ches"
-Selection.Collapse wdCollapseEnd
-Selection.MoveRight , 1
 End Sub
 

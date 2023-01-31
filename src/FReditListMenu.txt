@@ -4,10 +4,10 @@ Sub FReditListMenu()
 
 
 ' On Windows, it will need to be something like:
-myFolder = "C:\Documents and Settings\Paul\My Documents\MyLists"
+myFolder = "C:\Documents and Settings\Paul\My Documents\MyLists\"
 
 ' On a Mac, it will need to be something like:
-myFolder = "/Users/Paul/My Documents/MyLists"
+myFolder = "/Users/Paul/My Documents/MyLists/"
 
 
 Dim myList(30) As String

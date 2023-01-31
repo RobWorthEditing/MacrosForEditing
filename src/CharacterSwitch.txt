@@ -7,10 +7,10 @@ specChar = "_"
 listName = "zzSwitchList"
 
 ' On Windows, it will need to be something like:
-myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff"
+myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff\"
 
 ' On a Mac, it will need to be something like:
-myFolder = "/Users/Paul/My Documents/Macro stuff"
+myFolder = "/Users/Paul/My Documents/Macro stuff/"
 
 doaBeep = False
 maxChars = 200

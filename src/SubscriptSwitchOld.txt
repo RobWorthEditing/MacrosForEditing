@@ -1,0 +1,6 @@
+Sub SubscriptSwitchOld()
+' Paul Beverley - Version 05.09.11
+' Toggles subscript on/off
+
+Selection.Font.Subscript = Not Selection.Font.Subscript
+End Sub

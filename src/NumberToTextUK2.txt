@@ -1,8 +1,12 @@
 Sub NumberToTextUK2()
-' Paul Beverley - Version 14.09.11
+' Paul Beverley - Version 01.06.22
 ' Convert next number into text
+
 oldFind = Selection.Find.Text
 oldReplace = Selection.Find.Replacement.Text
+
+myOptWS = Options.AutoWordSelection
+Options.AutoWordSelection = False
 
 ' Find a number (six figures max)
 Selection.End = Selection.Start
@@ -64,5 +68,7 @@ With Selection.Find
   .Replacement.Text = oldReplace
   .MatchWildcards = False
 End With
+Options.AutoWordSelection = myOptWS
 End Sub
+
 

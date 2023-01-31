@@ -1,187 +1,140 @@
 Sub ChapterChopper()
-' Paul Beverley - Version 28.01.15
-' Chop text into chapters
+' Paul Beverley - Version 16.04.22
+' Chops a book file into a set of chapter files
 
-Dim wordsTrue As Long, wordsCount As Long
+' addPrefix = "Alice "
+addPrefix = "AA"
 
-myPostfix = ""
+' Add highlight to...
+' myChapterTitle = "Chapter 1.^p"
+' myChapterTitle = "Part 1:"
+' myChapterTitle = "Chapter 1^p"
+' myChapterTitle = "1^p"
+' myChapterTitle = "1.^p"
+' myChapterTitle = "1.^p"
+myChapterTitle = "CHAPTER 1"
 
-' For Macs only, use
-' myPostfix = ".docx"
-
-'find start of special heading
-Set rng = ActiveDocument.Content
-endOfFile = rng.End
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "Summary of chapter contents"
-  .Execute
-End With
-
-' If that heading is already there, you're
-' ready to chop up the file
-
-If rng.Find.Found = True Then GoTo chopItUp
-
-If Selection.End = Selection.Start Then
-  myResponse = MsgBox("Chapter chopper" & vbCrLf & _
-     "Please select text to define chapter start")
-  Exit Sub
-End If
-
-chapTitle = Selection
-
-' Find actual total wordcount
-wordsTrue = ActiveDocument.Content.ComputeStatistics(wdStatisticWords)
-
-' Find apparent total word count
-wordsCount = ActiveDocument.Content.Words.Count
-correctionFactor = wordsTrue / wordsCount
-
-Set rng = ActiveDocument.Content
-
-' Find start of first chapter
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = chapTitle
-  .MatchCase = True
-  .Execute
-End With
-chapStart = rng.Start
-' If it's a long chapter heading, cut it down a bit.
-rng.End = rng.End + 50
-rng.Start = chapStart
-chapName = rng
-' If we've picked up more then one line
-' of text, chop it short at the line end
-anyNewLine = InStr(chapName, Chr(11))
-anyReturn = InStr(chapName, Chr(13))
-If anyNewLine > 2 Then
-  If anyNewLine < anyReturn Then anyReturn = anyNewLine
-End If
-If anyReturn > 2 Then chapName = Left(chapName, anyReturn - 1)
-rng.End = rng.Start
-rng.Start = 0
-wordsTrue = Int(rng.Words.Count * correctionFactor)
-Selection.EndKey Unit:=wdStory
-Selection.TypeText Text:="Summary of chapter contents" & vbCrLf & vbCrLf
-Selection.TypeText Text:="Prelims" & vbTab & Str(wordsTrue) _
-    & vbCrLf & vbCrLf
-   
-' Note where the list starts
-listStart = Selection.Start
+myMarkerColour = wdBrightGreen
+addLeadingZero = True
 
 Do
-  Set rng = ActiveDocument.Content
-  rng.Start = chapStart + 1
-  lastChapStart = chapStart
-  With rng.Find
-    .ClearFormatting
-    .Replacement.ClearFormatting
-    .Text = chapTitle
-    .MatchCase = True
-    .Execute
-  End With
- 
-  If rng.Start > listStart Then Exit Sub
-  rng.End = rng.End + 50
-  nextChapName = rng
- 
-  ' If we've picked up more then one line
-  ' of text, chop it short at the line end
-  anyNewLine = InStr(nextChapName, Chr(11))
-  anyReturn = InStr(nextChapName, Chr(13))
-  If anyNewLine > 2 Then
-    If anyNewLine < anyReturn Then anyReturn = anyNewLine
-  End If
-  If anyReturn > 2 Then nextChapName = Left(nextChapName, anyReturn - 1)
-  chapStart = rng.Start
-  rng.End = rng.Start
-  rng.Start = lastChapStart
-  wordsTrue = Int(rng.Words.Count * correctionFactor)
-  Selection.EndKey Unit:=wdStory
-  Selection.TypeText Text:=chapName & vbTab & Str(wordsTrue) _
-      & vbCrLf & vbCrLf
-  chapName = nextChapName
+  myText = InputBox("1: Add highlighting" & vbCr & _
+       "2: Chop and save file", "ChapterChopper")
+  myNumber = Val(myText)
+  If myNumber = 0 Then Beep: Exit Sub
+Loop Until myNumber = 1 Or myNumber = 2
 
-Loop Until finished = True
+If myNumber = 1 Then GoTo addHighlight
+Beep
+myResponse = MsgBox("Chop and save?", _
+     vbQuestion + vbYesNo, "ChapterChopper")
+If myResponse <> vbYes Then Exit Sub
+
+Dim chapStart(50) As Long
+Dim chapEnd(50) As Long
+Dim fileName(50) As String
+
+myFolder = ActiveDocument.FullName
+myName = ActiveDocument.Name
+myFolder = Replace(myFolder, myName, "")
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+myFile = 1
+noNoChars = ".,:!" & ChrW(12)
+Do While rng.Find.Found = True
+  chapStart(myFile) = rng.Start
+  endChapNow = rng.Start - 1
+  lastChar = Right(rng, 1)
+  If InStr(noNoChars, lastChar) > 0 Then
+    rng.Select
+    Beep
+    myResponse = MsgBox("Illegal character highlighted", , "ChapterChopper")
+    Exit Sub
+  End If
+  myText = Replace(rng.Text, vbCr, "")
+Debug.Print myText & "|"
+  If addLeadingZero = True Then
+    spPos = InStr(myText, " ")
+    If spPos > 0 Then
+      myChapNum = Val(Mid(myText, spPos + 1))
+      If myChapNum < 10 Then
+        myText = Left(myText, spPos) & "0" & Right(myText, 1)
+      End If
+    End If
+    If Len(myText) = 1 Then
+      myText = "0" & myText
+    End If
+  End If
+  fileName(myFile) = myText
+  If rng.Font.Underline <> 0 Then
+    rng.Expand wdParagraph
+    rng.Collapse wdCollapseEnd
+    chapStart(myFile) = rng.Start
+  End If
+  If myFile > 1 Then chapEnd(myFile - 1) = endChapNow - 1
+  endChapWas = endChapNow
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+  myFile = myFile + 1
+Loop
+chapEnd(myFile - 1) = ActiveDocument.Content.End
+' Debug.Print fileName(myFile - 1), chapStart(myFile - 1), chapEnd(myFile - 1)
+
+Set rng = ActiveDocument.Content
+numFiles = myFile - 1
+For i = 1 To numFiles
+  rng.Start = chapStart(i)
+  rng.End = chapEnd(i)
+  rng.Copy
+  Documents.Add
+  Selection.TypeText Text:=vbCr
+  Selection.MoveLeft , 1
+  Selection.Paste
+  ActiveDocument.SaveAs fileName:=addPrefix & fileName(i)
+  ActiveDocument.Close SaveChanges:=False
+  DoEvents
+Next i
+Beep
 Exit Sub
 
+addHighlight:
+Set rng = ActiveDocument.Content
+myChapterTitle = Replace(myChapterTitle, "1", "[0-9 ]{1,}")
+myChapterTitle = "^13" & Replace(myChapterTitle, "^p", "^13")
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myChapterTitle
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
 
-' Start of chopping up mechanism
-chopItUp:
-' Text at beginning of every filename
-myPrefix = InputBox("Filename?", "Chapter Chopper", "Chapter")
-
-rng.Select
-Dim startNextText(100) As String
-
-' First find out if the prelims have been
-' lumped into chapter 1
-startNumber = 0
-Selection.MoveDown Unit:=wdLine, Count:=3
-Selection.HomeKey Unit:=wdLine
-Selection.MoveDown Unit:=wdLine, Count:=1, Extend:=wdExtend
-myLine = Selection
-Selection.Start = Selection.End
-' If the second line is longer than two
-' then prelims and chapter 1 are together as file 01
-If Len(myLine) > 2 Then
-  startNumber = 1
-  Selection.MoveDown Unit:=wdLine, Count:=1
-End If
-
-' Starting from zero (prelims file) or
-' one (prelims + chapter 1), store the
-' text that follows, i.e. the start of the
-' next file
-fileNumber = startNumber
-Do
-  Selection.End = Selection.Start
-  Selection.MoveDown Unit:=wdLine, Count:=1, Extend:=wdExtend
-  thisBit = Selection
-  ' Chop off the tab and the wordcount
-  thisBit = Left(thisBit, InStr(thisBit, Chr(9)) - 1)
-  startNextText(fileNumber) = thisBit
-  ' Skip any files that have been bunched together
-  ' i.e. are to be stored in a single file
-  Do
-    Selection.Start = Selection.End
-    Selection.MoveDown Unit:=wdLine, Count:=1, Extend:=wdExtend
-  Loop Until Len(Selection) < 3
-  Selection.Start = Selection.End
-  fileNumber = fileNumber + 1
-Loop Until Selection.End > endOfFile - 3
-startNextText(fileNumber) = "Summary of chapter contents"
-
-' Chop up the text, section by section
-' according to the numbering and sections
-' defined above
-startText = 0
-For i = startNumber To fileNumber
-  Set rng = ActiveDocument.Content
-
-  With rng.Find
-    .ClearFormatting
-    .Replacement.ClearFormatting
-    .Text = startNextText(i)
-    .Execute
-  End With
-  rng.End = rng.Start
-  rng.Start = startText
-  If rng.Start <> rng.End Then
-    rng.Copy
-    startText = rng.End
-    Documents.Add
-    Selection.Paste
-    myFile = Trim(Str(i))
-    If Len(myFile) = 1 Then myFile = "0" & myFile
-    myFile = myPrefix & myFile & myPostfix
-    ActiveDocument.SaveAs FileName:=myFile
-    ActiveDocument.Close
-  End If
-Next i
+Do While rng.Find.Found = True
+  rng.MoveStart , 1
+  If Right(rng.Text, 1) = "." Or Right(rng.Text, 1) = ":" _
+       Or Right(rng.Text, 1) = vbCr Then rng.MoveEnd , -1
+  ' Just in case there are two!
+  If Right(rng.Text, 1) = "." Or Right(rng.Text, 1) = ":" _
+       Or Right(rng.Text, 1) = vbCr Then rng.MoveEnd , -1
+  rng.HighlightColorIndex = myMarkerColour
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Beep
 End Sub
 

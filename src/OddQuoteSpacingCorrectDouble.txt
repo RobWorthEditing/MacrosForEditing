@@ -1,0 +1,52 @@
+Sub OddQuoteSpacingCorrectDouble()
+' Paul Beverley - Version 22.07.22
+' Corrects the odd spacing on double quotation marks
+
+myQuote = """"
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myQuote
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  endNow = rng.End
+  rng.MoveStart , -1
+  rng.MoveEnd , 1
+  If Right(rng, 1) = vbCr Then rng.MoveEnd , -1
+  rng.Cut
+  rng.PasteSpecial DataType:=wdPasteText
+  rng.Start = endNow - 1
+  rng.Font.Superscript = False
+  rng.Start = endNow + 2
+  rng.End = endNow + 2
+  rng.Find.Execute
+  DoEvents
+  DoEvents
+  q = q + 1
+  If q Mod 100 = 0 Then rng.Select
+Loop
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myQuote
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = myQuote
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

@@ -1,24 +1,23 @@
+
 Sub PDFspellAll()
-' Paul Beverley - Version 16.01.21
-' Underline all spelling errors
+' Paul Beverley - Version 21.11.22
+' Underlines all spelling errors
 
-' Options.IgnoreMixedDigits = True
-
-' Highlight the result (use zero for no highlight)
+' Highlight the result (use zero or wdNoHighlight for no highlight)
 myColour = wdYellow
+' myColour = 0
 
 Selection.HomeKey Unit:=wdStory
 langText = Languages(Selection.LanguageID).NameLocal
 wasIgnore = Options.IgnoreMixedDigits
 Options.IgnoreMixedDigits = False
 
-j = ActiveDocument.Words.Count
+j = ActiveDocument.Words.count
 StatusBar = "Spellchecking. To go: " & Str(j)
-DoEvents ' Debug.Print "Spellchecking. To go: " & Str(j)
 Set rng = ActiveDocument.Content
 
 For Each wd In ActiveDocument.Words
-  Do While InStr(ChrW(8217) & "' ", Right(wd.Text, 1)) > 0
+  Do While InStr(ChrW(8217) & "'", Right(wd.Text, 1)) > 0
     wd.MoveEnd , -1
     DoEvents
   Loop
@@ -27,17 +26,15 @@ For Each wd In ActiveDocument.Words
   If wd.Font.StrikeThrough = False Then
     If Application.CheckSpelling(wd, MainDictionary:=langText) = False Then
       wd.Font.Underline = True
-      wd.HighlightColorIndex = wdYellow
+      wd.HighlightColorIndex = myColour
     End If
   End If
   j = j - 1
   If j Mod 100 = 0 Then
     StatusBar = "Spellchecking. To go: " & Str(j)
-    DoEvents ' Debug.Print "Spellchecking. To go: " & Str(j)
+    DoEvents
   End If
 Next wd
 StatusBar = ""
-doneSpell = True
 Options.IgnoreMixedDigits = wasIgnore
 End Sub
-

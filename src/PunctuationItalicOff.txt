@@ -1,6 +1,7 @@
+
 Sub PunctuationItalicOff()
-' Paul Beverley - Version 06.10.21
-' Un-italicises all commas not followed by italic text
+' Paul Beverley - Version 20.01.23
+' Un-italicises all commas etc not followed by italic text
 
 ' stayItalicColour = wdNoHighlight
 stayItalicColour = wdYellow
@@ -16,7 +17,7 @@ Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "[,:;.]"
+  .Text = "[,:;.""'\)]"
   .Font.Italic = True
   .Wrap = wdFindStop
   .Replacement.Text = ""
@@ -51,12 +52,12 @@ Do While rng.Find.Found = True
   rng.Find.Execute
 Loop
 
-If ActiveDocument.Endnotes.Count > 0 Then
+If ActiveDocument.Endnotes.count > 0 Then
   Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
   With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
-    .Text = "[,:;.]"
+    .Text = "[,:;.""'\)]"
     .Font.Italic = True
     .Wrap = wdFindStop
     .Replacement.Text = ""
@@ -91,12 +92,12 @@ If ActiveDocument.Endnotes.Count > 0 Then
     rng.Find.Execute
   Loop
 End If
-If ActiveDocument.Footnotes.Count > 0 Then
+If ActiveDocument.Footnotes.count > 0 Then
   Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
   With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
-    .Text = "[,:;.]"
+    .Text = "[,:;.""'\)]"
     .Font.Italic = True
     .Wrap = wdFindStop
     .Replacement.Text = ""
@@ -131,9 +132,7 @@ If ActiveDocument.Footnotes.Count > 0 Then
     rng.Find.Execute
   Loop
 End If
-
 MsgBox "Changed italic to roman: " & myCount
 ActiveDocument.TrackRevisions = myTrack
-
 End Sub
 

@@ -1,0 +1,61 @@
+Sub CambiaPuntuación()
+' PunctuationSwap()
+' Paul Beverley - Version 13.01.22
+' Cambia el punto por coma, dos puntos por punto y coma, paréntesis por corchetes y viceversa. También cambia la tilde de la vocal siguiente.
+
+mySwaps = ".|,,|.;|::|; ?|! !|? " & _
+  " (|[ )|] [|( ]|) a|á á|a e|é é|e i|í í|i o|ó ó|o u|ú ú|u"
+
+doCaseSwap = ",.;:"
+
+doQuoteSwap = True
+
+If doQuoteSwap = True Then
+ mySwaps = mySwaps & """|' '|"" " & ChrW(8216) & "|" & ChrW(8220) _
+  & " " & ChrW(8220) & "|" & ChrW(8216) & " "
+ 
+ mySwaps = mySwaps & " " & ChrW(8217) & "|" & ChrW(8221) _
+  & " " & ChrW(8221) & "|" & ChrW(8217) & " "
+End If
+
+If Selection.Start <> Selection.End And InStr(doCaseSwap, Selection) > 0 Then
+ Selection.Move wdWord, 1
+ Call CaseNextChar
+ Exit Sub
+End If
+
+mySplit = Split(mySwaps, "|")
+myTargets = ""
+For i = 0 To UBound(mySplit)
+ myTargets = myTargets & Right(mySplit(i), 1)
+Next i
+myTargets = Trim(myTargets)
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.End
+
+myEnd = rng.Characters.Count
+If myEnd > 100 Then myEnd = 100
+For i = 1 To myEnd
+ ch = rng.Characters(i)
+ Debug.Print ch, AscW(ch)
+ If InStr(myTargets, ch) > 0 Then
+ ptr = InStr(mySwaps, ch & "|")
+ If ch = ChrW(8217) Then
+  ch2 = rng.Characters(i + 1)
+  Debug.Print ch2
+  If UCase(ch2) <> LCase(ch2) Then ptr = 0
+ End If
+ If ptr > 0 Then
+  rng.Start = rng.Start + i - 1
+  rng.End = rng.Start + 1
+  newChar = Mid(mySwaps, ptr + 2, 1)
+  rng.Text = newChar
+  rng.Select
+  Exit Sub
+ End If
+ End If
+Next i
+End Sub
+
+

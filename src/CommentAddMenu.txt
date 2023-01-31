@@ -1,28 +1,36 @@
 Sub CommentAddMenu()
-' Paul Beverley - Version 16.01.21
+' Paul Beverley - Version 22.10.22
 ' Adds a comment off a menu
+
+useCommentPane = False
+paneZoom = 240
 
 myPrefix = "PB: "
 myPrefix = ""
 
 addPageNum = False
 addLineNum = False
-keepPaneOpen = False
 
-copyAsPureText = False
-keepTextFont = True
+copyAsPureText = True
+keepTextFont = False
 
 listName = "zzSwitchList"
-myDir = "C:\Users\User\Documents\"
 
-myDir = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\"
+' On Windows, it will need to be something like:
+myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff\"
 
-defaultList = myDir & listName
+' On a Mac, it will need to be something like:
+myFolder = "/Users/Paul/My Documents/Macro stuff/"
+
+
+myFolder = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\"
+
+defaultList = myFolder & listName
 Set textDoc = ActiveDocument
 If Selection.Start = Selection.End Then
   Selection.Expand wdSentence
   If Right(Selection, 4) = "al. " Or Right(Selection, 5) = "al., " Then
-    Selection.MoveRight Unit:=wdSentence, Count:=1, Extend:=wdExtend
+    Selection.MoveRight Unit:=wdSentence, count:=1, Extend:=wdExtend
   End If
   Do While InStr(" " & vbCr, Right(Selection.Text, 1)) > 0
     Selection.MoveEnd , -1
@@ -35,7 +43,7 @@ Set thisDoc = ActiveDocument.ActiveWindow
 dirName = ActiveDocument.Path
 ' Go and look for the list file
 gottaList = False
-For i = 1 To Application.Windows.Count
+For i = 1 To Application.Windows.count
   If InStr(Application.Windows(i).Document.Name, _
        listName) > 0 Then
     Set listDoc = Application.Windows(i).Document
@@ -74,7 +82,7 @@ End With
 
 Selection.Collapse wdCollapseEnd
 Selection.Expand wdParagraph
-Set startRange = Selection.Range
+Set startRange = Selection.Range.Duplicate
 Selection.Collapse wdCollapseEnd
 
 ' Construct myFullPrompt
@@ -146,10 +154,9 @@ Selection.End = Selection.Start + curlyPos1 - 1
     DoEvents
   Loop
 Selection.MoveStart , sqPos + 1
-'               cursorPos = InStr(Selection, "][")
+' cursorPos = InStr(Selection, "][")
 lenCopy = Len(Selection)
 If lenCopy > 1 Then Selection.Copy
-
 
 ' Add comment bubble + comment
 textDoc.Activate
@@ -171,7 +178,13 @@ If highlightColour > 0 Or fontColour > 0 Or isUL Then
 End If
 ' Now create the comment
 Set cmt = Selection.Comments.Add(Range:=Selection.Range)
-cmt.Edit
+If useCommentPane = False Then
+  ActiveWindow.ActivePane.Close
+  cmt.Edit
+Else
+  Application.ActiveWindow.View.Zoom.Percentage = paneZoom
+End If
+
 myPLtext = ""
 If addPageNum = True Then myPLtext = myPLtext & "(p. " & _
      pageNum
@@ -187,12 +200,6 @@ If lenCopy > 1 Then Selection.Paste
 For i = 1 To 20
   DoEvents
 Next
-
-'k = Timer
-'Do
-'  DoEvents
-'Loop Until Timer > k + 0.5
-
 
 ' Replace the <> with the quote
 cmt.Range.Select
@@ -244,12 +251,11 @@ ActiveDocument.TrackRevisions = myTrack
 cmt.Range.Select
 cursorPos = InStr(Selection, "][")
 If cursorPos > 0 Then
-  myLen = cmt.Range.Characters.Count
+  myLen = cmt.Range.Characters.count
   Selection.MoveStart , cursorPos - 1
   Selection.End = Selection.Start + 2
   Selection.Delete
 End If
-If keepPaneOpen = False Then ActiveWindow.ActivePane.Close
 If cursorPos > 0 Then
   cmt.Edit
   Selection.MoveLeft , (myLen - cursorPos - 1)
@@ -266,6 +272,4 @@ Else
   On Error GoTo 0
 End If
 End Sub
-
-
 

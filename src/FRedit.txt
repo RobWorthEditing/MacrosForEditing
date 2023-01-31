@@ -1,7 +1,7 @@
 Sub FRedit()
-' Paul Beverley - Version 06.01.22
+' Paul Beverley - Version 01.01.23
 ' Scripted find and replace
-' ©2009-2022 Paul Beverley
+' ©2009-2023 Paul Beverley
 
 useReverseStrikeFeature = False
 
@@ -95,6 +95,7 @@ If numDocs = 1 Then myError = 11: GoTo myErrorReport
 NoOfLists = 0
 NoOfTexts = 0
 allFileNames = ""
+  Debug.Print "myName", "isAlist", "NoOfTexts", "NoOfLists"
 For Each myDoc In Application.Documents
   DoEvents
   myFullName = myDoc.FullName
@@ -102,23 +103,34 @@ For Each myDoc In Application.Documents
   myName = Replace(myName, ".docx", "")
   myName = Replace(myName, ".doc", "")
   myName = Replace(myName, ".rtf", "")
+  Debug.Print myName
   notThisFile = InStr(ignoreTheseFiles, myName) > 0
   If InStr(allFileNames, myFullName) = 0 And _
        notThisFile = False Then
-    txt = myDoc.Content.Text
-    txt = Replace(txt, vbCr & vbCr, vbCr)
-    txt = Replace(txt, vbCr & vbCr, vbCr)
-    tot = Len(txt)
-    numCR = tot - Len(Replace(txt, vbCr, ""))
-    numPad = tot - Len(Replace(txt, "|", ""))
-    If numPad > 0 Then
-      myFactor = numCR / numPad
+  ' Finding some '|' in the first few lines means it's a list
+    myLines = 20
+    myParas = myDoc.Paragraphs.count
+    If myParas < myLines Then myLines = myParas - 1
+    If myLines = 0 Then myLines = 1
+    isAlist = True
+    Set rng = myDoc.Content
+    rng.End = myDoc.Paragraphs(myLines).Range.End
+    myText = rng.Text
+    myText = Replace(myText, CR2, CR)
+    myText = Replace(myText, CR2, CR)
+    numLines = Len(myText) - Len(Replace(myText, CR, ""))
+    numPads = Len(myText) - Len(Replace(myText, "|", ""))
+    If numPads = 0 Then
+      isAlist = False
     Else
-      myFactor = 3
-      ' i.e. definitely more than 2
+      myDiff = numLines - numPads
+      If myDiff > 2 Then
+        isAlist = False
+      Else
+        isAlist = True
+      End If
     End If
-  ' Finding a '|' in the first few lines means it's a list
-    If myFactor < 2 Then
+    If isAlist = True Then
       NoOfLists = NoOfLists + 1
       If startIsListFile = False Then Set theList = myDoc
       If myDoc = startFile Then startIsListFile = True
@@ -126,6 +138,7 @@ For Each myDoc In Application.Documents
       NoOfTexts = NoOfTexts + 1
       If NoOfTexts = 1 Then Set theText = myDoc
     End If
+' Debug.Print myName, isAlist, NoOfTexts, NoOfLists, "|||", myDiff
     allFileNames = allFileNames & myFullName
   End If
 Next myDoc
@@ -162,7 +175,7 @@ If mlb > 0 Then
   Selection.End = mlb + 1
   Beep
   MsgBox "Beware: FRedit list contains manual line breaks!"
-  Application.Run MacroName:="ShowFormatting"
+  Application.Run macroName:="ShowFormatting"
   MsgBox "I've turned Show Formatting on, so you can see."
   Application.ScreenUpdating = True
   Exit Sub
@@ -382,7 +395,7 @@ For i = 1 To lastLine
       rSize = rng.Font.Size
       rHiColour = rng.HighlightColorIndex
       rTxtColour = rng.Font.Color
-      trackit = Not (rng.Font.StrikeThrough)
+      trackIt = Not (rng.Font.StrikeThrough)
     End If
     
     FRitem = FRitem + 1
@@ -415,7 +428,7 @@ For i = 1 To lastLine
     funct(FRitem, 14) = rSmall
     funct(FRitem, 15) = fAllcaps
     funct(FRitem, 16) = rAllcaps
-    funct(FRitem, 17) = trackit
+    funct(FRitem, 17) = trackIt
     funct(FRitem, 18) = fDstrike
 
     ' ^p is not allowed in wildcard searches!
@@ -475,11 +488,11 @@ For FRitem = 1 To lastItem
   rSmall = funct(FRitem, 14)
   fAllcaps = funct(FRitem, 15)
   rAllcaps = funct(FRitem, 16)
-  trackit = funct(FRitem, 17)
+  trackIt = funct(FRitem, 17)
   fDstrike = funct(FRitem, 18)
-  If trackNow = True Then ActiveDocument.TrackRevisions = trackit
+  If trackNow = True Then ActiveDocument.TrackRevisions = trackIt
   If fText = isMacro Then
-    Application.Run MacroName:=rText
+    Application.Run macroName:=rText
   Else
     ' funnyCode means fText should be blank
     If InStr(fText, funnyCode) > 0 Then fText = ""
@@ -563,7 +576,7 @@ For FRitem = 1 To lastItem
 
             ' Now do the F&R with the appropriate conditions set
             Options.DefaultHighlightColorIndex = rHiColour
-            If rHiColour <> fHiColour Then
+            If (rHiColour <> fHiColour) And (fHiColour <> 0) Then
               ' But first emboss all text in fHiColour
               Set rngNow = rng.Duplicate
               For Each myPar In rngNow.Paragraphs
@@ -686,7 +699,7 @@ For FRitem = 1 To lastItem
                   End If
                 End If
               End If
-              If rHiColour <> fHiColour And rText > "" And _
+              If rHiColour <> fHiColour And fHiColour <> 0 And rText > "" And _
                    fHiColour > 0 Then .Font.Emboss = True
               If rText > "" And (rHiColour > 0 Or fHiColour > 0) Then
                 .Replacement.Highlight = True
@@ -776,8 +789,8 @@ Select Case myError
   Case 111: myPrompt = "You appear to have two FRedit lists. " & CR2 & _
            "Does your text file have a '|' character near the beginning?!"
            
-  Case 12: myPrompt = "Something funny at the end of the FRedit list? " & _
-           "To be safe, add a blank line."
+  Case 12: myPrompt = "Something funny has happened. " & _
+           "Please tell Paul."
   Case 13: myPrompt = "A 'Footnotes =' line should say 'yes' or 'no'."
   Case 14: myPrompt = "An 'Endnotes =' line should say 'yes' or 'no'."
   Case 15: myPrompt = "A 'Text =' line should say 'yes' or 'no'."

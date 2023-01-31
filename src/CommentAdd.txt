@@ -1,8 +1,18 @@
 Sub CommentAdd()
-' Paul Beverley - Version 13.01.21
+' Paul Beverley - Version 21.07.22
 ' Adds a comment
 
+attachToWord = True
+' If False, it attaches to the current sentence
+
+useSingleQuotes = True
+' If False, it uses double quotes
+
+useCommentPane = False
+paneZoom = 240
+
 copySelectedText = True
+
 attrib1 = ""
 attrib2 = ""
 attrib1 = ""
@@ -18,7 +28,13 @@ colourTheText = False
 textColour = wdColorBlue
 removeHighlight = True
 
-keepPaneOpen = False
+If Selection.Start = Selection.End Then
+  If attachToWord = True Then
+    Selection.Expand wdWord
+  Else
+    Selection.Expand wdSentence
+  End If
+End If
 
 myStart = Selection.Start
 wasEnd = Selection.End
@@ -64,13 +80,17 @@ Selection.End = rng.End
        lineNum & ") "
   Selection.TypeText attrib1
   If copySelectedText = True Then
-  Selection.TypeText ChrW(8216) & ChrW(8217)
+    If useSingleQuotes = True Then
+      Selection.TypeText ChrW(8216) & ChrW(8217)
+    Else
+      Selection.TypeText ChrW(8220) & ChrW(8221)
+    End If
   ' Move back to between the close and open quotes
-    Selection.MoveEnd wdCharacter, -1
+    Selection.MoveEnd , -1
   ' Paste in a copy of the selected text
      Selection.Paste
   ' Move back past the close quote
-    Selection.MoveRight Count:=1
+    Selection.MoveRight count:=1
   End If
   If postText > "" Then
     Selection.TypeText postText
@@ -107,10 +127,11 @@ Else
   Selection.HomeKey Unit:=wdLine
   Selection.Fields.Unlink
 End If
-If keepPaneOpen = False Then ActiveWindow.ActivePane.Close
+If useCommentPane = False Then
+  ActiveWindow.ActivePane.Close
+Else
+  Application.ActiveWindow.View.Zoom.Percentage = paneZoom
+End If
 cmt.Edit
-Selection.TypeText Text:=" "
-Selection.MoveStart , -1
-Selection.Cut
 End Sub
 

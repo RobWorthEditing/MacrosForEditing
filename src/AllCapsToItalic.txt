@@ -1,0 +1,35 @@
+
+Sub AllCapsToItalic()
+' Paul Beverley - Version 08.08.22
+' Finds words in all caps and makes them italic
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[A-Z]{2,}>"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  endNow = rng.End
+  rng.Text = LCase(rng.Text)
+  rng.Font.Italic = True
+  rng.Select
+  rng.Start = endNow
+  rng.End = endNow
+  rng.Find.Execute
+  DoEvents
+Loop
+MsgBox "Changed: " & myCount
+End Sub
+
+
+

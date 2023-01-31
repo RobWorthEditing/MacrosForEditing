@@ -1,0 +1,33 @@
+Sub PunctuationToNothing()
+' Paul Beverley - Version 10.09.22
+' Changes next punctuation mark to nothing, i.e. deletes it
+
+searchChars = ",.?!:;"
+newChar = ""
+
+trackIt = True
+
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+If Len(rng) > 1000 Then rng.End = rng.Start + 1000
+
+For Each ch In rng.Characters
+  If InStr(searchChars, ch.Text) > 0 Then
+    ch.Select
+    gotChar = True
+    Exit For
+  Else
+  End If
+Next ch
+If gotChar = False Then
+  Beep
+  ActiveDocument.TrackRevisions = myTrack
+  Exit Sub
+End If
+Selection.Text = newChar
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

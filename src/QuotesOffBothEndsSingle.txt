@@ -1,0 +1,35 @@
+Sub QuotesOffBothEndsSingle()
+' Paul Beverley - Version 03.09.22
+' Removes single quotations marks from both ends of a test
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8216)
+  .Wrap = wdFindStop
+  .Forward = False
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceOne
+  DoEvents
+End With
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8217)
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceOne
+  DoEvents
+End With
+rng.Select
+End Sub
+
+

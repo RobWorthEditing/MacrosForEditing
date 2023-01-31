@@ -1,0 +1,21 @@
+Sub TablesMarkEmptyCells()
+' Paul Beverley - Version 09.06.22
+' Adds some dummy text into every empty cell
+
+dummyText = "Hello!"
+myHighlight = wdYellow
+' myHighlight = wdNoHighlight
+
+Set rng = ActiveDocument.Content
+For Each myTable In rng.Tables
+  For Each myCell In myTable.Range.Cells
+    If Len(myCell.Range.Text) < 3 Then
+      myCell.Range.InsertBefore Text:=dummyText
+      If myHighlight > 0 Then myCell.Range.HighlightColorIndex = myHighlight
+    End If
+    DoEvents
+  Next myCell
+Next myTable
+Beep
+End Sub
+

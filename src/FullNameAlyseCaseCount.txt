@@ -1,0 +1,114 @@
+Sub FullNameAlyseCaseCount()
+' Paul Beverley - Version 23.12.22
+' Counts each of a list of words/phrases
+
+Set testDoc = ActiveDocument
+' Find the word list
+For Each myDoc In Documents
+  listText = myDoc.Content.Text
+  If Left(listText, 8) = "Fullname" Then
+    Set listDoc = myDoc
+    Exit For
+  End If
+Next myDoc
+
+' Find the start of the second listing
+Set rng = listDoc.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Sorted by first name"
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+rng.Start = 0
+startPara = rng.Paragraphs.count + 1
+myResults = ""
+' From there to the end
+For i = startPara To listDoc.Paragraphs.count Step 3
+Set rng = testDoc.Content
+  myText = listDoc.Paragraphs(i).Range.Text
+  If Len(myText) > 4 Then
+    myText = Left(myText, Len(myText) - 2)
+    myCount = Val(listDoc.Paragraphs(i + 1).Range.Text)
+' Only if there's more than one,
+'  check if there's odd capitalisation
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = myText
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchCase = False
+      .MatchWildcards = False
+      .MatchWholeWord = False
+      .Execute
+    End With
+    ' Remember the first of a set
+    myFirst = rng.Text
+    useThisOne = False
+    myLine = ""
+    Do While rng.Find.Found = True
+      myLine = myLine & rng.Text & vbCr
+      Debug.Print rng.Text, myFirst
+  ' If another one has different caps, note the fact
+      If rng.Text <> myFirst Then useThisOne = True
+      rng.Collapse wdCollapseEnd
+      rng.Find.Execute
+      DoEvents
+    Loop
+  ' If there are oddly capitalised ones,
+  '  add them into the final output
+    If useThisOne = True Then myResults = myResults & myLine
+  End If
+  DoEvents
+Next i
+Documents.Add
+Selection.TypeText Text:=myResults
+Set rng = ActiveDocument.Content
+rng.Sort
+rng.InsertAfter Text:=vbCr
+rng.Characters(1) = ""
+numPars = ActiveDocument.Paragraphs.count
+myNum = 1
+For j = numPars - 1 To 2 Step -1
+  Set rng1 = ActiveDocument.Paragraphs(j).Range
+  Set rng2 = ActiveDocument.Paragraphs(j - 1).Range
+  addCR = (LCase(rng1) <> LCase(rng2))
+  If rng1 = rng2 Then
+    rng1.Delete
+    myNum = myNum + 1
+  Else
+    rng1.MoveEnd , -1
+    rng1.InsertAfter Text:=vbTab & Trim(Str(myNum))
+    myNum = 1
+  End If
+  DoEvents
+  Debug.Print rng1, rng2 & vbCr
+  If addCR Then rng1.InsertBefore Text:=vbCr
+Next j
+Set rng = ActiveDocument.Paragraphs(1).Range
+rng.MoveEnd , -1
+rng.InsertAfter Text:=vbTab & Trim(Str(myNum))
+
+Selection.WholeStory
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+Set tb = ActiveDocument.Tables(1)
+tb.Style = "Table Grid"
+tb.AutoFitBehavior (wdAutoFitContent)
+tb.Borders(wdBorderTop).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderRight).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+tb.Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+Selection.HomeKey Unit:=wdStory
+End Sub
+
+
+

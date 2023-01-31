@@ -1,0 +1,54 @@
+Sub CaseThisWord()
+' Version 06.05.22
+' Changes initial case of current word and jumps to next word
+
+trackit = True
+' If an area of text is selected
+If Selection.End > Selection.Start Then
+  If trackit = False Then
+    myText = Selection
+    If LCase(myText) = myText Then
+      Selection.Range.Case = wdTitleWord
+    Else
+      Selection.Range.Case = wdLowerCase
+    End If
+  Else
+    Set rng = Selection.Range.Duplicate
+    If LCase(rng.Text) = rng.Text Then
+      For wd = 2 To rng.Words.count
+        ch = rng.Words(wd).Characters(1)
+        rng.Words(wd).Characters(1) = UCase(ch)
+      Next wd
+    Else
+      For wd = 2 To rng.Words.count
+        ch = rng.Words(wd).Characters(1)
+        rng.Words(wd).Characters(1) = LCase(ch)
+      Next wd
+    End If
+  End If
+  
+Else
+' If no text is selected
+  Selection.Expand wdWord
+  Selection.Collapse wdCollapseStart
+  Selection.MoveEnd , 1
+  If LCase(Selection) = UCase(Selection) Then
+    Selection.MoveStart wdWord
+    Selection.MoveEnd , 1
+  End If
+  If trackit = False Then
+    Selection.Range.Case = wdToggleCase
+    Selection.MoveRight Unit:=wdCharacter, count:=1
+  Else
+    m = Selection.Text
+    If UCase(m) = m Then
+      Selection.Text = LCase(m)
+    Else
+      Selection.Text = UCase(m)
+    End If
+    Selection.Collapse wdCollapseEnd
+  End If
+End If
+Selection.MoveRight wdWord, 1
+End Sub
+

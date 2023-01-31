@@ -1,17 +1,29 @@
 Sub MacroNameToLink()
-' Paul Beverley - Version 11.02.21
+' Paul Beverley - Version 31.08.21
 ' Makes URL for macro name in clipboard or at cursor and puts in clipboard
 
 Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 1
 Selection.Expand wdWord
 Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
   Selection.MoveEnd , -1
   DoEvents
 Loop
 myMacroName = Selection
+Selection.Collapse wdCollapseEnd
 
 myFolder = Left(myMacroName, 1)
-myFullName = "http://www.wordmacrotools.com/macros/" & myFolder & "/" & myMacroName
+myName = ""
+For i = 1 To Len(myMacroName)
+  ch = Mid(myMacroName, i, 1)
+  If AscW(ch) > 128 Then
+    myName = myName & "%" & Hex(AscW(ch))
+    myFolder = "ES"
+  Else
+    myName = myName & ch
+  End If
+Next i
+myFullName = "http://www.wordmacrotools.com/macros/" & myFolder & "/" & myName
 Set MyData = New DataObject
 MyData.SetText ""
 MyData.PutInClipboard
