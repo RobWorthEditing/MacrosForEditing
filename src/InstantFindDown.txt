@@ -1,5 +1,5 @@
 Sub InstantFindDown()
-' Paul Beverley - Version 12.01.21
+' Paul Beverley - Version 11.02.23
 ' Finds selected text downwards
 
 doTrim = True
@@ -7,33 +7,16 @@ addBookmark = True
 
 butNotTheseFiles = "zzSwitchList,ComputerTools4Eds,TheMacros,5_Library,VideoList"
 
-If Selection.Start = Selection.End Then
-  Selection.Expand wdWord
+Set rng = Selection.Range.Duplicate
+If rng.Start = rng.End Then
+  rng.Expand wdWord
   For i = 1 To 3
-    If InStr(ChrW(8217) & " '", Right(Selection.Text, 1)) > 0 Then _
-         Selection.MoveEnd , -1
+    If InStr(ChrW(8217) & " '", Right(rng.Text, 1)) > 0 Then _
+         rng.End = rng.End - 1
   Next i
 End If
-
-If Selection.Font.DoubleStrikeThrough = True Then
-  Selection.Expand wdParagraph
-  Selection.Collapse wdCollapseEnd
-  With Selection.Find
-    .ClearFormatting
-    .Replacement.ClearFormatting
-    .Wrap = wdFindStop
-    .Text = ""
-    .Font.DoubleStrikeThrough = True
-    .Replacement.Text = ""
-    .MatchWildcards = False
-    .MatchCase = False
-    .Forward = True
-    .Execute
-  End With
-  Exit Sub
-End If
-
-thisBit = Selection
+thisBit = rng.Text
+endNow = Selection.End
 
 makeWild = False
 If Right(thisBit, 1) = ">" Then makeWild = True
@@ -59,9 +42,6 @@ Else
 End If
 thisBit = Replace(thisBit, vbTab, "^t")
 
-
-Selection.Start = Selection.End
-hereNow = Selection.Start
 With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -75,7 +55,7 @@ With Selection.Find
   .Forward = True
   .Execute
 End With
-If Selection.Start = hereNow And _
+If Selection.End = endNow And _
      Selection.Find.Found = False Then Beep
 ' Leaves F&R dialogue in a sensible state
 Selection.Find.Wrap = wdFindContinue

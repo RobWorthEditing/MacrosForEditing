@@ -1,10 +1,9 @@
 Sub MultiFileText()
-' Paul Beverley - Version 05.01.22
+' Paul Beverley - Version 07.02.23
 ' Collects text plus simple formatting from multiple files
 
 spaceEquations = True
 listOff = True
-acceptTCs = True
 addFilename = True
 convertMathsItems = True
 remindAboutCancel = False
@@ -104,7 +103,7 @@ For Each myPara In ActiveDocument.Paragraphs
   Else
     thisFile = lineText
     If Len(thisFile) > 2 Then
-      If Left(thisFile, 1) <> "|" Then
+      If Left(thisFile, 1) <> "=" Then
         numFiles = numFiles + 1
         allMyFiles(numFiles) = thisFile
       End If
@@ -122,7 +121,7 @@ For i = 1 To numFiles
 ' Get the folder name, and then the text for the files in the list
   StatusBar = allMyFiles(i)
   thisFile = myFolder & myDelimiter & allMyFiles(i)
-  Set myDoc = Application.Documents.Open(FileName:=thisFile)
+  Set myDoc = Application.Documents.Open(fileName:=thisFile)
 
   If gotLanguage = False Then
     Selection.MoveEnd , 1
@@ -138,7 +137,7 @@ For i = 1 To numFiles
     Next myMath
   End If
   DoEvents
-  If acceptTCs = True Then myDoc.Revisions.AcceptAll
+  myDoc.Revisions.AcceptAll
   myDoc.TrackRevisions = False
   If listOff = True Then myDoc.ConvertNumbersToText
   If ActiveDocument.Endnotes.count > 0 Then
@@ -173,6 +172,7 @@ For i = 1 To numFiles
 
   StatusBar = allMyFiles(i)
   Selection.HomeKey Unit:=wdStory
+  DoEvents
   If addFilename = True Then Selection.TypeText CR2 & "[[[[ " & _
        allMyFiles(i) & " ]]]]]" & CR2
   If convertMathsItems = True Then
@@ -195,6 +195,7 @@ For i = 1 To numFiles
   myDoc.Range.Revisions.AcceptAll
   myDoc.TrackRevisions = False
   Set rng = ActiveDocument.Content
+  DoEvents
   With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
@@ -203,29 +204,32 @@ For i = 1 To numFiles
     .Wrap = wdFindContinue
     .MatchWildcards = False
     .MatchCase = True
-    .Replacement.Text = "zccz^&pqqp"
+    .Replacement.Text = "=i=i=^&=j=j="
+    .Replacement.Highlight = True
     .Execute Replace:=wdReplaceAll
-    
+  DoEvents
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = ""
     .Font.Bold = True
-    .Replacement.Text = "bqqb^&zwvf"
+    .Replacement.Text = "=b=b=^&=c=c="
+    .Replacement.Highlight = True
     .Execute Replace:=wdReplaceAll
-    
+  DoEvents
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = ""
     .Font.Superscript = True
-    .Replacement.Text = "yxzu^&qiwv"
+    .Replacement.Text = "=u=u=^&=v=v="
     .Execute Replace:=wdReplaceAll
-    
+  DoEvents
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = ""
     .Font.Subscript = True
-    .Replacement.Text = "xhwc^&yvxz"
+    .Replacement.Text = "=s=s=^&=t=t="
     .Execute Replace:=wdReplaceAll
+  DoEvents
   End With
 
   Set rng = ActiveDocument.Content
@@ -243,75 +247,40 @@ Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "yxzu(*)qiwv"
+  .Text = "=s=s=(*)=t=t="
   .MatchWildcards = True
-  .MatchCase = False
-  .Replacement.Text = "^&"
-  .Replacement.Font.Superscript = True
+  .Replacement.Text = "\1"
+  .Replacement.Font.Subscript = True
   .Execute Replace:=wdReplaceAll
   
     .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "xhwc(*)yvxz"
-  .Replacement.Text = "^&"
-  .Replacement.Font.Subscript = True
+  .Text = "=u=u=(*)=v=v="
+  .Replacement.Text = "=\1"
+  .Replacement.Font.Superscript = True
+  .Font.Underline = True
   .Execute Replace:=wdReplaceAll
   
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "bqqb(*)zwvf"
-  .Replacement.Text = "^&"
+  .Text = "=b=b=(*)=c=c="
+  .Replacement.Text = "\1"
   .Replacement.Font.Bold = True
   .Execute Replace:=wdReplaceAll
   
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "zccz(*)pqqp"
-  .Replacement.Text = "^&"
+  .Text = "=i=i=(*)=j=j="
+  .Replacement.Text = "\1"
   .Replacement.Font.Italic = True
-  .Execute Replace:=wdReplaceAll
-  
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "zccz"
-  .MatchWildcards = False
-  .MatchCase = False
-  .Replacement.Text = ""
-  .Execute Replace:=wdReplaceAll
-  
-  .Text = "yxzu"
-  .Replacement.Text = ""
-  .Execute Replace:=wdReplaceAll
-  
-  .Text = "bqqb"
-  .Replacement.Text = ""
-  .Execute Replace:=wdReplaceAll
-  
-  .Text = "zwvf"
-  .Replacement.Text = ""
-  .Execute Replace:=wdReplaceAll
-  
-  .Text = "qiwv"
-  .Replacement.Text = ""
-  .Execute Replace:=wdReplaceAll
-  
-  .Text = "pqqp"
-  .Replacement.Text = ""
-  .Execute Replace:=wdReplaceAll
-  
-  .Text = "xhwc"
-  .Replacement.Text = ""
-  .Execute Replace:=wdReplaceAll
-  
-  .Text = "yvxz"
-  .Replacement.Text = ""
   .Execute Replace:=wdReplaceAll
 
 ' Remove optional hyphens
-  .Text = Chr(172)
+  .ClearFormatting
+  .Replacement.ClearFormatting
   .MatchWildcards = False
-  .MatchCase = True
   .Replacement.Text = ""
+  .Text = ChrW(172)
   .Execute Replace:=wdReplaceAll
 End With
 
@@ -365,4 +334,10 @@ Application.Visible = True
 On Error GoTo 0
 Resume
 End Sub
+
+
+
+
+
+
 

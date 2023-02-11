@@ -1,5 +1,5 @@
 Sub FReditListProcess()
-' Paul Beverley - Version 02.02.22
+' Paul Beverley - Version 08.02.22
 ' Tidies up a spelling FRedit list from cursor downwards
 
 makeCopyingNotTracked = True
@@ -13,7 +13,7 @@ strongHighlight = wdBrightGreen
 changeColour = wdColorDarkBlue
 minLength = 7
 
-Application.ScreenUpdating = False
+Application.ScreenUpdating = True
 On Error GoTo ReportIt
 
 myResponse = MsgBox("Any case? (Yes)" & vbCr & vbCr & "or Case Sensitive? (No)", _
@@ -112,7 +112,9 @@ Do While Len(Selection) > 1
         Selection.Range.Font.Color = changeColour
 '        Selection.range.Font.Color = nowColour
       End If
+      DoEvents
     End If
+    DoEvents
   End If
   
   ' Now check if it has still got no vertical bar
@@ -121,25 +123,15 @@ Do While Len(Selection) > 1
     Selection.Delete
     Selection.MoveLeft , 1
   Else
-  Application.ScreenUpdating = True
   DoEvents
-  Application.ScreenUpdating = False
   End If
-  
   Selection.MoveDown , 1
   Selection.Expand wdParagraph
+  DoEvents
 Loop
 Selection.Collapse wdCollapseEnd
 Selection.MoveLeft , -1
 Selection.MoveLeft , 1
 Beep
-Exit Sub
-
-ReportIt:
-Application.ScreenUpdating = True
-On Error GoTo 0
-Resume
 End Sub
-
-
 

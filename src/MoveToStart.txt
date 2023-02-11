@@ -1,31 +1,59 @@
-Sub MoveToStart()
-' Paul Beverley - Version 20.07.15
-' Move the selected text to the beginning of the sentence
 
+Sub MoveToStart()
+' Paul Beverley - Version 06.02.23
+' Moves the selected text to the beginning of the sentence
+  
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord
-  Selection.MoveEndUntil cset:=" ", Count:=wdForward
-  Selection.MoveEnd , 1
+Else
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.Expand wdWord
+  Selection.Start = rng.Start
+  rng.End = Selection.End
+  rng.Collapse wdCollapseEnd
+  rng.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.End = rng.End
 End If
-endNow = Selection.End
-cutLength = Len(Selection)
-Selection.Cut
-Selection.Expand wdSentence
-Selection.Collapse wdCollapseStart
-Selection.MoveEnd , 1
-newChar = LCase(Selection)
-Selection.TypeText newChar
-Selection.MoveLeft , 1
-Selection.Collapse wdCollapseStart
-Selection.Paste
-Selection.Start = Selection.Start - cutLength
-Selection.End = Selection.Start + 1
-Selection.Range.Case = wdUpperCase
-Selection.Start = endNow - 2
-If ActiveDocument.TrackRevisions = True Then
-  Selection.MoveEndUntil cset:=",", Count:=wdForward
-  Selection.Collapse wdCollapseEnd
+
+Set rng = Selection.Range.Duplicate
+Selection.Range.Characters(1) = _
+UCase(Selection.Range.Characters(1))
+rng.Select
+rng.Collapse wdCollapseEnd
+rng.MoveEnd , 1
+If rng.Text = " " Then
+  Selection.Cut
+  Selection.MoveStart , -1
+  Selection.Delete
+  Selection.Expand wdSentence
+  Selection.Collapse wdCollapseStart
+  Selection.TypeText Text:=" "
+  Selection.MoveEnd , 1
+  Selection.Text = LCase(Selection)
+  Selection.Collapse wdCollapseStart
+  Selection.MoveLeft , 1
+  Selection.Paste
+Else
+' With a punctuation mark
+  Selection.Cut
+  Selection.MoveStart , -1
+  Selection.Delete
+  Selection.Expand wdSentence
+  Selection.Collapse wdCollapseStart
+  Selection.MoveEnd , 1
+  Selection.Text = LCase(Selection)
+  Selection.Collapse wdCollapseStart
+  Selection.Paste
+  Selection.TypeText Text:=" "
 End If
 End Sub
+
+
+
 
 

@@ -1,5 +1,5 @@
 Sub SpellingSuggest()
-' Paul Beverley - Version 06.12.22
+' Paul Beverley - Version 06.02.23
 ' Checks/corrects spellings or adds/subtracts FRedit suggested change
 
 If LCase(Selection) = UCase(Selection) Then Selection.MoveLeft , 1
@@ -47,7 +47,8 @@ If LCase(lastChar) <> lastChar Then _
 
 ' If it's the only word in the para (a FRedit list)
 If wdsInPara < 3 And ActiveDocument.Words.count > 10 Then
-  oldWord = Selection.Text
+  oldWord = myWord
+  Selection.Expand wdWord
   Selection.Collapse wdCollapseEnd
   If Asc(Selection) = 32 Then
     Selection.MoveEnd , 1

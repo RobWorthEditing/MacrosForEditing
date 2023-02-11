@@ -1,5 +1,5 @@
 Sub CitationAlyse()
-' Paul Beverley - Version 23.07.22
+' Paul Beverley - Version 06.02.23
 ' Checks citations against references
 
 myFontColour = wdColorBlue
@@ -121,6 +121,18 @@ End If
 DoEvents
 
 Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ",([0-9]{4})"
+  .Wrap = wdFindStop
+  .Replacement.Text = ", \1"
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute Replace:=wdReplaceAll
+End With
+
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting

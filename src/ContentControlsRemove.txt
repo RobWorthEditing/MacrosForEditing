@@ -1,0 +1,10 @@
+Sub ContentControlsRemove()
+' Paul Beverley - Version 14.04.21
+' Removes all content controls
+' Code provided by Gary Smith
+
+For Each myControl In ActiveDocument.ContentControls
+  myControl.Delete
+Next myControl
+End Sub
+
