@@ -1,0 +1,55 @@
+Sub SentenceRoughRepeatChecker()
+' Paul Beverley - Version 14.02.23
+' Unprotects the current file
+
+firstWords = 3
+finalWords = 3
+
+myLink = "and"
+' myLink = "or"
+
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set rng = ActiveDocument.Content
+rng.Text = rngOld.Text
+
+For Each sn In ActiveDocument.Sentences
+  myText = sn.Text
+  Debug.Print myText
+  For Each snTest In ActiveDocument.Sentences
+    If sn.Start <> snTest.Start And _
+         sn.Words.count > firstWords + finalWords _
+         And snTest.Words.count > firstWords + finalWords Then
+      startSame = True
+      For i = 1 To firstWords
+        If sn.Words(i) <> snTest.Words(i) Then startSame = False
+        DoEvents
+      Next i
+      endSame = True
+      numWordsSN = sn.Words.count
+      numWordsSNtest = snTest.Words.count
+      For i = 1 To finalWords
+        If sn.Words(numWordsSN - i) <> snTest.Words(numWordsSNtest - i) Then endSame = False
+        DoEvents
+      Next i
+      gotMatch = False
+      If LCase(myLink) = "and" Then
+        If endSame = True And startSame = True Then gotMatch = True
+      Else
+        If endSame = True Or startSame = True Then gotMatch = True
+      End If
+      If gotMatch = True Then
+        sn.Select
+        sn.HighlightColorIndex = wdYellow
+        snTest.HighlightColorIndex = wdBrightGreen
+      End If
+    End If
+    DoEvents
+  Next snTest
+  DoEvents
+Next sn
+Beep
+End Sub
+
+
+

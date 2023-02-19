@@ -1,3 +1,4 @@
+
 Sub IStoIZ()
 ' Paul Beverley - Version 14.06.22
 ' Corrects text to give -iz-, -yz- spellings
@@ -11,7 +12,7 @@ szExceptions = szExceptions & "electrolys,paralys,hydrolys"
 ' textColour = wdColorBlue
 textColour = 0
 
-highlightColour = 0
+' highlightColour = 0
 highlightColour = wdYellow
 
 bothTCandHighlight = True
@@ -233,4 +234,5 @@ If promptForConfirmation = True Then
   End If
 End If
 End Sub
+
 

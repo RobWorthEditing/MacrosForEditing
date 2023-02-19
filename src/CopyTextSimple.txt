@@ -1,1 +1,441 @@
-Sub CopyTextSimple()' Paul Beverley - Version 24.05.22' Creates a text-only copy, with some features preserved' (A little less prone to mistaken replaces with the temp strings. - Rob Worth)doItalic = TruedoBold = TruedoSub = TruedoSuper = TruetempStringItalic = "zqzq"tempStringHighlight = "jzjz"tempStringBold = "jxjx"tempStringSubscript = "xzxz"tempStringSuperscript = "xqxq"myColour = wdGray25myScreenOff = TruemyComments = ""Set rngOld = ActiveDocument.ContentDocuments.AddSet rng = ActiveDocument.Contentrng.FormattedText = rngOld.FormattedTextrng.Revisions.AcceptAllIf numberCmnts > 0 Then ActiveDocument.DeleteAllCommentswds1 = rng.Words.Countrng.Font.Hidden = Falsewds2 = rng.Words.CountIf wds2 <> wds1 Then  WordBasic.EditUndo  myResponse = MsgBox("Original contains " & wds2 - wds1 & _       " words of hidden text. Include it?", _       vbQuestion + vbYesNoCancel, "CopyText")  If myResponse = vbCancel Then Exit Sub  If myResponse = vbYes Then    ActiveDocument.ActiveWindow.View.ShowHiddenText = True    oldColour = Options.DefaultHighlightColorIndex    Options.DefaultHighlightColorIndex = myColour    Set rng = ActiveDocument.Content    With rng.Find      .ClearFormatting      .Replacement.ClearFormatting      .Text = ""      .Font.Hidden = True      .Wrap = wdFindContinue      .Replacement.Font.Hidden = False      .Replacement.Highlight = True      .Replacement.Text = ""      .Execute Replace:=wdReplaceAll      DoEvents    End With    ActiveDocument.ActiveWindow.View.ShowHiddenText = False  End IfEnd IfIf myScreenOff = True Then  Application.ScreenUpdating = False  On Error GoTo ReportItEnd IfnumNotes = ActiveDocument.Endnotes.CountIf numNotes > 0 Then  myComments = myComments & "| endnotes = yes (" _       & Trim(Str(numNotes)) & ")" & vbCr  Set rng = ActiveDocument.Content  rng.Collapse wdCollapseEnd  rng.InsertAfter Text:=vbCr & "Endnotes:" & vbCr & vbCr  rng.Collapse wdCollapseEnd  rng.FormattedText = _       ActiveDocument.StoryRanges(wdEndnotesStory).FormattedText  ' Delete all notes  For j = numNotes To 1 Step -1    ActiveDocument.Endnotes(j).Delete    DoEvents  Next jEnd IfnumNotes = ActiveDocument.Footnotes.CountIf numNotes > 0 Then  myComments = myComments & "| footnotes = yes (" _       & Trim(Str(numNotes)) & ")" & vbCr  Set rng = ActiveDocument.Content  rng.Collapse wdCollapseEnd  rng.InsertAfter Text:=vbCr & "Footnotes:" & vbCr & vbCr  rng.Collapse wdCollapseEnd  rng.FormattedText = _       ActiveDocument.StoryRanges(wdFootnotesStory).FormattedText  ' Delete all notes  For j = numNotes To 1 Step -1    ActiveDocument.Footnotes(j).Delete    DoEvents  Next jEnd If' copy all the textboxes to the end of the textshCount = ActiveDocument.Shapes.CounttbCount = 0If shCount > 0 Then  Selection.EndKey Unit:=wdStory  Selection.TypeText vbCr & "Textboxes:" & vbCr & vbCr  For j = 1 To shCount    Set shp = ActiveDocument.Shapes(j)    If shp.Type <> 24 And shp.Type <> 3 Then      If shp.TextFrame.HasText Then        Set rng = shp.TextFrame.TextRange        If Len(rng.Text) > 1 Then          tbCount = tbCount + 1          Selection.FormattedText = rng.FormattedText          Selection.EndKey Unit:=wdStory        End If      End If    End If    DoEvents  Next  If tbCount > 0 Then myComments = myComments & _       "| textboxes = yes (" & Trim(Str(tbCount)) _       & ")" & vbCrEnd If' Add a newline for safetySelection.TypeText vbCrSelection.HomeKey Unit:=wdStoryIf myComments > "" Then Selection.TypeText myComments & vbCr' Watch out for hard spaces and spaced dots for ellipsesSet rng = ActiveDocument.ContentWith rng.Find  .ClearFormatting  .Replacement.ClearFormatting  .Text = "^s"  .Wrap = wdFindContinue  .Replacement.Text = " "  .MatchWildcards = False  .Execute Replace:=wdReplaceAll  DoEventsEnd WithSet rng = ActiveDocument.ContentWith rng.Find  .ClearFormatting  .Replacement.ClearFormatting  .Text = ". . ."  .Wrap = wdFindContinue  .Replacement.Text = "É"  .Execute Replace:=wdReplaceAll  DoEventsEnd WithSet rng = ActiveDocument.ContentWith rng.Find  .ClearFormatting  .Replacement.ClearFormatting  .Text = ""  .Highlight = True  .Wrap = wdFindContinue  .Replacement.Text = tempStringHighlight & "^&" & StrReverse(tempStringHighlight)  .MatchCase = True  .MatchWildcards = False  .Execute Replace:=wdReplaceAll  DoEventsEnd WithIf doItalic = True Then  Set rng = ActiveDocument.Content  With rng.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = ""    .Font.Italic = True    .Wrap = wdFindContinue    .Replacement.Text = tempStringItalic & "^&" & StrReverse(tempStringItalic)    .MatchCase = True    .MatchWildcards = False    .Execute Replace:=wdReplaceAll    DoEvents  End WithEnd IfIf doBold = True Then  Set rng = ActiveDocument.Content  With rng.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = ""    .Font.Bold = True    .Wrap = wdFindContinue    .Replacement.Text = tempStringBold & "^&" & StrReverse(tempStringBold)    .MatchCase = True    .MatchWildcards = False    .Execute Replace:=wdReplaceAll    DoEvents  End WithEnd IfIf doSub = True Then  Set rng = ActiveDocument.Content  With rng.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = ""    .Font.Subscript = True    .Wrap = wdFindContinue    .Replacement.Text = tempStringSubscript & "^&" & StrReverse(tempStringSubscript)    .MatchCase = True    .MatchWildcards = False    .Execute Replace:=wdReplaceAll    DoEvents  End WithEnd IfIf doSuper = True Then  Set rng = ActiveDocument.Content  With rng.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = ""    .Font.Superscript = True    .Wrap = wdFindContinue    .MatchCase = True    .Replacement.Text = tempStringSuperscript & "^&" & StrReverse(tempStringSuperscript)    .MatchWildcards = False    .Execute Replace:=wdReplaceAll    DoEvents  End WithEnd If' Copy pure text after the end of the formatted textendNow = ActiveDocument.Range.EndSet rngNew = ActiveDocument.ContentrngNew.Collapse wdCollapseEndrngNew.Text = rng.Text' Delete the formatted textSet rng = ActiveDocument.Contentrng.Collapse wdCollapseStart' One character less, to avoid the safety newlinerng.End = endNow - 1rng.DeleteSet rng = ActiveDocument.ContentWith rng.Find  .ClearFormatting  .Replacement.ClearFormatting  .Text = "[^12^14]"  .Wrap = wdFindContinue  .Replacement.Text = "^p"  .MatchWildcards = True  .Execute Replace:=wdReplaceAll  DoEventsEnd WithIf doSuper = True Then  Set rngNew = ActiveDocument.Content  With rngNew.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = tempStringSuperscript & "(*)" & StrReverse(tempStringSuperscript)    .Wrap = wdFindContinue    .Replacement.Text = "\1"    .Replacement.Font.Superscript = True    .MatchWildcards = True    .Execute Replace:=wdReplaceAll    DoEvents  End With  With rngNew.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = UCase(tempStringSuperscript) & "(*)" & UCase(StrReverse(tempStringSuperscript))    .Wrap = wdFindContinue    .Replacement.Text = "\1"    .Replacement.Font.Superscript = True    .MatchWildcards = True    .Execute Replace:=wdReplaceAll  End With  DoEventsEnd IfIf doSub = True Then  Set rngNew = ActiveDocument.Content  With rngNew.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = tempStringSubscript & "(*)" & StrReverse(tempStringSubscript)    .Wrap = wdFindContinue    .Replacement.Text = "\1"    .Replacement.Font.Subscript = True    .MatchWildcards = True    .Execute Replace:=wdReplaceAll  End With  DoEvents  With rngNew.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = UCase(tempStringSubscript) & "(*)" & UCase(StrReverse(tempStringSubscript))    .Wrap = wdFindContinue    .Replacement.Text = "\1"    .Replacement.Font.Subscript = True    .MatchWildcards = True    .Execute Replace:=wdReplaceAll    DoEvents  End WithEnd IfIf doBold = True Then  Set rngNew = ActiveDocument.Content  With rngNew.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = tempStringBold & "(*)" & StrReverse(tempStringBold)    .Wrap = wdFindContinue    .Replacement.Text = "\1"    .Replacement.Font.Bold = True    .MatchCase = True    .MatchWildcards = True    .Execute Replace:=wdReplaceAll    DoEvents  End With  With rngNew.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = UCase(tempStringBold) & "(*)" & UCase(StrReverse(tempStringBold))    .Wrap = wdFindContinue    .Replacement.Text = "\1"    .Replacement.Font.Bold = True    .MatchCase = True    .MatchWildcards = True    .Execute Replace:=wdReplaceAll    DoEvents  End WithEnd IfIf doItalic = True Then  Set rngNew = ActiveDocument.Content  With rngNew.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = tempStringItalic & "(*)" & StrReverse(tempStringItalic)    .Wrap = wdFindContinue    .Replacement.Text = "\1"    .Replacement.Font.Italic = True    .MatchCase = True    .MatchWildcards = True    .Execute Replace:=wdReplaceAll    DoEvents  End With  With rngNew.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = UCase(tempStringItalic) & "(*)" & UCase(StrReverse(tempStringItalic))    .Wrap = wdFindContinue    .Replacement.Text = "\1"    .Replacement.Font.Italic = True    .MatchCase = True    .MatchWildcards = True    .Execute Replace:=wdReplaceAll  End With  DoEventsEnd If' Restore HighlightSet rngNew = ActiveDocument.ContentWith rngNew.Find  .ClearFormatting  .Replacement.ClearFormatting  .Text = tempStringHighlight & "(*)" & StrReverse(tempStringHighlight)  .Wrap = wdFindContinue  .Replacement.Text = "\1"  .Replacement.Highlight = True  .MatchCase = True  .MatchWildcards = True  .Execute Replace:=wdReplaceAll  DoEventsEnd WithWith rngNew.Find  .ClearFormatting  .Replacement.ClearFormatting  .Text = UCase(tempStringHighlight) & "(*)" & UCase(StrReverse(tempStringHighlight))  .Wrap = wdFindContinue  .Replacement.Text = "\1"  .Replacement.Highlight = True  .MatchCase = True  .MatchWildcards = True  .Execute Replace:=wdReplaceAll  DoEventsEnd WithOptions.DefaultHighlightColorIndex = oldColour' Tidy up picture markersSet rngNew = ActiveDocument.ContentWith rngNew.Find  .ClearFormatting  .Replacement.ClearFormatting  .Text = "^1"  .Wrap = wdFindContinue  .Replacement.Text = ""  .MatchWildcards = False  .Execute Replace:=wdReplaceAll  DoEventsEnd WithWith rngNew.Find  .ClearFormatting  .Replacement.ClearFormatting  .Text = "[^13]{3,}"  .Wrap = wdFindContinue  .Replacement.Text = "^p^p"  .MatchWildcards = True  .Execute Replace:=wdReplaceAll  DoEventsEnd WithWith rngNew.Find  .ClearFormatting  .Replacement.ClearFormatting  .Text = "[jqxzJQXZ]{4,}"  .Wrap = wdFindContinue  .Replacement.Text = ""  .MatchWildcards = True  .Execute Replace:=wdReplaceAll  DoEventsEnd WithIf tbCount = 0 Then  With rngNew.Find    .ClearFormatting    .Replacement.ClearFormatting    .Text = "Textboxes:"    .Wrap = wdFindContinue    .Replacement.Text = ""    .MatchCase = True    .MatchWildcards = True    .Execute Replace:=wdReplaceAll    DoEvents  End WithEnd IfBeepApplication.ScreenUpdating = TrueExit SubReportIt:Application.ScreenUpdating = TrueOn Error GoTo 0ResumeEnd Sub
+Sub CopyTextSimple()
+' Paul Beverley - Version 10.04.22
+' Creates a text-only copy, with some features preserved
+
+doItalic = True
+doBold = True
+doSub = False
+doSuper = False
+
+myColour = wdGray25
+
+myScreenOff = True
+
+myComments = ""
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set rng = ActiveDocument.Content
+rng.FormattedText = rngOld.FormattedText
+rng.Revisions.AcceptAll
+If numberCmnts > 0 Then ActiveDocument.DeleteAllComments
+
+wds1 = rng.Words.count
+rng.Font.Hidden = False
+wds2 = rng.Words.count
+If wds2 <> wds1 Then
+  WordBasic.EditUndo
+  myResponse = MsgBox("Original contains " & wds2 - wds1 & _
+       " words of hidden text. Include it?", _
+       vbQuestion + vbYesNoCancel, "CopyText")
+  If myResponse = vbCancel Then Exit Sub
+  If myResponse = vbYes Then
+    ActiveDocument.ActiveWindow.View.ShowHiddenText = True
+    oldColour = Options.DefaultHighlightColorIndex
+    Options.DefaultHighlightColorIndex = myColour
+    Set rng = ActiveDocument.Content
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ""
+      .Font.Hidden = True
+      .Wrap = wdFindContinue
+      .Replacement.Font.Hidden = False
+      .Replacement.Highlight = True
+      .Replacement.Text = ""
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    End With
+    ActiveDocument.ActiveWindow.View.ShowHiddenText = False
+  End If
+End If
+
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
+
+numNotes = ActiveDocument.Endnotes.count
+If numNotes > 0 Then
+  myComments = myComments & "| endnotes = yes (" _
+       & Trim(Str(numNotes)) & ")" & vbCr
+  Set rng = ActiveDocument.Content
+  rng.Collapse wdCollapseEnd
+  rng.InsertAfter Text:=vbCr & "Endnotes:" & vbCr & vbCr
+  rng.Collapse wdCollapseEnd
+  rng.FormattedText = _
+       ActiveDocument.StoryRanges(wdEndnotesStory).FormattedText
+  ' Delete all notes
+  For j = numNotes To 1 Step -1
+    ActiveDocument.Endnotes(j).Delete
+    DoEvents
+  Next j
+End If
+
+numNotes = ActiveDocument.Footnotes.count
+If numNotes > 0 Then
+  myComments = myComments & "| footnotes = yes (" _
+       & Trim(Str(numNotes)) & ")" & vbCr
+  Set rng = ActiveDocument.Content
+  rng.Collapse wdCollapseEnd
+  rng.InsertAfter Text:=vbCr & "Footnotes:" & vbCr & vbCr
+  rng.Collapse wdCollapseEnd
+  rng.FormattedText = _
+       ActiveDocument.StoryRanges(wdFootnotesStory).FormattedText
+  ' Delete all notes
+  For j = numNotes To 1 Step -1
+    ActiveDocument.Footnotes(j).Delete
+    DoEvents
+  Next j
+End If
+
+' copy all the textboxes to the end of the text
+shCount = ActiveDocument.Shapes.count
+tbCount = 0
+If shCount > 0 Then
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText vbCr & "Textboxes:" & vbCr & vbCr
+  For j = 1 To shCount
+    Set shp = ActiveDocument.Shapes(j)
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.HasText Then
+        Set rng = shp.TextFrame.TextRange
+        If Len(rng.Text) > 1 Then
+          tbCount = tbCount + 1
+          Selection.FormattedText = rng.FormattedText
+          Selection.EndKey Unit:=wdStory
+        End If
+      End If
+    End If
+    DoEvents
+  Next
+  If tbCount > 0 Then myComments = myComments & _
+       "| textboxes = yes (" & Trim(Str(tbCount)) _
+       & ")" & vbCr
+End If
+
+' Add a newline for safety
+Selection.TypeText vbCr
+Selection.HomeKey Unit:=wdStory
+If myComments > "" Then Selection.TypeText myComments & vbCr
+
+' Watch out for hard spaces and spaced dots for ellipses
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^s"
+  .Wrap = wdFindContinue
+  .Replacement.Text = " "
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ". . ."
+  .Wrap = wdFindContinue
+  .Replacement.Text = "…"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Wrap = wdFindContinue
+  .Replacement.Text = "hkhk^&khkh"
+  .MatchCase = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+If doItalic = True Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Italic = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = "zczc^&czcz"
+    .MatchCase = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+
+If doBold = True Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Bold = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = "jqjq^&qjqj"
+    .MatchCase = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+
+If doSub = True Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Subscript = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = "xbxb^&bxbx"
+    .MatchCase = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+
+If doSuper = True Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Superscript = True
+    .Wrap = wdFindContinue
+    .MatchCase = True
+    .Replacement.Text = "xsxs^&sxsx"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+
+' Copy pure text after the end of the formatted text
+endNow = ActiveDocument.Range.End
+Set rngNew = ActiveDocument.Content
+rngNew.Collapse wdCollapseEnd
+rngNew.Text = rng.Text
+
+' Delete the formatted text
+Set rng = ActiveDocument.Content
+rng.Collapse wdCollapseStart
+' One character less, to avoid the safety newline
+rng.End = endNow - 1
+rng.Delete
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[^12^14]"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+If doSuper = True Then
+  Set rngNew = ActiveDocument.Content
+  With rngNew.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "xsxs(*)sxsx"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Superscript = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+  With rngNew.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "XSXS(*)SXSX"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Superscript = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  DoEvents
+End If
+
+If doSub = True Then
+  Set rngNew = ActiveDocument.Content
+  With rngNew.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "xbxb(*)bxbx"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Subscript = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  DoEvents
+  With rngNew.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "XBXB(*)BXBX"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Subscript = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+
+If doBold = True Then
+  Set rngNew = ActiveDocument.Content
+  With rngNew.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "jqjq(*)qjqj"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Bold = True
+    .MatchCase = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+  With rngNew.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "JQJQ(*)QJQJ"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Bold = True
+    .MatchCase = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+
+If doItalic = True Then
+  Set rngNew = ActiveDocument.Content
+  With rngNew.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "zczc(*)czcz"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Italic = True
+    .MatchCase = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+  With rngNew.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "ZCZC(*)CZCZ"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "\1"
+    .Replacement.Font.Italic = True
+    .MatchCase = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  DoEvents
+End If
+
+' Restore Highlight
+Set rngNew = ActiveDocument.Content
+With rngNew.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "hkhk(*)khkh"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "\1"
+  .Replacement.Highlight = True
+  .MatchCase = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+With rngNew.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "HKHK(*)KHKH"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "\1"
+  .Replacement.Highlight = True
+  .MatchCase = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Options.DefaultHighlightColorIndex = oldColour
+
+' Tidy up picture markers
+Set rngNew = ActiveDocument.Content
+With rngNew.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^1"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+With rngNew.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[^13]{3,}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+With rngNew.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[hkjzcqxbsHKJZCQXBS]{4,}"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+If tbCount = 0 Then
+  With rngNew.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "Textboxes:"
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .MatchCase = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+Beep
+Application.ScreenUpdating = True
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+
