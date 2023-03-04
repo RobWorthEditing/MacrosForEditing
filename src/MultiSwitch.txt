@@ -1,5 +1,5 @@
 Sub MultiSwitch()
-' Paul Beverley - Version 03.10.22
+' Paul Beverley - Version 01.03.23
 ' Scripted word/phrase switching
 
 maxWords = 5
@@ -16,10 +16,8 @@ linksOFF = True
 ' addOriginal = True
 addOriginal = False
 
-Set thisDoc = ActiveDocument
-
 ' If you want to load the SwitchList file automatically...
-
+' then...
 ' On a Mac, you will need
 myList = "/Users/Paul/My Documents/Macro stuff/zzSwitchList.docx"
 
@@ -27,11 +25,13 @@ myList = "/Users/Paul/My Documents/Macro stuff/zzSwitchList.docx"
 myList = "C:\Documents and Settings\Paul\My Documents\zzSwitchList.docx"
 
 
+Set thisDoc = ActiveDocument
+
 CR = vbCr
 CR2 = CR & CR
 Dim myStr(20) As String
 Dim endStr(20) As Long
-
+nowSearch = Selection.Find.Text
 ' Just in case they are using "smart" cut/opaste option
 mySmartOpt = Options.SmartCutPaste
 Options.SmartCutPaste = False
@@ -74,7 +74,6 @@ rng.Collapse wdCollapseStart
 rng.MoveEnd Unit:=wdWord, count:=maxWords
 numTCs = rng.Revisions.count
 
-
 If numTCs > 0 Then
   rng.Revisions.AcceptAll
   rng.MoveEnd Unit:=wdWord, count:=maxWords
@@ -109,7 +108,7 @@ For i = 1 To Documents.count
   End If
 Next i
 If gottaList = False Then
-  Documents.Open FileName:=myList
+  Documents.Open fileName:=myList
 '  Beep
 '  myResponse = MsgBox("Please open the " & myListName & _
        " file.", vbOKOnly, "MultiSwitch")
@@ -130,6 +129,7 @@ With Selection.Find
     Beep
     MsgBox "The switch list must use paragraphs, not line breaks!"
     ActiveWindow.ActivePane.View.ShowAll = True
+    Selection.Find.Text = nowSearch
     Exit Sub
   End If
 End With
@@ -155,6 +155,7 @@ If lfPos > 0 Then
   Application.Run "ShowFormatting"
   MsgBox "The switch list must use paragraphs, not line breaks!"
   Options.SmartCutPaste = mySmartOpt
+  Selection.Find.Text = nowSearch
   Exit Sub
 End If
 
@@ -208,6 +209,7 @@ If gottaMatch = False Then
   Loop Until Timer > myTime + 0.2
   Beep
   Options.SmartCutPaste = mySmartOpt
+  Selection.Find.Text = nowSearch
   Exit Sub
   Else
   Selection.Start = myPos + 20
@@ -225,6 +227,7 @@ If numAlts > 1 And wasSelected = False Then
   If myChoice > numAlts Or myChoice = 0 Then
     thisDoc.Activate
     Options.SmartCutPaste = mySmartOpt
+    Selection.Find.Text = nowSearch
     Exit Sub
   End If
 Else
@@ -280,6 +283,7 @@ If Selection.Information(wdInCommentPane) = 0 And _
              & CR2 & "Please use a manual change.", _
              vbOKOnly, "MultiSwitch")
         Options.SmartCutPaste = mySmartOpt
+        Selection.Find.Text = nowSearch
         Exit Sub
       End If
     End If
@@ -382,5 +386,6 @@ If noTrack Then
   ActiveWindow.View.ShowInsertionsAndDeletions = myState
 End If
 Options.SmartCutPaste = mySmartOpt
+Selection.Find.Text = nowSearch
 End Sub
 

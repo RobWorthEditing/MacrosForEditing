@@ -1,9 +1,9 @@
 
 Sub IStoIZ()
-' Paul Beverley - Version 14.06.22
+' Paul Beverley - Version 20.02.23
 ' Corrects text to give -iz-, -yz- spellings
 
-promptForConfirmation = True
+promptForConfirmation = False
 
 doExtraWords = False
 szExceptions = "analys,reanalys,overanalys,catalys,dialys,"
@@ -12,8 +12,11 @@ szExceptions = szExceptions & "electrolys,paralys,hydrolys"
 ' textColour = wdColorBlue
 textColour = 0
 
-' highlightColour = 0
 highlightColour = wdYellow
+highlightColour = 0
+
+analysesColour = 0
+analysesColour = wdYellow
 
 bothTCandHighlight = True
 
@@ -31,6 +34,9 @@ mySFile = "C:\Documents and Settings\Paul\My Documents\IS_words.docx"
 ' mySFile = "/Users/Paul/My Documents/Macro stuff/"
 
 
+
+mySFile = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\aaaStarterMacros\IS_words.docx"
+
 ExceptionSFile = "IS_words"
 
 ' Start of main program
@@ -41,11 +47,11 @@ Set mainDoc = ActiveDocument
 
 myTrack = ActiveDocument.TrackRevisions
 
-gottadoc = False
+gottaDoc = False
 For Each thisDoc In Application.Documents
   thisName = thisDoc.Name
   If InStr(thisName, ExceptionSFile) > 0 Then
-    gottadoc = True
+    gottaDoc = True
     closeExceptionsFile = False
     thisDoc.Activate
     Exit For
@@ -53,7 +59,7 @@ For Each thisDoc In Application.Documents
 Next thisDoc
 
 On Error Resume Next
-If gottadoc = False Then
+If gottaDoc = False Then
   Documents.Open mySFile
   If Err.Number = 5174 Then
     MsgBox ("Please open the IS exceptions file")
@@ -70,7 +76,7 @@ For Each wd In ActiveDocument.Words
   If Asc(thisWord) > 32 Then allWords = allWords & thisWord & "!"
 Next wd
 
-If closeExceptionsFile = True And gottadoc = False Then
+If closeExceptionsFile = True And gottaDoc = False Then
   ActiveDocument.Close SaveChanges:=False
 End If
 
@@ -192,6 +198,8 @@ For hit = 1 To maxHits
                  Then changeIt = False
             If InStr(szExceptions, Left(LCase(rng1), 6)) > 0 And _
                  rng1.LanguageID = wdEnglishUK Then changeIt = False
+            If LCase(rng1.Text) = "analyses" Then _
+                 rng1.HighlightColorIndex = analysesColour
             If changeIt = True Then
             ' then change it to a z
               If myResponse = vbYes Then rng.Text = opposite
@@ -230,7 +238,8 @@ If promptForConfirmation = True Then
   If myResponse = vbYes Then
      MsgBox ("IS words changed:  " & Str(totChanges) & "  ")
   Else
-     MsgBox ("IS words needing to be changed:  " & Str(totChanges) & "  ")
+     MsgBox ("IS words needing to be changed:  " & _
+         Str(totChanges) & "  ")
   End If
 End If
 End Sub

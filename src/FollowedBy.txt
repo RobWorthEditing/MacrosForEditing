@@ -1,0 +1,74 @@
+
+
+Sub FollowedBy()
+' Paul Beverley - Version 03.02.23
+' Finds two bits of text in proximity
+
+myText = ""
+If Selection.Start <> Selection.End Then
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseEnd
+  rng.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Collapse wdCollapseStart
+  Selection.Expand wdWord
+  Selection.Collapse wdCollapseStart
+  rng.Start = Selection.Start
+  rng.Select
+  myFirst = Trim(Selection.Range.Words.First)
+  myLast = Trim(Selection.Range.Words.Last)
+Else
+  Set rng = Selection.Range.Duplicate
+  rng.Expand wdParagraph
+  If rng.Words.count > 10 Then
+    myText = InputBox("Text to search: ", "FollowedBy")
+    If myText = "" Then
+      Beep
+      Exit Sub
+    End If
+    spPos = InStr(myText, " ")
+    If spPos > 0 Then
+    myFirst = Left(myText, spPos - 1)
+    myLast = Mid(myText, spPos + 1)
+    End If
+  Else
+    myFirst = Trim(rng.Words.First)
+    rng.MoveEnd , -1
+    myLast = Trim(rng.Words.Last)
+  End If
+End If
+
+myWCfind = myFirst & "[!^13]@" & myLast
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myWCfind
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute
+  DoEvents
+  If .Found = False Then
+    Beep
+    Exit Sub
+  End If
+End With
+Debug.Print rng.End, rng.Start
+If rng.End = 0 Then
+  Beep
+  MsgBox "Drat! Found text inside a field!"
+  Selection.Collapse wdCollapseEnd
+Else
+  rng.Select
+End If
+Selection.Find.Text = myWCfind
+Selection.Find.MatchWildcards = True
+End Sub
+
+
