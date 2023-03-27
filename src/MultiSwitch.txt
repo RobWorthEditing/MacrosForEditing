@@ -1,9 +1,9 @@
 Sub MultiSwitch()
-' Paul Beverley - Version 01.03.23
+' Paul Beverley - Version 21.03.23
 ' Scripted word/phrase switching
 
 maxWords = 5
-myListName = "zzSwitchList"
+myListName = "zzSwitchList.docx"
 
 commentNearCheck = True
 
@@ -24,6 +24,7 @@ myList = "/Users/Paul/My Documents/Macro stuff/zzSwitchList.docx"
 ' On Windows, you will need something like this:
 myList = "C:\Documents and Settings\Paul\My Documents\zzSwitchList.docx"
 
+myList = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\zzSwitchList.docx"
 
 Set thisDoc = ActiveDocument
 
@@ -47,8 +48,8 @@ Else
 End If
 inAComment = Selection.Information(wdInCommentPane)
 'If inAComment = True Then
-' ' cmtText = Selection.Comments(1).Range.Words.count
-'  numWds = Selection.Comments(1).Range.Words.count
+' ' cmtText = Selection.Comments(1).Range.Words.Count
+'  numWds = Selection.Comments(1).Range.Words.Count
 '  If numWds = 1 Then Selection.InsertAfter Text:=" "
 'End If
 
@@ -99,21 +100,15 @@ iMax = maxWords
 
 ' Find the zzSwitchList file
 gottaList = False
-For i = 1 To Documents.count
-  Set dcu = Documents(i)
+For Each dcu In Documents
   If InStr(dcu.Name, myListName) > 0 Then
     Set listDoc = dcu
     gottaList = True
     Exit For
   End If
-Next i
+Next dcu
 If gottaList = False Then
   Documents.Open fileName:=myList
-'  Beep
-'  myResponse = MsgBox("Please open the " & myListName & _
-       " file.", vbOKOnly, "MultiSwitch")
-'  Options.SmartCutPaste = mySmartOpt
-'  Exit Sub
 Else
   listDoc.Activate
 End If

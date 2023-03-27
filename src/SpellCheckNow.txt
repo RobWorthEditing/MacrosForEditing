@@ -1,0 +1,10 @@
+Sub SpellCheckNow()
+' Paul Beverley - Version 07.03.23
+' Runs the old spelling checker
+
+ActiveDocument.CheckSpelling
+MsgBox ("Spelling check completed")
+End Sub
+
+
+

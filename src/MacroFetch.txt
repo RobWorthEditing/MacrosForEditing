@@ -40,7 +40,7 @@ Next i
 
 If Len(myMacroName) > 3 And GotMacro = True Then
   myFolder = Left(myMacroName, 1)
-  myFullName = "http://www.wordmacrotools.com/macros/" & _
+  myFullName = "https://www.wordmacrotools.com/macros/" & _
        myFolder & "/" & myMacroName
   ActiveDocument.FollowHyperlink Address:=myFullName
 End If

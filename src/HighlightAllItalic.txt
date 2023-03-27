@@ -1,6 +1,11 @@
+
 Sub HighlightAllItalic()
-' Paul Beverley - Version 06.01.21
+' Paul Beverley - Version 04.03.23
 ' Highlights all text in italic
+
+myColour = wdYellow
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
 
 Set rng = ActiveDocument.Content
 With rng.Find
@@ -15,5 +20,9 @@ With rng.Find
   .Replacement.Highlight = True
   .Execute Replace:=wdReplaceAll
 End With
+Options.DefaultHighlightColorIndex = oldColour
 End Sub
+
+
+
 

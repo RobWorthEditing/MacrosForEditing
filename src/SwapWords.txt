@@ -1,6 +1,10 @@
 Sub SwapWords()
-' Paul Beverley - Version 07.06.22
+' Paul Beverley - Version 14.03.23
 ' Swaps adjacent words
+
+' Turn off "smart" (ha!) cut and paste
+mySmart = Options.SmartCutPaste
+Options.SmartCutPaste = False
 
 Selection.Expand wdWord
 Selection.Cut
@@ -17,5 +21,7 @@ Else
   Selection.MoveStart , -1
   Selection.Delete
 End If
+' turn it back on if the user wants it
+Options.SmartCutPaste = mySmart
 End Sub
 
