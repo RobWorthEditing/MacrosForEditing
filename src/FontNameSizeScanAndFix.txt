@@ -1,0 +1,68 @@
+Sub FontNameSizeScanAndFix()
+' Paul Beverley - Version 13.03.23
+' Assesses and lists (& optionally fixes) the font sizes & names
+
+Dim descrip(100) As String
+Dim count(100) As Integer
+
+If Selection.Start = Selection.End Then
+  Beep
+  myResponse = MsgBox("Please select some text!", vbOKOnly, _
+     "FontNameSizeScanAndFix")
+  Exit Sub
+End If
+numDescrips = 0
+For Each wd In Selection.Range.Words
+  If wd.Font.Name > "" And wd.Font.Size < 100 Then
+    myDescript = "$" & wd.Font.Name & "!" & Trim(Str(wd.Font.Size)) & "="
+    If numDescrips = 0 Then
+      numDescrips = 1
+      descrip(1) = myDescript
+      count(1) = 1
+      allDescript = myDescript
+    Else
+      myStart = InStr(allDescript, myDescript)
+      If myStart = 0 Then
+        allDescript = allDescript & myDescript
+        numDescrips = numDescrips + 1
+        descrip(numDescrips) = myDescript
+        count(numDescrips) = 1
+      Else
+        myText = Left(allDescript, myStart + 1)
+        ptr = Len(myText) - Len(Replace(myText, "$", ""))
+        count(ptr) = count(ptr) + 1
+      End If
+    End If
+  End If
+  DoEvents
+Next wd
+myScores = ""
+topScore = 0
+For i = 1 To numDescrips
+  myScores = myScores & descrip(i) & Trim(Str(count(i))) & vbCr
+  If count(i) > topScore Then
+    topScore = count(i)
+    topFontNum = i
+  End If
+Next i
+myScores = Replace(myScores, "$", "")
+myScores = Replace(myScores, "!", "  ")
+myScores = Replace(myScores, "=", "  .....")
+myRecommend = descrip(topFontNum)
+myRecommend = Replace(myRecommend, "$", "")
+myRecommend = Replace(myRecommend, "!", "  ")
+myRecommend = Replace(myRecommend, "=", "")
+myPrompt = myScores & vbCr & vbCr & "Change to:" & vbCr _
+     & vbCr & myRecommend
+myResponse = MsgBox(myPrompt, vbQuestion + vbOKCancel, _
+     "FontNameSizeScanAndFix")
+If myResponse <> vbOK Then Beep: Exit Sub
+myEnd = InStr(descrip(topFontNum), "!")
+myNewFont = Mid(descrip(topFontNum), 2, myEnd - 2)
+myNewSize = Val(Mid(descrip(topFontNum), myEnd + 1))
+Selection.Range.Font.Name = myNewFont
+Selection.Range.Font.Size = myNewSize
+End Sub
+
+
+

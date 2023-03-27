@@ -1,0 +1,189 @@
+Sub MarkIt()
+' Paul Beverley - Version 24.03.23
+' Applies various attributes by (wildcard) F&R
+
+confirmMarkItList = True
+' confirmMarkItList = False
+
+On Error GoTo ReportIt
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Set workDoc = ActiveDocument
+
+myResponse = vbNo
+For Each listDoc In Application.Documents
+  DoEvents
+  pNum = listDoc.Paragraphs.count
+  myNum = 3
+  If pNum < 3 Then myNum = pNum
+  Set rng = listDoc.Paragraphs(myNum).Range
+  rng.Start = 0
+  If InStr(LCase(rng.Text), "markit") Then
+    listDoc.Activate
+    listDoc.Windows(1).WindowState = wdWindowStateNormal
+    If confirmMarkItList = True Then
+      myResponse = MsgBox("Is this your MarkIt list?", _
+           vbQuestion + vbYesNo, "MarkIt")
+    Else
+      myResponse = vbYes
+    End If
+    If myResponse = vbYes Then Exit For
+  End If
+Next listDoc
+
+If myResponse <> vbYes Then
+  Beep
+  myResponse = MsgBox("Can't find a MarkIt list." & vbCr & vbCr & _
+       "Please ensure that your MarkIt list is open and starts with:" _
+       & vbCr & vbCr & "| MarkIt", vbExclamation + vbOKOnly, "MarkIt")
+  Exit Sub
+End If
+
+If listDoc = workDoc Then
+  Beep
+  myResponse = MsgBox("Please place the cursor in the text to be marked." _
+       & vbCr & vbCr & "and rerun MarkIt.", vbExclamation + vbOKOnly, _
+       "MarkIt")
+  Exit Sub
+End If
+
+' Now do the F&Rs
+workDoc.Activate
+Set rng = Selection.Range.Duplicate
+Selection.HomeKey Unit:=wdStory
+
+Set main = ActiveDocument.Content
+doFoots = ActiveDocument.Footnotes.count > 0
+doEnds = ActiveDocument.Endnotes.count > 0
+
+If doFoots Then Set foots = workDoc.StoryRanges(wdFootnotesStory)
+If doEnds Then Set ends = workDoc.StoryRanges(wdEndnotesStory)
+oldColour = Options.DefaultHighlightColorIndex
+
+For Each ma In listDoc.Paragraphs
+  ' Only do anything if there's text on the line
+  doThis = (Len(ma) > 2)
+  If doThis = True Then
+    myText = Replace(ma.Range.Text, vbCr, "")
+    ' Check for any wildcard characters
+    isWild = False
+    If InStr(myText, "[") > 0 Then isWild = True
+    If InStr(myText, "<") > 0 Then isWild = True
+    If InStr(myText, ">") > 0 Then isWild = True
+    ' Check for bent pipe = any case
+    If Left(myText, 1) = ChrW(172) Then
+      myText = Mid(myText, 2)
+      doMatch = False
+    Else
+      doMatch = True
+    End If
+    isItalic = ma.Range.Font.Italic
+    isBold = ma.Range.Font.Bold
+    isUline = ma.Range.Font.Underline
+    hiColour = ma.Range.HighlightColorIndex
+    textColour = ma.Range.Font.Color
+    ' First three are neg if true;
+    '   second two are positive if true
+    If (isItalic + isBold + isUline = 0) And _
+         (hiColour + textColour = 0) Then doThis = False
+    If ma.Range.Characters(1).Font.StrikeThrough Or _
+         ma.Range.Characters(1) = ChrW(124) Then doThis = False
+  End If
+  If doThis = True Then
+    Options.DefaultHighlightColorIndex = hiColour
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = myText
+      .Wrap = wdFindContinue
+      .Forward = True
+      .Replacement.Text = ""
+      If isItalic Then .Replacement.Font.Italic = True
+      If isBold Then .Replacement.Font.Bold = True
+      If isUline Then .Replacement.Font.Underline = True
+      If hiColour > 0 Then .Replacement.Highlight = True
+      If textColour > 0 Then .Replacement.Font.Color = textColour
+      .MatchCase = doMatch
+      .MatchWildcards = isWild
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    End With
+    
+    If doFoots Then
+      With foots.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = myText
+        .Wrap = wdFindContinue
+        .Forward = True
+        .Replacement.Text = ""
+        If isItalic Then .Replacement.Font.Italic = True
+        If isBold Then .Replacement.Font.Bold = True
+        If isUline Then .Replacement.Font.Underline = True
+        If hiColour > 0 Then .Replacement.Highlight = True
+        If textColour > 0 Then .Replacement.Font.Color = textColour
+        .MatchCase = doMatch
+        .MatchWildcards = isWild
+        .Execute Replace:=wdReplaceAll
+        DoEvents
+      End With
+    End If
+    
+    If doEnds Then
+      With ends.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = myText
+        .Wrap = wdFindContinue
+        .Forward = True
+        .Replacement.Text = ""
+        If isItalic Then .Replacement.Font.Italic = True
+        If isBold Then .Replacement.Font.Bold = True
+        If isUline Then .Replacement.Font.Underline = True
+        If hiColour > 0 Then .Replacement.Highlight = True
+        If textColour > 0 Then .Replacement.Font.Color = textColour
+        .MatchCase = doMatch
+        .MatchWildcards = isWild
+        .Execute Replace:=wdReplaceAll
+        DoEvents
+      End With
+    End If
+  End If
+Next ma
+Options.DefaultHighlightColorIndex = oldColour
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchCase = False
+  .MatchWildcards = False
+  DoEvents
+End With
+ActiveDocument.TrackRevisions = myTrack
+rng.Select
+Beep
+myTime = Timer
+Do
+Loop Until Timer > myTime + 0.2
+Beep
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+ern = Err.Number
+If ern = 9118 Or ern = 5590 Or ern = 5560 Or ern = 5692 Then
+  ActiveDocument.ActiveWindow.LargeScroll down:=1
+  ma.Range.Select
+  ActiveDocument.ActiveWindow.SmallScroll down:=1
+  Beep
+  MsgBox "Wildcard error"
+  Err.Clear
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+

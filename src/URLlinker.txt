@@ -1,8 +1,8 @@
 Sub URLlinker()
-' Paul Beverley - Version 14.04.22
+' Paul Beverley - Version 05.03.23
 ' Finds all URLs in the text and links them
 
-charsInURLs = "[%./:a-zA-Z0-9_\-\?^38=+]"
+charsInURLs = "[%./:a-zA-Z0-9_\-\?^38=+\(\)]"
 
 Set rng = ActiveDocument.Range
 myFind = "<[wthps]{3,5}>" & charsInURLs & "{1,}"
@@ -17,6 +17,7 @@ End With
 
 Do While rng.Find.Found = True
   rng.Select
+  If Right(rng.Text, 1) = "." Then rng.End = rng.End - 1
   Selection.Collapse wdCollapseStart
   stNow = Selection.Start
   Selection.MoveLeft , 1
@@ -25,6 +26,7 @@ Do While rng.Find.Found = True
     myAddress = rng.Text
     rng.Text = Replace(rng.Text, "https://", "")
     rng.Text = Replace(rng.Text, "http://", "")
+    If rng.Characters.Last = "." Then rng.MoveEnd , -1
     rng.Select
     Set myLink = ActiveDocument.Hyperlinks.Add(Anchor:=rng, _
           Address:=myAddress, TextToDisplay:=rng.Text)

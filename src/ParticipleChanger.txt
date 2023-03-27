@@ -1,5 +1,5 @@
 Sub ParticipleChanger()
-' Paul Beverley - Version 23.06.21
+' Paul Beverley - Version 09.03.23
 ' Toggles between past to present participles
 
 If Asc(Selection) = 32 Then Selection.MoveRight , 1
@@ -12,28 +12,64 @@ Do While InStr(ChrW(8217) & ChrW(39) & " ", Right(Selection.Text, 1)) > 0
 Loop
 theWord = Selection.Text
 
+' Beware being close to a comment
+allCmts = ActiveDocument.Comments.count
+cmt = allCmts
+If allCmts > 0 Then
+  Set rng = Selection.Range.Duplicate
+  rng.Start = 0
+  cmt1 = rng.Comments.count
+  rng.End = Selection.Start
+  cmt0 = rng.Comments.count
+  If cmt0 = cmt1 Then
+    cmt = cmt1 + 1
+  Else
+    cmt = cmt1
+  End If
+  If cmt <= allCmts Then
+    ' Find start and end of comment scope
+    cmStart = ActiveDocument.Comments(cmt).Scope.Start
+    cmEnd = ActiveDocument.Comments(cmt).Scope.End
+    myStart = Selection.Start
+    myEnd = Selection.End
+    
+    ' Warn if you're too close
+    doWarn = False
+    If myStart < cmStart And myEnd > cmStart Then doWarn = True
+    If myEnd - cmEnd < 3 And myEnd > cmEnd Then doWarn = True
+    If (myEnd > cmEnd) And (myStart < cmEnd) Then doWarn = True
+    If doWarn = True Then
+      Beep
+      myResponse = MsgBox("Beware: too close to a comment!", vbQuestion + vbCancelonly, _
+           "ParticipleChanger")
+      Exit Sub
+    End If
+  End If
+End If
+wd = Selection
+
 Debug.Print fiveChars, twoChars
 rtChars = Right(theWord, 3)
 
+wd = Selection
 If rtChars = "ing" Then
 ' Remove 'ing' and try adding an 'ed'
-  Selection.Start = Selection.End - 3
-  Selection.TypeText Text:="ed"
-  Selection.MoveLeft , 1
+  newWord = Left(wd, Len(wd) - 3) & "ed"
+  Selection.Text = newWord
 Else
 ' Remove 'ed' and try adding an 'ing'
-  Selection.Start = Selection.End - 2
-  twoChars = Selection.Text
+  twoChars = Right(Selection.Text, 2)
+  lft = Left(wd, Len(wd) - 2)
   Select Case twoChars
-    Case "ed": Selection.TypeText "ing"
-    Case "lt": Selection.TypeText "lling"
-    Case "nt": Selection.TypeText "ning"
-    Case "an": Selection.TypeText "inning"
-    Case "un": Selection.TypeText "inning"
+    Case "ed": Selection.Text = lft & "ing"
+    Case "lt": Selection.Text = lft & "lling"
+    Case "nt": Selection.Text = lft & "ning"
+    Case "an": Selection.Text = lft & "inning"
+    Case "un": Selection.Text = lft & "inning"
     Case Else: Beep
   End Select
 End If
-Selection.MoveLeft , 1
+Selection.MoveRight , 1
 Selection.Expand wdWord
 Do While InStr(ChrW(8217) & ChrW(39) & " ", Right(Selection.Text, 1)) > 0
   Selection.MoveEnd , -1
@@ -41,7 +77,13 @@ Do While InStr(ChrW(8217) & ChrW(39) & " ", Right(Selection.Text, 1)) > 0
 Loop
 myWord = Selection.Text
 spellOK = Application.CheckSpelling(myWord)
-If spellOK = False Then Beep
+If spellOK = False Then
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+End If
 Selection.Collapse wdCollapseEnd
 Selection.MoveLeft , 1
 End Sub

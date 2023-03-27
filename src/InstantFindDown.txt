@@ -1,6 +1,9 @@
+
 Sub InstantFindDown()
-' Paul Beverley - Version 11.02.23
+' Paul Beverley - Version 08.03.23
 ' Finds selected text downwards
+
+Call MacroNameShow("InstantFindDown")
 
 doTrim = True
 addBookmark = True
@@ -17,11 +20,6 @@ If rng.Start = rng.End Then
 End If
 thisBit = rng.Text
 endNow = Selection.End
-
-makeWild = False
-If Right(thisBit, 1) = ">" Then makeWild = True
-If Left(thisBit, 1) = "<" Then makeWild = True
-wordEnd = Selection.End
 Selection.Collapse wdCollapseStart
 myName = ActiveDocument.Name
 dotPos = InStr(myName, ".")
@@ -30,16 +28,11 @@ noMarker = (InStr(LCase(butNotTheseFiles), LCase(myName)) > 0)
 If InStr(myName, "Ch") > 0 Then noMarker = True
 If addBookmark = True And noMarker = False Then _
      ActiveDocument.Bookmarks.Add Name:="myTempMark2"
-Selection.Start = wordEnd
+Selection.Start = endNow
 
 If Asc(thisBit) <> 32 And doTrim Then thisBit = Trim(thisBit)
 thisBit = Replace(thisBit, "^", "^^")
-
-If makeWild = True Then
-  thisBit = Replace(thisBit, vbCr, "^p")
-Else
-  thisBit = Replace(thisBit, vbCr, "^13")
-End If
+thisBit = Replace(thisBit, vbCr, "^p")
 thisBit = Replace(thisBit, vbTab, "^t")
 
 With Selection.Find
@@ -48,7 +41,7 @@ With Selection.Find
   .Wrap = wdFindStop
   .Text = thisBit
   .Replacement.Text = thisBit
-  .MatchWildcards = makeWild
+  .MatchWildcards = False
   .MatchCase = False
   If UCase(thisBit) = thisBit Then .MatchCase = True
   .MatchWholeWord = False

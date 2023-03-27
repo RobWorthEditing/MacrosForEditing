@@ -1,11 +1,12 @@
 Sub NoteMarkerMoveEndSentence()
-' Paul Beverley - Version 19.04.21
+' Paul Beverley - Version 13.03.23
 ' Moves the foot/endnote marker to the end of the sentence
 
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 Do
-  Selection.MoveRight , 1
+  Selection.MoveLeft , 1
+  DoEvents
 Loop Until Asc(Selection) = 2
 hereNow = Selection.Start
 Selection.Expand wdSentence
@@ -16,5 +17,4 @@ Selection.MoveLeft , 1
 Selection.Paste
 ActiveDocument.TrackRevisions = myTrack
 End Sub
-
 

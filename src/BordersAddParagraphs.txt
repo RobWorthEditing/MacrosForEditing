@@ -1,0 +1,89 @@
+Sub BordersAddParagraphs()
+' Paul Beverley - Version 08.03.23
+' Adds colour borders to (partly) selected paragraphs
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+rng.Expand wdParagraph
+myStart = rng.Start
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+rng.Expand wdParagraph
+rng.Start = myStart
+Do
+  myText = InputBox("1: Copy this macro" & vbCr & _
+       "2: Restore keystroke", "MacroUpdater")
+  myNumber = Val(myText)
+  If myNumber = 0 Then Beep: Exit Sub
+  DoEvents
+Loop Until myNumber < 9
+
+Select Case myNumber
+  Case 1:
+    With Options
+      .DefaultBorderLineStyle = wdLineStyleSingle
+      .DefaultBorderLineWidth = wdLineWidth150pt
+      .DefaultBorderColor = wdColorBrightGreen
+    End With
+
+  Case 2:
+    With Options
+      .DefaultBorderLineStyle = wdLineStyleSingle
+      .DefaultBorderLineWidth = wdLineWidth150pt
+      .DefaultBorderColor = wdColorRed
+    End With
+
+  Case 3:
+    With Options
+      .DefaultBorderLineStyle = wdLineStyleSingle
+      .DefaultBorderLineWidth = wdLineWidth150pt
+      .DefaultBorderColor = wdColorBlue
+    End With
+
+  Case 4:
+    With Options
+      .DefaultBorderLineStyle = wdLineStyleSingle
+      .DefaultBorderLineWidth = wdLineWidth300pt
+      .DefaultBorderColor = wdColorPink
+    End With
+
+  Case 5:
+    With Options
+      .DefaultBorderLineStyle = wdLineStyleSingleWavy
+      .DefaultBorderColor = wdColorBlack
+    End With
+
+  Case 6:
+    With Options
+      .DefaultBorderLineStyle = wdLineStyleDouble
+      .DefaultBorderLineWidth = wdLineWidth150pt
+      .DefaultBorderColor = wdColorTurquoise
+    End With
+
+  Case 7:
+    With Options
+      .DefaultBorderLineStyle = wdLineStyleDot
+      .DefaultBorderLineWidth = wdLineWidth225pt
+      .DefaultBorderColor = wdColorRed
+    End With
+
+  Case 8:
+    With Options
+      .DefaultBorderLineStyle = wdLineStyleEmboss3D
+      .DefaultBorderColor = wdColorTurquoise
+    End With
+
+  Case Else
+    With Options
+      .DefaultBorderLineStyle = wdLineStyleSingle
+      .DefaultBorderLineWidth = wdLineWidth150pt
+      .DefaultBorderColor = wdColorBlack
+    End With
+End Select
+With rng.Font.Borders(1)
+  .LineStyle = Options.DefaultBorderLineStyle
+  .LineWidth = Options.DefaultBorderLineWidth
+  .Color = Options.DefaultBorderColor
+End With
+End Sub
+

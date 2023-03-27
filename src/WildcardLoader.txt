@@ -1,0 +1,147 @@
+Sub WildcardLoader()
+' Paul Beverley - Version 11.03.23
+' Tool for wildcards searches
+
+doPrompt = False
+numWordsShow = 3
+
+On Error GoTo ReportIt
+If Selection.Start = Selection.End Then
+  Set rng = Selection.Range.Duplicate
+  rng.Expand wdParagraph
+  If Len(rng) = 1 Then
+    Selection.TypeText Text:=Selection.Find.Text
+    Exit Sub
+  Else
+    ' If not a WC, then open an input box
+    rng.MoveEnd , -1
+    myText = rng.Text
+    myCheck = Replace(myText, "[", "")
+    myCheck = Replace(myCheck, "*", "")
+    If myCheck = myText Then
+      ' It's not a WC (they all have at least one "["!)
+      Selection.Expand wdWord
+      Selection.MoveEnd wdWord, numWordsShow - 1
+      myDefault = Selection
+      Selection.Collapse wdCollapseEnd
+      myWC = InputBox("Text to search: ", "WildcardLoader", myDefault)
+      If myWC = "" Then
+        Beep
+        Exit Sub
+      End If
+    Else
+    ' pick up WC
+      myWC = rng
+      rng.Select
+      Selection.Collapse wdCollapseEnd
+    End If
+  End If
+Else
+  If Len(Trim(Selection)) < 3 Then
+  ' Only one word selected? Switch order of FollowedBy
+    myText = Selection.Find.Text
+    wcPos = InStr(myText, "[!^13]@")
+    If wcPos > 0 Then
+      myLast = Left(myText, wcPos - 1)
+      myFirst = Mid(myText, wcPos + 7)
+      myWC = myFirst & "[!^13]@" & myLast
+    Else
+    ' If not a FollowedBy then inform user
+      Beep
+      myResponse = MsgBox("Current WC: " & vbCr & myText, vbOKOnly, "WildcardLoader")
+      Exit Sub
+    End If
+
+  Else
+  ' Set up FollowedBy
+    Set rng = Selection.Range.Duplicate
+    rng.MoveEnd , -1
+    rng.Collapse wdCollapseEnd
+    rng.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+      rng.MoveEnd , -1
+      DoEvents
+    Loop
+    Selection.Collapse wdCollapseStart
+    Selection.Expand wdWord
+    Selection.Collapse wdCollapseStart
+    rng.Start = Selection.Start
+    rng.Select
+    myFirst = Trim(Selection.Range.Words.First)
+    apoPos = InStr(myFirst, ChrW(8217))
+    If apoPos > 0 Then myFirst = Left(myFirst, apoPos - 1)
+    init = Left(myFirst, 1)
+    If LCase(init) <> UCase(init) Then _
+         myFirst = "[" & LCase(init) & UCase(init) & "]" _
+         & Mid(myFirst, 2)
+    myLast = Trim(Selection.Range.Words.Last)
+    init = Left(myLast, 1)
+    If LCase(init) <> UCase(init) Then _
+         myLast = "[" & LCase(init) & UCase(init) & "]" _
+         & Mid(myLast, 2)
+    myWC = myFirst & "[!^13]@" & myLast
+  End If
+End If
+
+' Go find WC
+Selection.Collapse wdCollapseEnd
+hereNow = Selection.Start
+Set rng = Selection.Range.Duplicate
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindStop
+  .Text = myWC
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Forward = True
+  .Execute
+  If .Found = True Then
+    Selection.Collapse wdCollapseStart
+    Selection.MoveLeft , 1
+    .Execute
+  End If
+
+End With
+If Selection.Start = hereNow And _
+     Selection.Find.Found = False Then Beep
+' Leaves F&R dialogue in a sensible state
+Selection.Find.Wrap = wdFindContinue
+Debug.Print Selection.Start, Selection.End, Selection.Find.Found
+
+If Selection.End = 0 Then
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+
+  rng.Select
+  If doPrompt = True Then myResponse = MsgBox("Sorry, Word's Find is confused by the embedded fields." _
+       & vbCr & vbCr & "Try searching in a text-only copy.", _
+       vbOKOnly, "WildcardLoader")
+    Selection.EndKey Unit:=wdStory
+    With Selection.Find
+      .Wrap = wdFindStop
+      .Forward = False
+      .Execute
+    ' Leave F&R dialogue in a sensible state
+      .Wrap = wdFindContinue
+      .Forward = True
+    End With
+    If doPrompt = True Then myResponse = _
+         MsgBox("...So I went to the end and searched upwards! OK?", _
+         vbOKOnly, "FindFwd")
+End If
+Exit Sub
+
+ReportIt:
+If Err.Number = 5560 Then
+  Beep
+  MsgBox ("Bad pattern match!")
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+

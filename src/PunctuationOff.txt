@@ -1,7 +1,6 @@
 Sub PunctuationOff()
-' Paul Beverley - Version 24.08.17
+' Paul Beverley - Version 06.03.23
 ' Delete the next punctuation item
-' Alt-Backspace
 
 myChars = ""
 myChars = myChars + ";:.,\!\?"
@@ -26,6 +25,7 @@ With Selection.Find
   .MatchSoundsLike = False
   .Execute Replace:=wdReplaceOne
 End With
+Selection.MoveRight , 1
 
 With Selection.Find
   .Text = oldFind
