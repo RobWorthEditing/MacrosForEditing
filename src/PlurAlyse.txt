@@ -1,0 +1,181 @@
+Sub PlurAlyse()
+' Paul Beverley - Version 29.01.24
+' Creates a frequency list of single/plural pairs
+
+minLength = 3
+
+Dim myResult As String
+Set FUT = ActiveDocument
+doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
+If doingSeveralMacros = False Then
+  myResponse = MsgBox("Run PlurAlyse ?", vbQuestion _
+       + vbYesNoCancel, "PlurAlyse")
+  If myResponse <> vbYes Then Exit Sub
+End If
+Set testDoc = ActiveDocument
+strttime = Timer
+Set rng = ActiveDocument.Content
+Documents.Add
+Selection.Text = rng.Text
+Selection.HomeKey Unit:=wdStory
+Application.ScreenUpdating = False
+On Error GoTo ReportIt
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "'"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = " "
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+rng.Text = "    " & vbCr & vbCr & LCase(rng.Text)
+ActiveDocument.Paragraphs(1).Style = _
+     ActiveDocument.Styles(wdStyleHeading1)
+
+Set rng2 = ActiveDocument.Content
+wasLength = rng2.End
+myWild = "<[a-zA-Z]@ies>"
+For i = 3 To 1 Step -1
+  If i = 2 Then myWild = "<[a-zA-Z]@es>"
+  If i = 1 Then myWild = "<[a-zA-Z]@s>"
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myWild
+    .Font.StrikeThrough = False
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .Execute
+    DoEvents
+  End With
+
+  Do While rng.Find.Found = True
+    endWas = rng.End
+    myLong = rng.Text
+    rng.MoveEnd , -i
+    If i = 3 Then
+      myShort = rng.Text & "y"
+    Else
+      myShort = rng.Text
+    End If
+    Selection.MoveRight , 1
+    ' Does the singular occur?...
+    With rng2.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = myShort
+      .MatchWholeWord = True
+      .Replacement.Text = ""
+      .MatchWildcards = False
+      .Execute
+    End With
+    If rng2.Find.Found = True And Len(rng2.Text) > (minLength - 1) Then
+      rng2.Collapse wdCollapseEnd
+     ' ... if so, then count occurrences
+      DoEvents
+      Application.ScreenUpdating = True
+      ActiveDocument.Paragraphs(1).Range.Text = myShort & vbCr
+      ActiveDocument.Paragraphs(1).Range.Select
+      Selection.Collapse wdCollapseStart
+      DoEvents
+      Application.ScreenUpdating = False
+      ActiveDocument.Paragraphs(1).Range.Text = vbCr
+      DoEvents
+      wasLength = ActiveDocument.Content.End
+      With rng2.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = myShort
+        .Wrap = wdFindContinue
+        .MatchWholeWord = True
+        .Replacement.Text = "^&!"
+        .MatchWildcards = False
+        .Execute Replace:=wdReplaceAll
+      End With
+      numSingular = ActiveDocument.Content.End - wasLength
+      WordBasic.EditUndo
+      myResult = myResult & myShort & vbTab & Trim(Str(numSingular))
+      DoEvents
+      wasLength = ActiveDocument.Content.End
+      With rng2.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = myLong
+        .Wrap = wdFindContinue
+        .MatchWholeWord = True
+        .Replacement.Text = "^&!"
+        .MatchWildcards = False
+        .Execute Replace:=wdReplaceAll
+      End With
+      numPlural = ActiveDocument.Content.End - wasLength
+      WordBasic.EditUndo
+      myResult = myResult & vbTab & myLong & vbTab & _
+           Trim(Str(numPlural)) & vbCr
+    End If
+    With rng2.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = myLong
+      .Wrap = wdFindContinue
+      .MatchWholeWord = True
+      .Replacement.Text = "^&"
+      .Replacement.Font.StrikeThrough = True
+      .MatchWildcards = False
+      .Execute Replace:=wdReplaceAll
+    End With
+    rng.End = endWas
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+    DoEvents
+  Loop
+Next i
+Selection.WholeStory
+Selection.Style = ActiveDocument.Styles(wdStyleNormal)
+Selection.TypeText Text:=myResult
+Set rng = ActiveDocument.Content
+rng.Sort
+Selection.HomeKey Unit:=wdStory
+Selection.MoveEnd , 2
+Selection.TypeText "Plurals use"
+startTable = Selection.End + 1
+ActiveDocument.Paragraphs(1).Style = _
+     ActiveDocument.Styles(wdStyleHeading1)
+Selection.Start = startTable
+Selection.End = ActiveDocument.Range.End
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+
+timNow = Timer
+Application.ScreenUpdating = True
+
+If doingSeveralMacros = False Then
+  timGone = timNow - strttime
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+  m = Int(timGone / 60)
+  s = Int(timGone) - m * 60
+  timeAll = "Time:  " & Trim(Str(m)) & " m " & _
+       Trim(Str(s)) & " s"
+  Selection.HomeKey Unit:=wdStory
+  numPairs = ActiveDocument.Tables(1).Rows.Count
+  MsgBox "Items:  " & Trim(Str(numPairs)) & vbCr & vbCr _
+       & timeAll
+Else
+  FUT.Activate
+End If
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+

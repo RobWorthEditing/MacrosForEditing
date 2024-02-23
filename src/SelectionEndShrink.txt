@@ -1,0 +1,14 @@
+Sub SelectionEndShrink()
+' Paul Beverley - Version 03.07.23
+' Pulls the end of the selection back to the left (i.e. shrinks it)
+
+preChar = Right(Selection, 1)
+
+If LCase(preChar) <> UCase(preChar) _
+       Or preChar = "0" Or Val(preChar) <> 0 Then
+    Selection.MoveEnd wdWord, -1
+  Else
+    Selection.MoveEnd wdCharacter, -1
+End If
+End Sub
+

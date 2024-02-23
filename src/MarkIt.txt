@@ -1,5 +1,5 @@
 Sub MarkIt()
-' Paul Beverley - Version 24.03.23
+' Paul Beverley - Version 25.10.23
 ' Applies various attributes by (wildcard) F&R
 
 confirmMarkItList = True
@@ -13,7 +13,7 @@ Set workDoc = ActiveDocument
 myResponse = vbNo
 For Each listDoc In Application.Documents
   DoEvents
-  pNum = listDoc.Paragraphs.count
+  pNum = listDoc.Paragraphs.Count
   myNum = 3
   If pNum < 3 Then myNum = pNum
   Set rng = listDoc.Paragraphs(myNum).Range
@@ -53,103 +53,125 @@ Set rng = Selection.Range.Duplicate
 Selection.HomeKey Unit:=wdStory
 
 Set main = ActiveDocument.Content
-doFoots = ActiveDocument.Footnotes.count > 0
-doEnds = ActiveDocument.Endnotes.count > 0
+doFoots = ActiveDocument.Footnotes.Count > 0
+doEnds = ActiveDocument.Endnotes.Count > 0
 
 If doFoots Then Set foots = workDoc.StoryRanges(wdFootnotesStory)
 If doEnds Then Set ends = workDoc.StoryRanges(wdEndnotesStory)
 oldColour = Options.DefaultHighlightColorIndex
 
+numLines = listDoc.Paragraphs.Count
+ReDim myText(numLines) As String
+ReDim isItalic(numLines) As Boolean
+ReDim isBold(numLines) As Boolean
+ReDim isUline(numLines) As Boolean
+ReDim isWild(numLines) As Boolean
+ReDim doMatch(numLines) As Boolean
+ReDim hiColour(numLines) As Long
+ReDim textColour(numLines) As Long
+
+For i = 1 To 40
+  mySPs = mySPs & "    "
+Next i
+mySPs = mySPs & "To go: "
+' First fill arrays for all the F&Rs needed
+i = 0
 For Each ma In listDoc.Paragraphs
   ' Only do anything if there's text on the line
   doThis = (Len(ma) > 2)
-  If doThis = True Then
-    myText = Replace(ma.Range.Text, vbCr, "")
+  Debug.Print ma.Range.Text
+  If doThis = True And Left(ma.Range.Text, 1) <> ChrW(124) _
+       And ma.Range.Characters(1).Font.StrikeThrough = False Then
+    i = i + 1
+    myText(i) = Replace(ma.Range.Text, vbCr, "")
     ' Check for any wildcard characters
-    isWild = False
-    If InStr(myText, "[") > 0 Then isWild = True
-    If InStr(myText, "<") > 0 Then isWild = True
-    If InStr(myText, ">") > 0 Then isWild = True
+    isWild(i) = False
+    If InStr(myText(i), "[") > 0 Then isWild(i) = True
+    If InStr(myText(i), "<") > 0 Then isWild(i) = True
+    If InStr(myText(i), ">") > 0 Then isWild(i) = True
     ' Check for bent pipe = any case
-    If Left(myText, 1) = ChrW(172) Then
-      myText = Mid(myText, 2)
-      doMatch = False
+    If Left(myText(i), 1) = ChrW(172) Then
+      myText(i) = Mid(myText(i), 2)
+      doMatch(i) = False
     Else
-      doMatch = True
+      doMatch(i) = True
     End If
-    isItalic = ma.Range.Font.Italic
-    isBold = ma.Range.Font.Bold
-    isUline = ma.Range.Font.Underline
-    hiColour = ma.Range.HighlightColorIndex
-    textColour = ma.Range.Font.Color
+    isItalic(i) = ma.Range.Font.Italic
+    isBold(i) = ma.Range.Font.Bold
+    isUline(i) = ma.Range.Font.Underline
+    hiColour(i) = ma.Range.HighlightColorIndex
+    textColour(i) = ma.Range.Font.Color
     ' First three are neg if true;
-    '   second two are positive if true
-    If (isItalic + isBold + isUline = 0) And _
-         (hiColour + textColour = 0) Then doThis = False
-    If ma.Range.Characters(1).Font.StrikeThrough Or _
-         ma.Range.Characters(1) = ChrW(124) Then doThis = False
+    '   second two are positive if true.
+    ' So if you're asking for none of these, ignore this line
+    If (isItalic(i) + isBold(i) + isUline(i) + hiColour(i) = 0) And _
+         (textColour(i) < 1) Then i = i - 1
   End If
-  If doThis = True Then
-    Options.DefaultHighlightColorIndex = hiColour
-    With Selection.Find
+Next ma
+numFRs = i
+
+For i = 1 To numFRs
+  Options.DefaultHighlightColorIndex = hiColour(i)
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myText(i)
+    .Wrap = wdFindContinue
+    .Forward = True
+    .Replacement.Text = ""
+    If isItalic(i) Then .Replacement.Font.Italic = True
+    If isBold(i) Then .Replacement.Font.Bold = True
+    If isUline(i) Then .Replacement.Font.Underline = True
+    If hiColour(i) > 0 Then .Replacement.Highlight = True
+    If textColour(i) > 0 Then .Replacement.Font.Color = textColour(i)
+    .MatchCase = doMatch(i)
+    .MatchWildcards = isWild(i)
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+  
+  If doFoots Then
+    With foots.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = myText(i)
+      .Wrap = wdFindContinue
+      .Forward = True
+      .Replacement.Text = ""
+      If isItalic(i) Then .Replacement.Font.Italic = True
+      If isBold(i) Then .Replacement.Font.Bold = True
+      If isUline(i) Then .Replacement.Font.Underline = True
+      If hiColour(i) > 0 Then .Replacement.Highlight = True
+      If textColour(i) > 0 Then .Replacement.Font.Color = textColour(i)
+      .MatchCase = doMatch(i)
+      .MatchWildcards = isWild(i)
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    End With
+  End If
+  
+  If doEnds Then
+    With ends.Find
       .ClearFormatting
       .Replacement.ClearFormatting
       .Text = myText
       .Wrap = wdFindContinue
       .Forward = True
       .Replacement.Text = ""
-      If isItalic Then .Replacement.Font.Italic = True
-      If isBold Then .Replacement.Font.Bold = True
-      If isUline Then .Replacement.Font.Underline = True
-      If hiColour > 0 Then .Replacement.Highlight = True
-      If textColour > 0 Then .Replacement.Font.Color = textColour
-      .MatchCase = doMatch
-      .MatchWildcards = isWild
+      If isItalic(i) Then .Replacement.Font.Italic = True
+      If isBold(i) Then .Replacement.Font.Bold = True
+      If isUline(i) Then .Replacement.Font.Underline = True
+      If hiColour(i) > 0 Then .Replacement.Highlight = True
+      If textColour(i) > 0 Then .Replacement.Font.Color = textColour
+      .MatchCase = doMatch(i)
+      .MatchWildcards = isWild(i)
       .Execute Replace:=wdReplaceAll
       DoEvents
     End With
-    
-    If doFoots Then
-      With foots.Find
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Text = myText
-        .Wrap = wdFindContinue
-        .Forward = True
-        .Replacement.Text = ""
-        If isItalic Then .Replacement.Font.Italic = True
-        If isBold Then .Replacement.Font.Bold = True
-        If isUline Then .Replacement.Font.Underline = True
-        If hiColour > 0 Then .Replacement.Highlight = True
-        If textColour > 0 Then .Replacement.Font.Color = textColour
-        .MatchCase = doMatch
-        .MatchWildcards = isWild
-        .Execute Replace:=wdReplaceAll
-        DoEvents
-      End With
-    End If
-    
-    If doEnds Then
-      With ends.Find
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Text = myText
-        .Wrap = wdFindContinue
-        .Forward = True
-        .Replacement.Text = ""
-        If isItalic Then .Replacement.Font.Italic = True
-        If isBold Then .Replacement.Font.Bold = True
-        If isUline Then .Replacement.Font.Underline = True
-        If hiColour > 0 Then .Replacement.Highlight = True
-        If textColour > 0 Then .Replacement.Font.Color = textColour
-        .MatchCase = doMatch
-        .MatchWildcards = isWild
-        .Execute Replace:=wdReplaceAll
-        DoEvents
-      End With
-    End If
   End If
-Next ma
+  StatusBar = mySPs & Str(numFRs - i)
+  Debug.Print mySPs & Str(numFRs - i)
+Next i
 Options.DefaultHighlightColorIndex = oldColour
 With Selection.Find
   .ClearFormatting
@@ -163,6 +185,7 @@ With Selection.Find
   DoEvents
 End With
 ActiveDocument.TrackRevisions = myTrack
+StatusBar = ""
 rng.Select
 Beep
 myTime = Timer
@@ -186,4 +209,6 @@ Else
   Resume
 End If
 End Sub
+
+
 

@@ -1,0 +1,66 @@
+Sub ListAllCitations()
+' Paul Beverley - Version 28.12.23
+' Alphabetically lists all fig/table/box/flowchart citations
+
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set rng = ActiveDocument.Content
+rng.Text = LCase(rngOld.Text)
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  
+  .Text = "<fig[eru :.\-0-9]{2,}"
+  .Replacement.Font.Underline = True
+  .Execute Replace:=wdReplaceAll
+  
+  DoEvents
+  .Text = "<flow[achrt :.\-0-9]{2,}"
+  .Execute Replace:=wdReplaceAll
+  
+  DoEvents
+  .Text = "<box[ :.\-0-9]{2,}"
+  .Execute Replace:=wdReplaceAll
+  
+  DoEvents
+  .Text = "<table[ :.\-0-9]{2,}"
+  .Execute Replace:=wdReplaceAll
+  
+  DoEvents
+  .Text = ""
+  .Replacement.Text = "^p"
+  .Font.Underline = False
+  .Execute Replace:=wdReplaceAll
+  
+  DoEvents
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "([a-z])[:.\-]"
+  .Replacement.Text = "\1 "
+  .Execute Replace:=wdReplaceAll
+  
+  DoEvents
+  .ClearFormatting
+  .Text = "  "
+  .Replacement.Text = " "
+  .Execute Replace:=wdReplaceAll
+  
+  DoEvents
+  .Text = "[. ]{1,}^13"
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+End With
+rng.Sort
+rng.Font.Underline = False
+rng.InsertAfter Text:=vbCr
+rng.End = 2
+rng.Delete
+Selection.HomeKey Unit:=wdStory
+End Sub
+
+
+

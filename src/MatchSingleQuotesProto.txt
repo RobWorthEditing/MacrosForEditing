@@ -1,0 +1,99 @@
+
+Sub MatchSingleQuotesProto()
+' Paul Beverley - Version 29.07.23
+' Check whether single quotes match up
+
+Dim myList As String
+myList = "'s,s','t,'v,'r,'l,'m,'d,'y,'c,'n" ' UK list
+' myList = "'i,'k,'m,'n,'s,'t,'r,'n" ' Dutch list
+myColour = wdYellow
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+
+myList = myList & "," & Replace(myList, "'", ChrW(8217))
+myCode = Split(myList, ",")
+numCodes = UBound(myCode)
+useExplorer = False
+
+
+For Each myPara In ActiveDocument.Paragraphs
+  myText = LCase(myPara.Range.Text)
+  'Strip out all the apostrophe-s and s-apostrophe
+  For i = 0 To numCodes
+    myText = Replace(myText, myCode(i), "")
+  Next i
+  L = Len(myText)
+  qts = L - Len(Replace(myText, Chr(39), ""))
+  opens = L - Len(Replace(myText, ChrW(8216), ""))
+  closes = L - Len(Replace(myText, ChrW(8217), ""))
+
+  If qts Mod 2 <> 0 Or opens <> closes Then
+    myPara.Range.Font.Underline = True
+    myCount = myCount + 1
+    StatusBar = "Found: " & myCount
+    DoEvents
+  End If
+Next
+StatusBar = ""
+If myCount = 0 Then
+  MsgBox ("All clear!")
+Else
+  MsgBox ("Number of suspect paragraphs: " & Trim(myCount))
+End If
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "s'"
+  .Font.Underline = True
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Font.DoubleStrikeThrough = True
+  .Replacement.Highlight = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Wrap = wdFindStop
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+Do While rng.Find.Found = True
+  If rng.Font.DoubleStrikeThrough <> 9999999 Then
+    rng.HighlightColorIndex = wdYellow
+  End If
+  rng.Font.DoubleStrikeThrough = False
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Replacement.Text = ""
+  .Execute
+End With
+Selection.Collapse wdCollapseStart
+Selection.MoveLeft , 1
+Selection.MoveRight , 1
+ActiveDocument.TrackRevisions = myTrack
+Options.DefaultHighlightColorIndex = oldColour
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+
+

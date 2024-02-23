@@ -1,0 +1,58 @@
+Sub ColourPlusAttribute()
+' Paul Beverley - Version 06.06.23
+' Applies font/highlight colour plus an attribute
+
+' roundToWholeWord = False
+roundToWholeWord = True
+
+' myFontColour = 0
+myFontColour = wdColorGreen
+
+' myHighlightColour = wdYellow
+myHighlightColour = wdNoHighlight
+
+addItalic = True
+addBold = False
+addUnderline = False
+
+If roundToWholeWord = True Then
+  If Selection.Start = Selection.End Then
+    Selection.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+  Else
+    endNow = Selection.End
+    Selection.MoveLeft wdWord, 1
+    startNow = Selection.Start
+    Selection.End = endNow
+    Selection.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+    Selection.Start = startNow
+  End If
+Else
+  If Selection.Start = Selection.End Then
+    Selection.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+  End If
+End If
+If myFontColour <> 0 Then _
+     Selection.Font.Color = myFontColour
+If myHighlightColour <> 0 Then _
+     Selection.Range.HighlightColorIndex = myHighlightColour
+If addItalic = True Then Selection.Font.Italic = True
+If addBold = True Then Selection.Font.Bold = True
+If addUnderline = True Then Selection.Font.Underline = True
+Selection.Collapse wdCollapseEnd
+End Sub
+
+
+
+

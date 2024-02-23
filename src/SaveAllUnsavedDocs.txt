@@ -1,0 +1,18 @@
+Sub SaveAllUnsavedDocs()
+' Paul Beverley - Version 26.10.23
+' Saves all unsaved documents
+
+For Each myDoc In Documents
+  myName = myDoc.FullName
+  If InStr(myName, "\") = 0 And InStr(myName, "/") = 0 Then
+    newName = Trim(myDoc.Content.Paragraphs(1))
+    newName = Replace(newName, vbCr, "")
+    myDate = Replace(Left(Date, 3), "/", "")
+    myFullFilename = myFolder & newName & "_" & myDate
+    Debug.Print myFullFilename
+    myDoc.SaveAs fileName:=myFullFilename
+  End If
+  DoEvents
+Next myDoc
+End Sub
+

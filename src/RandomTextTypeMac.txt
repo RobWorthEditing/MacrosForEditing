@@ -1,0 +1,22 @@
+Sub RandomTextTypeMac()
+' Paul Beverley - Version 24.11.23
+' Types out paragraphs of pseudo-Latin or English text (Mac version)
+ 
+autoCorrect.ReplaceText = True
+myText = InputBox("How many paras?" & vbCr & _
+     "L = lorem, R = random", "MacroUpdater")
+myText = LCase(Trim(myText))
+If InStr(myText, "r") > 0 Then
+  myType = "=rand(num)"
+Else
+  myType = "=lorem(num)"
+End If
+myText = Replace(myText, "r", "")
+myText = Replace(myText, "l", "")
+myType = Replace(myType, "num", myText)
+Debug.Print myType
+Selection.InsertAfter myType
+Selection.Collapse wdCollapseEnd
+End Sub
+
+

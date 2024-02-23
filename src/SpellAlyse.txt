@@ -1,5 +1,5 @@
 Sub SpellAlyse()
-' Paul Beverley - Version 02.03.22
+' Paul Beverley - Version 25.05.23
 ' Complete spellchecking system
 
 ignoreNumbers = True
@@ -52,22 +52,25 @@ timeStart = Timer
 allExcepts = CR
 'Collect all words from all word lists
 For Each myDoc In Documents
-  If InStr(myDoc.Name, ignoreDoc) = 0 Then
-    numParas = myDoc.Paragraphs.count
-    numWords = myDoc.Content.ComputeStatistics(wdStatisticWords)
-    myProfile = numWords / numParas
-    If myProfile < 1.01 Then
-      myWds = myDoc.Content.Text
-      If InStr(myWds, "|") = 0 Then
-        ' This is a list
-        docWds = Replace(myDoc.Content.Text, CR2, CR)
-        docWds = Replace(docWds, CR2, CR)
-        allExcepts = allExcepts & docWds
+Debug.Print myDoc.Name
+  pNum = myDoc.Paragraphs.count
+  myNum = 3
+  If pNum < 3 Then myNum = pNum
+  Set rng = myDoc.Paragraphs(myNum).Range
+  rng.Start = 0
+  If InStr(LCase(rng.Text), "elist") > 0 Then
+    For Each myPar In myDoc.Paragraphs
+      myWord = Trim(myPar.Range.Words(1).Text)
+      If Len(myWord) > 2 Then
+        allExcepts = allExcepts & myWord & CR
+        Debug.Print allExcepts
       End If
-    End If
+      DoEvents
+    Next myPar
   End If
   DoEvents
 Next myDoc
+Debug.Print allExcepts
 
 ' Create a text-only copy in another file
 Set rngOld = FUT.Content
@@ -75,18 +78,18 @@ Documents.Add
 Set erList = ActiveDocument
 Set rng = ActiveDocument.Content
 rng.LanguageID = thisLanguage
-rng.Text = rngOld.Text
+rng.FormattedText = rngOld.FormattedText
 
 numNotes = FUT.Endnotes.count
 If numNotes > 0 Then
   rng.Collapse wdCollapseEnd
-  rng.Text = FUT.StoryRanges(wdEndnotesStory).FormattedText
+  rng.FormattedText = FUT.StoryRanges(wdEndnotesStory).FormattedText
 End If
 
 numNotes = FUT.Footnotes.count
 If numNotes > 0 Then
   rng.Collapse wdCollapseEnd
-  rng.Text = FUT.StoryRanges(wdFootnotesStory).FormattedText
+  rng.FormattedText = FUT.StoryRanges(wdFootnotesStory).FormattedText
 End If
 
 ' copy all the textboxes to the end of the text
@@ -109,14 +112,22 @@ If shCount > 0 Then
 End If
 
 ' Add a newline for safety
-Selection.TypeText vbCr
+Selection.TypeText CR
 
 Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "^2"
+  .Text = ""
+  .Font.StrikeThrough = True
   .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^2"
   .Replacement.Text = ""
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
@@ -162,11 +173,13 @@ With rng.Find
      .Text = "[!a-zA-Z^13'" & ChrW(8217) _
      & ChrW(248) & "-" & ChrW(591) _
      & ChrW(697) & "-" & ChrW(703) _
+     & ChrW(&H591) & "-" & ChrW(&H5FF) _
      & ChrW(7680) & "-" & ChrW(7935) & "]"
    Else
      .Text = "[!a-zA-Z0-9^13'" & ChrW(8217) _
      & ChrW(248) & "-" & ChrW(591) _
      & ChrW(697) & "-" & ChrW(703) _
+     & ChrW(&H591) & "-" & ChrW(&H5FF) _
      & ChrW(7680) & "-" & ChrW(7935) & "]"
    End If
   .Replacement.Text = sp1
@@ -354,6 +367,7 @@ ActiveDocument.TrackRevisions = False
 Exit Sub
 
 createListPair:
+' Make Flist + MarkIt list + Elist
 Application.ScreenUpdating = True
 myResponse = MsgBox("Create exceptions and FRedit lists?", _
      vbQuestion + vbYesNoCancel, "SpellAlyse")
@@ -361,33 +375,41 @@ If myResponse <> vbYes Then Exit Sub
 
 Documents.Add
 Set eList = ActiveDocument
+Selection.TypeText Text:="| Elist" & CR2
+eList.Paragraphs(1).Style = eList.Styles(wdStyleHeading1)
 Set eRng = ActiveDocument.Content
+
 Documents.Add
-DoEvents
 Set fList = ActiveDocument
+Selection.TypeText Text:="| FRedit" & CR2
+fList.Paragraphs(1).Style = fList.Styles(wdStyleHeading1)
 Set fRng = ActiveDocument.Content
+
+' FUT is now the spelling error list
 For i = 1 To FUT.Paragraphs.count
-  Set pRng = FUT.Paragraphs(i).Range
-  If InStr(pRng.Text, spellingListName) = 0 _
-       And Len(pRng.Text) > 3 Then
+  DoEvents
+  Set itemRng = FUT.Paragraphs(i).Range
+  If InStr(itemRng.Text, spellingListName) = 0 _
+       And Len(itemRng.Text) > 3 Then
     DoEvents
-    If InStr(pRng.Text, "|") > 0 Then
+    If InStr(itemRng.Text, "|") > 0 Then
       fRng.Collapse wdCollapseEnd
-      fRng.FormattedText = pRng.FormattedText
+      fRng.FormattedText = itemRng.FormattedText
     Else
-      myFontCol = pRng.Font.Color
-      myHiCol = pRng.HighlightColorIndex
+      myFontCol = itemRng.Font.Color
+      myHiCol = itemRng.HighlightColorIndex
       If myFontCol > 0 Or myHiCol > 0 Then
         fRng.Collapse wdCollapseEnd
-        fRng.Text = "~<" & Replace(pRng.Text, CR, _
-             "") & ">" & CR
+        fRng.Text = "~<" & Replace(itemRng.Text, CR, _
+             "") & ">" & "|^&" & CR
         fRng.Expand wdParagraph
+        fRng.Font.StrikeThrough = True
         If myFontCol > 0 Then fRng.Font.Color = myFontCol
         If myHiCol > 0 Then fRng.HighlightColorIndex = myHiCol
         fRng.Collapse wdCollapseEnd
       Else
         eRng.Collapse wdCollapseEnd
-        eRng.Text = pRng.Text
+        eRng.Text = itemRng.Text
       End If
     End If
   End If

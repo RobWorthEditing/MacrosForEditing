@@ -1,0 +1,128 @@
+
+Sub ChapterFileLinker()
+' Paul Beverley - Version 16.11.23
+' Rejoins all the chapters of a book
+
+bookName = "allTheBook"
+
+Dim allMyFiles(200) As String
+
+Set rng = ActiveDocument.Content
+myDelay = 10
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+CR = vbCr
+CR2 = CR & CR
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  myResponse = _
+       MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "ChapterFileLinker")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.Count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & CR
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  If Application.PathSeparator <> "\" Then
+    Set rng = ActiveDocument.Content
+    rng.Sort SortOrder:=wdSortOrderAscending, _
+         SortFieldType:=wdSortFieldAlphanumeric
+  End If
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath & CR
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+  myResponse = MsgBox("Collect formatted text " & moreText & _
+       "from ALL the files in" & " directory:" & dirName & _
+       " ?", vbQuestion + vbYesNoCancel, "ChapterFileLinker")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  myResponse = MsgBox("Collect formatted text " & moreText & _
+       "from the files listed here?", vbQuestion + vbYesNoCancel, _
+       "ChapterFileLinker")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.Range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+' Now pick up formatted text from all the files
+firstFile = myFolder & myDelimiter & allMyFiles(1)
+Set bookDoc = Application.Documents.Open(fileName:=firstFile)
+ActiveDocument.TrackRevisions = False
+myResponse = MsgBox("Save combined file as: " & bookName & _
+     "?", vbQuestion + vbYesNoCancel, "ChapterFileLinker")
+ActiveDocument.SaveAs myFolder & myDelimiter & bookName
+For j = 1 To myDelay
+  DoEvents
+Next j
+For i = 2 To numFiles
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText Text:=Chr(12)
+  thisFile = myFolder & myDelimiter & allMyFiles(i)
+  Set thisChapter = Application.Documents.Open(fileName:=thisFile)
+  thisChapter.TrackRevisions = False
+  thisChapter.Content.Copy
+  StatusBar = allMyFiles(i)
+  For j = 1 To myDelay
+    DoEvents
+  Next j
+  bookDoc.Activate
+  Selection.EndKey Unit:=wdStory
+  Selection.Paste
+  For j = 1 To myDelay
+    DoEvents
+  Next j
+  thisChapter.Close SaveChanges:=wdDoNotSaveChanges
+Next i
+Beep
+bookDoc.Activate
+ActiveDocument.Save
+myResponse = MsgBox("Click OK here, and then WAIT until the flashing cursor returns." _
+    & CR2 & "Not doing so can cause Word to crash." & CR2 & _
+    "If unsure, try just pressing the cursor right key.", _
+    vbOKOnly, "ChapterFileLinker")
+End Sub
+
+
+
+
+

@@ -1,17 +1,19 @@
 Sub FigStrip()
-' Paul Beverley - Version 09.05.13
-' Strip out all figures and leave a callout
+' Paul Beverley - Version 25.05.23
+' Strips out all figures and leave a callout
 
 myFormat = "<xxx about here>"
 
-myFig = "^13Fig"
-myFig = "[^13^n^m^l]Fig"
-myFig = "\<Cap\>Fig"
-myFig = "zczcFig"
+' myFig = "[^13^n^m^l]Fig"
+' myFig = "\<Cap\>Fig"
+myFig = "^13Fig."
 
 captionWithText = True
 captionWithFigs = True
 
+' If Word throws up and error 4605 about pasting
+' increase the delay value to, say, 1000
+myDelay = 500
 
 myFind = Replace(myFig, "\<", "<")
 myFind = Replace(myFind, "\>", ">")
@@ -41,16 +43,18 @@ Do
     .Execute
   End With
   gotOne = Selection.Find.Found
-  Selection.MoveDown Unit:=wdParagraph, Count:=1
+  Selection.MoveDown Unit:=wdParagraph, count:=1
   myEnd = Selection.Start
-  Selection.MoveUp Unit:=wdParagraph, Count:=1
+  Selection.MoveUp Unit:=wdParagraph, count:=1
   ' Cursor now at start of caption line
   captionStart = Selection.Start
   Do
-    Selection.MoveRight Unit:=wdCharacter, Count:=1
+    Selection.MoveRight Unit:=wdCharacter, count:=1
+    DoEvents
   Loop Until Selection = " " Or Selection = vbTab
   Do
-    Selection.MoveRight Unit:=wdCharacter, Count:=1
+    Selection.MoveRight Unit:=wdCharacter, count:=1
+    DoEvents
   Loop Until Selection = " " Or Selection = vbTab
   Selection.Start = captionStart
   figTitle = Selection
@@ -59,29 +63,33 @@ Do
   figEnd = captionStart
   If gotOne Then
     Do
-      Selection.MoveUp Unit:=wdLine, Count:=1
+      Selection.MoveUp Unit:=wdLine, count:=1
       Selection.Expand wdParagraph
-    Loop Until Selection.Words.Count > 2
+      DoEvents
+    Loop Until Selection.Words.count > 2
     Selection.Collapse wdCollapseEnd
     Selection.End = myEnd
   ' Is this a figure i've found?[[[
-    figsBefore = ActiveDocument.InlineShapes.Count _
-         + ActiveDocument.Shapes.Count
+    figsBefore = ActiveDocument.InlineShapes.count _
+         + ActiveDocument.Shapes.count
     Selection.Cut
-    figsAfter = ActiveDocument.InlineShapes.Count _
-         + ActiveDocument.Shapes.Count
+    figsAfter = ActiveDocument.InlineShapes.count _
+         + ActiveDocument.Shapes.count
     If figsAfter = figsBefore Then
     ' If not, put it back
       Selection.Paste
-      Selection.MoveLeft Unit:=wdWord, Count:=2
+      Selection.MoveLeft Unit:=wdWord, count:=2
     Else
       Selection.InsertAfter Replace(myFormat, "xxx", figTitle) & vbCr
       Selection.ParagraphFormat.Alignment = wdAlignParagraphLeft
       Selection.HomeKey Unit:=wdLine
       figDoc.Activate
+      For i = 1 To myDelay
+        DoEvents
+      Next i
       Selection.Paste
       ' But mark the caption ready to copy it back
-      Selection.MoveUp Unit:=wdParagraph, Count:=1, Extend:=wdExtend
+      Selection.MoveUp Unit:=wdParagraph, count:=1, Extend:=wdExtend
       ' Either
       If captionWithFigs = True Then
         Selection.Copy
@@ -96,11 +104,12 @@ Do
       thisDoc.Activate
       ' If caption wanted in text, paste it back in
       If captionWithText = True Then
-        Selection.MoveDown Unit:=wdParagraph, Count:=1
+        Selection.MoveDown Unit:=wdParagraph, count:=1
         Selection.Paste
       End If
     End If
   End If
+  DoEvents
 Loop Until gotOne = False
 figDoc.Activate
 

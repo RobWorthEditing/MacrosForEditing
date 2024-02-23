@@ -1,0 +1,10 @@
+Sub TablesStrikeThroughAll()
+' Paul Beverley - Version 19.07.23
+' Adds a strike-through to all table text
+
+For Each myTable In ActiveDocument.Tables
+  myTable.Range.Font.StrikeThrough = True
+Next myTable
+End Sub
+
+

@@ -1,0 +1,57 @@
+Sub SwapNamesFullPoints()
+' Paul Beverley - Version 13.11.23
+' Swap name and initials and add full points
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdWord
+rng.Collapse wdCollapseStart
+myStart = rng.Start
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\([0-9]{4}\)"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+rng.Collapse wdCollapseStart
+rng.Start = myStart
+myEnd = rng.End
+gotTwo = (InStr(rng, " and ") > 0)
+myInits = Trim(rng.Words(3))
+rng.Words(2) = " "
+rng.Words(2) = ""
+rng.Collapse wdCollapseStart
+newInits = ""
+For i = 1 To Len(myInits)
+  newInits = newInits & Mid(myInits, i, 1) & "."
+  DoEvents
+Next i
+rng.InsertBefore newInits & " "
+
+If gotTwo Then
+  rng.End = myEnd
+  andPos = InStr(rng, " and ")
+  rng.MoveStart , andPos + 4
+  rng.Expand wdWord
+  rng.Collapse wdCollapseStart
+  rng.End = myEnd
+  rng.MoveEnd wdWord, 4
+  myInits = Trim(rng.Words(3))
+  rng.Words(2) = " "
+  rng.Words(2) = ""
+  rng.Collapse wdCollapseStart
+  newInits = ""
+  For i = 1 To Len(myInits)
+    newInits = newInits & Mid(myInits, i, 1) & "."
+    DoEvents
+  Next i
+  rng.InsertBefore newInits & " "
+End If
+DoEvents
+rng.Collapse wdCollapseEnd
+rng.Select
+End Sub
+

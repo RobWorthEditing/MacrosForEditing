@@ -1,0 +1,5 @@
+Sub NTpath()
+Documents.Add
+Selection.TypeText NormalTemplate.Path
+End Sub
+

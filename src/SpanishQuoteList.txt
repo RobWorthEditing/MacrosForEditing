@@ -1,0 +1,62 @@
+
+Sub SpanishQuoteList()
+' Paul Beverley - Version 20.02.24
+' Extracts a list of all text in Spanish quotes
+
+qtsNow = Options.AutoFormatAsYouTypeReplaceQuotes
+Options.AutoFormatAsYouTypeReplaceQuotes = False
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set rng = ActiveDocument.Content
+rng.FormattedText = rngOld.FormattedText
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(187) & "*" & ChrW(171)
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ChrW(187) & "^p" & ChrW(171)
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Set rng = ActiveDocument.Content
+rng.Collapse wdCollapseEnd
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(187)
+  .Wrap = wdFindStop
+  .Forward = False
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute
+  DoEvents
+End With
+If rng.Find.Found = True Then
+  rng.MoveStart , 1
+  rng.End = ActiveDocument.Content.End
+  rng.Text = vbCr
+End If
+Set rng = ActiveDocument.Content
+rng.Collapse wdCollapseStart
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(171)
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute
+  DoEvents
+End With
+If rng.Find.Found = True Then
+  rng.MoveEnd , -1
+  rng.Start = ActiveDocument.Content.Start
+  rng.Delete
+End If
+Options.AutoFormatAsYouTypeReplaceQuotes = qtsNow
+End Sub
+
+

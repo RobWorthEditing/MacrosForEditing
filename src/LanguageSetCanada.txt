@@ -1,5 +1,5 @@
 Sub LanguageSetCanada()
-' Paul Beverley - Version 16.03.23
+' Paul Beverley - Version 09.04.23
 ' Sets language as Canadian English
 
 ' If you want all the styles to be language-set as well,
@@ -8,8 +8,6 @@ setStyleLanguage = False
 ' setStyleLanguage = True
 
 myLanguage = wdEnglishCanadian
-myTrack = ActiveDocument.TrackRevisions
-ActiveDocument.TrackRevisions = False
 ActiveDocument.Content.LanguageID = myLanguage
 For Each aStory In ActiveDocument.StoryRanges
   Do
@@ -40,8 +38,6 @@ If ActiveDocument.Shapes.count > 0 Then
 End If
 ActiveDocument.Styles(wdStyleNormal).LanguageID = myLanguage
 ActiveDocument.Styles(wdStyleCommentText).LanguageID = myLanguage
-ActiveDocument.SpellingChecked = False
-ActiveDocument.GrammarChecked = False
-ActiveDocument.TrackRevisions = myTrack
+ActiveDocument.Styles("Balloon Text").LanguageID = myLanguage
 End Sub
 

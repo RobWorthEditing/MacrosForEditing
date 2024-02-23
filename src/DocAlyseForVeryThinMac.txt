@@ -1,6 +1,6 @@
 
 Sub DocAlyseForVeryThinMac()
-' Version 11.09.19
+' Paul Beverley - Version 11.09.19
 ' Analyses various aspects of a document
 
 showWild = True

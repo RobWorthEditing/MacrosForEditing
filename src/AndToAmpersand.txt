@@ -1,0 +1,47 @@
+Sub AndToAmpersand()
+' Paul Beverley - Version 24.06.23
+' Changes the next citation from "and" to "&"
+
+myColour = wdColorBlue
+
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = " and "
+  .Replacement.Text = " & "
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Highlight = True
+  .MatchWildcards = True
+  .Execute
+  DoEvents
+  If .Found = True Then
+    .Execute Replace:=wdReplaceOne
+    Selection.Collapse wdCollapseEnd
+  Else
+    Beep
+    Exit Sub
+  End If
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "??[0-9]{4}"
+  .Replacement.Text = ""
+  .Wrap = wdFindStop
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+  DoEvents
+  If .Found = True Then
+    If Left(Selection, 1) <> "," Then
+      Selection.MoveStart , 1
+      Selection.InsertBefore Text:=","
+      Selection.Collapse wdCollapseStart
+    Else
+      Selection.Collapse wdCollapseEnd
+    End If
+  End If
+End With
+End Sub
+

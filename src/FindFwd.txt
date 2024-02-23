@@ -1,17 +1,24 @@
 Sub FindFwd()
-' Paul Beverley - Version 10.03.23
+' Paul Beverley - Version 20.12.23
 ' Finds next match forwards, case insensitively
 
+mySpaces = "                "
+For i = 1 To 3
+  mySpaces = mySpaces & mySpaces
+Next i
+mySch = Selection.Find.Text
+thisIsWild = ((InStr(mySch, "]") + InStr(mySch, "<") _
+     + InStr(mySch, ">") > 0))
+If thisIsWild Then StatusBar = mySpaces & "Using WILDCARD find"
 Set rng = Selection.Range.Duplicate
 Selection.Collapse wdCollapseEnd
 With Selection.Find
   .Wrap = wdFindStop
   .Forward = True
   .MatchCase = False
+  .MatchWildcards = thisIsWild
   .Execute
-  If InStr(.Text, "]") > 0 Then .MatchWildcards = True
-' Leave F&R dialogue in a sensible state
-  .Wrap = wdFindContinue
+  .Wrap = wdFindStop
 End With
 If Selection.Find.Found = False Then
   Beep
@@ -28,11 +35,16 @@ Else
       .Wrap = wdFindStop
       .Forward = False
       .Execute
-    ' Leave F&R dialogue in a sensible state
+' Leave F&R dialogue in a sensible state
       .Wrap = wdFindContinue
       .Forward = True
     End With
     StatusBar = "Sorry, Word's Find facility is playing sillies!"
+  Else
+    Set rng = Selection.Range.Duplicate
+    Selection.Collapse wdCollapseStart
+    Selection.MoveUp , 1
+    rng.Select
   End If
 End If
 End Sub

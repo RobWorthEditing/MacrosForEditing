@@ -1,0 +1,11 @@
+Sub WildcardType()
+' Paul Beverley - Version 31.03.23
+' Reads the current 'Selection.Find' and types it in the file
+
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Selection.TypeText Text:=Selection.Find.Text & vbCr
+End Sub
+
+
+

@@ -1,14 +1,17 @@
 Sub FontFunniesClearAll()
-' Paul Beverley - Version 08.09.17
+' Paul Beverley - Version 22.07.22
 ' Changes all text in this specific font into the default font
 
-badFont = Selection.Font.Name
 highlightChanges = True
 myColour = wdBrightGreen
 
+badFont = Selection.Font.Name
+
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
-
+  
+Application.ScreenUpdating = False
+On Error GoTo ReportIt
 Selection.HomeKey Unit:=wdStory
 With Selection.Find
   .ClearFormatting
@@ -42,11 +45,18 @@ Do While Selection.Find.Found = True
   End If
   If isSuper Then Selection.Font.Superscript = True
   If isSub Then Selection.Font.Subscript = True
-  If highlightChanges = True Then Selection.range.HighlightColorIndex = myColour
+  If highlightChanges = True Then Selection.Range.HighlightColorIndex = myColour
   Selection.Start = endNow
   Selection.Find.Execute
 Loop
 MsgBox "Changed: " & myCount
 ActiveDocument.TrackRevisions = myTrack
+Application.ScreenUpdating = True
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
 

@@ -1,6 +1,6 @@
 Sub InitialCapWord()
 ' Paul Beverley - Version 18.09.15
-' Initial capital word at cursor
+' Initial capitalises the word at the cursor
 
 Selection.Expand wdWord
 If UCase(Selection) = Selection Then

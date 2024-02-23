@@ -1,8 +1,10 @@
 Sub BibleGatewayFetch()
-' Paul Beverley - Version 06.03.23
+' Paul Beverley - Version 12.04.23
 ' Launches Bible references on BibleGateway
 
 mySite = "https://www.biblegateway.com/passage/?search="
+
+myVersion = "NKJV"
 
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord
@@ -35,11 +37,11 @@ Else
   Selection.Start = startNow
 End If
 
-Selection.Copy
 mySubject = Trim(Selection)
 mySubject = Replace(mySubject, " ", "+")
 mySubject = Replace(mySubject, "&", "%26")
 mySubject = Replace(mySubject, ChrW(8217), "'")
+mySubject = mySubject & "&version=" & myVersion
 ActiveDocument.FollowHyperlink Address:=mySite & mySubject
 Selection.Collapse wdCollapseEnd
 End Sub

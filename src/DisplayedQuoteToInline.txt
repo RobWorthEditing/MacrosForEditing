@@ -1,0 +1,25 @@
+Sub DisplayedQuoteToInline()
+' Paul Beverley - Version 17.07.23
+' Turns a displayed quote to an inline quote
+
+useUSpunct = True
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+rng.Collapse wdCollapseStart
+rng.MoveStart , -1
+rng.Text = " " & ChrW(8220)
+rng.Expand wdParagraph
+rng.Collapse wdCollapseEnd
+rng.MoveStart , -1
+rng.Text = " "
+rng.Collapse wdCollapseStart
+rng.MoveStart , -1
+If InStr(",.", rng.Text) > 0 And useUSpunct = True Then
+  rng.InsertBefore Text:=ChrW(8221)
+Else
+  rng.InsertAfter Text:=ChrW(8221)
+End If
+End Sub
+
+

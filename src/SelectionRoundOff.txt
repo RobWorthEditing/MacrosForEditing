@@ -1,0 +1,18 @@
+Sub SelectionRoundOff()
+' Paul Beverley - Version 01.09.23
+' Extends the existing selection to the nearest word end/start
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+rng.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+  rng.MoveEnd , -1
+  DoEvents
+Loop
+Selection.Collapse wdCollapseStart
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+rng.Start = Selection.Start
+rng.Select
+End Sub
+

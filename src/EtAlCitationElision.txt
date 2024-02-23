@@ -1,9 +1,9 @@
 Sub EtAlCitationElision()
-' Paul Beverley - Version 09.09.20
+' Paul Beverley - Version 04.10.23
 ' Crops multi-author citation to single name + 'et al'
 
 isItalic = False
-etAlText = " et al. "
+etAlText = " et al., "
 
 Selection.Expand wdWord
 Selection.Collapse wdCollapseEnd
@@ -13,10 +13,17 @@ Selection.MoveEnd Unit:=wdWord, Count:=10
 
 myStart = Selection.Start
 
-For i = 1 To 10
+wdsMax = 10
+For i = 1 To wdsMax
   Debug.Print Selection.Words(i)
   If InStr("12", Selection.Words(i).Characters(1)) > 0 Then Exit For
 Next i
+If i = wdsMax + 1 Then
+  WordBasic.EditUndo
+  Beep
+  MsgBox ("Can't find a date (year)")
+  Exit Sub
+End If
 Selection.Words(i).Select
 Selection.Collapse wdCollapseStart
 Selection.Start = myStart
@@ -27,26 +34,6 @@ If isItalic Then
   Selection.Font.Italic = True
   Selection.Collapse wdCollapseEnd
 End If
-
-Exit Sub
-
-Selection.MoveStartUntil cset:="(;", Count:=wdBackward
-Selection.Collapse wdCollapseStart
-Selection.MoveEndUntil cset:=",", Count:=wdForward
-
-myStart = Selection.End
-Selection.Collapse wdCollapseEnd
-With Selection.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "^#^#^#^#"
-  .Replacement.Text = ""
-  .MatchWildcards = False
-  .Execute
-End With
-
-Selection.Collapse wdCollapseStart
-Selection.Start = myStart
-Selection.TypeText " et al. "
 End Sub
+
 

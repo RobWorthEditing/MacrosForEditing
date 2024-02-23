@@ -1,0 +1,16 @@
+Sub LinkCopy()
+' Paul Beverley - Version 25.01.24
+' Copies the URL of the current link
+
+Set rng = ActiveDocument.Range(0, Selection.End)
+linkNum = rng.Hyperlinks.Count
+Set rng = ActiveDocument.Hyperlinks(linkNum).Range
+Selection.InsertAfter Text:=ActiveDocument.Hyperlinks(linkNum).Address
+Selection.Copy
+WordBasic.EditUndo
+rng.Select
+Selection.Collapse wdCollapseEnd
+End Sub
+
+
+

@@ -1,0 +1,11 @@
+Sub LinkDelete()
+' Paul Beverley - Version 25.01.24
+' Deletes (unlinks) the current link
+
+Set rng = ActiveDocument.Range(0, Selection.End)
+linkNum = rng.Hyperlinks.Count
+ActiveDocument.Hyperlinks(linkNum).Delete
+End Sub
+
+
+

@@ -1,10 +1,13 @@
 Sub GoogleFetch()
-' Paul Beverley - Version 02.05.22
+' Paul Beverley - Version 04.10.23
 ' Launches selected text on Google
 
+alsoCopySubject = False
+
+' mySite = "http://www.worldcat.org/search?q="
 mySite = "http://www.google.co.uk/search?q="
 
-' Or for Google Scholar
+' Or for Google Scholar, use
 ' mySite = "https://scholar.google.com/scholar?q="
 
 ' USA
@@ -13,18 +16,26 @@ mySite = "http://www.google.co.uk/search?q="
 ' Canada
 ' mySite = "http://www.google.ca/search?q="
 
+' Australia
+' mySite = "http://www.google.com.au/search?q="
+
 ' India
-' mySite = http://www.google.co.in/search?q=
+' mySite = "http://www.google.co.in/search?q="
 
 ' Netherlands
-' "http://www.google.nl/search?q="
+' mySite = "http://www.google.nl/search?q="
 
 ' Germany
 ' mySite = "http://www.google.de/search?q="
 
 ' South Africa
-' mySite = http://www.google.co.za/search?q=
+' mySite = "http://www.google.co.za/search?q="
 
+' Chile
+' mySite = "https://www.google.com.cl/search?q="
+
+'Colombia
+' mySite = "http://www.google.com.co/search?q="
 
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord
@@ -45,12 +56,14 @@ Else
   Selection.Start = startNow
 End If
 
+If alsoCopySubject = True Then Selection.Copy
+
 mySubject = Trim(Selection)
 mySubject = Replace(mySubject, " ", "+")
 mySubject = Replace(mySubject, "&", "%26")
 mySubject = Replace(mySubject, ChrW(8217), "'")
+Debug.Print mySite & mySubject
 ActiveDocument.FollowHyperlink Address:=mySite & mySubject
 Selection.Collapse wdCollapseEnd
 End Sub
-
 

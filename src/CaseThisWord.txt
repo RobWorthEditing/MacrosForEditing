@@ -1,5 +1,5 @@
 Sub CaseThisWord()
-' Version 06.05.22
+' Paul Beverley - Version 06.05.22
 ' Changes initial case of current word and jumps to next word
 
 trackit = True

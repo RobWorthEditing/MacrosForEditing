@@ -1,16 +1,18 @@
+
 Sub FReditCopy()
 ' Paul Beverley - Version 20.01.16
 ' Copy word to make FRedit script item
-' Shift-Alt-f6
 
 Selection.EndKey Unit:=wdLine
-Selection.MoveStartWhile cset:=ChrW(124) & Chr(9) & " .", Count:=wdBackward
+Selection.MoveStartWhile cset:=ChrW(124) & Chr(9) & " ", count:=wdBackward
 If Selection <> Chr(13) Then Selection.Delete
 Selection.Expand wdParagraph
 Selection.MoveEnd , -1
 Selection.Copy
 Selection.Collapse wdCollapseEnd
-Selection.TypeText Text:=ChrW(124)
+Selection.TypeText ChrW(124)
 Selection.Paste
+Selection.MoveRight , 1
 End Sub
+
 

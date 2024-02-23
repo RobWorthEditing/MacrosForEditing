@@ -1,6 +1,6 @@
 Sub PunctuationOff()
-' Paul Beverley - Version 06.03.23
-' Delete the next punctuation item
+' Paul Beverley - Version 30.06.23
+' Deletes the next punctuation item
 
 myChars = ""
 myChars = myChars + ";:.,\!\?"
@@ -8,6 +8,8 @@ myChars = myChars + ";:.,\!\?"
 myChars = myChars + ChrW(8216) & ChrW(8217) & ChrW(8220) & ChrW(8221)
 ' Straight quotes
 myChars = myChars + "'" & Chr(34)
+' Ellipsis
+myChars = myChars + ChrW(8230)
 ' Brackets
 myChars = myChars + "\(\)\[\]\{\}"
 
@@ -23,13 +25,17 @@ With Selection.Find
   .MatchWildcards = True
   .MatchWholeWord = False
   .MatchSoundsLike = False
-  .Execute Replace:=wdReplaceOne
+  .Execute
 End With
-Selection.MoveRight , 1
 
 With Selection.Find
   .Text = oldFind
   .MatchWildcards = False
 End With
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+Selection.Delete
+rng.Select
 End Sub
 

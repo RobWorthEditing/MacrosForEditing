@@ -1,0 +1,13 @@
+Sub FieldCodesVisible()
+' Paul Beverley - Version 24.10.23
+' Switches between fields being visible and not visible
+
+Set rng = Selection.Range.Duplicate
+ActiveWindow.View.ShowFieldCodes = Not ActiveWindow.View.ShowFieldCodes
+rng.Select
+ActiveDocument.ActiveWindow.LargeScroll up:=1
+rng.Select
+ActiveDocument.ActiveWindow.SmallScroll up:=1
+End Sub
+
+

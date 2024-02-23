@@ -1,12 +1,12 @@
 
 Sub HighlightAllItalic()
-' Paul Beverley - Version 04.03.23
-' Highlights all text in italic
+' Paul Beverley - Version 07.05.23
+' Highlights all text in italic (including in notes)
 
 myColour = wdYellow
+
 oldColour = Options.DefaultHighlightColorIndex
 Options.DefaultHighlightColorIndex = myColour
-
 Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
@@ -20,9 +20,28 @@ With rng.Find
   .Replacement.Highlight = True
   .Execute Replace:=wdReplaceAll
 End With
+If ActiveDocument.Footnotes.count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+  With rng.Find
+    .Text = ""
+    .Font.Italic = True
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+If ActiveDocument.Endnotes.count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  With rng.Find
+    .Text = ""
+    .Font.Italic = True
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
 Options.DefaultHighlightColorIndex = oldColour
 End Sub
-
 
 
 

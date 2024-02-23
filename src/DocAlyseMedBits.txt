@@ -1,5 +1,5 @@
 Sub DocAlyseMedBits()
-Version 28.11.11
+' Paul Beverley - Version 28.11.11
 ' Thiers Halliwell's medical bits:
 
 ' bd, bds, bid b.i.d

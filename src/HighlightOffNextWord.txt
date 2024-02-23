@@ -1,7 +1,11 @@
 Sub HighlightOffNextWord()
-' Paul Beverley - Version 15.05.21
+' Paul Beverley - Version 15.04.23
 ' Unhighlights the next word that has some highlighting
 
+doTrack = False
+
+myTrack = ActiveDocument.TrackRevisions
+If doTrack = False Then ActiveDocument.TrackRevisions = False
 Do
   Selection.Collapse wdCollapseEnd
   Selection.MoveRight wdWord, 1, Extend:=wdExtend
@@ -11,6 +15,6 @@ Loop Until myCol <> wdNoHighlight Or Selection = vbCr
 Selection.Range.HighlightColorIndex = wdNoHighlight
 If Selection = vbCr Then Beep
 Selection.Collapse wdCollapseEnd
+If doTrack = False Then ActiveDocument.TrackRevisions = myTrack
 End Sub
-
 

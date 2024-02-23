@@ -1,0 +1,22 @@
+Sub ReferenceErrorHighlight()
+' Paul Beverley - Version 19.07.23
+' Highlights references that aren't found
+
+For Each fld In ActiveDocument.Fields
+  If fld.Type = 3 Then
+    myResult = fld.Result
+    myResult = Mid(myResult, 2)
+    If myResult = "0" Then
+      fld.Select
+      Selection.MoveStart , -8
+      Selection.MoveEnd , 1
+      Selection.Range.HighlightColorIndex = wdBrightGreen
+      Selection.Collapse wdCollapseEnd
+    End If
+  End If
+  DoEvents
+Next fld
+Beep
+Selection.HomeKey Unit:=wdStory
+End Sub
+

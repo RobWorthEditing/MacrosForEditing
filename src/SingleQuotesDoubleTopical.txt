@@ -1,27 +1,26 @@
 Sub SingleQuotesDoubleTopical()
-' Paul Beverley - Version 14.01.23
+' Paul Beverley - Version 20.07.23
 ' Changes single quotes around current text to doubles
 
-Set rng = Selection.Range.Duplicate
-rng.Collapse wdCollapseStart
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = ChrW(8216)
-  .Wrap = wdFindContinue
-  .Forward = False
-  .Replacement.Text = ChrW(8220)
-  .MatchWildcards = False
-  .Execute Replace:=wdReplaceOne
-  DoEvents
-End With
+myRange = 60
+' doUSpunctuation = False
+doUSpunctuation = True
 
 Set rng = Selection.Range.Duplicate
-rng.Collapse wdCollapseEnd
-With rng.Find
+Selection.MoveStartUntil cset:=ChrW(8216), count:=wdBackward
+If Len(Selection) > myRange Then
+  Beep
+  Exit Sub
+End If
+Selection.Collapse wdCollapseStart
+Selection.MoveStart , -1
+Selection.TypeText Text:=ChrW(8220)
+rng.Select
+Selection.Collapse wdCollapseEnd
+With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = ChrW(8217) & "[!a-zA-Z]"
+  .Text = "['" & ChrW(8217) & "][!a-z]"
   .Wrap = wdFindContinue
   .Forward = True
   .Replacement.Text = ""
@@ -29,13 +28,16 @@ With rng.Find
   .Execute
   DoEvents
 End With
-If rng.Find.Found Then
-  rng.MoveEnd , -1
-  rng.Text = ChrW(8221)
-  rng.Collapse wdCollapseEnd
-  rng.Select
-Else
-  Beep
+Selection.MoveEnd , -1
+Selection.Delete
+If doUSpunctuation = True Then
+  Selection.MoveEnd , 1
+  If InStr(".,", Selection.Text) > 0 Then
+    Selection.Collapse wdCollapseEnd
+  Else
+    Selection.Collapse wdCollapseStart
+  End If
 End If
+Selection.TypeText Text:=ChrW(8221)
 End Sub
 

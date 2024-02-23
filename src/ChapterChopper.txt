@@ -1,140 +1,79 @@
 Sub ChapterChopper()
-' Paul Beverley - Version 16.04.22
-' Chops a book file into a set of chapter files
+' Paul Beverley - Version 20.10.23
+' Chops a book file into separate chapter files
 
-' addPrefix = "Alice "
-addPrefix = "AA"
+' On a Mac, you will need something like:
+myFolder = "/Users/Paul/My Documents/My book folder/"
 
-' Add highlight to...
-' myChapterTitle = "Chapter 1.^p"
-' myChapterTitle = "Part 1:"
-' myChapterTitle = "Chapter 1^p"
-' myChapterTitle = "1^p"
-' myChapterTitle = "1.^p"
-' myChapterTitle = "1.^p"
-myChapterTitle = "CHAPTER 1"
+' On Windows, you will need something like:
+myFolder = "C:\Documents and Settings\Paul\My book folder\"
 
-myMarkerColour = wdBrightGreen
-addLeadingZero = True
+myFind = "[^13^12][0-9][0-9] "
+myMoveStart = 1
+myFontSize = 22
+myFirstFilename = "00"
+myChapterPrefix = "Chapter "
+' myChapterPrefix = ""
 
-Do
-  myText = InputBox("1: Add highlighting" & vbCr & _
-       "2: Chop and save file", "ChapterChopper")
-  myNumber = Val(myText)
-  If myNumber = 0 Then Beep: Exit Sub
-Loop Until myNumber = 1 Or myNumber = 2
-
-If myNumber = 1 Then GoTo addHighlight
-Beep
-myResponse = MsgBox("Chop and save?", _
+myResponse = MsgBox("Have you created a ""aaBlank"" file?", _
      vbQuestion + vbYesNo, "ChapterChopper")
 If myResponse <> vbYes Then Exit Sub
 
-Dim chapStart(50) As Long
-Dim chapEnd(50) As Long
-Dim fileName(50) As String
-
-myFolder = ActiveDocument.FullName
-myName = ActiveDocument.Name
-myFolder = Replace(myFolder, myName, "")
-Set rng = ActiveDocument.Content
-With rng.Find
+Set myChapter = ActiveDocument.Content
+Set rngSource = ActiveDocument.Content
+theVeryEnd = rngSource.End
+With rngSource.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = ""
-  .Highlight = True
-  .Wrap = wdFindStop
-  .Replacement.Text = ""
-  .Forward = True
-  .MatchWildcards = False
-  .Execute
-End With
-myFile = 1
-noNoChars = ".,:!" & ChrW(12)
-Do While rng.Find.Found = True
-  chapStart(myFile) = rng.Start
-  endChapNow = rng.Start - 1
-  lastChar = Right(rng, 1)
-  If InStr(noNoChars, lastChar) > 0 Then
-    rng.Select
-    Beep
-    myResponse = MsgBox("Illegal character highlighted", , "ChapterChopper")
-    Exit Sub
-  End If
-  myText = Replace(rng.Text, vbCr, "")
-Debug.Print myText & "|"
-  If addLeadingZero = True Then
-    spPos = InStr(myText, " ")
-    If spPos > 0 Then
-      myChapNum = Val(Mid(myText, spPos + 1))
-      If myChapNum < 10 Then
-        myText = Left(myText, spPos) & "0" & Right(myText, 1)
-      End If
-    End If
-    If Len(myText) = 1 Then
-      myText = "0" & myText
-    End If
-  End If
-  fileName(myFile) = myText
-  If rng.Font.Underline <> 0 Then
-    rng.Expand wdParagraph
-    rng.Collapse wdCollapseEnd
-    chapStart(myFile) = rng.Start
-  End If
-  If myFile > 1 Then chapEnd(myFile - 1) = endChapNow - 1
-  endChapWas = endChapNow
-  rng.Collapse wdCollapseEnd
-  rng.Find.Execute
-  DoEvents
-  myFile = myFile + 1
-Loop
-chapEnd(myFile - 1) = ActiveDocument.Content.End
-' Debug.Print fileName(myFile - 1), chapStart(myFile - 1), chapEnd(myFile - 1)
-
-Set rng = ActiveDocument.Content
-numFiles = myFile - 1
-For i = 1 To numFiles
-  rng.Start = chapStart(i)
-  rng.End = chapEnd(i)
-  rng.Copy
-  Documents.Add
-  Selection.TypeText Text:=vbCr
-  Selection.MoveLeft , 1
-  Selection.Paste
-  ActiveDocument.SaveAs fileName:=addPrefix & fileName(i)
-  ActiveDocument.Close SaveChanges:=False
-  DoEvents
-Next i
-Beep
-Exit Sub
-
-addHighlight:
-Set rng = ActiveDocument.Content
-myChapterTitle = Replace(myChapterTitle, "1", "[0-9 ]{1,}")
-myChapterTitle = "^13" & Replace(myChapterTitle, "^p", "^13")
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = myChapterTitle
+  .Text = myFind
   .Wrap = wdFindStop
   .Replacement.Text = ""
   .Forward = True
   .MatchWildcards = True
+  .MatchWholeWord = False
   .Execute
 End With
 
-Do While rng.Find.Found = True
-  rng.MoveStart , 1
-  If Right(rng.Text, 1) = "." Or Right(rng.Text, 1) = ":" _
-       Or Right(rng.Text, 1) = vbCr Then rng.MoveEnd , -1
-  ' Just in case there are two!
-  If Right(rng.Text, 1) = "." Or Right(rng.Text, 1) = ":" _
-       Or Right(rng.Text, 1) = vbCr Then rng.MoveEnd , -1
-  rng.HighlightColorIndex = myMarkerColour
-  rng.Collapse wdCollapseEnd
-  rng.Find.Execute
+doContinue = False
+myNextFilename = myFirstFilename
+myCount = 0
+Do While rngSource.Find.Found = True
+  If myMoveStart > 0 Then rngSource.Start = rngSource.Start + myMoveStart
+  myChapter.End = rngSource.Start
+  If doContinue = True Then rngSource.Select
+  If rngSource.Font.Size = myFontSize Then
+    myCount = myCount + 1
+    myFileName = myNextFilename
+    myNextFilename = Trim(rngSource.Text)
+    myChapter.End = rngSource.Start
+    Documents.Open fileName:=myFolder & "aaBlank.docx"
+    Set rng = ActiveDocument.Content
+    rng.FormattedText = myChapter.FormattedText
+    If doContinue = False Then
+      myResponse = MsgBox("Save " & myChapterPrefix & _
+           myFileName & " and continue?", _
+       vbQuestion + vbYesNo, "ChapterChopper")
+      If myResponse <> vbYes Then Exit Sub
+      doContinue = True
+    End If
+    ActiveDocument.SaveAs fileName:=myFolder & myChapterPrefix & myFileName
+    Debug.Print myFileName
+    DoEvents
+    ActiveDocument.Close SaveChanges:=False
+    myChapter.Collapse wdCollapseEnd
+  End If
+  rngSource.Collapse wdCollapseEnd
+  rngSource.Find.Execute
   DoEvents
 Loop
-Beep
+
+myFileName = myNextFilename
+myChapter.End = theVeryEnd
+Documents.Open fileName:=myFolder & "aaBlank.docx"
+Set rng = ActiveDocument.Content
+rng.FormattedText = myChapter.FormattedText
+ActiveDocument.SaveAs fileName:=myFolder & myChapterPrefix & myFileName
+ActiveDocument.Close SaveChanges:=False
+MsgBox "Files created: " & myCount + 1
 End Sub
 

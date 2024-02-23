@@ -1,22 +1,24 @@
 Sub CommentNameChanger()
-' Paul Beverley - Version 06.08.22
+' Paul Beverley - Version 20.07.23
 ' Changes the name attached to comments
 
-newName = "Anon"
-nowName = "Paul Beverley"
-' To change all names, use nowName = ""
+newName = "Referee"
+
+nameToChange = "Paul Beverley"
+' To change ALL names, use nameToChange = ""
+nameToChange = ""
 
 nameNow = Application.UserName
 Application.UserName = newName
 
 For i = 1 To ActiveDocument.Comments.count
   Set cmt = ActiveDocument.Comments(i)
-  If cmt.Contact = nowName Or nowName = "" Then
+  If cmt.Contact = nameToChange Or nameToChange = "" Then
     Set rng = cmt.Scope
     cmt.Range.Copy
     cmt.Delete
-    rng.Select
-    Set newCmt = Selection.Comments.Add(Range:=Selection.Range)
+    Set newCmt = rng.Comments.Add(Range:=rng)
+    ActiveDocument.Comments(i).Edit
     Selection.Paste
     DoEvents
   End If
@@ -24,6 +26,5 @@ Next i
 Application.UserName = nameNow
 ActiveDocument.ActiveWindow.View.SplitSpecial = wdPaneNone
 Beep
-
 End Sub
 

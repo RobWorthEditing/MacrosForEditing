@@ -3,8 +3,6 @@ Sub NavPaneLoad()
 ' Copies selected text into the F&R box
 
 Application.CommandBars ("Navigation")
-' Application.Run NavPane
-' WordBasic NavPane
 
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord
@@ -30,8 +28,6 @@ With Selection.Find
 End With
 Selection.End = Selection.Start
 On Error Resume Next
-' Application.Run MacroName:="EditReplace"
-
 End Sub
 
 

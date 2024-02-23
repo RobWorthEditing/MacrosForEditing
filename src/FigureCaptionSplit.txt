@@ -1,0 +1,40 @@
+Sub FigureCaptionSplit()
+' Paul Beverley - Version 27.10.23
+' Splits a caption into two lines, the second in italic
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+rng.End = rng.End - 1
+' In case the number is a link
+rng.Text = rng.Text
+tabPos = InStr(rng, vbTab)
+If tabPos > 0 Then
+  rng.Start = rng.Start + tabPos - 1
+  rng.End = rng.Start + 1
+Else
+  For i = 1 To rng.Characters.Count
+    If Val(rng.Characters(i)) > 0 Then
+      numStart = i
+      Exit For
+    End If
+    DoEvents
+  Next i
+  For i = numStart To rng.Characters.Count
+  nowPos = i
+    If InStr("0123456789.", rng.Characters(i)) = 0 Then
+      Exit For
+    End If
+    DoEvents
+  Next i
+  rng.Start = rng.Start + nowPos - 1
+  rng.End = rng.Start + 1
+End If
+rng.Delete
+rng.InsertAfter vbCr
+rng.MoveStart , 1
+rng.Expand wdParagraph
+rng.Font.Italic = True
+rng.Collapse wdCollapseStart
+rng.Select
+End Sub
+

@@ -1,0 +1,107 @@
+
+Sub TableSpacingCorrection()
+' Paul Beverley - Version 14.02.24
+' Checks and corrects the one-blank-line spacing of tables and their captions
+
+'Set myRange = Selection.Range.Duplicate
+'myRange.End = ActiveDocument.Content.End
+'For Each myTable In myRange.Tables
+Set myTable = Selection.Tables(1)
+  
+  Set tb = myTable.Range
+  tb.Select
+  ' Add CR after
+  Set rng = tb.Duplicate
+  rng.Collapse wdCollapseEnd
+  rng.InsertBefore Text:="zczc" & vbCr
+  
+  ' Add CR before
+  Set tb = myTable.Range
+  Set rng = tb.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.MoveEnd , -1
+  rng.Expand wdParagraph
+  rng.MoveEnd , -1
+  rng.InsertAfter Text:=vbCr & "zczc"
+    
+' Check for first text para above table
+  Set rng = tb.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.MoveStart wdParagraph, -1
+  Do
+    rng.MoveStart wdParagraph, -1
+    rng.MoveEnd wdParagraph, -1
+    myText = rng.Text
+    DoEvents
+  Loop Until LCase(myText) <> UCase(myText) And Left(myText, 4) <> "zczc"
+  
+  ' Check text above table for a caption
+  If Left(myText, 5) = "Table" Then
+    rng.MoveStart wdParagraph, -1
+    rng.MoveEnd wdParagraph, -1
+
+    ' Check for a blank line before
+    If LCase(myText) <> UCase(myText) Then
+      rng.InsertAfter Text:=vbCr
+    Else
+      If rng.Text <> vbCr Then rng.Text = vbCr
+    End If
+  Else
+    rng.HighlightColorIndex = wdBrightGreen
+  End If
+  ' Record furthest text up
+  allStart = rng.End
+'  rng.Select
+  ' Check rogue space after
+  Set rng = tb.Duplicate
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd wdParagraph, 1
+  Do
+    rng.Collapse wdCollapseEnd
+    rng.Expand wdParagraph
+    myText = rng.Text
+    DoEvents
+    If LCase(myText) = UCase(myText) And _
+         Len(rng) > 0 Then rng.Text = vbCr
+  Loop Until LCase(myText) <> UCase(myText) And Left(myText, 4) <> "zczc"
+  allEnd = rng.End
+  
+    
+  ' Remove double CRs above
+  twoCR = vbCr & vbCr
+  Set rng = tb.Duplicate
+  rng.Start = allStart
+  rng.MoveStart wdParagraph, -1
+  CR2pos = InStr(rng, twoCR)
+  Do While CR2pos > 0
+    rng.Characters(CR2pos) = ""
+    CR2pos = InStr(rng, twoCR)
+  Loop
+    
+  ' Remove double CRs below
+  Set rng = tb.Duplicate
+  rng.Collapse wdCollapseEnd
+  rng.End = allEnd
+  twoCR = vbCr & vbCr
+  CR2pos = InStr(rng, twoCR)
+  Do While CR2pos > 0
+    rng.Characters(CR2pos) = ""
+    CR2pos = InStr(rng, twoCR)
+  Loop
+  
+  ' Remove zczc markers
+  rng.Start = allStart
+  For Each pa In rng.Paragraphs
+    If pa.Range = "zczc" & vbCr Then
+    Set temp = pa.Range.Duplicate
+    temp.MoveEnd , -1
+    temp.Delete
+    End If
+  Next pa
+  tb.Select
+  Selection.Collapse wdCollapseEnd
+  DoEvents
+' Next myTable
+End Sub
+
+

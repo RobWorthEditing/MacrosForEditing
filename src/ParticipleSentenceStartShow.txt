@@ -1,0 +1,28 @@
+Sub ParticipleSentenceStartShow()
+' Paul Beverley - Version 04.01.24
+' Underlines + highlights the participles that start sentences
+
+myHighColour = wdYellow
+' or myHighColour = 0
+' for no highlight
+myUnderline = True
+
+For Each mySent In ActiveDocument.Sentences
+  myWd = Trim(mySent.Words(1))
+  If Len(myWd) > 4 Then
+    If Right(myWd, 3) = "ing" Then
+      If myHighColour > 0 Then _
+           mySent.Words(1).HighlightColorIndex = myHighColour
+      If myUnderline = True Then _
+           mySent.Words(1).Font.Underline = True
+      mySent.Words(1).Select
+      DoEvents
+    End If
+  End If
+Next
+
+End Sub
+
+
+
+

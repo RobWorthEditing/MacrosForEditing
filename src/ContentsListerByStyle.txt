@@ -1,30 +1,47 @@
 Sub ContentsListerByStyle()
-' Paul Beverley - Version 16.07.13
+' Paul Beverley - Version 23.06.23
 ' Create a contents list from numbered heading style
 
 bigFontSize = 12
 
-Selection.WholeStory
-Selection.Copy
-Selection.HomeKey Unit:=wdStory
+Set rngOld = ActiveDocument.Content
 Documents.Add
-Selection.Paste
+Set rng = ActiveDocument.Content
+rng.FormattedText = rngOld.FormattedText
+
 For Each myTable In ActiveDocument.Tables
   myTable.Delete
 Next myTable
 
 For Each myPara In ActiveDocument.Paragraphs
   cutIt = True
-  mySize = myPara.range.Font.Size
+  mySize = myPara.Range.Font.Size
   If mySize > bigFontSize And mySize < 100 Then cutIt = False
-  sfdhlsgk = myPara.range.Style
-  myStyle = Left(myPara.range.Style, 4)
-  myText = myPara.range.Text
-  If Left(myPara.range.Style, 4) = "Head" Then cutIt = False
-  ' If myPara.range.Style = "Heading 4" Then cutIt = True
+  myStyle = Left(myPara.Range.Style, 4)
+  myText = myPara.Range.Text
+  If Left(myPara.Range.Style, 4) = "Head" Then cutIt = False
+  ' If myPara.Range.Style = "Heading 2" Then cutIt = True
+  ' If myPara.Range.Style = "Heading 3" Then cutIt = True
 
-  If cutIt = True Then myPara.range.Delete
+  If cutIt = True Then myPara.Range.Font.Color = wdColorBlue
+  DoEvents
 Next myPara
-
+Beep
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Color = wdColorBlue
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Beep
 End Sub
+
+
 

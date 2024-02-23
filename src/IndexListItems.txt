@@ -1,0 +1,231 @@
+Sub IndexListItems()
+' Paul Beverley - Version 01.02.24
+' Finds page numbers of all the words/phrases given in a list
+
+doWholeWordsOnly = False
+doMatchCase = False
+firstGap = " " & ChrW(8211) & " "
+myLink = ", "
+
+oldColour = Options.DefaultHighlightColorIndex
+Set myDoc = ActiveDocument
+gottaList = False
+For Each myWnd In Application.Windows
+  thisName = myWnd.Document.Name
+  If InStr(LCase(thisName), "list") > 0 Then
+    myWnd.Document.Activate
+    myResponse = MsgBox("Is this your list?" & vbCr & vbCr _
+         & ">>> " & thisName & " <<<", _
+         vbQuestion + vbYesNoCancel, "IndexListItems")
+    If myResponse = vbCancel Then
+      Beep
+      Exit Sub
+    End If
+
+    If myResponse = vbYes Then
+      gottaList = True
+      Exit For
+    End If
+  End If
+Next myWnd
+If gottaList = False Then
+  Beep
+  MsgBox "Can't find a word list."
+  Exit Sub
+End If
+If myDoc.FullName = myWnd.Document.FullName Then
+  Beep
+  MsgBox "Please place the cursor in the text to be" & vbCr & "indexed and rerun the macro."
+  Exit Sub
+End If
+Set myList = myWnd.Document
+Documents.Add
+Set rngIndex = ActiveDocument.Content
+rngIndex.Text = myList.Content.Text
+
+With rngIndex.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^11"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "^13[0-9]{1,}^13^13"
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = " . . . [0-9]{1,}"
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+For i = 1 To rngIndex.Paragraphs.Count
+  Set myItem = rngIndex.Paragraphs(i).Range
+  myText = Replace(myItem.Text, vbCr, "")
+  myFind = myText
+  If Left(myText, 1) = "#" Then
+    Beep
+    ActiveDocument.TrackRevisions = nowTrack
+    Exit Sub
+  End If
+  If Len(myText) > 1 And Left(myText, 1) <> "|" Then
+    thisHighlightColour = myList.Paragraphs(i).Range.Characters(1).HighlightColorIndex
+    Options.DefaultHighlightColorIndex = thisHighlightColour
+    thisTextColour = myList.Paragraphs(i).Range.Characters(1).Font.Color
+' if item is coloured/highlighted do that in the document
+    If thisHighlightColour <> 0 Or thisTextColour <> 0 Then
+      Set rngDoc = myDoc.Content
+      With rngDoc.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Wrap = wdFindContinue
+        .Text = myText
+        .Replacement.Text = "^&"
+        If thisHighlightColour > 0 Then .Replacement.Highlight = True
+        If thisTextColour > 0 Then .Replacement.Font.Color = thisTextColour
+        .MatchCase = doMatchCase
+        .MatchWildcards = False
+        .MatchWholeWord = doWholeWordsOnly
+        .Execute Replace:=wdReplaceAll
+      End With
+      If myDoc.Footnotes.Count > 0 Then
+        Set rngNts = myDoc.StoryRanges(wdFootnotesStory)
+        With rngNts.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .Wrap = wdFindContinue
+          .Text = myText
+          .Replacement.Text = "^&"
+          If thisHighlightColour <> 0 Then .Replacement.Highlight = True
+          If thisTextColour <> 0 Then .Replacement.Font.Color = thisTextColour
+          .MatchCase = doMatchCase
+          .MatchWildcards = False
+          .MatchWholeWord = doWholeWordsOnly
+          .Execute Replace:=wdReplaceAll
+        End With
+      End If
+      If myDoc.Endnotes.Count > 0 Then
+        Set rngNts = myDoc.StoryRanges(wdEndnotesStory)
+        With rngNts.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .Wrap = wdFindContinue
+          .Text = myText
+          .Replacement.Text = "^&"
+          If thisHighlightColour > 0 Then .Replacement.Highlight = True
+          If thisTextColour > 0 Then .Replacement.Font.Color = thisTextColour
+          .MatchCase = doMatchCase
+          .MatchWildcards = False
+          .MatchWholeWord = doWholeWordsOnly
+          .Execute Replace:=wdReplaceAll
+        End With
+      End If
+    End If
+      
+    Set rngDoc = myDoc.Content
+    With rngDoc.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Wrap = wdFindStop
+      .Text = myFind
+      .Replacement.Text = "^&"
+      .MatchCase = doMatchCase
+      .MatchWildcards = False
+      .MatchWholeWord = doWholeWordsOnly
+      .Execute
+      myText = myText & firstGap
+      Do While .Found = True
+        myPg = Trim(Str(rngDoc.Information(wdActiveEndAdjustedPageNumber)))
+        myText = myText & myPg & myLink
+        rngDoc.Collapse wdCollapseEnd
+        rngDoc.Find.Execute
+        DoEvents
+      Loop
+    End With
+    If myDoc.Footnotes.Count > 0 Then
+        Set rngNts = myDoc.StoryRanges(wdFootnotesStory)
+      With rngNts.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Wrap = wdFindStop
+        .Text = myFind
+        .Replacement.Text = "^&"
+        .MatchCase = doMatchCase
+        .MatchWildcards = False
+        .MatchWholeWord = doWholeWordsOnly
+        .Execute
+        If .Found = True Then myText = myText & "  Notes on pp: "
+        Do While .Found = True
+          myPg = Trim(Str(rngNts.Information(wdActiveEndAdjustedPageNumber)))
+          myText = myText & myPg & myLink
+          rngNts.Collapse wdCollapseEnd
+          rngNts.Find.Execute
+          DoEvents
+        Loop
+      End With
+    End If
+    If myDoc.Endnotes.Count > 0 Then
+           Set rngNts = myDoc.StoryRanges(wdEndnotesStory)
+      With rngNts.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Wrap = wdFindStop
+        .Text = myFind
+        .Replacement.Text = "^&"
+        .MatchCase = doMatchCase
+        .MatchWildcards = False
+        .MatchWholeWord = doWholeWordsOnly
+        .Execute
+        If .Found = True Then myText = myText & "  Notes on pp: "
+        Do While .Found = True
+          myPg = Trim(Str(rngNts.Information(wdActiveEndAdjustedPageNumber)))
+          myText = myText & myPg & myLink
+          rngNts.Collapse wdCollapseEnd
+          rngNts.Find.Execute
+          DoEvents
+        Loop
+      End With
+    End If
+    myText = myText & vbCr
+    myText = Replace(myText, myLink & vbCr, vbCr)
+    myItem.Text = myText
+  End If
+  DoEvents
+  If i Mod 3 = 0 Then
+    rngIndex.Paragraphs(i).Range.Select
+    Selection.Collapse wdCollapseEnd
+  End If
+Next i
+Options.DefaultHighlightColorIndex = oldColour
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Text = "(<[0-9]{1,}), \1"
+  .Replacement.Text = "\1"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  .Execute Replace:=wdReplaceAll
+  .Execute Replace:=wdReplaceAll
+  .Execute Replace:=wdReplaceAll
+
+  .Text = ",  "
+  .Replacement.Text = "  "
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+
+
+

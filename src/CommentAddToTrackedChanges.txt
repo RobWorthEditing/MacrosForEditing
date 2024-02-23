@@ -1,0 +1,27 @@
+Sub CommentAddToTrackedChanges()
+' Paul Beverley - Version 06.04.23
+' Adds a blank comment to every tracked change in the selected text
+
+If Selection.Start = Selection.End Then
+  Beep
+  MsgBox "Please select an area of text."
+  Exit Sub
+End If
+Set rng = Selection.Range.Duplicate
+i = 0
+For Each rev In rng.Revisions
+  myType = rev.Type
+  Set rng2 = rev.Range.Duplicate
+  If myType = 2 Then
+    rng2.MoveStart , -1
+    rng2.MoveEnd , 1
+  End If
+  Set cmt = rng2.Comments.Add(Range:=rng2)
+  DoEvents
+  i = i + 1
+Next rev
+Beep
+MsgBox Str(i) & " comments added"
+End Sub
+
+

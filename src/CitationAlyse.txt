@@ -1,5 +1,5 @@
 Sub CitationAlyse()
-' Paul Beverley - Version 06.02.23
+' Paul Beverley - Version 13.11.23
 ' Checks citations against references
 
 myFontColour = wdColorBlue
@@ -17,7 +17,7 @@ notNames = notNames & " Secondly Thirdly Similarly Additionally "
 
 CR = vbCr
 CR2 = CR & CR
-myScreenOff = False
+myScreenOff = True
 
 Dim myCol(4)
 myCol(0) = wdYellow
@@ -104,8 +104,8 @@ Documents.Add
 Selection.Text = rngOld.Text
 
 ' Copy footnotes and endnotes, text only
-gotFoots = (mainDoc.Footnotes.count > 0)
-gotEnds = (mainDoc.Endnotes.count > 0)
+gotFoots = (mainDoc.Footnotes.Count > 0)
+gotEnds = (mainDoc.Endnotes.Count > 0)
 DoEvents
 
 If gotFoots = True And includeNotes = True Then
@@ -149,16 +149,16 @@ Do While rng.Find.Found = True
   endNow = rng.End
   rng.MoveStart wdWord, -1
   rng.MoveEnd wdCharacter, -1
-  rng.Select
+'  rng.Select
   rng.Text = LCase(rng.Text)
   rng.MoveStart wdWord, -1
-  rng.Select
+'  rng.Select
   myMidWord = Left(rng, 3)
   If myMidWord = "und" Or myMidWord = "and" Then
     rng.MoveStart wdWord, -1
     rng.Text = LCase(rng.Text)
   End If
-  rng.Select
+'  rng.Select
   rng.Start = endNow + 2
   rng.End = endNow + 2
   rng.Find.Execute
@@ -233,8 +233,10 @@ Do While rng.Find.Found = True
   rng.Collapse wdCollapseStart
   rng.MoveStart wdWord, -1
   myInit = Left(rng, 1)
-  If UCase(myInit) <> myInit Or UCase(myInit) _
-       = LCase(myInit) Then GoTo getNext
+  Debug.Print rng
+  If (UCase(myInit) <> myInit Or UCase(myInit) _
+       = LCase(myInit)) And Left(rng, 3) <> "and" Then GoTo getNext
+  If Left(rng, 3) = "and" Then rng.Start = rng.Start + 4
   wd1 = Trim(rng)
   rng.Collapse wdCollapseStart
   rng.MoveStart wdWord, -1
@@ -315,7 +317,7 @@ rng.Sort SortOrder:=wdSortOrderAscending, _
      SortFieldType:=wdSortFieldAlphanumeric
 
 ' Remove duplicates
-numPars = ActiveDocument.Paragraphs.count
+numPars = ActiveDocument.Paragraphs.Count
 For j = numPars To 2 Step -1
   Set rng1 = ActiveDocument.Paragraphs(j).Range
   Set rng2 = ActiveDocument.Paragraphs(j - 1).Range
@@ -324,7 +326,7 @@ For j = numPars To 2 Step -1
 Next j
 
 ' Highlight multiple part citations
-numPars = ActiveDocument.Paragraphs.count
+numPars = ActiveDocument.Paragraphs.Count
 Set rng = ActiveDocument.Content
 allText = rng
 myStrike = False
@@ -348,7 +350,7 @@ For i = 1 To numPars
     End With
     Do While rng.Find.Found
       rng.HighlightColorIndex = myCol(baseCol)
-      For j = 1 To rng.Characters.count
+      For j = 1 To rng.Characters.Count
         If (j Mod 5) < 2 Then
           rng.Characters(j).HighlightColorIndex = myCol(addCol)
         End If
@@ -384,7 +386,7 @@ End With
 
 ' Add author name to "ditto" type references
 myPrevAuthor = ""
-For i = 1 To rng.Paragraphs.count
+For i = 1 To rng.Paragraphs.Count
   Set myRef = rng.Paragraphs(i).Range
   myWord = Trim(myRef.Words(1))
   
@@ -403,7 +405,8 @@ For i = 1 To rng.Paragraphs.count
 Next i
 
 Set rng = ActiveDocument.Content
-rng.Sort
+rng.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
 DoEvents
 
 Set rng = ActiveDocument.Content
@@ -433,7 +436,7 @@ Do While Len(para2.Range.Text) < 3
 Loop
 
 notNames = notNames & " "
-For i = ActiveDocument.Paragraphs.count To 2 Step -1
+For i = ActiveDocument.Paragraphs.Count To 2 Step -1
   Set rng = ActiveDocument.Paragraphs(i).Range
   If InStr(notNames, rng.Words(1).Text) > 0 Then _
        rng.Words(1).Delete
@@ -461,11 +464,12 @@ Next myPara
 If rng.Words(1) = "Citation " Then
   rng.Start = rng.Paragraphs(1).Range.End
 End If
-rng.Sort
+rng.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
 DoEvents
 If rng.End = ActiveDocument.Content.End Then _
      rng.InsertAfter Text:=vbCr
-numPars = rng.Paragraphs.count
+numPars = rng.Paragraphs.Count
 myStart = 5
 If numPars < myStart Then myStart = numPars
 For i = myStart To 1 Step -1
@@ -476,7 +480,7 @@ Next i
 ' Add blank line at year change
 Set rng = ActiveDocument.Content
 wasYear = ""
-For i = rng.Paragraphs.count To 1 Step -1
+For i = rng.Paragraphs.Count To 1 Step -1
   myYear = Left(rng.Paragraphs(i).Range.Text, 5)
   If myYear <> wasYear Then _
        rng.Paragraphs(i).Range.InsertAfter Text:=vbCr

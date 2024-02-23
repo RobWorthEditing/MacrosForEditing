@@ -1,4 +1,4 @@
-Sub OpenmySize()
+Sub OpenMySize()
 ' Paul Beverley - Version 02.11.21
 ' Opens the window to a particular size, position and magnification
 

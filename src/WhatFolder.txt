@@ -1,13 +1,10 @@
 Sub WhatFolder()
-' Paul Beverley - Version 10.02.21
+' Paul Beverley - Version 01.09.23
 ' Loads the clipboard with the address of folder of this file
 
 myPath = ActiveDocument.Path
-Set myData = New DataObject
-myData.SetText ""
-myData.PutInClipboard
-myData.SetText myPath
-myData.PutInClipboard
+Selection.InsertAfter Text:=myPath
+Selection.Range.Copy
+WordBasic.EditUndo
 End Sub
-
 

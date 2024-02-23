@@ -1,0 +1,69 @@
+Sub LanguageSwitch()
+' Paul Beverley - Version 16.08.23
+' Switches the language between two or three alternates
+
+Lan1 = wdEnglishUS
+Lan2 = wdEnglishUK
+Lan3 = wdEnglishCanadian
+' for two languages only, use:
+' Lan3 = 0
+
+' If you want all the styles to be language-set as well,
+' make it true:
+setStyleLanguage = False
+'setStyleLanguage = True
+
+nowLanguage = Selection.Range.LanguageID
+If Lan3 <> 0 Then
+  Select Case nowLanguage
+    Case Lan1: myLanguage = Lan2
+    Case Lan2: myLanguage = Lan3
+    Case Lan3: myLanguage = Lan1
+    Case Else: myLanguage = Lan1
+  End Select
+Else
+  Select Case nowLanguage
+    Case Lan1: myLanguage = Lan2
+    Case Lan2: myLanguage = Lan1
+    Case Else: myLanguage = Lan1
+  End Select
+End If
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+ActiveDocument.Content.LanguageID = myLanguage
+For Each aStory In ActiveDocument.StoryRanges
+  Do
+    aStory.LanguageID = myLanguage
+    If aStory.NextStoryRange Is Nothing Then
+      MoreStoryRanges = False
+    Else
+      MoreStoryRanges = True
+      Set aStory = aStory.NextStoryRange
+    End If
+  Loop While MoreStoryRanges
+  DoEvents
+Next aStory
+If setStyleLanguage = True Then
+  For i = 1 To ActiveDocument.Styles.count
+    Set sty = ActiveDocument.Styles(i)
+    If sty.Type = wdStyleTypeParagraph Then _
+         sty.LanguageID = myLanguage
+    DoEvents
+  Next i
+End If
+If ActiveDocument.Shapes.count > 0 Then
+  For Each shp In ActiveDocument.Shapes
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.HasText Then
+        shp.TextFrame.TextRange.LanguageID = myLanguage
+      End If
+    End If
+    DoEvents
+  Next
+End If
+ActiveDocument.SpellingChecked = False
+ActiveDocument.GrammarChecked = False
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

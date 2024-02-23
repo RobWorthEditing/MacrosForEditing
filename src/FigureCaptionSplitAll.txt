@@ -1,0 +1,74 @@
+Sub FigureCaptionSplitAll()
+' Paul Beverley - Version 29.10.23
+' Splits all captions into two lines, the second in italic
+
+allMyCaps = "Fig Figure Table Box "
+maxSentences = 3
+maxWords = 50
+minWords = 2
+
+Beep
+myResponse = MsgBox("Split ALL captions? Really?!" _
+     , vbQuestion + vbYesNoCancel, "FigureCaptionSplitAll")
+If myResponse <> vbYes Then Exit Sub
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+rng.Collapse wdCollapseStart
+rng.End = ActiveDocument.Content.End
+Do
+  thisCap = Trim(rng.Words(1))
+  doThisOne = (InStr(allMyCaps, thisCap) > 0)
+  Debug.Print thisCap, doThisOne
+  If doThisOne Then
+    rng.Collapse wdCollapseStart
+    rng.Expand wdParagraph
+    Debug.Print rng.Words.Count
+    If rng.Sentences.Count > maxSentences Then doThisOne = False
+    If rng.Words.Count > maxWords Then doThisOne = False
+    If rng.Words.Count < minWords + 2 Then doThisOne = False
+  End If
+  If doThisOne Then
+    rng.End = rng.End - 1
+    ' In case the number is a link
+    rng.Text = rng.Text
+    tabPos = InStr(rng, vbTab)
+    If tabPos > 0 Then
+      rng.Start = rng.Start + tabPos - 1
+      rng.End = rng.Start + 1
+    Else
+      For j = 1 To rng.Characters.Count
+        If Val(rng.Characters(j)) > 0 Then
+          numStart = j
+          Exit For
+        End If
+        DoEvents
+      Next j
+      For j = numStart To rng.Characters.Count
+      nowPos = j
+        If InStr("0123456789.", rng.Characters(j)) = 0 Then
+          Exit For
+        End If
+        DoEvents
+      Next j
+      rng.Start = rng.Start + nowPos - 1
+      rng.End = rng.Start + 1
+    End If
+    rng.Delete
+    rng.InsertAfter vbCr
+    rng.MoveStart , 1
+    rng.Expand wdParagraph
+    rng.Font.Italic = True
+    rng.Select
+    rng.Collapse wdCollapseEnd
+  Else
+    rng.Collapse wdCollapseStart
+    rng.Expand wdParagraph
+    rng.Collapse wdCollapseEnd
+  End If
+  DoEvents
+  rng.End = ActiveDocument.Content.End
+Loop Until rng.Paragraphs.Count < 2
+Beep
+End Sub
+

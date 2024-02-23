@@ -1,0 +1,30 @@
+Sub OddLanguageHighlighter()
+' Paul Beverley - Version 12.04.23
+' Highlights any characters NOT in the chosen language
+
+myLanguage = Selection.LanguageID
+
+Set rng = ActiveDocument.Content
+rng.Start = Selection.Start
+For h = 1 To rng.Paragraphs.count
+  If rng.Paragraphs(h).Range.LanguageID <> myLanguage Then
+    For i = 1 To rng.Paragraphs(h).Range.Words.count
+      If rng.Paragraphs(h).Range.Words(i).LanguageID <> myLanguage Then
+        For j = 1 To Len(rng.Paragraphs(h).Range.Words(i))
+          If rng.Paragraphs(h).Range.Words(i).Characters(j).LanguageID _
+              <> myLanguage Then
+            rng.Paragraphs(h).Range.Words(i).Characters(j).HighlightColorIndex _
+                 = wdYellow
+          End If
+          DoEvents
+        Next j
+      End If
+      DoEvents
+    Next i
+  End If
+  If h Mod 50 = 0 Then rng.Paragraphs(h).Range.Select
+  DoEvents
+Next h
+End Sub
+
+

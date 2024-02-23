@@ -1,13 +1,19 @@
 Sub QuotesAddDouble()
-' Paul Beverley - Version 08.12.22
+' Paul Beverley - Version 11.12.23
 ' Adds quotes round a word or phrase
 
-addHighlight = True
+useUSpunctuation = True
+
+addHighlight = False
 myColour = wdBrightGreen
 
 ' doubles
 myOpen = ChrW(8220)
 myClose = ChrW(8221)
+
+' Or singles
+' myOpen = ChrW(8216)
+' myClose = ChrW(8217)
 
 If Selection = "." Then Selection.MoveLeft , 1
 Set rng = Selection.Range.Duplicate
@@ -25,6 +31,11 @@ Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
   rng.MoveEnd , -1
   DoEvents
 Loop
+If useUSpunctuation = True Then
+  rng.MoveEnd , 1
+  If InStr(",.!?", Right(rng.Text, 1)) = 0 Then rng.MoveEnd , -1
+End If
+
 rng.Collapse wdCollapseEnd
 rng.InsertAfter Text:=myClose
 If addHighlight = True Then

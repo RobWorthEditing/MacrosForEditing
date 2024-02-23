@@ -1,0 +1,32 @@
+Sub ItalicSpeechToSingleQuotes()
+' Paul Beverley - Version 04.05.22
+' Finds italic text, Romanises it and adds single quotes
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Wrap = wdFindStop
+  .Font.Italic = True
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  endNow = rng.End
+  rng.InsertBefore Text:=ChrW(8216)
+  rng.Font.Italic = False
+  If Right(rng.Text, 1) = vbCr Then rng.MoveEnd , -1
+  rng.InsertAfter Text:=ChrW(8217)
+  i = i + 1
+  If i Mod 10 = 0 Then rng.Select
+  rng.Start = endNow + 1
+  rng.End = endNow + 1
+  rng.Find.Execute
+  DoEvents
+Loop
+End Sub
+

@@ -1,24 +1,23 @@
 Sub MultiFileText()
-' Paul Beverley - Version 07.02.23
+' Paul Beverley - Version 16.11.23
 ' Collects text plus simple formatting from multiple files
 
 spaceEquations = True
 listOff = True
 addFilename = True
 convertMathsItems = True
-remindAboutCancel = False
+remindAboutCancel = True
 
 myScreenOff = True
 
 CR2 = vbCr & vbCr
-Dim allMyFiles(200) As String
+Dim allMyFiles2(200) As String
 Set rng = ActiveDocument.Content
 myExtent = 250
+myDelay = 10
 
 ' First find if this is a Mac or a PC!
-myFullName = ActiveDocument.FullName
-myName = ActiveDocument.Name
-myFolder = Replace(myFullName, myName, "")
+myFolder = ActiveDocument.Path
 myDelimiter = Application.PathSeparator
 If myDelimiter = "/" Then
   InAMac = True
@@ -34,9 +33,9 @@ If InStr(LCase(rng.Text), ".doc") = 0 _
   If remindAboutCancel = True Then myResponse = _
        MsgBox("Navigate to the required folder; then press 'Cancel'" _
       , , "Multifile Text Collection")
-  docCount = Documents.count
+  docCount = Documents.Count
   Dialogs(wdDialogFileOpen).Show
-  If Documents.count > docCount Then ActiveDocument.Close
+  If Documents.Count > docCount Then ActiveDocument.Close
   dirPath = CurDir()
   ChDir dirPath
 ' Read the names of all the files in this directory
@@ -62,7 +61,7 @@ If InStr(LCase(rng.Text), ".doc") = 0 _
   Selection.HomeKey Unit:=wdStory
   Selection.TypeText dirPath
 ' Go back until you hit myDelimiter
-  Selection.MoveStartUntil cset:=myDelimiter, count:=wdBackward
+  Selection.MoveStartUntil cset:=myDelimiter, Count:=wdBackward
   dirName = Selection
   Selection.HomeKey Unit:=wdStory
 
@@ -97,7 +96,7 @@ For Each myPara In ActiveDocument.Paragraphs
   If myFolder = "" Then
     myFolder = lineText
     Selection.Collapse wdCollapseEnd
-    Selection.MoveStartUntil cset:=myDelimiter, count:=wdBackward
+    Selection.MoveStartUntil cset:=myDelimiter, Count:=wdBackward
     Selection.MoveStart , -1
     myDelimiter = Left(Selection, 1)
   Else
@@ -105,7 +104,7 @@ For Each myPara In ActiveDocument.Paragraphs
     If Len(thisFile) > 2 Then
       If Left(thisFile, 1) <> "=" Then
         numFiles = numFiles + 1
-        allMyFiles(numFiles) = thisFile
+        allMyFiles2(numFiles) = thisFile
       End If
     End If
   End If
@@ -119,8 +118,8 @@ gotLanguage = False
 
 For i = 1 To numFiles
 ' Get the folder name, and then the text for the files in the list
-  StatusBar = allMyFiles(i)
-  thisFile = myFolder & myDelimiter & allMyFiles(i)
+  StatusBar = allMyFiles2(i)
+  thisFile = myFolder & myDelimiter & allMyFiles2(i)
   Set myDoc = Application.Documents.Open(fileName:=thisFile)
 
   If gotLanguage = False Then
@@ -128,7 +127,7 @@ For i = 1 To numFiles
     myLanguage = Selection.Range.LanguageID
     gotLanguage = True
   End If
-  numEqns = ActiveDocument.OMaths.count
+  numEqns = ActiveDocument.OMaths.Count
   If numEqns > 0 And spaceEquations = True Then
     For Each myMath In ActiveDocument.OMaths
       myMath.Range.InsertBefore Text:=" "
@@ -140,13 +139,13 @@ For i = 1 To numFiles
   myDoc.Revisions.AcceptAll
   myDoc.TrackRevisions = False
   If listOff = True Then myDoc.ConvertNumbersToText
-  If ActiveDocument.Endnotes.count > 0 Then
+  If ActiveDocument.Endnotes.Count > 0 Then
     Set thisDocRange = myDoc.Content
     thisDocRange.Collapse wdCollapseEnd
     thisDocRange.FormattedText = _
          myDoc.StoryRanges(wdEndnotesStory).FormattedText
   End If
-  If ActiveDocument.Footnotes.count > 0 Then
+  If ActiveDocument.Footnotes.Count > 0 Then
     Set thisDocRange = myDoc.Content
     thisDocRange.Collapse wdCollapseEnd
     thisDocRange.FormattedText = _
@@ -154,7 +153,7 @@ For i = 1 To numFiles
   End If
 
   ' copy all the textboxes to the end of the text
-  shCount = myDoc.Shapes.count
+  shCount = myDoc.Shapes.Count
   If shCount > 0 Then
     Selection.EndKey Unit:=wdStory
     Selection.TypeText vbCr & vbCr
@@ -170,13 +169,13 @@ For i = 1 To numFiles
     Next
   End If
 
-  StatusBar = allMyFiles(i)
+  StatusBar = allMyFiles2(i)
   Selection.HomeKey Unit:=wdStory
   DoEvents
   If addFilename = True Then Selection.TypeText CR2 & "[[[[ " & _
-       allMyFiles(i) & " ]]]]]" & CR2
+       allMyFiles2(i) & " ]]]]]" & CR2
   If convertMathsItems = True Then
-    numMaths = ActiveDocument.OMaths.count
+    numMaths = ActiveDocument.OMaths.Count
     If numMaths > 0 Then
       For Each myMath In ActiveDocument.OMaths
         myMath.Range.Select
@@ -236,6 +235,9 @@ For i = 1 To numFiles
   alltextRng.End = alltextDoc.Range.End
   alltextRng.Start = alltextDoc.Range.End
   alltextRng.Text = rng.Text
+  For j = 1 To myDelay
+    DoEvents
+  Next j
   myDoc.Close SaveChanges:=wdDoNotSaveChanges
 Next i
 
@@ -252,28 +254,40 @@ With rng.Find
   .Replacement.Text = "\1"
   .Replacement.Font.Subscript = True
   .Execute Replace:=wdReplaceAll
+  For j = 1 To myDelay
+    DoEvents
+  Next j
   
-    .ClearFormatting
+  .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "=u=u=(*)=v=v="
   .Replacement.Text = "=\1"
   .Replacement.Font.Superscript = True
   .Font.Underline = True
   .Execute Replace:=wdReplaceAll
-  
+  For j = 1 To myDelay
+    DoEvents
+  Next j
+
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "=b=b=(*)=c=c="
   .Replacement.Text = "\1"
   .Replacement.Font.Bold = True
   .Execute Replace:=wdReplaceAll
-  
+  For j = 1 To myDelay
+    DoEvents
+  Next j
+
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "=i=i=(*)=j=j="
   .Replacement.Text = "\1"
   .Replacement.Font.Italic = True
   .Execute Replace:=wdReplaceAll
+  For j = 1 To myDelay
+    DoEvents
+  Next j
 
 ' Remove optional hyphens
   .ClearFormatting
@@ -282,6 +296,9 @@ With rng.Find
   .Replacement.Text = ""
   .Text = ChrW(172)
   .Execute Replace:=wdReplaceAll
+  For j = 1 To myDelay
+    DoEvents
+  Next j
 End With
 
 Set rng = ActiveDocument.Content
@@ -296,6 +313,9 @@ With rng.Find
   .MatchWholeWord = False
   .Replacement.Text = "[[[[[ "
   .Execute Replace:=wdReplaceAll
+  For j = 1 To myDelay
+    DoEvents
+  Next j
 End With
 ActiveDocument.Paragraphs(3).Range.Bold = True
 Set rng = ActiveDocument.Content
@@ -334,10 +354,4 @@ Application.Visible = True
 On Error GoTo 0
 Resume
 End Sub
-
-
-
-
-
-
 

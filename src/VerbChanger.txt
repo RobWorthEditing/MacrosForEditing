@@ -1,8 +1,8 @@
 Sub VerbChanger()
-' Paul Beverley - Version 19.02.22
+' Paul Beverley - Version 11.12.23
 ' Changes "(to) splodge" <-> "(of/for) splodging"
 
-doBeep = True
+doBeep = False
 preps = "to of for "
 useOf = (Selection.Start = Selection.End)
 If Asc(Selection) = 32 Then Selection.MoveRight , 1
@@ -58,10 +58,15 @@ Else
   Selection.MoveStart , 1
   If Selection = "es" Then Selection.Delete: GoTo ing
   If Selection = "ed" Then
-    spellOK = Application.CheckSpelling(Left(theWord, Len(theWord) - 2))
+    tstWd = Left(theWord, Len(theWord) - 2)
+    spellOK = Application.CheckSpelling(tstWd)
     If spellOK = False And Len(theWord) > 4 Then Selection.Delete: GoTo ing
+    tstWd = tstWd & "ing"
+    spellOK = Application.CheckSpelling(tstWd)
+    If spellOK = True Then Selection.Delete: GoTo ing
   End If
   twoChars = Selection
+  
   Selection.MoveStart , 1
   If Selection = "s" And twoChars <> "ss" Then Selection.Delete
   Selection.Collapse wdCollapseEnd
@@ -79,7 +84,7 @@ Loop
 myWord = rng.Text
 spellOK = Application.CheckSpelling(myWord)
 Set suggList = Application.GetSpellingSuggestions(myWord)
-If suggList.count > 0 And Not (spellOK) Then
+If suggList.Count > 0 And Not (spellOK) Then
   If doBeep = True Then Beep
   rng.Text = suggList.Item(1).Name
 End If

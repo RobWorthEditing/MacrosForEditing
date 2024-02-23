@@ -1,13 +1,13 @@
 Sub FindSamePlace()
-' Paul Beverley - Version 19.11.22
-' Finds the same place in another file
+' Paul Beverley - Version 16.10.23
+' Finds the same place in another open file
 
 ' selectCurrentWord = True
 selectCurrentWord = False
 
 ' Select whole words
-wholeWordsSelect = True
-' wholeWordsSelect = False
+' wholeWordsSelect = True
+wholeWordsSelect = False
 
 
 ' onlyLookInTheseFiles = "_PB"
@@ -21,7 +21,7 @@ notThisFileEnd = "XX"
 alphaOrderUp = True
 
 preserveOriginalFind = False
-doWholeWord = False
+doWholeWordSearch = False
 
 myStep = 10
 minLength = 15
@@ -43,7 +43,7 @@ If Selection.Start = Selection.End Then
     hereNow = Selection.Start
     Selection.HomeKey Unit:=wdLine
     cursorPos = hereNow - Selection.Start
-    Selection.MoveDown Unit:=wdLine, count:=1, _
+    Selection.MoveDown Unit:=wdLine, Count:=1, _
          Extend:=wdExtend
     repeatedSearch = (Len(Selection) > 2 * myStep)
   End If
@@ -77,7 +77,7 @@ End If
 dotsPos = InStr(Selection, " . . ")
 If dotsPos > 0 Then
   Selection.Collapse wdCollapseStart
-  Selection.MoveEndUntil cset:=".", count:=wdForward
+  Selection.MoveEndUntil cset:=".", Count:=wdForward
   Selection.MoveEnd , -1
 End If
 
@@ -109,8 +109,11 @@ Else
   tryThisName = ""
 End If
 
-totWnds = Application.Windows.count
+totWnds = Application.Windows.Count
 
+' What's this for? I dunno!
+' Something to do with having multiple windows
+' open on a single file?
 For i = 1 To totWnds
   Set myDoc = Application.Windows(i).Document
   If myDoc.FullName = thisDoc.FullName Then
@@ -143,13 +146,16 @@ For i = 1 To totWnds - 1
       InStr(myDoc.Name, notThisFile) = 0 Then
     If thisName = tryThisName Then tryThisName = ""
     Set rng = Documents(myDoc).Content
+    Debug.Print myDoc.Name
+    
+    
     With rng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
       .MatchCase = False
       .MatchWildcards = False
       If selectCurrentWord = True And _
-           doWholeWord = True Then
+           doWholeWordSearch = True Then
         .MatchWholeWord = True
       Else
         .MatchWholeWord = False
@@ -171,13 +177,13 @@ For i = 1 To totWnds - 1
         GoTo myEnd
       End If
     Else
-      numFoots = myDoc.Footnotes.count
-      numEnds = myDoc.Endnotes.count
+      numFoots = myDoc.Footnotes.Count
+      numEnds = myDoc.Endnotes.Count
       If numFoots + numEnds > 0 Then
         If numFoots > 0 Then Set rng = _
-             ActiveDocument.StoryRanges(wdFootnotesStory)
+             myDoc.StoryRanges(wdFootnotesStory)
         If numEnds > 0 Then Set rng = _
-            ActiveDocument.StoryRanges(wdEndnotesStory)
+            myDoc.StoryRanges(wdEndnotesStory)
         With rng.Find
           .ClearFormatting
           .Replacement.ClearFormatting
@@ -236,8 +242,8 @@ If tryThisName > "" Then
       rng.Select
       GoTo myEnd
     Else
-      numFoots = myDoc.Footnotes.count
-      numEnds = myDoc.Endnotes.count
+      numFoots = myDoc.Footnotes.Count
+      numEnds = myDoc.Endnotes.Count
       If numFoots + numEnds > 0 Then
         If numFoots > 0 Then Set rng = _
              ActiveDocument.StoryRanges(wdFootnotesStory)
@@ -312,6 +318,7 @@ Beep
 thisDoc.Activate
 
 myEnd:
+If rng.Find.Found = True Then myDoc.Activate
 If preserveOriginalFind = True Then
   Selection.Find.Text = nowFind
      Else

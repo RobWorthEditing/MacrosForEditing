@@ -1,6 +1,6 @@
 Sub UKUShighlight()
-' Paul Beverley - Version 22.11.14
-' Mark US spellings within UK text and vice versa
+' Paul Beverley - Version 02.10.23
+' Marks US spellings within UK text and vice versa
 
 myColour = wdBrightGreen
 minLengthSpell = 3
@@ -28,6 +28,7 @@ For i = 1 To numExceptions
   nextComma = InStr(myList, ",")
   exWord(i) = Left(myList, nextComma - 1)
   myList = Mid(myList, nextComma + 1)
+  DoEvents
 Next i
 
 ' To measure the time taken
@@ -49,6 +50,7 @@ With rng.Find
   .MatchCase = True
   .Replacement.Text = " zczc"
   .Execute Replace:=wdReplaceAll
+  DoEvents
 End With
 
 ' Spellcheck the endnotes
@@ -61,6 +63,7 @@ If ActiveDocument.Endnotes.Count > 0 Then
     .Text = ChrW(8217) & "s"
     .Replacement.Text = " zczc"
     .Execute Replace:=wdReplaceAll
+    DoEvents
   End With
   countWds = rng.Words.Count
   i = 0
@@ -74,6 +77,7 @@ If ActiveDocument.Endnotes.Count > 0 Then
            MainDictionary:=Languages(altLanguage).NameLocal) _
             = True Then wd.HighlightColorIndex = myColour
     End If
+    DoEvents
   Next wd
   With rng.Find
     .ClearFormatting
@@ -81,6 +85,7 @@ If ActiveDocument.Endnotes.Count > 0 Then
     .Text = " zczc"
     .Replacement.Text = ChrW(8217) & "s"
     .Execute Replace:=wdReplaceAll
+    DoEvents
   End With
   For i = 1 To numExceptions
     With rng.Find
@@ -92,6 +97,7 @@ If ActiveDocument.Endnotes.Count > 0 Then
       .MatchCase = False
       .Execute Replace:=wdReplaceAll
     End With
+    DoEvents
   Next i
 End If
 
@@ -104,6 +110,7 @@ If ActiveDocument.Footnotes.Count > 0 Then
     .Text = ChrW(8217) & "s"
     .Replacement.Text = " zczc"
     .Execute Replace:=wdReplaceAll
+    DoEvents
   End With
   countWds = rng.Words.Count
   i = 0
@@ -118,6 +125,7 @@ If ActiveDocument.Footnotes.Count > 0 Then
            MainDictionary:=Languages(altLanguage).NameLocal) _
           = True Then wd.HighlightColorIndex = myColour
     End If
+    DoEvents
   Next wd
   With rng.Find
     .Text = " zczc"
@@ -134,6 +142,7 @@ If ActiveDocument.Footnotes.Count > 0 Then
       .MatchCase = False
       .Execute Replace:=wdReplaceAll
     End With
+    DoEvents
   Next i
 End If
 
@@ -149,6 +158,7 @@ For Each wd In ActiveDocument.Words
   End If
   i = i - 1
   If i Mod 100 = 0 Then StatusBar = "Spellchecking. To go: " & Str(i)
+  DoEvents
 Next wd
 
 ' restore all apostrophe-s
@@ -158,6 +168,7 @@ With rng.Find
   .Replacement.Text = ChrW(8217) & "s"
   .Replacement.Highlight = False
   .Execute Replace:=wdReplaceAll
+  DoEvents
 End With
 For i = 1 To numExceptions
   With rng.Find
@@ -168,6 +179,7 @@ For i = 1 To numExceptions
     .Replacement.Highlight = True
     .MatchCase = False
     .Execute Replace:=wdReplaceAll
+    DoEvents
   End With
 Next i
 
@@ -177,4 +189,6 @@ If totTime > 60 Then MsgBox ((Int(10 * totTime _
 ActiveDocument.TrackRevisions = nowTrack
 StatusBar = ""
 End Sub
+
+
 

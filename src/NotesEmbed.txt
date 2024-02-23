@@ -1,6 +1,9 @@
 Sub NotesEmbed()
-' Paul Beverley - Version 04.02.21
+' Paul Beverley - Version 12.06.23
 ' Embed footnotes or endnotes
+
+deleteNoteNumber = False
+deleteNoteNumber = True
 
 Selection.HomeKey Unit:=wdLine
 If Selection <> "1" And Asc(Selection) <> 9 Then
@@ -27,7 +30,7 @@ Selection.EndKey Unit:=wdStory
 Selection.TypeParagraph
 
 Do
-  Selection.GoTo what:=wdGoToBookmark, Name:="PBnoteStart"
+  Selection.GoTo What:=wdGoToBookmark, Name:="PBnoteStart"
   ' Read the note number
   myStart = Selection.Start
   Selection.End = Selection.Start + 5
@@ -37,38 +40,48 @@ Do
   tbPos = InStr(Selection, vbTab)
   If tbPos > 0 Then myText = Left(myText, tbPos - 1)
   myNote = Val(myText)
-
+  Selection.Collapse wdCollapseStart
+  Selection.MoveLeft , 1
   ' Give up if you've reached the end
   If myNote = 0 Then Exit Do
-
-  ' Select the footnote
-  Selection.Start = myStart
-  Selection.End = myStart
-  Selection.MoveDown Unit:=wdParagraph, Count:=1, Extend:=wdExtend
-  myPara = Selection
-
-  ' If it's a blank line delete it and select the next paragraph
-  If Len(myPara) < 5 Then
-    Selection.Delete
-    Selection.MoveDown Unit:=wdParagraph, Count:=1, Extend:=wdExtend
+  ' Find the following note
+  myFind = "^p" & Trim(Str(myNote + 1))
+  With Selection.Find
+    .Text = myFind
+    .Replacement.Text = ""
+    .Forward = True
+    .Wrap = wdFindStop
+    .Format = False
+    .MatchWildcards = False
+    .Execute
+  End With
+  
+  If Selection.Find.Found = True Then
+    Selection.Collapse wdCollapseStart
+    Selection.MoveRight , 1
+    ' Select the footnote
+    Selection.Start = myStart
+  Else
+    Selection.MoveRight , 2
+    Selection.End = ActiveDocument.Content.End - 1
+    If Right(Selection, 1) = vbCr Then Selection.MoveEnd , -1
+    If Right(Selection, 1) = vbCr Then Selection.MoveEnd , -1
   End If
-
-  ' Find a tab or, if not, the first space, i.e. after the note number
+  myNextNote = Selection
+    ' Find a tab or, if not, the first space, i.e. after the note number
   spacePlace = InStr(myPara, Chr(9))
-  If spacePlace = 0 Then spacePlace = InStr(myPara, " ")
+  If spacePlace = 0 Then spacePlace = InStr(myNextNote, " ")
   Selection.MoveEnd , -1
   Selection.MoveStart , spacePlace
   Selection.Copy
   Selection.Start = myStart
-
   ' Delete the used footnote
-  Selection.MoveEnd , 1
   Selection.Delete
   If myNote = 1 Then
     Selection.HomeKey Unit:=wdStory
   Else
     ' Go back to the previous citation
-    Selection.GoTo what:=wdGoToBookmark, Name:="PBlastNote"
+    Selection.GoTo What:=wdGoToBookmark, Name:="PBlastNote"
   End If
 
   ' Find the next citation (superscript number)
@@ -84,7 +97,7 @@ Do
     .Execute
   End With
   ' Delete the superscript number and add a footnote
-  Selection.Delete
+  If deleteNoteNumber = True Then Selection.Delete
 
   ' Bookmark the place
   ActiveDocument.Bookmarks.Add Name:="PBlastNote"

@@ -1,6 +1,6 @@
 Sub PunctuationAfterCitation()
 ' Paul Beverley - Version 17.10.22
-' Moves the next punctuation mark to after the citation
+' Moves the full point (period) to after the citation
 
 Selection.Collapse wdCollapseStart
 Set rng = Selection.Range.Duplicate

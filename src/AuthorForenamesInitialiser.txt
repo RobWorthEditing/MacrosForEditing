@@ -1,5 +1,5 @@
 Sub AuthorForenamesInitialiser()
-' Paul Beverley - Version 15.06.19
+' Paul Beverley - Version 20.12.23
 ' Changes author forenames to initials
 
 ' For numeric keypad
@@ -14,7 +14,7 @@ addFullPt = True
 ' nextParaKey = "'"
 ' stopKey = "]"
 
-Set rng = Selection.range.Duplicate
+Set rng = Selection.Range.Duplicate
 myPosn = rng.Start
 rng.Expand wdParagraph
 For i = 1 To rng.Words.Count
@@ -33,10 +33,22 @@ Do
          (UCase(myInit) = myInit) And (UCase(wd) <> wd) Then
       wd.Select
       If Right(wd, 1) = " " Then sp = " " Else sp = ""
-      nowWhat = InputBox("Initialise?", "Author Initialiser")
-      If nowWhat = initialKey Then wd.Text = myInit & sp
+      nowWhat = InputBox("Initialise?", "AuthorForenamesInitialiser")
+      If nowWhat = initialKey Then
+        wd.Text = myInit & sp
+        DoEvents
+      End If
       If nowWhat = nextParaKey Then Exit For
       If nowWhat = stopKey Then Exit Sub
+      If InStr(initialKey & nextParaKey & stopKey, nowWhat) = 0 Then
+        Beep
+        myResponse = MsgBox("Have you read the instruction for this macro?!", _
+             vbQuestion + vbYesNoCancel, "AuthorForenamesInitialiser")
+        If myResponse <> vbYes Then
+          MsgBox "See chapter 12 of my book at http://wordmacrotools.com"
+          Exit Sub
+        End If
+      End If
     End If
   Next i
   posNow = wd.Start
@@ -45,12 +57,12 @@ Do
   edPos = InStr(LCase(Selection), " ed")
   If edPos = 0 Then edPos = InStr(LCase(Selection), "(ed")
   If edPos > 0 Then
-    Set rng = Selection.range.Duplicate
+    Set rng = Selection.Range.Duplicate
     rng.Start = posNow + edPos
     Beep
   Else
     Selection.Collapse wdCollapseEnd
-    Set rng = Selection.range.Duplicate
+    Set rng = Selection.Range.Duplicate
     rng.Collapse wdCollapseEnd
     rng.Expand wdParagraph
   End If

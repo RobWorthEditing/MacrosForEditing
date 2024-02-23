@@ -13,8 +13,6 @@ myFile = "C:\Documents and Settings\Paul\My Documents\Macro stuff\Confusables.do
 ' On a Mac, it will need to be something like:
 myFile = "/Users/Paul/My Documents/Macro stuff/Confusables.docx"
 
-myFile = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\Confusables.docx"
-
 For i = 4 To 100
   myTest = Left(Right(myFile, i), 1)
   If myTest = "\" Or myTest = "/" Then
@@ -181,7 +179,7 @@ With rng.Find
   .Execute
 End With
 
-Options.DefaultHighlightColorIndex = oldColourw
+Options.DefaultHighlightColorIndex = oldColour
 ActiveDocument.TrackRevisions = myTrack
 Beep
 Application.ScreenUpdating = True

@@ -1,6 +1,6 @@
 Sub CommentComposeMenu()
-' Paul Beverley - Version 06.08.21
-' Adds a comment off a menu
+' Paul Beverley - Version 26.05.22
+' Adds a comment off a menu (for modern comments only)
 
 stdName = "Document"
 
@@ -41,7 +41,7 @@ lNum = rng.Information(wdFirstCharacterLineNumber)
 
 ' Begin to compose menu-based comment
 On Error GoTo ReportIt
-Set myDoc = Application.Documents.Open(FileName:=defaultList & ".docx")
+Set myDoc = Application.Documents.Open(fileName:=defaultList & ".docx")
 On Error GoTo 0
 Set menuDoc = ActiveDocument
 
@@ -114,7 +114,7 @@ If gottaCompo = False Then
   Documents.Add
   Selection.TypeText Text:=docName & vbCr & vbCr
 Else
-  If ActiveDocument.Paragraphs.Count > 2 Then
+  If ActiveDocument.Paragraphs.count > 2 Then
     ActiveDocument.Paragraphs(3).Range.Select
     Selection.End = ActiveDocument.Content.End
     Selection.Delete
@@ -195,13 +195,13 @@ If cursorPos > 0 Then
 End If
 Selection.Collapse wdCollapseEnd
 Exit Sub
-' ---------------------------------
+
 
 insertComment:
 Set rng = ActiveDocument.Paragraphs(1).Range
 rng.End = rng.End - 1
 docName = rng.Text
-If ActiveDocument.Paragraphs.Count > 2 Then
+If ActiveDocument.Paragraphs.count > 2 Then
   ActiveDocument.Paragraphs(3).Range.Select
   Selection.End = ActiveDocument.Content.End
 Else
@@ -227,7 +227,7 @@ If Selection.Start = Selection.End And sentenceSelect = True Then
   If Right(Selection, 4) = "al. " Or Right(Selection, 5) = "al., " _
        Or Right(Selection, 5) = "e.g. " Or Right(Selection, 5) = "i.e. " _
        Or Right(Selection, 6) = "e.g., " Or Right(Selection, 6) = "i.e., " Then
-    Selection.MoveRight Unit:=wdSentence, Count:=1, Extend:=wdExtend
+    Selection.MoveRight Unit:=wdSentence, count:=1, Extend:=wdExtend
   End If
   Do While InStr(" " & vbCr, Right(Selection.Text, 1)) > 0
     Selection.MoveEnd , -1
@@ -239,7 +239,7 @@ Set cmt = Selection.Comments.Add(Range:=Selection.Range)
 Selection.Paste
 ActiveWindow.ActivePane.Close
 Exit Sub
-' ---------------------------------
+
 
 ReportIt:
 If Err.Number = 5174 Then
@@ -248,8 +248,5 @@ Else
   On Error GoTo 0
   Resume
 End If
-
 End Sub
-
-
 

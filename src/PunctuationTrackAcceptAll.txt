@@ -1,0 +1,35 @@
+
+Sub PunctuationTrackAcceptAll()
+' Paul Beverley - Version 19.02.24
+' Accepts all track changes that involve punctuation
+
+allPuncts = ".,:;!?…()" & ChrW(8211) & ChrW(8212)
+' en and em dash in line above, four quote marks below
+allPuncts = allPuncts & ChrW(8216) & ChrW(8217) & _
+     ChrW(8220) & ChrW(8221)
+
+For i = 1 To Len(allPuncts)
+  puncString = puncString & "x" & Mid(allPuncts, i, 1)
+Next i
+p = Split(puncString, "x")
+
+For Each rv In ActiveDocument.Revisions
+  myText = rv.Range.Text
+  If rv.Type < 3 Then
+    i = i + 1
+    If i Mod 20 = 0 Then rv.Range.Select
+    doAccept = False
+    For q = 1 To UBound(p)
+      If InStr(myText, p(q)) > 0 Then
+        doAccept = True
+        Exit For
+      End If
+    Next q
+    If doAccept = True Then rv.Accept
+    DoEvents
+  End If
+Next rv
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

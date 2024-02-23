@@ -1,0 +1,26 @@
+Sub SpacedFontFinder()
+' Paul Beverley - Version 19.01.23
+' Finds and highlights/underlines any text with odd spacing
+
+myHiColour = wdYellow
+
+' You can do it per paragraph, which is quicker...
+For Each pa In ActiveDocument.Content.Paragraphs
+  If pa.Range.Font.Spacing <> 0 Then
+  pa.Range.Underline = True
+  End If
+  DoEvents
+Next pa
+
+' Or per word, in case some parts of a para are spaced
+' and some not
+For Each wd In ActiveDocument.Content.Words
+  If wd.Font.Spacing <> 0 Then
+  wd.HighlightColorIndex = myHiColour
+  End If
+  DoEvents
+Next wd
+End Sub
+
+
+

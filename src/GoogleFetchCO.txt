@@ -3,7 +3,7 @@ Sub GoogleFetchCO()
 ' Paul Beverley - Version 02.05.22
 ' Launches selected text on Google
 
-mySite = "http://www.google.co.co/search?q="
+mySite = "http://www.google.com.co/search?q="
 
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord

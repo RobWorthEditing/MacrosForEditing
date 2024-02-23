@@ -1,0 +1,31 @@
+Sub AllCapWordsCollect()
+' Paul Beverley - Version 15.09.23
+' Collects all the words in all caps style
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[a-zA-Z]{1,}"
+  .Font.AllCaps = True
+  .Wrap = wdFindStop
+  .MatchWildcards = True
+  .Execute
+End With
+Documents.Add
+Set rng2 = ActiveDocument.Content
+
+myCount = 0
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  If myCount Mod 20 = 0 Then rng.Select
+  rng2.InsertAfter Text:=rng & "  "
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Beep
+MsgBox "Found: " & myCount
+End Sub
+
+

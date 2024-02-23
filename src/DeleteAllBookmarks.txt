@@ -1,6 +1,7 @@
 Sub DeleteAllBookmarks()
 ' Paul Beverley - Version 18.06.10
-' Delete all bookmarks
+' Deletes all bookmarks
+
 ActiveDocument.Bookmarks.ShowHidden = True
 numberBMs = ActiveDocument.Bookmarks.Count
 If numberBMs > 0 Then

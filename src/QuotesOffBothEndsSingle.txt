@@ -1,6 +1,6 @@
 Sub QuotesOffBothEndsSingle()
 ' Paul Beverley - Version 03.09.22
-' Removes single quotations marks from both ends of a test
+' Removes single quotations marks from both ends of some text
 
 Set rng = Selection.Range.Duplicate
 rng.Collapse wdCollapseStart

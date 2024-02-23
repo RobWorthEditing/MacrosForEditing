@@ -1,0 +1,49 @@
+Sub MarkupDisplaySwitch()
+' Paul Beverley - Version 23.11.23
+' Cycles through track change display levels
+
+' N.B. You need to put a line at the top of the VBA area:
+' Private pbMarkupMode As Integer
+' (but without the ' at the beginning of the line, of course)
+
+includeNoMarkup = True
+
+viewInBalloons = True
+
+Set rng = Selection.Range.Duplicate
+
+If pbMarkupMode = 2 And includeNoMarkup = False Then
+  pbMarkupMode = 3
+End If
+Debug.Print pbMarkupMode
+Select Case pbMarkupMode
+  Case 1: markupNext = wdRevisionsMarkupAll
+        pbMarkupMode = 2
+        Debug.Print "All"
+        StatusBar = "All"
+  Case 2: markupNext = wdRevisionsMarkupNone
+        pbMarkupMode = 3
+        StatusBar = "No markup"
+        Debug.Print "No markup"
+  Case 3: markupNext = wdRevisionsMarkupSimple
+        Debug.Print "Simple"
+        StatusBar = "Simple"
+        pbMarkupMode = 1
+  Case Else
+        markupNext = wdRevisionsMarkupAll
+        pbMarkupMode = 2
+        StatusBar = "All"
+        Debug.Print "All"
+End Select
+With ActiveWindow.View.RevisionsFilter
+  .Markup = markupNext
+  .View = wdRevisionsViewFinal
+End With
+If viewInBalloons = True Then
+  ActiveWindow.View.MarkupMode = wdBalloonRevisions
+Else
+  ActiveWindow.View.MarkupMode = wdInLineRevisions
+End If
+rng.Select
+End Sub
+

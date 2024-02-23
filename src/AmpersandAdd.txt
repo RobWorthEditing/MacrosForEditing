@@ -1,0 +1,15 @@
+Sub AmpersandAdd()
+' Paul Beverley - Version 23.06.23
+' Adds an ampersand in front of the current name
+
+serialComma = False
+serialComma = True
+
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+Selection.MoveLeft , 1
+If serialComma = False Then Selection.MoveStart , -1
+Selection.TypeText Text:=" &"
+End Sub
+
+

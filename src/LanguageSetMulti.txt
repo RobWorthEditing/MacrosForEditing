@@ -1,0 +1,95 @@
+Sub LanguageSetMulti()
+' Paul Beverley - Version 07.06.23
+' Toggles between different language country settings
+
+' Loop through the first <this number> of languages
+numLanguages = 2
+
+' Adjust order and number of languages to taste
+myLanguage1 = wdEnglishUK
+myLanguage2 = wdEnglishUS
+myLanguage3 = wdFrench
+myLanguage4 = wdEnglishNZ
+myLanguage5 = wdEnglishAU
+
+On Error GoTo ReportIt
+nowLanguage = Selection.LanguageID
+ReDim myLang(numLanguages)
+For i = 1 To numLanguages
+  Select Case i
+    Case 1: myLang(i) = myLanguage1
+    Case 2: myLang(i) = myLanguage2
+    Case 3: myLang(i) = myLanguage3
+    Case 4: myLang(i) = myLanguage4
+    Case 5: myLang(i) = myLanguage5
+  End Select
+  DoEvents
+Next i
+myLanguage = myLang(numLanguages)
+For i = 1 To numLanguages
+  If nowLanguage = myLang(i) Then
+    nextNum = i Mod numLanguages + 1
+    myLanguage = myLang(nextNum)
+  End If
+Next i
+
+' If you want all the styles to be language-set as well,
+' make it true:
+setStyleLanguage = False
+' setStyleLanguage = True
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+ActiveDocument.Content.LanguageID = myLanguage
+For Each aStory In ActiveDocument.StoryRanges
+  Do
+    aStory.LanguageID = myLanguage
+    If aStory.NextStoryRange Is Nothing Then
+        MoreStoryRanges = False
+    Else
+        MoreStoryRanges = True
+        Set aStory = aStory.NextStoryRange
+    End If
+  Loop While MoreStoryRanges
+Next aStory
+If ActiveDocument.Shapes.count > 0 Then
+  For Each shp In ActiveDocument.Shapes
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.HasText Then
+        shp.TextFrame.TextRange.LanguageID = myLanguage
+      End If
+    End If
+  Next
+End If
+If setStyleLanguage = True Then
+  For i = 1 To ActiveDocument.Styles.count
+    Set sty = ActiveDocument.Styles(i)
+    If sty.Type = wdStyleTypeParagraph Then _
+         sty.LanguageID = myLanguage
+  Next i
+End If
+ActiveDocument.Styles(wdStyleNormal).LanguageID = myLanguage
+ActiveDocument.Styles(wdStyleCommentText).LanguageID = myLanguage
+ActiveDocument.SpellingChecked = False
+ActiveDocument.GrammarChecked = False
+ActiveDocument.TrackRevisions = myTrack
+Exit Sub
+
+ReportIt:
+myErr = Err.Number
+If myErr = 5843 Then
+  myPrompt = "You don't have language ""myLanguage" & Trim(Str(i - 1)) & _
+       """ installed."
+  myResponse = MsgBox(myPrompt, vbQuestion + vbOKOnly, "LanguageSetMulti")
+  DoEvents
+  myLanguage = myLanguage1
+  Resume Next
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+
+
+
+

@@ -1,0 +1,23 @@
+Sub NTbackupDatedSimple()
+' Paul Beverley - Version 28.10.23
+' Backs up the Normal template with date and time
+
+backupFolder = "Backup"
+
+NTname = NormalTemplate.FullName
+
+' Mac or PC? Use correct delimiter
+If InStr(NTname, "\") = 0 Then
+  backupFolder = backupFolder & "/"
+Else
+  backupFolder = backupFolder & "\"
+End If
+
+' Add date & time
+mySuffix = " " & Format(Now, "_YY-MM-DD-hh-mm")
+mySuffix = Replace(mySuffix, " _", " 20")
+
+newName = Replace(NTname, "Normal", backupFolder & "Normal" & mySuffix)
+ThisDocument.SaveAs newName
+End Sub
+

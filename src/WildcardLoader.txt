@@ -1,9 +1,8 @@
 Sub WildcardLoader()
-' Paul Beverley - Version 11.03.23
-' Tool for wildcards searches
+' Paul Beverley - Version 15.12.23
+' Tool for using wildcard searches
 
 doPrompt = False
-numWordsShow = 3
 
 On Error GoTo ReportIt
 If Selection.Start = Selection.End Then
@@ -15,50 +14,58 @@ If Selection.Start = Selection.End Then
   Else
     ' If not a WC, then open an input box
     rng.MoveEnd , -1
-    myText = rng.Text
-    myCheck = Replace(myText, "[", "")
+    mySearch = rng.Text
+    myCheck = Replace(mySearch, "[", "")
     myCheck = Replace(myCheck, "*", "")
-    If myCheck = myText Then
-      ' It's not a WC (they all have at least one "["!)
-      Selection.Expand wdWord
-      Selection.MoveEnd wdWord, numWordsShow - 1
-      myDefault = Selection
-      Selection.Collapse wdCollapseEnd
-      myWC = InputBox("Text to search: ", "WildcardLoader", myDefault)
-      If myWC = "" Then
-        Beep
+    myCheck = Replace(myCheck, "<", "")
+    myCheck = Replace(myCheck, ">", "")
+    
+    If myCheck <> mySearch Then
+      ' It's a WC
+      doWC = True
+    Else
+      doWC = False
+    ' Warn if too long
+      If Len(mySearch) > 254 Then
+        myResponse = MsgBox("Search text too long!", _
+             vbOKOnly, "WildcardLoader")
+        rng.Select
         Exit Sub
       End If
-    Else
-    ' pick up WC
-      myWC = rng
+      mySearch = rng
       rng.Select
       Selection.Collapse wdCollapseEnd
     End If
   End If
 Else
-  If Len(Trim(Selection)) < 3 Then
+  If Right(Selection, 1) = vbCr Then _
+       Selection.MoveEnd , -1
+  If InStr(Trim(Selection), " ") = 0 Then
   ' Only one word selected? Switch order of FollowedBy
+    doWC = True
     myText = Selection.Find.Text
     wcPos = InStr(myText, "[!^13]@")
     If wcPos > 0 Then
       myLast = Left(myText, wcPos - 1)
       myFirst = Mid(myText, wcPos + 7)
-      myWC = myFirst & "[!^13]@" & myLast
+      mySearch = myFirst & "[!^13]@" & myLast
     Else
     ' If not a FollowedBy then inform user
       Beep
-      myResponse = MsgBox("Current WC: " & vbCr & myText, vbOKOnly, "WildcardLoader")
+      myResponse = MsgBox("Current find:  " & myText & vbCr & vbCr & _
+           "For word-pair search, select the two words." _
+           , vbOKOnly, "WildcardLoader")
       Exit Sub
     End If
-
   Else
   ' Set up FollowedBy
+    doWC = True
     Set rng = Selection.Range.Duplicate
     rng.MoveEnd , -1
     rng.Collapse wdCollapseEnd
     rng.Expand wdWord
-    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    Do While InStr(ChrW(8217) & "' ", _
+         Right(rng.Text, 1)) > 0
       rng.MoveEnd , -1
       DoEvents
     Loop
@@ -69,17 +76,18 @@ Else
     rng.Select
     myFirst = Trim(Selection.Range.Words.First)
     apoPos = InStr(myFirst, ChrW(8217))
-    If apoPos > 0 Then myFirst = Left(myFirst, apoPos - 1)
+    If apoPos > 0 Then myFirst = Left(myFirst, _
+         apoPos - 1)
     init = Left(myFirst, 1)
     If LCase(init) <> UCase(init) Then _
-         myFirst = "[" & LCase(init) & UCase(init) & "]" _
-         & Mid(myFirst, 2)
+         myFirst = "[" & LCase(init) & _
+         UCase(init) & "]" & Mid(myFirst, 2)
     myLast = Trim(Selection.Range.Words.Last)
     init = Left(myLast, 1)
     If LCase(init) <> UCase(init) Then _
          myLast = "[" & LCase(init) & UCase(init) & "]" _
          & Mid(myLast, 2)
-    myWC = myFirst & "[!^13]@" & myLast
+    mySearch = myFirst & "[!^13]@" & myLast
   End If
 End If
 
@@ -91,9 +99,9 @@ With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Wrap = wdFindStop
-  .Text = myWC
+  .Text = mySearch
   .Replacement.Text = ""
-  .MatchWildcards = True
+  .MatchWildcards = doWC
   .Forward = True
   .Execute
   If .Found = True Then
@@ -107,7 +115,6 @@ If Selection.Start = hereNow And _
      Selection.Find.Found = False Then Beep
 ' Leaves F&R dialogue in a sensible state
 Selection.Find.Wrap = wdFindContinue
-Debug.Print Selection.Start, Selection.End, Selection.Find.Found
 
 If Selection.End = 0 Then
   Beep
@@ -118,7 +125,8 @@ If Selection.End = 0 Then
 
   rng.Select
   If doPrompt = True Then myResponse = MsgBox("Sorry, Word's Find is confused by the embedded fields." _
-       & vbCr & vbCr & "Try searching in a text-only copy.", _
+       & vbCr & vbCr _
+       & "Try searching in a text-only copy.", _
        vbOKOnly, "WildcardLoader")
     Selection.EndKey Unit:=wdStory
     With Selection.Find

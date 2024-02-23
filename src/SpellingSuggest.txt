@@ -1,5 +1,5 @@
 Sub SpellingSuggest()
-' Paul Beverley - Version 06.02.23
+' Paul Beverley - Version 12.02.24
 ' Checks/corrects spellings or adds/subtracts FRedit suggested change
 
 If LCase(Selection) = UCase(Selection) Then Selection.MoveLeft , 1
@@ -9,6 +9,10 @@ Do While InStr(ChrW(8217) & "' ", Right(rngWd.Text, 1)) > 0
   rngWd.MoveEnd , -1
   DoEvents
 Loop
+a = rngWd.Characters(1)
+b = rngWd.Characters(2)
+If UCase(a) = a And UCase(b) = b Then _
+     rngWd.Characters(2) = LCase(b)
 myWord = rngWd
 newWord = myWord
 
@@ -26,7 +30,7 @@ StatusBar = langName & "    " & langName1 & "    " & langName2
 
 Set rng = Selection.Range.Duplicate
 rng.Expand wdParagraph
-wdsInPara = rng.Words.count
+wdsInPara = rng.Words.Count
 myPara = rng
 initChar = Left(myWord, 1)
 lastChar = Right(myWord, 1)
@@ -34,7 +38,7 @@ lastChar = Right(myWord, 1)
 spellOK = Application.CheckSpelling(myWord, MainDictionary:=langName)
 Set suggList = Application.GetSpellingSuggestions(myWord, _
      MainDictionary:=langName)
-If suggList.count > 0 And Not (spellOK) Then _
+If suggList.Count > 0 And Not (spellOK) Then _
      newWord = suggList.Item(1).Name
 
 ' If initial letter is a capital keep the capital
@@ -46,7 +50,7 @@ If LCase(lastChar) <> lastChar Then _
      newWord = UCase(newWord)
 
 ' If it's the only word in the para (a FRedit list)
-If wdsInPara < 3 And ActiveDocument.Words.count > 10 Then
+If wdsInPara < 3 And ActiveDocument.Words.Count > 10 Then
   oldWord = myWord
   Selection.Expand wdWord
   Selection.Collapse wdCollapseEnd
@@ -67,6 +71,8 @@ Else
     Loop Until Timer > myTime + 0.2
     Beep
     rngWd.Text = newWord
+    rngWd.Select
+    Selection.Collapse wdCollapseEnd
   Else
     spellOK = Application.CheckSpelling(myWord, _
          MainDictionary:=langName)

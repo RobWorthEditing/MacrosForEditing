@@ -1,0 +1,48 @@
+Sub PunctuationToApostrophe()
+' Paul Beverley - Version 01.02.24
+' Changes next quote mark to an apostrophe
+
+trackIt = True
+
+newChar = ChrW(8217)
+
+searchChars = Chr(34) & Chr(39) & ChrW(8216) _
+       & ChrW(8220) & ChrW(8221) & ChrW(8249) & ChrW(8250) _
+       & ChrW(8222) & ChrW(8218) & ChrW(171) & ChrW(187) & ChrW(96) _
+       & ChrW(8242) & ChrW(8243)
+
+Set rng = Selection.Range.Duplicate
+
+For i = 1 To 1000
+  rng.MoveEnd , 1
+  If InStr(searchChars, Right(rng, 1)) > 0 Then
+    rng.Start = rng.End - 1
+    gotChar = True
+    Exit For
+  End If
+Next i
+If gotChar = False Then
+  Beep
+  Exit Sub
+End If
+
+ch = Right(rng, 1)
+Selection.Collapse wdCollapseStart
+
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ch
+  .Replacement.Text = ""
+  .Execute
+End With
+Selection.TypeText Text:=newChar
+Selection.Collapse wdCollapseEnd
+
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+
+

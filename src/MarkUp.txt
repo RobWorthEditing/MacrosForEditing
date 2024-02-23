@@ -1,0 +1,49 @@
+
+Sub Markup()
+' Paul Beverley - Version 21.05.23
+' Cycles through track change display levels
+
+' N.B. You need to put a line at the top of the VBA area:
+' Private pbMarkupMode As Integer
+' (but without the ' at the beginning of the line, of course)
+
+includeOriginal = True
+
+If pbMarkupMode = 2 And includeOriginal = False Then
+  pbMarkupMode = 3
+End If
+
+Select Case pbMarkupMode
+  Case 1: stateNext = wdRevisionsMarkupAll
+        viewNext = wdRevisionsViewFinal
+        pbMarkupMode = 2
+        Debug.Print "All"
+        StatusBar = "All"
+  Case 2: stateNext = wdRevisionsMarkupOriginal
+        viewNext = wdRevisionsViewOriginal
+        pbMarkupMode = 3
+        StatusBar = "Original"
+        Debug.Print "Original"
+  Case 3: stateNext = wdRevisionsMarkupNone
+        viewNext = wdRevisionsViewFinal
+        pbMarkupMode = 4
+        StatusBar = "None"
+        Debug.Print "None"
+  Case 4: stateNext = wdRevisionsMarkupSimple
+        viewNext = wdRevisionsViewFinal
+        Debug.Print "Simple"
+        StatusBar = "Simple"
+        pbMarkupMode = 1
+  Case Else
+        stateNext = wdRevisionsMarkupAll
+        viewNext = wdRevisionsViewFinal
+        pbMarkupMode = 2
+        StatusBar = "All"
+        Debug.Print "All"
+End Select
+With ActiveWindow.View.RevisionsFilter
+  .Markup = stateNext
+  .View = viewNext
+End With
+End Sub
+

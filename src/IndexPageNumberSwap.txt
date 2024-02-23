@@ -1,0 +1,16 @@
+Sub IndexPageNumberSwap()
+' Paul Beverley - Version 21.11.23
+' Swaps the page number at the cursor with the next number, e.g. 3,6,4,8,10
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdWord
+Set rng2 = Selection.Range.Duplicate
+rng2.Expand wdParagraph
+rng.End = rng2.End
+myFirstNum = rng.Words(1)
+rng.Words(1) = rng.Words(3)
+rng.Words(3) = myFirstNum
+End Sub
+
+
+

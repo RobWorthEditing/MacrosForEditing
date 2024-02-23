@@ -1,5 +1,5 @@
 Sub CountRemainder()
-' Paul Beverley - Version 29.04.22
+' Paul Beverley - Version 27.06.23
 ' Counts words below the cursor
 
 altDisplay = False
@@ -21,9 +21,9 @@ Else
 End If
 
 ' Count remainder
-Selection.End = ActiveDocument.Content.End
-wordsLeft = Selection.Range.ComputeStatistics(wdStatisticWords)
-Selection.Collapse wdCollapseStart
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+wordsLeft = rng.ComputeStatistics(wdStatisticWords)
 
 wordsDone = wordsTotal - wordsLeft
 If altDisplay = True Then

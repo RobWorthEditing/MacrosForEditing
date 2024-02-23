@@ -1,0 +1,26 @@
+
+Sub TableMarginFixer()
+' Paul Beverley - Version 15.02.24
+' Sets table margin to zero and fits to window
+
+Set myRange = Selection.Range.Duplicate
+myRange.End = ActiveDocument.Content.End
+For Each myTable In myRange.Tables
+  If myTable.Rows.LeftIndent <> 0 Then
+    myTable.Range.Select
+    myResponse = MsgBox("Fix this table?", _
+         vbQuestion + vbYesNo, "TableMarginFixer")
+    If myResponse <> vbYes Then Beep: Exit Sub
+    myTable.Rows.LeftIndent = CentimetersToPoints(0) 'moves the whole table to the left margin.
+    myTable.AutoFitBehavior (wdAutoFitWindow) 'fits it to the margins.
+    myResponse = MsgBox("OK? COntinue?", _
+         vbQuestion + vbYesNo, "TableMarginFixer")
+    If myResponse <> vbYes Then Beep: Exit Sub
+  End If
+  DoEvents
+Next myTable
+Beep
+MsgBox "Finished"
+End Sub
+
+

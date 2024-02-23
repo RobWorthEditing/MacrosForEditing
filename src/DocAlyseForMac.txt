@@ -1,6 +1,6 @@
 
 Sub DocAlyseForMac()
-' Version 28.09.19
+' Paul Beverley - Version 28.09.19
 ' Analyses various aspects of a document
 
 showWild = True

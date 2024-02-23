@@ -1,0 +1,11 @@
+Sub CommentJumpToText()
+' Paul Beverley - Version 22.06.22
+' Moves the cursor from the comment back into the text
+
+cursorAtEnd = True
+cursorAtStart = False
+Selection.Comments(1).Scope.Select
+If cursorAtEnd = True Then Selection.Collapse wdCollapseEnd
+If cursorAtStart = True Then Selection.Collapse wdCollapseStart
+End Sub
+

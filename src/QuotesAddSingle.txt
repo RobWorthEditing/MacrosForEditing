@@ -1,8 +1,9 @@
 Sub QuotesAddSingle()
-' Paul Beverley - Version 08.12.22
-' Puts single quotes round the current word or phrase
+' Paul Beverley - Version 19.05.23
+' Adds single quotes round a word or phrase
 
-addHighlight = True
+useUSpunctuation = False
+addHighlight = False
 myColour = wdBrightGreen
 
 ' singles
@@ -25,6 +26,11 @@ Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
   rng.MoveEnd , -1
   DoEvents
 Loop
+If useUSpunctuation = True Then
+  rng.MoveEnd , 1
+  If InStr(",.", Right(rng.Text, 1)) = 0 Then rng.MoveEnd , -1
+End If
+
 rng.Collapse wdCollapseEnd
 rng.InsertAfter Text:=myClose
 If addHighlight = True Then

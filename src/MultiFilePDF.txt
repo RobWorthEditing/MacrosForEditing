@@ -1,3 +1,4 @@
+
 Sub MultiFilePDF()
 ' Paul Beverley - Version 13.12.17
 ' Save a folder full of files as PDFs
@@ -7,7 +8,8 @@ showTrackChanges = True
 pdfFilesInFolder = True
 pdfFolderName = "PDF"
 
-Dim allMyFiles(200) As String
+
+Dim allMyFiles2(200) As String
 Set rng = ActiveDocument.Content
 myExtent = 250
 If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
@@ -15,7 +17,7 @@ If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
 If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
 ' If not a file list then open a file in the relevant folder
   myResponse = MsgBox("Navigate to the required folder; then press 'Cancel'" _
-      , , "Multifile Text Collection")
+      , , "MultifilePDF")
   docCount = Documents.Count
   Dialogs(wdDialogFileOpen).Show
   If Documents.Count > docCount Then ActiveDocument.Close
@@ -60,7 +62,7 @@ End If
 numFiles = 0
 myFolder = ""
 For Each myPara In ActiveDocument.Paragraphs
-  myPara.range.Select
+  myPara.Range.Select
   Selection.MoveEnd , -1
   lineText = Selection
   If myFolder = "" Then
@@ -74,7 +76,7 @@ For Each myPara In ActiveDocument.Paragraphs
     If Len(thisFile) > 2 Then
       If Left(thisFile, 1) <> "|" Then
         numFiles = numFiles + 1
-        allMyFiles(numFiles) = thisFile
+        allMyFiles2(numFiles) = thisFile
       End If
     End If
   End If
@@ -88,12 +90,12 @@ If pdfFilesInFolder = True Then
 End If
 
 For i = 1 To numFiles
-  thisName = allMyFiles(i)
+  thisName = allMyFiles2(i)
   myFileType = Mid(thisName, InStr(thisName, "."))
   justName = Replace(thisName, myFileType, "")
   thisFile = myFolder & myDelimiter & thisName
-  Set myDoc = Application.Documents.Open(FileName:=thisFile)
-  StatusBar = allMyFiles(i)
+  Set myDoc = Application.Documents.Open(fileName:=thisFile)
+  StatusBar = allMyFiles2(i)
   If pdfFilesInFolder = True Then
     justName = pdfFolderName & "\" & justName
   End If
@@ -117,4 +119,5 @@ rng.Copy
 
 MsgBox (numFiles & "  files saved as pdf")
 End Sub
+
 

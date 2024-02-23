@@ -1,0 +1,46 @@
+Sub NTbackupDated()
+' Paul Beverley - Version 18.01.24
+' Backs up the Normal template and the VBA code with date and time
+
+backupFolder = "Backup"
+
+mySuffix = " " & Format((Year(Now() + 1) Mod 100), "20##") & "-" & _
+   Format((Month(Now() + 1) Mod 100), "0#") & "-" & _
+   Format((Day(Now()) Mod 100), "0#") & "-" & _
+   Format(Now(), "HH_mm") 'add date & time
+NTname = NormalTemplate.FullName
+If InStr(NTname, "\") = 0 Then
+  backupFolder = backupFolder & "/"
+Else
+  backupFolder = backupFolder & "\"
+End If
+newName = Replace(NTname, "Normal", backupFolder & "Normal" & mySuffix)
+
+' Put the VBA code in a Word file
+fileName = Replace(newName, "dotm", "docx")
+fileName = Replace(fileName, "Normal", "The Macros")
+Documents.Add
+Selection.Paste
+For i = 1 To 100
+  DoEvents
+Next i
+If InStr(ActiveDocument.Content.Text, "End Sub") = 0 Then
+  Beep
+  MsgBox ("You forgot to copy the macros!")
+  Exit Sub
+End If
+Debug.Print newName
+Debug.Print fileName
+ActiveDocument.SaveAs fileName
+For i = 1 To 100
+  DoEvents
+Next i
+ActiveDocument.Close SaveChanges:=False
+
+' Save the Normal template
+ThisDocument.SaveAs newName
+End Sub
+
+
+
+

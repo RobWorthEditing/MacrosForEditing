@@ -1,0 +1,204 @@
+Sub DocAlyseUser()
+' Paul Beverley - Version 18.05.23
+' Create your own (multilingual?) document analyses
+
+' confirmCountItList = True
+confirmCountItList = False
+
+myScreenOff = True
+
+Set FUT = ActiveDocument
+doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
+If doingSeveralMacros = False Then
+  myResponse = MsgBox("    DocAlyseUser" & vbCr & vbCr & _
+       "Analyse this document?", vbQuestion _
+       + vbYesNoCancel, "DocAlyseUser")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+If myScreenOff = True Then Application.ScreenUpdating = False
+
+On Error GoTo ReportIt
+CR = vbCr
+CR2 = CR & CR
+CR3 = CR2 & CR
+Set workDoc = ActiveDocument
+
+myResponse = vbNo
+For Each listDoc In Application.Documents
+  DoEvents
+  pNum = listDoc.Paragraphs.count
+  myNum = 3
+  If pNum < 3 Then myNum = pNum
+  Set rng = listDoc.Paragraphs(myNum).Range
+  rng.Start = 0
+  If InStr(LCase(rng.Text), "countit") Then
+    listDoc.Activate
+    listDoc.Windows(1).WindowState = wdWindowStateNormal
+    If confirmCountItList = True Then
+      myResponse = MsgBox("Is this your CountIt list?", _
+           vbQuestion + vbYesNo, "DocAlyseUser")
+    Else
+      myResponse = vbYes
+    End If
+    If myResponse = vbYes Then Exit For
+  End If
+Next listDoc
+
+If myResponse <> vbYes Then
+  Beep
+  myResponse = MsgBox("Can't find a CountIt list." & CR2 & _
+       "Please ensure that your CountIt list is open and starts with:" _
+       & CR2 & "| CountIt", vbExclamation + vbOKOnly, "DocAlyseUser")
+  Exit Sub
+End If
+
+If listDoc = workDoc Then
+  Beep
+  myResponse = MsgBox("Please place the cursor in the text to be tested." _
+       & CR2 & "and rerun DocAlyseUser.", vbExclamation + vbOKOnly, _
+       "DocAlyseUser")
+  Exit Sub
+End If
+
+' Copy all text to output file
+addText = ""
+If workDoc.Footnotes.count > 0 Then addText = addText & _
+     workDoc.StoryRanges(wdFootnotesStory).Text & CR
+If workDoc.Endnotes.count > 0 Then addText = addText & _
+     workDoc.StoryRanges(wdEndnotesStory).Text & CR
+
+Documents.Add
+Set output = ActiveDocument.Content
+     
+output.Text = workDoc.Content.Text & addText
+
+myResults = "DocAlyseUser" & CR
+
+For Each ma In listDoc.Paragraphs
+  ' Only do anything if there's text on the line
+  padPosition = InStr(ma, "|")
+  If InStr(ma, "||") Then padPosition = 2
+  doCount = False
+  myText = Replace(ma.Range.Text, CR, "")
+  Select Case padPosition
+    Case 0: myResults = myResults & ma.Range.Text
+    Case 1: If InStr(LCase(myText), "countit") = 0 Then _
+                 myResults = myResults & ma.Range.Text
+    Case 2: ' Ignore
+    Case Else
+      doCount = True
+      ' Check for any wildcard characters
+      isWild = False
+      lcaseWhole = False
+      If InStr(myText, "[") > 0 Then isWild = True
+      If InStr(myText, "<") > 0 Then isWild = True
+      If InStr(myText, ">") > 0 Then isWild = True
+      ' Check for bent pipe = any case
+      If InStr(myText, ChrW(172)) > 0 Then _
+        doMatch = False
+      If InStr(myText, ChrW(172) & "<") > 0 Then
+        lcaseWhole = True
+      Else
+        doMatch = True
+      End If
+  End Select
+
+  
+  If doCount = True Then
+    ' Process the item
+    itemDescript = Left(myText, padPosition - 1)
+    myFind = Mid(myText, padPosition + 1)
+    myFind = Replace(myFind, ChrW(172), "")
+    If lcaseWhole = True Then
+      myFind = Replace(myFind, "<", "")
+      myFind = Replace(myFind, ">", "")
+      newFind = "<"
+      For i = 1 To Len(myFind)
+        ch = Mid(myFind, i, 1)
+        newFind = newFind & "[" & ch & UCase(ch) & "]"
+        DoEvents
+      Next i
+      myFind = newFind & ">"
+      isWild = True
+    End If
+    wasTot = Len(output.Text)
+    With output.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = myFind
+      .Wrap = wdFindContinue
+      .Replacement.Text = "^&!"
+      .MatchCase = doMatch
+      .MatchWildcards = isWild
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    End With
+    DoEvents
+    numFinds = Len(output.Text) - wasTot
+    If numFinds > 0 Then WordBasic.EditUndo
+    ' Now add result to output stream
+    myResults = myResults & itemDescript & vbTab & _
+         Trim(Str(numFinds)) & CR
+  End If
+Next ma
+myResults = Replace(myResults, CR3, CR2)
+output.Text = myResults
+
+Selection.HomeKey Unit:=wdStory
+output.Paragraphs(1).Style = ActiveDocument.Styles(wdStyleHeading1)
+'output.Paragraphs(3).Range.Select
+'Selection.End = output.End
+Set rng = ActiveDocument.Content
+rng.ParagraphFormat.TabStops.ClearAll
+rng.ParagraphFormat.TabStops.Add Position:=CentimetersToPoints(4.5), _
+    Alignment:=wdAlignTabRight, Leader:=wdTabLeaderSpaces
+
+' Grey out the zero lines
+DoEvents
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13([!^13]@)^t0"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p\1^t^="
+  .Replacement.Font.Color = wdColorGray25
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+With Selection.Find
+  .Text = ""
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+End With
+
+Selection.HomeKey Unit:=wdStory
+
+If doingSeveralMacros = False Then
+  Beep
+Else
+  FUT.Activate
+End If
+Application.ScreenUpdating = True
+
+Exit Sub
+ReportIt:
+Application.ScreenUpdating = True
+errNum = Err.Number
+If errNum = 9118 Or errNum = 5590 Or errNum = 5560 Or errNum = 5692 Then
+  ActiveDocument.ActiveWindow.LargeScroll down:=1
+  ma.Range.Select
+  ActiveDocument.ActiveWindow.SmallScroll down:=1
+  Beep
+  MsgBox "Wildcard error"
+  Err.Clear
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+
+

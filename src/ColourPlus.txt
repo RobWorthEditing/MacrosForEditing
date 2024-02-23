@@ -1,5 +1,5 @@
 Sub ColourPlus()
-' Paul Beverley - Version 24.03.21
+' Paul Beverley - Version 15.01.24
 ' Adds font colour in a choice of colours
 
 Dim myCol(10)
@@ -32,10 +32,19 @@ wasEnd = ActiveDocument.Variables("selEnd")
 wasCol = ActiveDocument.Variables("colNum")
 
 ' If no text is selected ...
+startAgain:
 If Selection.Start = Selection.End Then
   If Selection.Text = vbCr Then Selection.MoveLeft , 1
-  ' If the cursor is outside the area, give up
-  If Selection.Start < wasStart Or Selection.End > wasEnd Then GoTo theEnd
+  ' If the cursor is outside the area, select the word and start again
+  If Selection.Start < wasStart Or Selection.End > wasEnd Then
+    Selection.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+    DoEvents
+    GoTo startAgain
+  End If
   ' Otherwise check the font colour
   Selection.Start = wasStart
   Selection.End = wasStart + 1

@@ -1,0 +1,30 @@
+Sub SelectionEndExtend()
+' Paul Beverley - Version 03.07.23
+' Moves the end of the selection further out to the right (i.e. extends it)
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  lenNow = Len(Selection)
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  If Len(Selection) <> lenNow Then Exit Sub
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.MoveStart , -1
+  preChar = rng.Text
+  If (LCase(preChar) = UCase(preChar)) Then Exit Sub
+End If
+
+Selection.MoveEnd , 1
+preChar = Right(Selection, 1)
+
+If LCase(preChar) <> UCase(preChar) Or _
+     preChar = "0" Or Val(preChar) > 0 Then
+
+  Selection.MoveEnd , -1
+  Selection.MoveEnd wdWord, 1
+End If
+End Sub
+

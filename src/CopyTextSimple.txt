@@ -1,11 +1,12 @@
+
 Sub CopyTextSimple()
-' Paul Beverley - Version 10.04.22
+' Paul Beverley - Version 23.05.22
 ' Creates a text-only copy, with some features preserved
 
 doItalic = True
 doBold = True
-doSub = False
-doSuper = False
+doSub = True
+doSuper = True
 
 myColour = wdGray25
 
@@ -19,9 +20,9 @@ rng.FormattedText = rngOld.FormattedText
 rng.Revisions.AcceptAll
 If numberCmnts > 0 Then ActiveDocument.DeleteAllComments
 
-wds1 = rng.Words.count
+wds1 = rng.Words.Count
 rng.Font.Hidden = False
-wds2 = rng.Words.count
+wds2 = rng.Words.Count
 If wds2 <> wds1 Then
   WordBasic.EditUndo
   myResponse = MsgBox("Original contains " & wds2 - wds1 & _
@@ -54,7 +55,7 @@ If myScreenOff = True Then
   On Error GoTo ReportIt
 End If
 
-numNotes = ActiveDocument.Endnotes.count
+numNotes = ActiveDocument.Endnotes.Count
 If numNotes > 0 Then
   myComments = myComments & "| endnotes = yes (" _
        & Trim(Str(numNotes)) & ")" & vbCr
@@ -71,7 +72,7 @@ If numNotes > 0 Then
   Next j
 End If
 
-numNotes = ActiveDocument.Footnotes.count
+numNotes = ActiveDocument.Footnotes.Count
 If numNotes > 0 Then
   myComments = myComments & "| footnotes = yes (" _
        & Trim(Str(numNotes)) & ")" & vbCr
@@ -89,7 +90,7 @@ If numNotes > 0 Then
 End If
 
 ' copy all the textboxes to the end of the text
-shCount = ActiveDocument.Shapes.count
+shCount = ActiveDocument.Shapes.Count
 tbCount = 0
 If shCount > 0 Then
   Selection.EndKey Unit:=wdStory
@@ -149,7 +150,7 @@ With rng.Find
   .Text = ""
   .Highlight = True
   .Wrap = wdFindContinue
-  .Replacement.Text = "hkhk^&khkh"
+  .Replacement.Text = "vkvk^&kvkv"
   .MatchCase = True
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
@@ -358,7 +359,7 @@ Set rngNew = ActiveDocument.Content
 With rngNew.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "hkhk(*)khkh"
+  .Text = "vkvk(*)kvkv"
   .Wrap = wdFindContinue
   .Replacement.Text = "\1"
   .Replacement.Highlight = True
@@ -370,7 +371,7 @@ End With
 With rngNew.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "HKHK(*)KHKH"
+  .Text = "VKVK(*)KVKV"
   .Wrap = wdFindContinue
   .Replacement.Text = "\1"
   .Replacement.Highlight = True
@@ -408,7 +409,7 @@ End With
 With rngNew.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "[hkjzcqxbsHKJZCQXBS]{4,}"
+  .Text = "[vkjzcqxbsVKJZCQXBS]{4,}"
   .Wrap = wdFindContinue
   .Replacement.Text = ""
   .MatchWildcards = True
@@ -438,4 +439,5 @@ Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub
+
 

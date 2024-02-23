@@ -9,7 +9,6 @@ rng.End = rng.End + 1
 rng.Text = UCase(rng.Text)
 rng.Expand wdSentence
 Selection.Start = rng.Start
-' Selection.Delete
+Selection.Delete
 End Sub
-
 

@@ -1,0 +1,30 @@
+Sub InitialPullBack()
+' Paul Beverley - Version 03.02.24
+' Pulls author's trailing initial(s) (e.g. B. or C.D.) in front of surname
+
+Set rng = Selection.Range.Duplicate
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[A-Z.\-]{2,}"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute
+  DoEvents
+End With
+myInits = rng & " "
+Set rngNext = rng.Duplicate
+rngNext.Collapse wdCollapseEnd
+rngNext.MoveStart , 3
+
+rng.MoveStart , -2
+rng.Delete
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdWord
+rng.InsertBefore Text:=myInits
+rngNext.Select
+End Sub
+

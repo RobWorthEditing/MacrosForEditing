@@ -1,38 +1,32 @@
 Sub TrackChangeCounter()
-' Paul Beverley - Version 22.04.20
-' Counts all the edits in a document
+' Paul Beverley - Version 18.01.24
+' Reports the numbers of track changes, plus words/characters added/deleted
 
-On Error GoTo ErrorMsg
-Selection.HomeKey Unit:=wdStory
-i = 0
-xMax = 0
-wds = 0
-Do
- j = 0
-  Do
-    Application.Run MacroName:="nextChangeOrComment"
-    DoEvents
-    j = j + 1
-  Loop While j < 1000 And _
-       Selection.Information(wdInCommentPane)
+CR = vbCr
+CR2 = CR & CR
+numRevs = ActiveDocument.Revisions.Count
+For Each rev In ActiveDocument.Revisions
+  Select Case rev.Type
+    Case wdRevisionInsert
+      myAddChars = myAddChars + Len(rev.Range.Text)
+      myAddWords = myAddWords + rev.Range.Words.Count
+    Case wdRevisionDelete
+      myDeletesChars = myDeletesChars + Len(rev.Range.Text)
+      myDeletesWords = myDeletesWords + rev.Range.Words.Count
+  End Select
   i = i + 1
-  wds = wds + Selection.Words.Count
-  xPos = Selection.Start
-  If xPos < xMax Then
-    Exit Do
-  Else
-    xMax = xPos
-  End If
-Loop Until 0
-Beep
-cmts = ActiveDocument.Comments.Count
-MsgBox "Edits: " & Trim(Str(i)) & vbCr & _
-     vbCr & "Words: " & Trim(Str(wds)) & vbCr & _
-     vbCr & "Comments: " & Trim(Str(cmts))
-Exit Sub
-
-ErrorMsg:
-MsgBox "Something's gone wrong. Please contact Paul if you want it fixing."
-Beep
+  If i Mod 10 = 0 Then DoEvents
+Next rev
+myResult = Str(numRevs) & " Revisions" & CR2
+myResult = myResult & "Deletions" & CR
+myResult = myResult & "   Words: " & myDeletesWords & CR
+myResult = myResult & "   Characters: " & myDeletesChars & CR2
+myResult = myResult & "Insertions" & CR
+myResult = myResult & "   Words: " & myAddWords & CR
+myResult = myResult & "   Characters: " & myAddChars & CR2
+MsgBox myResult
 End Sub
+
+
+
 

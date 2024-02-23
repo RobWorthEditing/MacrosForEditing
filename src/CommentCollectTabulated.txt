@@ -1,5 +1,5 @@
 Sub CommentCollectTabulated()
-' Paul Beverley - Version 18.01.23
+' Paul Beverley - Version 15.01.24
 ' Collects comments into a table
 
 sortOnColumn = 0
@@ -17,7 +17,7 @@ myDelay = 500
 
 myScreenOff = True
 
-totCmnts = ActiveDocument.Comments.count
+totCmnts = ActiveDocument.Comments.Count
 Selection.HomeKey Unit:=wdStory
 Selection.EndKey Unit:=wdStory
 If totCmnts = 0 Then
@@ -36,23 +36,24 @@ End If
 ReDim pageNo(totCmnts) As String
 ReDim lineNo(totCmnts) As String
 For i = 1 To totCmnts
-  Selection.GoTo What:=wdGoToComment, count:=i
-  pageNo(i) = Trim(Str(Selection.Range.Information(wdActiveEndAdjustedPageNumber)))
+  Selection.GoTo What:=wdGoToComment, Count:=i
+  pageNo(i) = Trim(Str(Selection.Range.Information(wdActiveEndPageNumber)))
+'  pageNo(i) = Trim(Str(Selection.Range.Information(wdActiveEndAdjustedPageNumber)))
   lineNo(i) = Trim(Str(Selection.Range.Information(wdFirstCharacterLineNumber)))
-  For i = 1 To myDelay
+  For j = 1 To myDelay
     DoEvents
-  Next i
+  Next j
 Next i
 
 Selection.HomeKey Unit:=wdStory
 Set rng = ActiveDocument.Content
 rng.Copy
 Documents.Add
-For i = 1 To myDelay
+For j = 1 To myDelay
   DoEvents
-Next i
+Next j
 Selection.Paste
-totCmnts = ActiveDocument.Comments.count
+totCmnts = ActiveDocument.Comments.Count
 
 Dim cmnt As Word.Comment
 ReDim lineNum(totCmnts) As Integer
@@ -61,7 +62,7 @@ maxHeadNo = Val(Right(maxHeading, 1))
 hdStart = Left(maxHeading, InStr(maxHeading, " ") - 1)
 
 For i = 1 To totCmnts
-  Selection.GoTo What:=wdGoToComment, count:=i
+  Selection.GoTo What:=wdGoToComment, Count:=i
   pn = pageNo(i)
   ln = lineNo(i)
   Set cmnt = ActiveDocument.Comments(i)
@@ -74,9 +75,8 @@ For i = 1 To totCmnts
 
 '  Selection.GoTo what:=wdGoToComment, Count:=i
   Set rng = ActiveDocument.Range(0, Selection.End)
-  paraNum = rng.Paragraphs.count
+  paraNum = rng.Paragraphs.Count
   For j = paraNum - 1 To 1 Step -1
-    Debug.Print ActiveDocument.Paragraphs(j).Range.Text
     myStyle = ActiveDocument.Paragraphs(j).Range.Style
     If InStr(myStyle, hdStart) > 0 Then
       hdLevel = Val(Right(myStyle, 1))
@@ -86,8 +86,9 @@ For i = 1 To totCmnts
       End If
     End If
     DoEvents
-'    Debug.Print "Reading: ", pageNo(i)
   Next j
+  Debug.Print "Comment: ", totCmnts - i
+  StatusBar = "Comments to go:   " & Str(totCmnts - i)
 
 
 ' BEFORE TEXT HERE <<<<<<<<<<<<<<<<<<<<<<<<
@@ -107,9 +108,9 @@ ActiveDocument.StoryRanges(wdCommentsStory).Copy
 
 ' Replace whole text with just the (augmented) comments
 Selection.WholeStory
-For i = 1 To myDelay
+For j = 1 To myDelay
   DoEvents
-Next i
+Next j
 Selection.Paste
 Selection.WholeStory
 ' Remove hidden page references
@@ -244,4 +245,7 @@ Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub
+
+
+
 

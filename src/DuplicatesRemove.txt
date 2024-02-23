@@ -1,15 +1,21 @@
 Sub DuplicatesRemove()
-' Paul Beverley - Version 10.07.19
-' Remove duplicate items from a list
+' Paul Beverley - Version 26.01.24
+' Removes duplicate items from a list
+
+' Make this True if you want to completely delete
+' any lines that appear more than once
+' removeBothDuplicates = True
+removeBothDuplicates = False
 
 anyCase = True
 
-' Exchange rogue linefeed (ascii 10)
+' Exchange rogue linefeed (ascii 11)
 Set rng = ActiveDocument.Content
+rng.InsertAfter Text:=vbCr & vbCr
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "^10"
+  .Text = "^11"
   .Wrap = wdFindContinue
   .Replacement.Text = "^p"
   .Forward = True
@@ -28,18 +34,18 @@ Else
   myStart = Selection.Start
   myEnd = Selection.End
     For j = 1 To ActiveDocument.Paragraphs.Count
-      If ActiveDocument.Paragraphs(j).range.Start > myStart Then Exit For
+      If ActiveDocument.Paragraphs(j).Range.Start > myStart Then Exit For
     Next j
     listStart = j - 1
     For j = ActiveDocument.Paragraphs.Count To 1 Step -1
-      If ActiveDocument.Paragraphs(j).range.Start < myEnd Then Exit For
+      If ActiveDocument.Paragraphs(j).Range.Start < myEnd Then Exit For
     Next j
     listEnd = j
 End If
 
-For j = listEnd To listStart + 1 Step -1
-  Set rng1 = ActiveDocument.Paragraphs(j).range
-  Set rng2 = ActiveDocument.Paragraphs(j - 1).range
+For j = listEnd - 1 To listStart + 1 Step -1
+  Set rng1 = ActiveDocument.Paragraphs(j).Range
+  Set rng2 = ActiveDocument.Paragraphs(j - 1).Range
   If anyCase = True Then
     r1 = LCase(rng1)
     r2 = LCase(rng2)
@@ -47,12 +53,34 @@ For j = listEnd To listStart + 1 Step -1
     r1 = rng1
     r2 = rng2
   End If
-  If r1 = r2 Then rng1.Delete
+'  If r1 = r2 Then rng1.Font.Bold = True:  rng2.Font.Bold = True
+  If r1 = r2 Then
+    rng1.Delete
+    If removeBothDuplicates = True Then
+      rng1.Font.Underline = True
+      rng2.Font.Underline = True
+    End If
+  End If
   StatusBar = "Lines to go: " & Str(j)
   DoEvents
 Next j
 StatusBar = ""
-ActiveDocument.Paragraphs(listStart).range.Select
+If removeBothDuplicates = True Then
+Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Underline = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+ActiveDocument.Paragraphs(listStart).Range.Select
 Selection.End = Selection.Start
 End Sub
 

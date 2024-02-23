@@ -1,0 +1,21 @@
+Sub NoteCitationsOutsidePunctuationGlobal()
+' Paul Beverley - Version 28.07.23
+' Moves all note numbers to outside the punctuation
+
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "(^2)([.,:;\!\?])"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "\2\1"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

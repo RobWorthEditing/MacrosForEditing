@@ -1,0 +1,74 @@
+Sub MacroLauncherForMac()
+' Paul Beverley - Version 04.07.20
+' Offers a list of macros to launch (was called "MacroMenuForMac")
+
+myList1 = "a=AccentAlyse, d=DcAlyse, h=HyphenAlyse"
+myList2 = "w=WordPairAlyse, p=ProperNounAlyse, i=IZISCount"
+myList3 = "z=IStoIZ, s=IZtoIS, l=SpellingErrorLister"
+myList4 = "c=CopyTextSimple, m=MultiFileText, f=FRedit"
+myList5 = "e=SpellingErrorHighlighter, u=UKUSCount"
+' myList5 = "e=SpellingErrorHighlighter, u=UKUSCount, g=MegAlyse"
+
+myList = "," & myList1 & "," & myList2 & "," & myList3 & "," _
+     & myList4 & "," & myList5
+myList = Replace(myList, ",,", ",")
+mcr = Split(myList, ",")
+myPrompt = ""
+myCodes = ""
+numItems = UBound(mcr)
+For i = 1 To numItems
+  mcr(i) = Trim(mcr(i))
+  myCode = Left(mcr(i), 1)
+  myCodes = myCodes & myCode
+  mName = Mid(mcr(i), 3)
+  myPrompt = myPrompt & Trim(Str(i)) & " " & ChrW(8211) & " "
+  myPrompt = myPrompt & mName & "  (" & myCode & ")" & vbCr
+Next i
+
+Do
+  myResponse = UCase(InputBox(myPrompt, "MacroMenu"))
+  myNum = Val(myResponse)
+  If myResponse = "" Then Exit Sub
+  If myNum = 0 Then
+    myNum = InStr(UCase(myCodes), Left(myResponse, 1))
+  End If
+Loop Until myNum > 0 And myNum < numItems + 1
+
+mName = Mid(mcr(myNum), 3)
+Select Case mName
+  Case "AccentAlyse"
+    Call AccentAlyse
+  Case "CopyTextSimple"
+    Call CopyTextSimple
+  Case "DocAlyse"
+    Call DocAlyse
+  Case "FRedit"
+    Call FRedit
+  Case "HyphenAlyse"
+    Call HyphenAlyse
+  Case "IStoIZ"
+    Call IStoIZ
+  Case "IZISCount"
+    Call IZIScount
+  Case "IZtoIS"
+    Call IZtoIS
+  Case "MultiFileText"
+    Call MultiFileText
+  Case "ProperNounAlyse"
+    Call ProperNounAlyse
+  Case "SpellingErrorHighlighter"
+    Call SpellingErrorHighlighter
+  Case "SpellingErrorLister"
+    Call SpellingErrorLister
+  Case "UKUSCount"
+    Call UKUScount
+  Case "WordPairAlyse"
+    Call WordPairAlyse
+  Case "MegAlyse"
+    Call MegAlyse
+  Case Else
+    Beep
+    MsgBox "Not on list"
+End Select
+End Sub
+

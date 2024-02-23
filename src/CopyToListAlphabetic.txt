@@ -1,0 +1,123 @@
+
+Sub CopyToListAlphabetic()
+' Paul Beverley - Version 20.02.24
+' Copies selected text into an alphabetic list file
+
+' keyWord = "queries"
+' keyWord = "list"
+keyWord = "sheet"
+
+followHeading = "Word list"
+
+wordsToAvoid = "switch"
+' wordsToAvoid = "FRedit,switch"
+
+' copyWholePara = True
+copyWholePara = False
+
+' includeFormatting = True
+includeFormatting = False
+
+goBackToSource = True
+
+
+Set thisDoc = ActiveDocument
+wds = Split("," & LCase(wordsToAvoid), ",")
+
+If Selection.Start = Selection.End Then
+  If Selection = vbCr Then Selection.MoveLeft , 1
+  If copyWholePara = True Then
+    Selection.Expand wdParagraph
+  Else
+    Selection.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+  End If
+Else
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd , -1
+  rng.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Collapse wdCollapseStart
+  Selection.Expand wdWord
+  Selection.Collapse wdCollapseStart
+  rng.Start = Selection.Start
+  rng.Select
+End If
+
+Set sourceText = Selection.Range
+myText = sourceText.Text
+
+gottaList = False
+For Each myDoc In Application.Documents
+  thisName = myDoc.Name
+  nm = LCase(thisName)
+  gottaList = False
+  If InStr(nm, LCase(keyWord)) > 0 Then gottaList = True
+  For i = 1 To UBound(wds)
+    If InStr(nm, wds(i)) > 0 Then gottaList = False
+  Next i
+  If gottaList = True Then
+    myDoc.Activate
+    Exit For
+  End If
+Next myDoc
+
+If gottaList = False Then
+  Beep
+  MsgBox "Can't find a list."
+  Exit Sub
+End If
+
+' Decide where to put the item
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = followHeading
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchCase = True
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+rng.Expand wdParagraph
+rng.Collapse wdCollapseEnd
+rng.End = ActiveDocument.Content.End
+If LCase(rng) <> UCase(rng) Then
+  For i = 1 To rng.Paragraphs.Count
+    If LCase(rng.Paragraphs(i)) > LCase(myText) Then
+      rng.Paragraphs(i).Range.Select
+      Selection.Collapse wdCollapseStart
+      Exit For
+    End If
+  Next i
+Else
+  rng.Collapse wdCollapseEnd
+  rng.Select
+End If
+
+' Paste it in
+If includeFormatting = True Then
+  Selection.Range.FormattedText = sourceText.FormattedText
+  If InStr(sourceText, vbCr) = 0 Then
+    Selection.MoveRight , Len(sourceText)
+    Selection.TypeText vbCr
+  End If
+Else
+  Selection.TypeText Text:=myText
+  If InStr(sourceText, vbCr) = 0 Then Selection.TypeText vbCr
+End If
+
+If goBackToSource = True Then thisDoc.Activate
+End Sub
+
+

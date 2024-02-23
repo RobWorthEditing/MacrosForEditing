@@ -1,0 +1,28 @@
+Sub CommentsResolveSelected()
+' Paul Beverley - Version 19.09.23
+' Resolves all the comments in the selected area of text
+
+numComments = ActiveDocument.Comments.Count
+If Selection.Start = Selection.End Then
+  Beep
+  myResponse = MsgBox("Resolve ALL the comments in the whole document?!", _
+       vbQuestion + vbYesNo, "CommentsResolveSelected")
+  If myResponse <> vbYes Then Exit Sub
+  cmtFirst = 1: cmtLast = numComments
+Else
+  Set rng = Selection.Range.Duplicate
+  rng.Start = 0
+  cmtLast = rng.Comments.Count
+  
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.Start = 0
+  cmtFirst = rng.Comments.Count + 1
+End If
+For i = cmtFirst To cmtLast
+  ActiveDocument.Comments(i).Done = True
+  DoEvents
+Next i
+Selection.Collapse wdCollapseEnd
+End Sub
+

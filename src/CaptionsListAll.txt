@@ -1,6 +1,9 @@
 Sub CaptionsListAll()
-' Paul Beverley - Version 13.09.19
+' Paul Beverley - Version 25.05.23
 ' Lists all paragraphs with bold Figure, Table, Box
+
+captionsAreBold = True
+maxWords = 40
 
 Set rng = ActiveDocument.Content
 Documents.Add
@@ -11,8 +14,7 @@ rng.HighlightColorIndex = wdYellow
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "[FTB][iao][gbx][ul ]"
-  .Font.Bold = True
+  .Text = "^13[FTB][iao][gbx][ul .]"
   .Wrap = wdFindStop
   .Replacement.Text = ""
   .Forward = True
@@ -22,8 +24,13 @@ End With
 
 myCount = 0
 Do While rng.Find.Found = True
+  rng.MoveStart , 1
   rng.Expand wdParagraph
-  rng.HighlightColorIndex = wdNoHighlight
+  grabThisOne = True
+  If captionsAreBold = True And rng.Font.Bold _
+       = False Then grabThisOne = False
+  If rng.Words.count > maxWords Then grabThisOne = False
+  If grabThisOne = True Then rng.HighlightColorIndex = wdNoHighlight
   rng.Collapse wdCollapseEnd
   rng.Find.Execute
   DoEvents
@@ -41,6 +48,9 @@ With rng.Find
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
 End With
+For i = rng.Tables.count To 1 Step -1
+  rng.Tables(i).Delete
+Next i
 Beep
 End Sub
 

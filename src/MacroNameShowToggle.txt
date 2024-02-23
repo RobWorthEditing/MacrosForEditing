@@ -1,0 +1,18 @@
+Sub MacroNameShowToggle()
+' Paul Beverley - Version 23.03.23
+' Displays the current macro name in a display file
+
+' Needs a line: Private pbDoShow As Boolean
+'   at the top of the VBA area
+
+pbDoShow = Not pbDoShow
+
+Beep
+If pbDoShow Then
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+End If
+End Sub
+

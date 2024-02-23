@@ -1,5 +1,5 @@
 Sub InitialSwapperReverse()
-' Paul Beverley - Version 06.06.22
+' Paul Beverley - Version 22.07.22
 ' Swaps initials and surname (Beverley, P.E. -> P.E. Beverley)
 
 ' Expand selection to single or whole words
@@ -25,7 +25,9 @@ With rng.Find
   .Execute
   DoEvents
 End With
+rng.Select
 If Right(rng.Text, 1) = " " Then rng.MoveEnd , -1
+If Right(rng.Text, 1) = "," Then rng.MoveEnd , -1
 rng.Cut
 Selection.Collapse wdCollapseStart
 myStart = Selection.Start

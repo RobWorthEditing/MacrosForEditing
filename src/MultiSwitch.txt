@@ -1,10 +1,10 @@
 Sub MultiSwitch()
-' Paul Beverley - Version 21.03.23
+' Paul Beverley - Version 07.12.23
 ' Scripted word/phrase switching
 
 maxWords = 5
 myListName = "zzSwitchList.docx"
-
+Set rng = ActiveDocument.Content
 commentNearCheck = True
 
 ' Set min number of chars for an abbreviation
@@ -13,29 +13,31 @@ includeApostrophe = True
 
 linksOFF = True
 
-' addOriginal = True
-addOriginal = False
+addMarkerInList = True
+
+notTheseChars = ",!?. "
 
 ' If you want to load the SwitchList file automatically...
 ' then...
-' On a Mac, you will need
+
+' On a Mac, you will need something like this:
 myList = "/Users/Paul/My Documents/Macro stuff/zzSwitchList.docx"
 
 ' On Windows, you will need something like this:
 myList = "C:\Documents and Settings\Paul\My Documents\zzSwitchList.docx"
 
-myList = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\zzSwitchList.docx"
-
-Set thisDoc = ActiveDocument
-
 CR = vbCr
 CR2 = CR & CR
 Dim myStr(20) As String
 Dim endStr(20) As Long
-nowSearch = Selection.Find.Text
-' Just in case they are using "smart" cut/opaste option
+On Error GoTo ReportIt
+
+Set theDoc = ActiveDocument
+
+' Just in case they are using "smart" cut/paste option
 mySmartOpt = Options.SmartCutPaste
 Options.SmartCutPaste = False
+nowSearch = Selection.Find.Text
 
 ' Read the context, noting if the word is selected
 wasSelected = (Selection.End > Selection.Start)
@@ -43,15 +45,9 @@ If wasSelected = True Then
   maxWords = 1
 Else
   myTest = Selection.Text
-  If LCase(myTest) = UCase(myTest) Then Selection.MoveLeft , 1
+  If InStr(notTheseChars, myTest) > 0 Then Selection.MoveLeft , 1
   Selection.Expand wdWord
 End If
-inAComment = Selection.Information(wdInCommentPane)
-'If inAComment = True Then
-' ' cmtText = Selection.Comments(1).Range.Words.Count
-'  numWds = Selection.Comments(1).Range.Words.Count
-'  If numWds = 1 Then Selection.InsertAfter Text:=" "
-'End If
 
 ' If no word selected
 Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
@@ -72,15 +68,15 @@ iMax = maxWords
 
 Set rng = Selection.Range.Duplicate
 rng.Collapse wdCollapseStart
-rng.MoveEnd Unit:=wdWord, count:=maxWords
-numTCs = rng.Revisions.count
+rng.MoveEnd Unit:=wdWord, Count:=maxWords
+numTCs = rng.Revisions.Count
 
 If numTCs > 0 Then
   rng.Revisions.AcceptAll
-  rng.MoveEnd Unit:=wdWord, count:=maxWords
+  rng.MoveEnd Unit:=wdWord, Count:=maxWords
 End If
 
-wdsLeft = rng.Words.count
+wdsLeft = rng.Words.Count
 If maxWords > wdsLeft Then maxWords = wdsLeft
 If Asc(rng.Words(wdsLeft)) = 13 Then maxWords = maxWords - 1
 For i = 1 To maxWords
@@ -98,54 +94,64 @@ Selection.Collapse wdCollapseStart
 
 iMax = maxWords
 
-' Find the zzSwitchList file
 gottaList = False
-For Each dcu In Documents
-  If InStr(dcu.Name, myListName) > 0 Then
-    Set listDoc = dcu
+For Each myDoc In Application.Documents
+  thisName = myDoc.Name
+  If thisName = myListName Then
+    Set theList = Documents(myListName)
     gottaList = True
     Exit For
   End If
-Next dcu
+Next myDoc
+
+' Find the zzSwitchList file
 If gottaList = False Then
   Documents.Open fileName:=myList
-Else
-  listDoc.Activate
+  Set theList = ActiveDocument
+  theDoc.Activate
 End If
+
+Set rng = theList.Content
 ' Check if list has LFs
-With Selection.Find
+With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
   .Text = ChrW(11)
   .Replacement.Text = ""
   .Execute
   DoEvents
-  If .Found Then
+  If .Found = True Then
     Beep
+    rng.Start = rng.Start - 1
+    rng.Collapse wdCollapseStart
+    rng.Expand wdWord
+    rng.HighlightColorIndex = wdYellow
+    rng.Collapse wdCollapseEnd
+    rng.Select
     MsgBox "The switch list must use paragraphs, not line breaks!"
     ActiveWindow.ActivePane.View.ShowAll = True
-    Selection.Find.Text = nowSearch
+    rng.Find.Text = nowSearch
     Exit Sub
   End If
 End With
 
 ' Just in case the switch list has any URLs
 If linksOFF = True Then
-  Set rngList = ActiveDocument.Content
-  rngList.Fields.Unlink
+  rng.Fields.Unlink
 End If
+lastTwo = Right(rng, 2)
+If lastTwo <> CR2 Then rng.InsertAfter Text:=CR2
 
-Set rng = ActiveDocument.Content
-rng.End = 2
-If rng.Text <> CR2 Then rng.InsertBefore Text:=CR2
-
+rng.Start = 0
+rng.End = theList.Content.End
 ' Try to locate the selected text in the switch list
-Set rng = ActiveDocument.Content
 allWords = rng.Text
 lfPos = InStr(allWords, ChrW(11))
 If lfPos > 0 Then
-  Selection.Start = lfPos - 2
-  Selection.End = lfPos + 1
+  rng.Start = lfPos - 2
+  rng.End = lfPos + 1
+  rng.Select
   Beep
   Application.Run "ShowFormatting"
   MsgBox "The switch list must use paragraphs, not line breaks!"
@@ -168,7 +174,7 @@ For i = iMax To 1 Step -1
     j = 0
     Do
       j = j + 1
-    Loop Until Len(altText(j)) = 0 Or j = 10
+    Loop Until Len(altText(j)) = 0 Or j = 20
     numAlts = j - 2
     ' We now have j = number of options
     ' altText contains all numAlts texts
@@ -182,7 +188,7 @@ Next i
 If gottaMatch = False Then
   myWd = myStr(1)
   Do
-    With Selection.Find
+    With rng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
       .Text = "^p^p" & myWd
@@ -195,9 +201,9 @@ If gottaMatch = False Then
       .MatchCase = False
     End With
     If Len(myWd) > 1 Then myWd = Left(myWd, Len(myWd) - 1)
-  Loop Until Selection.Find.Found = True Or Len(myWd) = 1
-  Selection.Collapse wdCollapseStart
-  thisDoc.Activate
+  Loop Until rng.Find.Found = True Or Len(myWd) = 1
+  rng.Collapse wdCollapseStart
+  rng.Select
   Beep
   myTime = Timer
   Do
@@ -206,9 +212,11 @@ If gottaMatch = False Then
   Options.SmartCutPaste = mySmartOpt
   Selection.Find.Text = nowSearch
   Exit Sub
-  Else
-  Selection.Start = myPos + 20
-  Selection.MoveLeft , 19
+Else
+' TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO
+' What does this do, anyway
+'  Selection.Start = myPos + 20
+'  Selection.MoveLeft , 19
 End If
 
 'Offer j optional texts to the user
@@ -220,7 +228,6 @@ If numAlts > 1 And wasSelected = False Then
   myResponse = InputBox(myPrompt, "MultiSwitch")
   myChoice = Val(myResponse)
   If myChoice > numAlts Or myChoice = 0 Then
-    thisDoc.Activate
     Options.SmartCutPaste = mySmartOpt
     Selection.Find.Text = nowSearch
     Exit Sub
@@ -228,28 +235,28 @@ If numAlts > 1 And wasSelected = False Then
 Else
   myChoice = 1
 End If
-Selection.Start = myPos + 2
-Selection.Expand wdParagraph
+rng.Start = myPos + 2
+rng.Collapse wdCollapseStart
+rng.Expand wdParagraph
+
 For i = 1 To myChoice
-  Selection.Collapse wdCollapseEnd
-  Selection.Expand wdParagraph
+  rng.Collapse wdCollapseEnd
+  rng.Expand wdParagraph
 Next i
 ' Copy chosen line (check first for format change symbol)
 useFormat = False
-Selection.MoveEnd , -1
-myNewItem = Selection
-Set r = Selection.Range
+rng.MoveEnd , -1
+myNewItem = rng
 Dim gotFormat As Boolean
-gotFormat = r.Font.Bold Or r.Font.Italic Or r.Font.SmallCaps _
-     Or r.Font.Underline Or r.Font.Superscript Or r.Font.Subscript _
-     Or r.InlineShapes.count > 0
-If AscW(Selection) = 172 Or gotFormat Then
+gotFormat = rng.Font.Bold Or rng.Font.Italic Or rng.Font.SmallCaps _
+     Or rng.Font.Underline Or rng.Font.Superscript Or rng.Font.Subscript _
+     Or rng.InlineShapes.Count > 0
+If AscW(rng) = 172 Or gotFormat Then
   useFormat = True
-  If AscW(Selection) = 172 Then Selection.MoveStart , 1
-  Selection.Copy
+  If AscW(rng) = 172 Then rng.MoveStart , 1
+  rng.Copy
 End If
-noTrack = (Selection.Font.StrikeThrough)
-thisDoc.Activate
+noTrack = (rng.Font.StrikeThrough)
 startRng.Select
 Selection.End = endStr(numWords)
 
@@ -258,13 +265,13 @@ If Selection.Information(wdInCommentPane) = 0 And _
      Selection.Information(wdInFootnote) = 0 And _
      Selection.Information(wdInEndnote) = 0 Then
 
-  numCmts = ActiveDocument.Comments.count
+  numCmts = ActiveDocument.Comments.Count
   If numCmts > 0 And commentNearCheck = True Then
   ' Find scope of (range covered by) the next comment
     Set rng = Selection.Range.Duplicate
     rng.Collapse wdCollapseStart
     rng.Start = 0
-    cmtNumber = rng.Comments.count + 1
+    cmtNumber = rng.Comments.Count + 1
     If cmtNumber <= numCmts Then
       Set nextCmtRange = ActiveDocument.Comments(cmtNumber).Scope
       
@@ -288,11 +295,11 @@ End If
 myTrack = ActiveDocument.TrackRevisions
 myState = ActiveWindow.View.ShowInsertionsAndDeletions
 If noTrack Then ActiveDocument.TrackRevisions = False
-Selection.Delete
 If useFormat = True Then
+  Selection.Delete
   Selection.Paste
 Else
-  Selection.TypeText Text:=myNewItem
+  Selection.Text = myNewItem
 End If
 Selection.Start = startNow
 textEnd = Selection.End
@@ -381,6 +388,25 @@ If noTrack Then
   ActiveWindow.View.ShowInsertionsAndDeletions = myState
 End If
 Options.SmartCutPaste = mySmartOpt
-Selection.Find.Text = nowSearch
+Selection.Find.Text = "^p^p" & myStr(1)
+Exit Sub
+
+ReportIt:
+myErr = Err.Number
+If myErr = 4160 Then
+  DoEvents
+  gottaList = False
+  Resume Next
+Else
+  If myErr = 5174 Then
+    Beep
+    myPrompt = "Please open your switch list file: " & myListName _
+           & CR2 & CR & "I did try looking for file: " & CR2 & myList
+    myResponse = MsgBox(myPrompt, vbQuestion + vbOKOnly, "MultiSwitch")
+    Exit Sub
+  End If
+  DoEvents
+  Resume
+End If
 End Sub
 

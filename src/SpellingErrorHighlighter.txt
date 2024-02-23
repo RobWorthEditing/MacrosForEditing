@@ -1,13 +1,15 @@
 Sub SpellingErrorHighlighter()
-' Paul Beverley - Version 24.03.21
+' Paul Beverley - Version 11.04.21
 ' Highlights all spelling errors
 
 spellingListName = "SpellingErrors"
 spellingListName2 = "SpellAlyse"
 
+anyCase = False
+
 CR = vbCr
 CR2 = CR & CR
-sp = "__________________________"
+SP = "__________________________"
 
 ' Find errors list
 Set mainDoc = ActiveDocument
@@ -40,7 +42,7 @@ For Each myPar In ActiveDocument.Paragraphs
       myWordHighlightList(myCol) = myWordHighlightList(myCol) & _
            thisWord & "_"
       myCount = myCount + 1
-      StatusBar = sp & sp & sp & myCount
+      StatusBar = SP & SP & SP & myCount
     End If
   End If
 Next myPar
@@ -57,60 +59,102 @@ mainDoc.Activate
 Set rng = ActiveDocument.Content
 ' To speed up search
 Selection.HomeKey Unit:=wdStory
-fnNum = ActiveDocument.Footnotes.Count
-enNum = ActiveDocument.Endnotes.Count
+fnNum = ActiveDocument.Footnotes.count
+enNum = ActiveDocument.Endnotes.count
 ActiveDocument.TrackRevisions = False
 
 ' For each highlight colour
 oldColour = Options.DefaultHighlightColorIndex
-For myCol = 1 To 16
-  If Len(myWordHighlightList(myCol)) > 0 Then
-    Options.DefaultHighlightColorIndex = myCol
-    myWds = Split(myWordHighlightList(myCol), "_")
-    For Each fWord In myWds
-      fWord = "<" & fWord & ">"
-      fWord = Replace(fWord, "(", "\(")
-      fWord = Replace(fWord, ")", "\)")
-      fWord = Replace(fWord, "\)>", "\)")
-      For j = 1 To 3
-        If j = 1 And fnNum = 0 Then j = 2
-        If j = 2 And enNum = 0 Then j = 3
-        Select Case j
-          Case 1: Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
-          Case 2: Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
-          Case 3: Set rng = ActiveDocument.Content
-        End Select
-        DoEvents
-        If Len(fWord) > 3 Then
-          With rng.Find
-            .ClearFormatting
-            .Replacement.ClearFormatting
-            .Text = fWord
-            .Replacement.Text = "^&"
-            .Font.StrikeThrough = False
-            .Forward = True
-            .Replacement.Highlight = True
-            .MatchWildcards = True
-            .Execute Replace:=wdReplaceAll
-            .ClearFormatting
-            .Replacement.ClearFormatting
-            .Text = "-" & fWord
-            .Replacement.Text = "^&"
-            .Font.StrikeThrough = False
-            .Forward = True
-            .Replacement.Highlight = False
-            .MatchWildcards = True
-            .Execute Replace:=wdReplaceAll
-          End With
-        End If
-        If j = 3 Then
-          myCount = myCount - 1
-          StatusBar = sp & sp & sp & "To go: " & myCount
-        End If
-      Next j
-    Next fWord
-  End If
-Next myCol
+If anyCase = True Then
+  For myCol = 1 To 16
+    If Len(myWordHighlightList(myCol)) > 0 Then
+      Options.DefaultHighlightColorIndex = myCol
+      myWds = Split(myWordHighlightList(myCol), "_")
+      For Each fWord In myWds
+        For j = 1 To 3
+          If j = 1 And fnNum = 0 Then j = 2
+          If j = 2 And enNum = 0 Then j = 3
+          Select Case j
+            Case 1: Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+            Case 2: Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+            Case 3: Set rng = ActiveDocument.Content
+          End Select
+          DoEvents
+          If Len(fWord) > 3 Then
+            With rng.Find
+              .ClearFormatting
+              .Replacement.ClearFormatting
+              .Text = fWord
+              .Replacement.Text = ""
+              .Font.StrikeThrough = False
+              .Forward = True
+              .MatchCase = False
+              .Replacement.Highlight = True
+              .MatchWildcards = False
+              .Execute Replace:=wdReplaceAll
+            End With
+          End If
+          If j = 3 Then
+            myCount = myCount - 1
+            StatusBar = SP & SP & SP & "To go: " & myCount
+          End If
+        Next j
+              Debug.Print fWord
+      Next fWord
+    End If
+  Next myCol
+Else
+  For myCol = 1 To 16
+    If Len(myWordHighlightList(myCol)) > 0 Then
+      Options.DefaultHighlightColorIndex = myCol
+      myWds = Split(myWordHighlightList(myCol), "_")
+      For Each fWord In myWds
+        fWord = "<" & fWord & ">"
+        fWord = Replace(fWord, "(", "\(")
+        fWord = Replace(fWord, ")", "\)")
+        fWord = Replace(fWord, "\)>", "\)")
+        For j = 1 To 3
+          If j = 1 And fnNum = 0 Then j = 2
+          If j = 2 And enNum = 0 Then j = 3
+          Select Case j
+            Case 1: Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+            Case 2: Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+            Case 3: Set rng = ActiveDocument.Content
+          End Select
+          DoEvents
+          If Len(fWord) > 3 Then
+            With rng.Find
+              .ClearFormatting
+              .Replacement.ClearFormatting
+              .Text = fWord
+              .Replacement.Text = "^&"
+              .Font.StrikeThrough = False
+              .Forward = True
+              .Replacement.Highlight = True
+              .MatchWildcards = True
+              .Execute Replace:=wdReplaceAll
+              
+              .ClearFormatting
+              .Replacement.ClearFormatting
+              .Text = "-" & fWord
+              .Replacement.Text = "^&"
+              .Font.StrikeThrough = False
+              .Forward = True
+              .Replacement.Highlight = False
+              .MatchWildcards = True
+              .Execute Replace:=wdReplaceAll
+            End With
+          End If
+          If j = 3 Then
+            myCount = myCount - 1
+            StatusBar = SP & SP & SP & "To go: " & myCount
+          End If
+        Next j
+              Debug.Print fWord
+      Next fWord
+    End If
+  Next myCol
+End If
 
 Options.DefaultHighlightColorIndex = oldColour
 Beep

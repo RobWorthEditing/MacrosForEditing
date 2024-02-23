@@ -1,0 +1,62 @@
+Sub QQConvert()
+' Paul Beverley - Version 14.06.21
+' Converts QQ comments to ordinary comments
+
+Dim qqTag(999) As String
+
+allText = ActiveDocument.Content
+
+For i = ActiveDocument.Endnotes.count To 1 Step -1
+  thisTag = ActiveDocument.Endnotes(i).Range.Text
+  If InStr(allText, thisTag) = 0 Then _
+       ActiveDocument.Endnotes(i).Delete
+Next i
+
+For i = 1 To ActiveDocument.Endnotes.count
+  qqTag(i) = ActiveDocument.Endnotes(i).Range.Text
+Next i
+
+Set rng = ActiveDocument.Content
+For i = 1 To ActiveDocument.Endnotes.count
+Debug.Print ActiveDocument.Endnotes.count, "|", i
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = qqTag(i) & " "
+    .Wrap = wdFindContinue
+    .Forward = True
+    .Replacement.Text = tagText
+    .MatchWildcards = False
+    .Execute
+    DoEvents
+  End With
+  rng.Collapse wdCollapseEnd
+  rng.End = ActiveDocument.Content.End
+  qqPos = InStr(rng, "[qq")
+  If qqPos > 0 Then rng.End = rng.Start + qqPos - 1
+  Do While Right(rng.Text, 1) = vbCr
+    rng.End = rng.End - 1
+  Loop
+  Debug.Print rng.Text
+' rng.Select
+  rng.Copy
+  ActiveDocument.Endnotes(i).Reference.Select
+  Selection.Collapse wdCollapseStart
+  Set rng = Selection.Range.Duplicate
+  myEnd = rng.End
+  j = 0
+  Do
+    j = j + 1
+    rng.End = myEnd - j
+    rng.Start = rng.End - 1
+  Loop Until rng.Font.Underline = False
+  Selection.Start = rng.End
+  Selection.End = myEnd
+  DoEvents
+  Selection.Comments.Add Range:=Selection.Range
+  Selection.Paste
+Next i
+ActiveWindow.ActivePane.Close
+CommandBars("Comments").Visible = True
+End Sub
+

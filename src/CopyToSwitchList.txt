@@ -1,0 +1,85 @@
+Sub CopyToSwitchList()
+' Paul Beverley - Version 04.12.23
+' Copies selected text into a switch list file for MultiSwitch
+
+
+keyWord = "switchlist"
+
+' copyWholePara = True
+copyWholePara = False
+
+myHighlightColour = wdColorBlack
+' To add highlight, use:
+' myHighlightColour = wdYellow
+
+alwaysCopyAtEnd = False
+
+
+Set thisDoc = ActiveDocument
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd , -1
+  rng.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Collapse wdCollapseStart
+  Selection.Expand wdWord
+  Selection.Collapse wdCollapseStart
+  rng.Start = Selection.Start
+  rng.Select
+End If
+
+Set sourceText = Selection.Range
+
+For Each myDoc In Application.Documents
+  thisName = myDoc.Name
+  nm = LCase(thisName)
+  gottaList = False
+  If InStr(nm, LCase(keyWord)) > 0 Then
+    myDoc.Activate
+    gottaList = True
+    Exit For
+  End If
+Next myDoc
+
+If gottaList = False Then
+  Beep
+  MsgBox "Can't find a list."
+  Exit Sub
+End If
+
+If alwaysCopyAtEnd = True Then
+  Selection.EndKey Unit:=wdStory
+Else
+  hereNow = Selection.Start
+  Selection.Expand wdParagraph
+  If Selection.Start = hereNow Then Selection.Collapse wdCollapseStart
+  If Len(Selection) = 1 Then
+    Selection.Collapse wdCollapseStart
+  Else
+    Selection.Collapse wdCollapseEnd
+  End If
+End If
+
+Selection.InsertAfter sourceText.Text & vbCr & vbCr & vbCr
+Selection.Collapse wdCollapseEnd
+Selection.MoveUp , 2
+
+If myHighlightColour > 0 Then
+  sourceText.HighlightColorIndex = myHighlightColour
+  Selection.Collapse wdCollapseEnd
+End If
+End Sub
+
+
+

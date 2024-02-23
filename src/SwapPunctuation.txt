@@ -1,15 +1,20 @@
 Sub SwapPunctuation()
-' Version 02.02.21
-' Swaps the punctuation at the end of some words
+' Paul Beverley - Version 05.07.23
+' Swaps the next pair of punctuation marks
 
-Selection.Collapse wdCollapseStart
-Selection.MoveEnd , 1
-Do
-  Selection.MoveEnd , 1
-  Selection.MoveStart , 1
-  DoEvents
-Loop Until (UCase(Selection) = LCase(Selection) And Selection <> " ")
-Selection.Collapse wdCollapseEnd
-Call SwapCharacters
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+rng.Start = Selection.Start
+For i = 1 To Len(rng) - 1
+  ch1 = Mid(rng, i, 1)
+  If (UCase(ch1) = LCase(ch1) And ch1 <> " ") Then
+    ch2 = Mid(rng, i + 1, 1)
+    If (UCase(ch2) = LCase(ch2) And ch <> " ") Then Exit For
+  End If
+Next i
+Selection.MoveStart , i - 1
+Selection.End = Selection.Start + 2
+Selection.Delete
+Selection.TypeText Text:=ch2 & ch1
 End Sub
 

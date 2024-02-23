@@ -1,0 +1,26 @@
+Sub LongWordHighlighter()
+' Paul Beverley - Version 09.08.23
+' Highlights all words more than a certain length
+
+med = 8
+high = 12
+mega = 16
+
+Set rng = Selection.Range.Duplicate
+If Len(rng) < 2 Then rng.Expand wdParagraph
+
+For Each myWord In rng.Words
+  If myWord.Characters.count > mega Then
+    myWord.HighlightColorIndex = wdBrightGreen
+  Else
+    If myWord.Characters.count > med Then _
+         myWord.HighlightColorIndex = wdGray25
+    If myWord.Characters.count > high Then _
+         myWord.HighlightColorIndex = wdYellow
+  End If
+Next
+End Sub
+
+
+
+

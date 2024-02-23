@@ -1,17 +1,43 @@
 Sub TrackChangeDisplaySelect()
-' Paul Beverley - Version 11.12.19
+' Paul Beverley - Version 21.05.23
 ' Cycles through track change display levels
-' N.B. Only works on Word 2016 and later
 
-stateNow = ActiveWindow.View.RevisionsFilter.Markup
-Select Case stateNow
-  Case wdRevisionsMarkupSimple: stateNext = wdRevisionsMarkupAll
-  Case wdRevisionsMarkupAll: stateNext = wdRevisionsMarkupNone
-  Case wdRevisionsMarkupNone: stateNext = wdRevisionsMarkupSimple
+' N.B. You need to put a line at the top of the VBA area:
+' Private pbMarkupMode As Integer
+' (but without the ' at the beginning of the line, of course)
+
+includeOriginal = True
+
+If pbMarkupMode = 2 And includeOriginal = False Then
+  pbMarkupMode = 3
+End If
+
+Select Case pbMarkupMode
+  Case 1: stateNext = wdRevisionsMarkupAll
+        viewNext = wdRevisionsViewFinal
+        pbMarkupMode = 2
+        StatusBar = "All"
+  Case 2: stateNext = wdRevisionsMarkupOriginal
+        viewNext = wdRevisionsViewOriginal
+        pbMarkupMode = 3
+        StatusBar = "Original"
+  Case 3: stateNext = wdRevisionsMarkupNone
+        viewNext = wdRevisionsViewFinal
+        pbMarkupMode = 4
+        StatusBar = "None"
+  Case 4: stateNext = wdRevisionsMarkupSimple
+        viewNext = wdRevisionsViewFinal
+        pbMarkupMode = 1
+        StatusBar = "Simple"
+  Case Else
+        stateNext = wdRevisionsMarkupAll
+        viewNext = wdRevisionsViewFinal
+        pbMarkupMode = 2
+        StatusBar = "All"
 End Select
 With ActiveWindow.View.RevisionsFilter
   .Markup = stateNext
-  .View = wdRevisionsViewFinal
+  .View = viewNext
 End With
 End Sub
 

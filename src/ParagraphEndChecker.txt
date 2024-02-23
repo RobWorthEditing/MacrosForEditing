@@ -1,25 +1,29 @@
+
 Sub ParagraphEndChecker()
-' Paul Beverley - Version 12.08.22
+' Paul Beverley - Version 22.12.23
 ' Highlights the end of all possibly punctuation-less paragraphs
 
 myMainHighlight = wdBrightGreen
 
 mySoftColour = wdColorBlue
-' or for no colouration inside tables
-mySoftColour = wdColorAutomatic
+' or for no coloration inside tables
+' mySoftColour = wdColorAutomatic
+
+myOKChars = ".!?:…"
 
 addLightColour = True
+' addLightColour = False
 myLightColour = wdGray25
 
+' To not highlight all headings,
+'  ignore short "paragraphs" = headings.
+minWords = 10
+
+
 underlineLineFeeds = True
-underlineQuoteNoPunct = False
 
 myScreenOff = True
 
-' To not highlight headings, ignore short "paragraphs".
-minWords = 10
-
-myOKChars = ".!?:…" & ChrW(8221) & ChrW(8217)
 Dim i As Long
 Dim j As Long
 
@@ -46,7 +50,7 @@ If addLightColour = True Then
     .MatchSoundsLike = False
     .Execute Replace:=wdReplaceAll
   End With
-  If ActiveDocument.Endnotes.count > 0 Then
+  If ActiveDocument.Endnotes.Count > 0 Then
     Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
     With rng.Find
       .ClearFormatting
@@ -63,7 +67,7 @@ If addLightColour = True Then
       .Execute Replace:=wdReplaceAll
     End With
   End If
-  If ActiveDocument.Footnotes.count > 0 Then
+  If ActiveDocument.Footnotes.Count > 0 Then
     Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
     With rng.Find
       .ClearFormatting
@@ -102,90 +106,60 @@ If Selection.Start <> Selection.End Then
     DoEvents
   Next myPar
 Else
-  Set rng = ActiveDocument.Content
-  i = ActiveDocument.Paragraphs.count
-  For Each myPar In ActiveDocument.Paragraphs
-    If myPar.Range.Words.count > minWords + 2 Then
-      rng.Start = myPar.Range.End - 2
-      rng.End = myPar.Range.End - 1
-      If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
-      If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
-      If rng.Text = ChrW(2) Then
-         rng.Start = rng.Start - 1
-         rng.End = rng.End - 1
-      End If
-      Do While rng.Font.Superscript <> 0
-         rng.Start = rng.Start - 1
-         rng.End = rng.End - 1
-      Loop
-
-      If InStr(myOKChars, rng) = 0 Then
-        If rng = " " Then rng.Delete
-        If rng.Font.Bold = False Then
-          If rng.Information(wdWithInTable) = True Then
-            rng.Font.Color = mySoftColour
+  For myPass = 1 To 3
+    If myPass = 1 And ActiveDocument.Endnotes.Count = 0 Then _
+      myPass = 2
+    If myPass = 2 And ActiveDocument.Footnotes.Count = 0 Then _
+      myPass = 3
+    Select Case myPass
+      Case 1: Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+      Case 2: Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+      Case 3: Set rng = ActiveDocument.Content
+    End Select
+    i = rng.Paragraphs.Count
+    For Each myPar In rng.Paragraphs
+      Set testRng = myPar.Range
+      testRng.End = testRng.End - 1
+      If testRng.Font.Bold = False Then
+        If Right(testRng.Text, 1) = " " Then _
+             testRng.End = testRng.End - 1
+        If Right(testRng.Text, 1) = " " Then _
+             testRng.End = testRng.End - 1
+        If testRng.Words.Count > minWords + 2 Then
+          myLen = Len(testRng)
+          myTest = Right(testRng.Text, 3)
+          gottaPunc = False
+          For x = 3 To 1 Step -1
+            If InStr(myOKChars, Mid(myTest, x, 1)) > 0 Then
+              gottaPunc = True
+              puncPosn = x
+              Exit For
+            End If
+            DoEvents
+          Next x
+          testRng.Start = testRng.End - 2
+          If gottaPunc = False Then
+            If testRng.Information(wdWithInTable) = True Then
+              testRng.Font.Color = mySoftColour
+            Else
+              testRng.HighlightColorIndex = myMainHighlight
+            End If
           Else
-            rng.HighlightColorIndex = myMainHighlight
+            If addLightColour = True And gottaPunc = True Then
+              Set rng2 = rng.Duplicate
+              rng2.Start = rng2.End - 1
+              rng2.HighlightColorIndex = myLightColour
+            End If
           End If
         End If
+        i = i - 1
+        If i Mod 10 = 0 Then StatusBar = sps & i
+        DoEvents
       End If
-    End If
-    i = i - 1
-    j = i / 10
-    StatusBar = sps & j & "0"
-    DoEvents
-  Next myPar
-  If ActiveDocument.Footnotes.count > 0 Then
-    Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
-    Set nts = ActiveDocument.StoryRanges(wdFootnotesStory)
-    i = nts.Paragraphs.count
-    For Each myPar In nts.Paragraphs
-      rng.Start = myPar.Range.End - 2
-      rng.End = myPar.Range.End - 1
-      If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
-      If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
-      If InStr(myOKChars, rng) = 0 Then
-        If rng = " " Then rng.Delete
-        If rng.Font.Bold = False Then
-          If rng.Information(wdWithInTable) = True Then
-            rng.Font.Color = mySoftColour
-          Else
-            rng.HighlightColorIndex = myMainHighlight
-          End If
-        End If
-      End If
-      DoEvents
-      i = i - 1
-      j = i / 10
-      StatusBar = sps & j & "0"
     Next myPar
-  End If
-  If ActiveDocument.Endnotes.count > 0 Then
-    Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
-    Set nts = ActiveDocument.StoryRanges(wdEndnotesStory)
-    i = nts.Paragraphs.count
-    For Each myPar In nts.Paragraphs
-      rng.Start = myPar.Range.End - 2
-      rng.End = myPar.Range.End - 1
-      If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
-      If rng = " " Then rng.Delete: rng.Start = rng.Start - 1
-      If InStr(myOKChars, rng) = 0 Then
-        If rng = " " Then rng.Delete
-        If rng.Font.Bold = False Then
-          If rng.Information(wdWithInTable) = True Then
-            rng.Font.Color = mySoftColour
-          Else
-            rng.HighlightColorIndex = myMainHighlight
-          End If
-        End If
-      End If
-      DoEvents
-      i = i - 1
-      j = i / 10
-      StatusBar = sps & j & "0"
-    Next myPar
-  End If
+  Next myPass
 End If
+
 If underlineLineFeeds = True Then
   Options.DefaultHighlightColorIndex = myLightColour
   Set rng = ActiveDocument.Content
@@ -202,21 +176,6 @@ If underlineLineFeeds = True Then
   Options.DefaultHighlightColorIndex = oldColour
 End If
 
-If underlineQuoteNoPunct = True Then
-  Options.DefaultHighlightColorIndex = myLightColour
-  Set rng = ActiveDocument.Content
-  With rng.Find
-    .ClearFormatting
-    .Replacement.ClearFormatting
-    .Text = "^$"" "
-    .Wrap = wdFindContinue
-    .Replacement.Font.Underline = True
-    .Replacement.Highlight = True
-    .Replacement.Text = ""
-    .Execute Replace:=wdReplaceAll
-  End With
-  Options.DefaultHighlightColorIndex = oldColour
-End If
 ActiveDocument.TrackRevisions = myTrack
 Beep
 Application.ScreenUpdating = True
@@ -227,4 +186,5 @@ Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub
+
 

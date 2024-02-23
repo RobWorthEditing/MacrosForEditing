@@ -1,6 +1,6 @@
 Sub MoveWordLeft()
 ' Paul Beverley - Version 30.11.19
-' Moves current word one word to the right
+' Moves current word one word to the left
 
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord

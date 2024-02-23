@@ -1,5 +1,5 @@
 Sub SpracheCH()
-' Paul Beverley - Version 20.05.20
+' Paul Beverley - Version 09.04.23
 ' Sets language as SwissGerman
 
 myLanguage = wdSwissGerman
@@ -22,8 +22,5 @@ End If
 ActiveDocument.Styles(wdStyleNormal).LanguageID = myLanguage
 ActiveDocument.Styles(wdStyleCommentText).LanguageID = myLanguage
 ActiveDocument.Styles("Balloon Text").LanguageID = myLanguage
-ActiveDocument.SpellingChecked = False
-ActiveDocument.GrammarChecked = False
-ActiveDocument.TrackRevisions = myTrack
 End Sub
 

@@ -1,0 +1,72 @@
+Sub AndToAmpersandGlobal()
+' Paul Beverley - Version 24.06.23
+' Changes all citations from "and" to "&"
+
+myColour = wdColorBlue
+
+myResponse = MsgBox("Change ""and"" to ""&"" in all citations?!", _
+     vbQuestion + vbYesNo, "AndToAmpersandGlobal")
+If myResponse <> vbYes Then Exit Sub
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "([A-Z][a-z]{1,}) and ([A-Z][a-z]{1,}, [0-9]{4})"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "\1 & \2"
+  .Replacement.Font.Color = myColour
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+
+  .Text = "([A-Z][a-z]{1,}) and ([A-Z][a-z]{1,}) ([0-9]{4})"
+  .Replacement.Text = "\1 & \2, \3"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+If ActiveDocument.Footnotes.count > 0 Then
+  Set foots = ActiveDocument.StoryRanges(wdFootnotesStory)
+  With foots.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "([A-Z][a-z]{1,}) and ([A-Z][a-z]{1,}, [0-9]{4})"
+    .Wrap = wdFindContinue
+    .Forward = True
+    .Replacement.Text = "\1 & \2"
+    .Replacement.Font.Color = myColour
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  
+    .Text = "([A-Z][a-z]{1,}) and ([A-Z][a-z]{1,}) ([0-9]{4})"
+    .Replacement.Text = "\1 & \2, \3"
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+
+If ActiveDocument.Endnotes.count > 0 Then
+  Set ends = ActiveDocument.StoryRanges(wdEndnotesStory)
+  With ends.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "([A-Z][a-z]{1,}) and ([A-Z][a-z]{1,}, [0-9]{4})"
+    .Wrap = wdFindContinue
+    .Forward = True
+    .Replacement.Text = "\1 & \2"
+    .Replacement.Font.Color = myColour
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  
+    .Text = "([A-Z][a-z]{1,}) and ([A-Z][a-z]{1,}) ([0-9]{4})"
+    .Replacement.Text = "\1 & \2, \3"
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

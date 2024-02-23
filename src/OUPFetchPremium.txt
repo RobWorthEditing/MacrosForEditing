@@ -1,13 +1,15 @@
-
-
 Sub OUPFetchPremium()
-' Paul Beverley - Version 11.11.22
+' Paul Beverley - Version 18.11.23
 ' Launches selected text to OUP Premium website.
 
 mySite = "https://premium.oxforddictionaries.com/definition/english/"
-numTabs = 0: myWait = 2
+
+numTabs = 0: myWait = 0.75
 ' Depending on your browser + internet connection
 ' you might need a longer wait, or could get away with less.
+
+allowRerun = True
+' allowRerun = False
 
 testMode = False
 ' testMode = True
@@ -49,5 +51,28 @@ For i = 1 To numTabs
 Next i
 SendKeys "^v"
 SendKeys "{ENTER}"
+myTime = Timer
+If allowRerun = True Then
+  myResponse = MsgBox("Rerun the search?! (Or press<Esc>)", _
+       vbQuestion + vbYesNoCancel, "SerialCommaAlyse")
+  If myResponse <> vbYes Then
+    SendKeys "{NUMLOCK}"
+    Exit Sub
+  End If
+Else
+  SendKeys "{NUMLOCK}"
+  Exit Sub
+End If
+
+ActiveDocument.FollowHyperlink Address:=mySite
+myTime = Timer
+Do
+Loop Until Timer > myTime + myWait
+For i = 1 To numTabs
+  SendKeys "{TAB}"
+Next i
+SendKeys "^v"
+SendKeys "{ENTER}"
+SendKeys "{NUMLOCK}"
 End Sub
 

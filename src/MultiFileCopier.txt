@@ -1,13 +1,14 @@
+
 Sub MultiFileCopier()
 ' Paul Beverley - Version 13.12.17
-' Save a folder full of files as PDFs
+' Save a duplicate set of files with a postfix
 
 toFolderName = "aaMainText"
 ' toFolderName = "WorkingText"
-myPostFix = "_PB_01"
-' myPostFix = ""
+myPostfix = "_PB_01"
+' myPostfix = ""
 
-Dim allMyFiles(200) As String
+Dim allMyFiles2(200) As String
 Set rng = ActiveDocument.Content
 myExtent = 250
 If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
@@ -15,7 +16,7 @@ If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
 If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
 ' If not a file list then open a file in the relevant folder
   myResponse = MsgBox("Navigate to the required folder; then press 'Cancel'" _
-      , , "Multifile Text Collection")
+      , , "Multifile Copier")
   docCount = Documents.Count
   Dialogs(wdDialogFileOpen).Show
   If Documents.Count > docCount Then ActiveDocument.Close
@@ -59,7 +60,7 @@ End If
 numFiles = 0
 myFolder = ""
 For Each myPara In ActiveDocument.Paragraphs
-  myPara.range.Select
+  myPara.Range.Select
   Selection.MoveEnd , -1
   lineText = Selection
   If myFolder = "" Then
@@ -73,7 +74,7 @@ For Each myPara In ActiveDocument.Paragraphs
     If Len(thisFile) > 2 Then
       If Left(thisFile, 1) <> "|" Then
         numFiles = numFiles + 1
-        allMyFiles(numFiles) = thisFile
+        allMyFiles2(numFiles) = thisFile
       End If
     End If
   End If
@@ -93,15 +94,15 @@ End If
 
 ' Load files and save copies
 For i = 1 To numFiles
-  thisName = allMyFiles(i)
+  thisName = allMyFiles2(i)
   newName = toFolderName & myDelimiter & Replace(thisName, _
-       ".", myPostFix & ".")
+       ".", myPostfix & ".")
   thisFile = myFolder & myDelimiter & thisName
-  Set myDoc = Application.Documents.Open(FileName:=thisFile)
-  StatusBar = allMyFiles(i)
+  Set myDoc = Application.Documents.Open(fileName:=thisFile)
+  StatusBar = allMyFiles2(i)
   DoEvents
   myNewFile = baseFolder & newName
-  ActiveDocument.SaveAs FileName:=myNewFile
+  ActiveDocument.SaveAs fileName:=myNewFile
   myDoc.Close SaveChanges:=wdDoNotSaveChanges
 Next
 Selection.HomeKey Unit:=wdStory
@@ -112,4 +113,5 @@ rng.End = rng.Start + 1
 rng.Copy
 Beep
 End Sub
+
 

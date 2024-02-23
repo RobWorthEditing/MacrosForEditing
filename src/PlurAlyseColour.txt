@@ -1,0 +1,63 @@
+Sub PlurAlyseColour()
+' Paul Beverley - Version 19.06.23
+' Colours/highlights all words listed by PlurAlyse
+
+' myHiColour = wdBrightGreen
+myHiColour = 0
+myFontColour = wdColorBlue
+' myFontColour = 0
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myHiColour
+gottaList = False
+For Each myDoc In Application.Documents
+  DoEvents
+  pNum = myDoc.Paragraphs.count
+  myNum = 3
+  If pNum < 3 Then myNum = pNum
+  Set rng = myDoc.Paragraphs(myNum).Range
+  rng.Start = 0
+  If InStr(LCase(rng), "plural") Then
+    Set theList = myDoc
+    gottaList = True
+  End If
+Next myDoc
+
+If gottaList = False Then
+  Beep
+  myResponse = MsgBox("Can't find a PlurAlyse table." & CR2 & _
+       myWarning, vbExclamation + vbOKOnly, "PlurAlyseColour")
+  Exit Sub
+End If
+
+Set rng = ActiveDocument.Content
+For i = 1 To theList.Tables(1).Rows.count
+  myText = theList.Tables(1).Rows(i).Cells(1).Range.Text
+  myText = Left(myText, Len(myText) - 2)
+  DoEvents
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myText
+    .Wrap = wdFindContinue
+    .Forward = True
+    If myHiColour <> 0 Then .Replacement.Highlight = True
+    If myFontColour <> 0 Then .Replacement.Font.Color = myFontColour
+    .Replacement.Text = ""
+    .MatchWildcards = False
+    .MatchWholeWord = True
+    .Execute Replace:=wdReplaceAll
+    
+    myText = theList.Tables(1).Rows(i).Cells(3).Range.Text
+    myText = Left(myText, Len(myText) - 2)
+    DoEvents
+    .Text = myText
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+Next i
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+
+
+

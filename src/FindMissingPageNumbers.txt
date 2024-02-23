@@ -1,0 +1,30 @@
+Sub FindMissingPageNumbers()
+' Paul Beverley - Version 28.09.23
+' Clears trailing spaces, then highlights refs without page numbers
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[ ]{1,}^13"
+  .Replacement.Text = "^p"
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Format = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{1,}:[0-9]{1,}^13"
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+
+
+

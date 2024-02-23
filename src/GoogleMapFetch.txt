@@ -1,29 +1,59 @@
 Sub GoogleMapFetch()
-' Paul Beverley - Version 16.01.21
+' Paul Beverley - Version 06.09.23
 ' Launches selected text to Google Maps
 
-mySite = "http://www.google.co.uk/maps/dir/"
+mySite = "http://www.google.com.eg/maps/dir/"
 
-myHome = "NR8 6TR"
-myWork = "M21 1UW"
+myHome = "NR86TR"
+myWork = "NR13JQ"
 
+
+myChars = ".,!? '""" & vbCr & ChrW(8217) & ChrW(8221)
 If Selection.Start = Selection.End Then
-  Selection.Expand wdWord
-  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
-    Selection.MoveEnd , -1
+  Set rng = Selection.Range.Duplicate
+  Do
+    rng.MoveEnd , 1
+    lastChar = rng.Characters.Last
+    DoEvents
+  Loop Until InStr(myChars, lastChar) > 0
+  rng.MoveEnd , -1
+  
+  Do
+    rng.MoveStart , -1
+    firstChar = rng.Characters.First
+    DoEvents
+  Loop Until InStr(myChars, firstChar) > 0 Or rng.Start = 0
+  If rng.Start > 0 Then rng.MoveStart , 1
+Else
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseEnd
+  rng.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
     DoEvents
   Loop
-  DoEvents
+  Selection.Collapse wdCollapseStart
+  Selection.Expand wdWord
+  Selection.Collapse wdCollapseStart
+  rng.Start = Selection.Start
 End If
 
-s = Trim(Selection)
-If Left(s, 1) = "h" Then s = myHome & "/" & Mid(s, 2)
-If Left(s, 1) = "w" Then s = myWork & "/" & Mid(s, 2)
-
-s = Replace(s, " to ", "/")
-s = Replace(s, " ", "+")
-s = Replace(s, "&", "%26")
-s = Replace(s, ChrW(8217), "'")
+mySubject = Trim(rng)
+mySubject = Replace(mySubject, vbCr, "")
+mySubject = Replace(mySubject, " to ", "/")
+myPlace = Split(mySubject, "/")
+mySubject = ""
+For i = 0 To UBound(myPlace)
+  If myPlace(i) = "h" Then myPlace(i) = myHome
+  If myPlace(i) = "w" Then myPlace(i) = myWork
+  mySubject = mySubject & myPlace(i) & "/"
+Next i
+mySubject = mySubject & "/"
+mySubject = Replace(mySubject, "//", "")
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubject, ChrW(8217), "'")
+Debug.Print mySubject
 ActiveDocument.FollowHyperlink Address:=mySite & mySubject
 End Sub
 

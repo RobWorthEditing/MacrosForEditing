@@ -1,72 +1,144 @@
+
 Sub DisplayQuote()
-' Paul Beverley - Version 11.08.11
-' Display a highlighted (or selected) quote
+' Paul Beverley - Version 05.12.23
+' Finds or displays a long quote
 
-nextParaStyle = "Para-no-indent"
-displayedQuoteStyle = "DisplayQuote"
-ActiveDocument.TrackRevisions = False
+displayedQuoteStyle = "Quote"
 
-Set rng = ActiveDocument.Content
-If Selection.Start = Selection.End Then
-  rng.Start = Selection.Start
-  rng.End = Selection.End
-  ' Find beginning to the nearest word
-  nowCol = rng.HighlightColorIndex
-  Do
-    rng.MoveStart wdWord, -1
-  Loop Until rng.HighlightColorIndex <> nowCol
-  rng.MoveStart wdWord, 1
-  wasEnd = rng.End
-  rng.End = rng.Start + 1
- 
-  ' Find beginning to the nearest character
-  Do
-    rng.MoveStart , -1
-    rng.MoveEnd , -1
-  Loop Until rng.HighlightColorIndex <> nowCol
-  rng.MoveStart , 1
-  startHere = rng.Start
- 
-  ' Find end to the nearest word
-  rng.Start = wasEnd
-  rng.End = wasEnd
-  Do
-    rng.MoveEnd wdWord, 1
-  Loop Until rng.HighlightColorIndex <> nowCol
-  rng.Start = rng.End
-  rng.MoveEnd , 1
-  ' Find end to the nearest character
-  Do
-    rng.MoveStart , -1
-    rng.MoveEnd , -1
-  Loop Until rng.HighlightColorIndex = nowCol
-  rng.Start = startHere
-End If
-rng.Select
-sH = Selection.Start
-Selection.Start = Selection.End
-Selection.MoveStart wdCharacter, -1
-Selection.Delete
-Selection.MoveEnd wdCharacter, 1
+' nextParaStyle = "Body No Indent"
+nextParaStyle = "Normal"
 
-' If there's a note marker, move past it
-If Asc(Selection) = 2 Then
-  Selection.Start = Selection.End
+' Or if you don't want to change next paragraph style
+' nextParaStyle = ""
+
+removeQuotes = True
+minWords = 20
+
+singleQuotes = False
+
+startTag = "<DQ>"
+' startTag = ""
+
+endTag = "<\DQ>"
+' endTag = ""
+tagOnNewLine = False
+
+If tagOnNewLine = True Then
+  endText = vbCr & endTag
 Else
-  Selection.End = Selection.Start
+  endText = endTag
 End If
 
-' Is it followed by a space?
-' i.e. does the paragraph continue?
-Selection.MoveEnd wdCharacter, 1
-If Selection = " " Then
-  Selection.TypeParagraph
-  Selection.Style = ActiveDocument.Styles(nextParaStyle)
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+If singleQuotes = True Then
+  openQ = ChrW(8216)
+  closeQ = ChrW(8217)
+Else
+  openQ = ChrW(8220)
+  closeQ = ChrW(8221)
 End If
-Selection.Start = sH
-Selection.Range.HighlightColorIndex = 0
-Selection.End = Selection.Start + 1
-Selection.TypeParagraph
-Selection.Style = ActiveDocument.Styles(displayedQuoteStyle)
+
+If Selection.Start = Selection.End Then
+  Do
+    With Selection.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = openQ
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = False
+      .Execute
+    End With
+    If Selection.Find.Found = False Then
+      Selection.Collapse wdCollapseEnd
+      Beep
+      Exit Sub
+    End If
+    Set rng = Selection.Range.Duplicate
+    rng.Expand wdParagraph
+    paraEnd = rng.End
+    rng.Start = Selection.Start
+    rng.End = Selection.Start
+    foundEnd = False
+    wdCount = 1
+    Do While rng.End < paraEnd And foundEnd = False
+      rng.MoveEnd wdWord, 1
+      wdCount = wdCount + 1
+      DoEvents
+    '   If Len(rng.Text) > 20 Then Debug.Print Right(rng, 20)
+      If InStr(Right(rng, 2), closeQ) > 0 Then foundEnd = True
+    Loop
+  Loop Until wdCount > minWords
+  rng.Select
+  If foundEnd = False Then
+    rng.Collapse wdCollapseStart
+    rng.Start = rng.Start + 1
+    ActiveDocument.ActiveWindow.LargeScroll down:=1
+    rng.Select
+    ActiveDocument.ActiveWindow.SmallScroll down:=1
+    Beep
+    Exit Sub
+  End If
+End If
+
+' Delete redundant space
+qtStart = Selection.Start
+Set rng = ActiveDocument.Range(qtStart - 1, qtStart)
+If rng.Text = " " Then
+  rng.Delete
+ Selection.Start = qtStart - 1
+End If
+' Add newline unless it's already a para start.
+qtStart = Selection.Start
+Set rng = ActiveDocument.Range(qtStart - 1, qtStart)
+If rng.Text <> vbCr Then
+  Selection.InsertBefore vbCr
+  Selection.MoveStart , 1
+End If
+
+' Remove open quote if necessary
+qtStart = Selection.Start
+Set rng = ActiveDocument.Range(qtStart, qtStart + 1)
+If rng.Text = openQ And removeQuotes = True Then
+  Selection.MoveStart , 1
+  rng.Delete
+End If
+
+' Add start tag
+qtStart = Selection.Start
+Set rng = ActiveDocument.Range(qtStart, qtStart + 1)
+Selection.InsertBefore startTag
+' Selection.Expand wdParagraph
+
+' Delete redundant space
+qtEnd = Selection.End
+Set rng = ActiveDocument.Range(qtEnd - 1, qtEnd)
+spaceRemoved = False
+If rng.Text = " " Then
+  Selection.MoveEnd , -1
+  rng.Delete
+  spaceRemoved = True
+End If
+
+' Remove close quote if necessary
+qtEnd = Selection.End
+Set rng = ActiveDocument.Range(qtEnd - 1, qtEnd)
+If rng.Text = closeQ And removeQuotes = True Then
+  Selection.MoveEnd , -1
+  rng.Delete
+End If
+If spaceRemoved = True Then endText = endText & vbCr
+
+Selection.InsertAfter endText
+Selection.Expand wdParagraph
+Selection.Range.Style = displayedQuoteStyle
+Selection.Collapse wdCollapseEnd
+If nextParaStyle > "" Then
+  Selection.Expand wdParagraph
+  Selection.Range.Style = nextParaStyle
+  Selection.Collapse wdCollapseEnd
+End If
+ActiveDocument.TrackRevisions = myTrack
 End Sub
-

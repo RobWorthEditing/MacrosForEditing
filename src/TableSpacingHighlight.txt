@@ -1,0 +1,54 @@
+
+
+Sub TableSpacingHighlight()
+' Paul Beverley - Version 15.02.24
+' Checks the one-blank-line spacing of tables and their captions
+
+Set myRange = Selection.Range.Duplicate
+myRange.End = ActiveDocument.Content.End
+For Each myTable In myRange.Tables
+  isOK = True
+  Set rng = myTable.Range
+  rng.MoveStart wdParagraph, -4
+  rng.MoveEnd wdParagraph, 1
+  If rng.Paragraphs(1) = vbCr Then
+    isOK = False
+    rng.Paragraphs(1).Range.HighlightColorIndex = wdYellow
+    rng.Paragraphs(1).Range.Select
+  End If
+  
+  If rng.Paragraphs(2) <> vbCr Then
+    isOK = False
+    rng.Paragraphs(2).Range.HighlightColorIndex = wdYellow
+    rng.Paragraphs(2).Range.Select
+  End If
+  
+  If Left(rng.Paragraphs(3), 5) <> "Table" Then
+    isOK = False
+    rng.Paragraphs(3).Range.HighlightColorIndex = wdPink
+    rng.Paragraphs(3).Range.Select
+  End If
+  
+  If rng.Paragraphs(4) <> vbCr Then
+    isOK = False
+    rng.Paragraphs(4).Range.HighlightColorIndex = wdBrightGreen
+    rng.Paragraphs(4).Range.Select
+  End If
+  
+  If rng.Paragraphs.Last <> vbCr Then
+    isOK = False
+    rng.Paragraphs.Last.Range.HighlightColorIndex = wdYellow
+    rng.Paragraphs.Last.Range.Select
+  End If
+  
+  If isOK = False Then
+    Selection.Collapse wdCollapseEnd
+    myResponse = MsgBox("Continue?", _
+         vbQuestion + vbYesNo, "TableSpacingHighlight")
+    If myResponse <> vbYes Then Beep: Exit Sub
+  End If
+  DoEvents
+Next myTable
+End Sub
+
+

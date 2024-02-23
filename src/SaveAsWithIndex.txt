@@ -1,22 +1,22 @@
 Sub SaveAsWithIndex()
-' Paul Beverley - Version 13.04.21
+' Paul Beverley - Version 30.06.23
 ' Saves the current file, adding a postfix
 
 switchTC_ON = True
-myPostFix = "_PB_01"
+myPostfix = "_PB_01"
 
 myName = ActiveDocument.FullName
 dotPos = InStr(myName, ".do")
 fType = Mid(myName, dotPos)
 myNm = Replace(myName, fType, "")
-myPostFix = myPostFix & ".doc"
+myPostfix = myPostfix & ".doc"
 
 num = Val(Right(myNm, 2))
-If InStr(myNm, Left(myPostFix, 3)) = 0 Then
+If InStr(myNm, Left(myPostfix, 3)) = 0 Then
   myResponse = MsgBox("Save the current file, adding a postfix?", _
        vbQuestion + vbYesNo, "SaveAsWithIndex")
   If myResponse = vbNo Then Exit Sub
-  myName = Replace(myName, ".doc", myPostFix)
+  myName = Replace(myName, ".doc", myPostfix)
   If switchTC_ON Then ActiveDocument.TrackRevisions = True
 Else
   newNum = Trim(Str(num + 1))
@@ -27,15 +27,13 @@ Else
   If myResponse = vbNo Then Exit Sub
 End If
 TestStr = ""
-On Error Resume Next
 TestStr = Dir(myName)
-On Error GoTo 0
 If TestStr > "" Then
   Beep
   myResponse = MsgBox("Filename exists! Overwrite?", _
        vbQuestion + vbYesNo, "SaveAsWithIndex")
   If myResponse = vbNo Then Exit Sub
 End If
-ActiveDocument.SaveAs FileName:=myName
+ActiveDocument.SaveAs fileName:=myName
 End Sub
 

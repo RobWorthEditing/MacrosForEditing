@@ -1,0 +1,50 @@
+Sub PublisherSwitch()
+' Paul Beverley - Version 14.11.23
+' Swaps "Location: Publisher Name" to "Publisher Name, Location"
+
+Set rng = Selection.Range.Duplicate
+If rng.Start <> rng.End Then GoTo otherBit
+
+rng.Expand wdWord
+myStart = rng.Start
+rng.Expand wdParagraph
+rng.Start = myStart
+colonPos = InStr(rng, ": ")
+rng.End = rng.Start + colonPos + 1
+myPlace = ", " & Replace(rng, ": ", "")
+rng.Delete
+myStart = rng.Start
+rng.Expand wdParagraph
+rng.Start = myStart
+rng.MoveEnd , -2
+rng.Collapse wdCollapseEnd
+rng.InsertAfter myPlace
+rng.Collapse wdCollapseEnd
+rng.Select
+Exit Sub
+
+otherBit:
+Set rng2 = rng.Duplicate
+rng2.Collapse wdCollapseEnd
+rng2.Expand wdWord
+rng2.Collapse wdCollapseEnd
+
+myEnd = rng.End
+rng.Collapse wdCollapseStart
+rng.Expand wdWord
+rng.Collapse wdCollapseStart
+rng.End = myEnd
+rng.Select
+colonPos = InStr(rng, ": ")
+rng.End = rng.Start + colonPos + 1
+myPlace = ", " & Replace(rng.Text, ": ", "")
+rng.Delete
+rng2.InsertAfter myPlace
+rng2.Collapse wdCollapseEnd
+rng2.Select
+End Sub
+
+
+
+
+

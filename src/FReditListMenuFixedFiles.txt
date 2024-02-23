@@ -1,0 +1,68 @@
+Sub FReditListMenuFixedFiles()
+' Paul Beverley - Version 23.01.24
+' Allows fixed filenames, for if FReditListMenu doesn't work for you
+
+' On Windows, it will need to be something like:
+myFolder = "C:\Documents and Settings\Paul\My Documents\MyLists\"
+
+' On a Mac, it will need to be something like:
+myFolder = "/Users/Paul/My Documents/MyLists/"
+
+numLIsts = 5
+
+ReDim myList(numLIsts) As String
+ReDim myLetter(numLIsts) As String
+
+myList(1) = "CleanupList.doc"
+myList(2) = "h - HighlightThe.docx"
+myList(3) = "FinalDoMacros.docx"
+myList(4) = "f - HighlightAllETs.docx"
+myList(5) = "InitialDoMacros.docx"
+
+n = 0
+s = ";"
+allLetters = s
+For i = 1 To numLIsts
+  myLetter(i) = LCase(Left(myList(i), 1))
+  If InStr(allLetters, s & myLetter(i) & s) > 0 Then
+    myLetter(i) = myLetter(i) & myLetter(i)
+    If InStr(allLetters, s & myLetter(i) & s) > 0 Then
+      myResponse = MsgBox("Please don't have three items" & _
+           " with the same initial letter.", _
+           vbOKCancel, "FReditListMenu")
+      Exit Sub
+    End If
+  End If
+  allLetters = allLetters & myLetter(i) & s
+  DoEvents
+Next i
+
+For i = 1 To numLIsts
+  thisName = Replace(myList(i), ".docx", "")
+  thisName = Replace(myList(i), ".doc", "")
+  myMenu = myMenu & myLetter(i) & _
+       " - " & thisName & vbCr
+  DoEvents
+Next i
+myMenu = myMenu & vbCr & "Which list (letter)?"
+myChoice = InputBox(myMenu, "FReditListMenu")
+
+For i = 1 To numLIsts
+  If myLetter(i) = LCase(myChoice) Then
+    goodChoice = True
+    doList = myList(i)
+    Exit For
+  End If
+  DoEvents
+Next i
+
+If i < numLIsts + 1 Then myChoice = myList(i)
+If myChoice = "" Then Exit Sub
+Set myDoc = ActiveDocument
+Documents.Open fileName:=myFolder & myChoice
+Set listDoc = ActiveDocument
+myDoc.Activate
+Call FRedit
+listDoc.Close SaveChanges:=False
+End Sub
+

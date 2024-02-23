@@ -1,0 +1,66 @@
+Sub HighlightTrackedTextAuthor()
+' Paul Beverley - Version 02.02.24
+' Highlights all tracked text by a specific author
+
+' Put some or all of the author's name here
+auName = "John"
+
+myColour = wdYellow
+ActiveDocument.TrackRevisions = False
+For Each rev In ActiveDocument.Range.Revisions
+  Set rng = rev.Range
+  rng.Start = rng.Start - 1
+  rng.End = rng.End + 1
+  Debug.Print rev.Author
+  If InStr(rev.Author, auName) > 0 Then
+    rng.HighlightColorIndex = myColour
+  End If
+  DoEvents
+  i = i + 1
+  If i Mod 6 = 1 Then
+    rng.Select
+    rng.Collapse wdCollapseEnd
+  End If
+Next rev
+
+If ActiveDocument.Footnotes.Count > 0 Then
+  For Each rev In ActiveDocument.StoryRanges(wdFootnotesStory).Revisions
+  Set rng = rev.Range
+    rng.Start = rng.Start - 1
+    rng.End = rng.End + 1
+    Debug.Print rev.Author
+    If InStr(rev.Author, auName) > 0 Then
+      rng.HighlightColorIndex = myColour
+    End If
+    DoEvents
+    i = i + 1
+    If i Mod 6 = 1 Then
+      rng.Select
+      rng.Collapse wdCollapseEnd
+    End If
+  Next rev
+End If
+Exit Sub
+If ActiveDocument.Endnotes.Count > 0 Then
+  For Each rev In ActiveDocument.StoryRanges(wdEndnotesStory).Revisions
+    rng.Start = rng.Start - 1
+    rng.End = rng.End + 1
+    Debug.Print rev.Author
+    If InStr(rev.Author, auName) > 0 Then
+      rng.HighlightColorIndex = myColour
+    End If
+    DoEvents
+    i = i + 1
+    If i Mod 6 = 1 Then
+      rng.Select
+      rng.Collapse wdCollapseEnd
+    End If
+  Next rev
+End If
+Beep
+Selection.HomeKey Unit:=wdStory
+End Sub
+
+
+
+

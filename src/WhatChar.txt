@@ -1,5 +1,5 @@
 Sub WhatChar()
-' Paul Beverley - Version 25.01.23
+' Paul Beverley - Version 07.06.23
 ' Show ASCII and unicode and character names
 
 ' Decide where to show results
@@ -8,8 +8,8 @@ showInMessageBox = True
 
 useVoice = False
 
-' To use voice, remove the apostrophe from the following lilne
-' If useVoice = True Then Set speech = New SpVoice
+' To use voice, remove the apostrophe from the following line
+If useVoice = True Then Set speech = New SpVoice
 
 ' If the macro gives an error on locked files, make this True
 lockedFile = False
@@ -26,7 +26,7 @@ prepareFReditCode = True
 
 
 If showOnStatusbar + showInMessageBox + useVoice = 0 Then _
-     Beep: MsgBox "Alter options in macro code to show results.": _
+     Beep: MsgBox "Alter options at the top of the macro code to show results.": _
      Exit Sub
 
 charSelected = (Selection.Start <> Selection.End)
@@ -37,13 +37,12 @@ If Selection.Start = Selection.End Then Selection.MoveEnd wdCharacter, 1
 Set rng = Selection.Range.Duplicate
 rng.Collapse wdCollapseStart
 rng.MoveEnd , 1
-Debug.Print AscW(Left(rng.Text, 1)), AscW(Right(rng.Text, 1))
 
 If lockedFile = False Then
   Selection.MoveEnd , 1
   Selection.Range.Revisions.AcceptAll
 End If
-ansicode = Asc(rng)
+ansicode = AscW(rng)
 nextCharCode = AscW(Right(rng.Text, 1))
 uCode = Val(Dialogs(wdDialogInsertSymbol).CharNum)
 

@@ -1,5 +1,5 @@
 Sub LanguageSetUK()
-' Paul Beverley - Version 06.12.21
+' Paul Beverley - Version 09.04.23
 ' Sets language as UK English
 
 myLanguage = wdEnglishUK
@@ -9,8 +9,6 @@ myLanguage = wdEnglishUK
 setStyleLanguage = False
 ' setStyleLanguage = True
 
-myTrack = ActiveDocument.TrackRevisions
-ActiveDocument.TrackRevisions = False
 ActiveDocument.Content.LanguageID = myLanguage
 For Each aStory In ActiveDocument.StoryRanges
   Do
@@ -23,7 +21,7 @@ For Each aStory In ActiveDocument.StoryRanges
     End If
   Loop While MoreStoryRanges
 Next aStory
-If ActiveDocument.Shapes.count > 0 Then
+If ActiveDocument.Shapes.Count > 0 Then
   For Each shp In ActiveDocument.Shapes
     If shp.Type <> 24 And shp.Type <> 3 Then
       If shp.TextFrame.HasText Then
@@ -33,7 +31,7 @@ If ActiveDocument.Shapes.count > 0 Then
   Next
 End If
 If setStyleLanguage = True Then
-  For i = 1 To ActiveDocument.Styles.count
+  For i = 1 To ActiveDocument.Styles.Count
     Set sty = ActiveDocument.Styles(i)
     If sty.Type = wdStyleTypeParagraph Then _
          sty.LanguageID = myLanguage
@@ -41,9 +39,7 @@ If setStyleLanguage = True Then
 End If
 ActiveDocument.Styles(wdStyleNormal).LanguageID = myLanguage
 ActiveDocument.Styles(wdStyleCommentText).LanguageID = myLanguage
-ActiveDocument.SpellingChecked = False
-ActiveDocument.GrammarChecked = False
-ActiveDocument.TrackRevisions = myTrack
+ActiveDocument.Styles("Balloon Text").LanguageID = myLanguage
 End Sub
 
 

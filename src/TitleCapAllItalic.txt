@@ -1,5 +1,5 @@
 Sub TitleCapAllItalic()
-' Paul Beverley - Version 29.11.16
+' Paul Beverley - Version 13.11.23
 ' Changes all italic titles to title capitals.
 
 ' Start from the top of the document
@@ -22,7 +22,7 @@ Do While Selection.Find.Found = True
   endNow = Selection.End
 
 ' Make your required change
-  Call TitleCapper
+  Call CapperMax
   
   ' Be sure you're past the previous occurrence
   Selection.End = endNow
@@ -32,5 +32,6 @@ Do While Selection.Find.Found = True
   Selection.Find.Execute
 Loop
 End Sub
+
 
 

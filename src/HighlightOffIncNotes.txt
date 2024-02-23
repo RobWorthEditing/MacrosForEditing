@@ -1,0 +1,25 @@
+Sub HighlightOffIncNotes()
+' Paul Beverley - Version 24.01.24
+' Removes all highlights and/or colour from text and notes
+
+doColourToo = True
+
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+ActiveDocument.Content.HighlightColorIndex = wdNoHighlight
+If doColourToo = True Then
+  ActiveDocument.Content.Font.Color = wdColorAutomatic
+End If
+If ActiveDocument.Footnotes.Count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+  rng.HighlightColorIndex = wdNoHighlight
+  If doColourToo = True Then rng.Font.Color = wdColorAutomatic
+End If
+If ActiveDocument.Endnotes.Count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  rng.HighlightColorIndex = wdNoHighlight
+  If doColourToo = True Then rng.Font.Color = wdColorAutomatic
+End If
+ActiveDocument.TrackRevisions = nowTrack
+End Sub
+

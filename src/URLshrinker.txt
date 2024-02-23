@@ -1,44 +1,35 @@
 Sub URLshrinker()
-' Paul Beverley - Version 28.02.20
+' Paul Beverley - Version 15.07.23
 ' Reduces the extent of a URL link to just the selected text
 
-myStart = Selection.Start
-myEnd = Selection.End
-Selection.Expand wdParagraph
-Set rng = Selection.range.Duplicate
-For i = 1 To rng.Fields.Count
-  Set fld = rng.Fields(i)
-  myType = fld.Type
-  If myType = 88 Then
-    fld.Select
-    fldStart = Selection.Start
-    fldEnd = Selection.End
-    If fldEnd > myEnd Then Exit For
-  End If
-Next i
-myURLtext = fld.Code
-myDisplayText = fld.Result
-myStartText = fldEnd - Len(myDisplayText)
-myRight = Right(myDisplayText, fldEnd - myEnd - 1)
-myMiddle = Mid(myDisplayText, myStart - myStartText + 2, _
-     myEnd - myStart)
-myLeft = Left(myDisplayText, myStart - myStartText + 1)
-fld.Delete
-With Selection
-  .TypeText Text:=myLeft
-  .MoveStart , -Len(myLeft)
-  .range.Font.ColorIndex = wdAuto
-  .range.Underline = False
-  .Collapse wdCollapseEnd
-End With
-Set newLink = ActiveDocument.Hyperlinks.Add(Anchor:=Selection.range, _
-     TextToDisplay:=myMiddle, Address:=myURLtext)
-With Selection
-  .TypeText Text:=myRight
-  .MoveStart , -Len(myRight)
-  .range.Font.ColorIndex = wdAuto
-  .range.Underline = False
-  .Collapse wdCollapseEnd
-End With
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+  DoEvents
+  Loop
+End If
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Set rng = Selection.Range.Duplicate
+' Find the beginning and end of the existing link
+Do
+  rng.MoveStart , -1
+  DoEvents
+  Debug.Print rng.Font.Underline
+Loop Until rng.Font.Underline > 1
+Do
+  rng.MoveEnd , 1
+  DoEvents
+  Debug.Print rng.Font.Underline
+Loop Until rng.Font.Underline > 1
+myCode = rng.Fields(1).Code
+myCode = Replace(myCode, "HYPERLINK", "")
+myCode = Replace(myCode, """", "")
+rng.Fields(1).Unlink
+Set newLink = ActiveDocument.Hyperlinks.Add(Anchor:=Selection.Range, _
+         Address:=myCode)
+ActiveDocument.TrackRevisions = myTrack
 End Sub
 

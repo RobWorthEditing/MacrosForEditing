@@ -1,5 +1,5 @@
 Sub FullPointInDialogue()
-' Version 17.02.21
+' Paul Beverley - Version 17.02.21
 ' Make adjacent words into sentence end
 
 makeCaseChange = (Selection.Start = Selection.End)

@@ -1,7 +1,11 @@
 Sub HighlightOffNext()
-' Paul Beverley - Version 15.05.21
+' Paul Beverley - Version 15.04.23
 ' Unhighlights the next area of highlighting
 
+doTrack = False
+
+myTrack = ActiveDocument.TrackRevisions
+If doTrack = False Then ActiveDocument.TrackRevisions = False
 Selection.Collapse wdCollapseEnd
 With Selection.Find
   .ClearFormatting
@@ -21,6 +25,6 @@ If Selection.Find.Found = True Then
 Else
   Beep
 End If
+If doTrack = False Then ActiveDocument.TrackRevisions = myTrack
 End Sub
-
 

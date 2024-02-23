@@ -1,0 +1,35 @@
+
+Sub LinksAllToEndnotes()
+' Paul Beverley - Version 18.05.23
+' Change each active URL link into an endnote
+
+stopAfterEachOne = True
+
+For i = ActiveDocument.Fields.count To 1 Step -1
+  myAddress = ActiveDocument.Fields(i).Code
+  If ActiveDocument.Fields(i).Type = 88 Then
+    myAddress = Replace(myAddress, "HYPERLINK """, "")
+    myAddress = Replace(myAddress, " \h ", "")
+    myAddress = Replace(myAddress, " \h", "")
+    myAddress = Replace(myAddress, " \t ""_blank""", "")
+    myAddress = Replace(myAddress, " ", "")
+    myAddress = Replace(myAddress, """", "")
+    Debug.Print myAddress
+    ActiveDocument.Fields(i).Select
+    Selection.Collapse wdCollapseEnd
+    If InStr(".,;:!?", Selection) > 0 Then Selection.MoveRight , 1
+    ActiveDocument.Fields(i).Unlink
+    Selection.Endnotes.Add Range:=Selection.Range
+    Selection.TypeText Text:=myAddress & "."
+    Selection.Expand wdParagraph
+    Selection.MoveEnd , -2
+    Selection.MoveStart , 2
+    ActiveDocument.Hyperlinks.Add Anchor:=Selection.Range, Address:=myAddress
+  End If
+  If stopAfterEachOne = True Then
+    myResponse = MsgBox("Continue?", _
+         vbQuestion + vbYesNo, "LinksAllToEndnotes")
+    If myResponse <> vbYes Then Exit Sub
+  End If
+Next i
+End Sub

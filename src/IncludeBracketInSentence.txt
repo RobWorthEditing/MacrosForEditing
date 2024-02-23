@@ -1,19 +1,16 @@
 Sub IncludeBracketInSentence()
-' Paul Beverley - Version 24.08.12
-' Move the full point to after the bracketed reference
+' Paul Beverley - Version 11.08.23
+' Moves the full point to after the bracketed reference
 
-myTrack = ActiveDocument.TrackRevisions
-ActiveDocument.TrackRevisions = False
-If Selection.Start = Selection.End Then Selection.MoveEnd wdCharacter, 40
-
-Selection.MoveEndWhile cset:=ChrW(13), Count:=wdBackward
-mm = Selection
-mm = Replace(mm, ".", "")
-mm = Replace(mm, ")", ").")
-mm = Replace(mm, ")..", ").")
-Selection.TypeText mm
-
-ActiveDocument.TrackRevisions = myTrack
+Selection.Expand wdWord
+Selection.Collapse wdCollapseEnd
+Selection.MoveEnd , 1
+Selection.Cut
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 1
+Selection.Paste
 End Sub
+
 
 

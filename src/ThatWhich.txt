@@ -1,7 +1,6 @@
-
 Sub ThatWhich()
 ' Paul Beverley - Version 06.08.22
-' Changes "that" to "which" and vice versa
+' Changes that to which and vice versa
 
 Selection.MoveLeft Unit:=wdWord, count:=1
 Selection.MoveRight Unit:=wdWord, count:=1, Extend:=wdExtend
@@ -27,5 +26,4 @@ If thisWord <> "" Then
   Selection.TypeText Text:="that "
 End If
 End Sub
-
 

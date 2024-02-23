@@ -1,0 +1,32 @@
+Sub IndexPageOrderChecker()
+' Paul Beverley - Version 21.11.23
+' Seeks paragraphs that have number list in wrong order
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+
+Do While Len(rng) > 5
+  myLine = Replace(rng.Text, " ", "")
+  myNum = Split(rng, ",")
+  prevNum = 0
+  For i = 0 To UBound(myNum)
+   Debug.Print myNum(i)
+    nowNum = Val(myNum(i))
+    If nowNum < prevNum Then
+      Beep
+      rng.Select
+      Exit Sub
+    End If
+    prevNum = nowNum
+  Next i
+  rng.Collapse wdCollapseEnd
+  rng.Expand wdParagraph
+  DoEvents
+Loop
+Beep
+rng.Collapse wdCollapseEnd
+rng.Select
+End Sub
+
+
+

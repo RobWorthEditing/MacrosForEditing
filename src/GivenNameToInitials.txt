@@ -52,8 +52,5 @@ Next i
 newText = newText & wds(lastWd)
 
 Selection.TypeText newText
-sjkdfhjks = 0
-
 End Sub
-
 

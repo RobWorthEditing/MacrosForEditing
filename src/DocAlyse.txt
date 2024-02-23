@@ -1,5 +1,5 @@
 Sub DocAlyse()
-' Paul Beverley - Version 08.02.22
+' Paul Beverley - Version 21.12.23
 ' Analyses various aspects of a document
 
 ' prompts to count number of tests
@@ -25,6 +25,45 @@ ss = "________________________________" & _
      "__________________________________"
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
+
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set tempDoc = ActiveDocument
+Set rng = ActiveDocument.Content
+rng.FormattedText = rngOld.FormattedText
+Selection.EndKey Unit:=wdStory
+
+If ActiveDocument.Footnotes.Count > 0 Then
+  ActiveDocument.StoryRanges(wdFootnotesStory).Copy
+  Selection.Paste
+  Selection.Collapse wdCollapseEnd
+End If
+
+If ActiveDocument.Endnotes.Count > 0 Then
+  ActiveDocument.StoryRanges(wdEndnotesStory).Copy
+  Selection.Paste
+  Selection.Collapse wdCollapseEnd
+End If
+
+Set endTempfile = ActiveDocument.Content
+endTempfile.Collapse wdCollapseEnd
+
+' collect text in all the textboxes (if any)
+sh = ActiveDocument.Shapes.Count
+If sh > 0 Then
+  For Each shp In ActiveDocument.Shapes
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.HasText Then
+        shp.TextFrame.TextRange.Copy
+        endTempfile.Select
+        Selection.Paste
+      End If
+    End If
+  Next
+End If
+
+Selection.HomeKey Unit:=wdStory
+
 
 ' Use main file for italic 'et al' count...
 myTot = ActiveDocument.Range.End
@@ -612,8 +651,8 @@ DoEvents
 StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[bpiv]our[ ,.s]"
 rng.Find.Execute Replace:=wdReplaceAll
-A = ActiveDocument.Range.End - myTot
-If A > 0 Then WordBasic.EditUndo
+a = ActiveDocument.Range.End - myTot
+If a > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = "[a-z]{3,}elling>"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -649,9 +688,9 @@ rng.Find.Execute Replace:=wdReplaceAll
 k = ActiveDocument.Range.End - myTot
 If k > 0 Then WordBasic.EditUndo
 
-If A + g + f + i + q + v + k > 0 Then myRslt = _
+If a + g + f + i + q + v + k > 0 Then myRslt = _
      myRslt & "UK spelling (appx)" & vbTab & _
-     Trim(Str(A + g + f)) & CR & _
+     Trim(Str(a + g + f)) & CR & _
      "US spelling (appx)" & vbTab & _
      Trim(Str(i - q + v + k)) & CR & _
      "(For a more accurate count, please use UKUScount.)" & CR2
@@ -1196,150 +1235,43 @@ If i + j + g + k + l + m > 0 Then
 End If
 
 
+
 ' equations
+fText = ",<eq [0-9],<eq. [0-9],<eqn [0-9],<Eqn [0-9]," & _
+"eqns [0-9],eqs [0-9],<eq \(,<eq. \(,<Eq. \(" & _
+",<eqn \(,<Eqn \(,eqns \(,eqs \(,Eqs \(,Eqs. \(" & _
+",equation \(,[!.] Equation \(,equations \(" & _
+",[!.] Equations \(,equation [0-9]" & _
+",[!.] Equation [0-9],equations [0-9]" & _
+",[!.] Equations [0-9]"
+
+resText = ",eq,eq.,eqn,Eqn,eqns,eqs,eq (n.n)," & _
+"eq. (n.n),Eq. (n.n),eqn (n.n)," & _
+"Eqn (n.n),eqns (n.n),eqs,Eqs,Eqs.," & _
+"equation (n.n),Equation (n.n)," & _
+"equations (n.n),Equations (n.n),equation," & _
+"Equation,equations,Equations"
+
+myF = Split(fText, ",")
+myRes = Split(resText, ",")
+
 aBit = ""
 cc = cc - 1
 DoEvents
 StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 myTot = ActiveDocument.Range.End
 rng.Find.MatchWildcards = True
-rng.Find.Text = "<eq [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eq" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<eq. [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eq." & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<eqn [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eqn" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<Eqn [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Eqn" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "eqns [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eqns" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "eqs [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eqs" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<eq \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eq (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<eq. \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eq. (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<Eq. \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Eq. (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<eqn \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eqn (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<Eqn \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Eqn (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "eqns \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eqns (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "eqs \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eqs" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "Eqs \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Eqs" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "Eqs. \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Eqs." & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "equation \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "equation (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "[!.] Equation \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Equation (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "equations \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "equations (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "[!.] Equations \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Equations (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "equation [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "equation" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "[!.] Equation [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Equation" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "equations [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "equations" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "[!.] Equations [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Equations" & vbTab & Trim(Str(i)) & CR
+For q = 1 To 23
+  With rng.Find
+    .Text = myF(q)
+    .Replacement.Text = "^&!"
+    .Execute Replace:=wdReplaceAll
+  End With
+  i = ActiveDocument.Range.End - myTot
+  Debug.Print ActiveDocument.Range.End, myTot, i
+  If i > 0 Then WordBasic.EditUndo: _
+       aBit = aBit & myRes(q) & vbTab & Trim(Str(i)) & CR
+Next q
 If aBit > "" Then myRslt = myRslt & aBit & CR
 
 
@@ -1906,9 +1838,11 @@ With Selection.Find
 End With
 
 Selection.HomeKey Unit:=wdStory
+tempDoc.Close SaveChanges:=False
 
 If doingSeveralMacros = False Then
   Beep
+  newDoc.Activate
 Else
   FUT.Activate
 End If

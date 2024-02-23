@@ -1,0 +1,22 @@
+Sub WildcardSave()
+' Paul Beverley - Version 31.03.23
+' Reads the current 'Selection.Find' and saves at the top of the file
+
+addBookmark = True
+
+Set rng = Selection.Range.Duplicate
+If addBookmark = True Then _
+     ActiveDocument.Bookmarks.Add Name:="myTempMark"
+
+Selection.HomeKey Unit:=wdStory
+myFind = Selection.Find.Text
+Selection.TypeText Text:=myFind & vbCr
+For i = 1 To 100
+DoEvents
+Next i
+myResponse = MsgBox("Find saved", vbOKOnly, "WildcardSave")
+rng.Select
+Selection.MoveLeft , 1
+Selection.MoveRight , 1
+End Sub
+

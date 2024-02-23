@@ -1,6 +1,11 @@
+
 Sub HighlightPlus()
-' Paul Beverley - Version 24.03.21
+' Paul Beverley - Version 18.10.23
 ' Adds highlight in a choice of colours
+
+' Make one or other True:
+highlightParagraph = False
+highlightWord = True
 
 Dim myCol(20)
 myCol(0) = wdNoHighlight
@@ -20,26 +25,48 @@ myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
 Dim v As Variable, nowColour As Long
-varsExist = False
+numVars = 0
 For Each v In ActiveDocument.Variables
-  If v.Name = "colNum" Then varsExist = True: Exit For
+  If v.Name = "colNum" Then numVars = numVars + 1
+  If v.Name = "selEnd" Then numVars = numVars + 1
+  If v.Name = "selStart" Then numVars = numVars + 1
 Next v
 
-If varsExist = False Then
+If numVars = 1 Or numVars = 2 Then
+  numVars = 0
+  For i = ActiveDocument.Variables.Count To 1 Step -1
+    ActiveDocument.Variables(i).Delete
+  Next i
+End If
+
+If numVars = 0 Then
   ActiveDocument.Variables.Add "selStart", 0
   ActiveDocument.Variables.Add "selEnd", 0
   ActiveDocument.Variables.Add "colNum", 0
+Else
+  wasStart = ActiveDocument.Variables("selStart")
+  wasEnd = ActiveDocument.Variables("selEnd")
+  wasCol = ActiveDocument.Variables("colNum")
 End If
 
-wasStart = ActiveDocument.Variables("selStart")
-wasEnd = ActiveDocument.Variables("selEnd")
-wasCol = ActiveDocument.Variables("colNum")
 ' If no text is selected ...
 If Selection.Start = Selection.End Then
   If Selection.Text = vbCr Then Selection.MoveLeft , 1
   ' If the cursor is outside the area, give up
   If Selection.Start < wasStart Or Selection.End > wasEnd Then
-    Selection.Expand wdWord
+    If highlightParagraph = True Then
+      Selection.Expand wdParagraph
+    Else
+      If highlightWord = True Then
+        Selection.Expand wdWord
+        Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+          Selection.MoveEnd , -1
+          DoEvents
+        Loop
+      End If
+    End If
+
+    If highlightParagraph = True Then Selection.Expand wdWord
     ActiveDocument.Variables("selStart") = Selection.Start
     ActiveDocument.Variables("selEnd") = Selection.End
     nowCol = 1
@@ -71,4 +98,5 @@ Selection.End = Selection.Start
 theEnd:
 ActiveDocument.TrackRevisions = myTrack
 End Sub
+
 

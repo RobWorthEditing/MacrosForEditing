@@ -1,5 +1,5 @@
 Sub PunctuationToHardSpace()
-' Paul Beverley - Version 19.11.21
+' Paul Beverley - Version 25.03.23
 ' Changes the next item to a hard space
 
 trackIt = True
@@ -11,25 +11,23 @@ newChar = ChrW(160)
 
 myTrack = ActiveDocument.TrackRevisions
 If trackIt = False Then ActiveDocument.TrackRevisions = False
-
 Set rng = Selection.Range.Duplicate
-rng.End = ActiveDocument.Content.End
-If Len(rng) > 1000 Then rng.End = rng.Start + 1000
 
-For Each ch In rng.Characters
-  If InStr(searchChars, ch.Text) > 0 Then
-    ch.Select
+For i = 1 To 1000
+  rng.MoveEnd , 1
+  If InStr(searchChars, Right(rng, 1)) > 0 Then
+    rng.Start = rng.End - 1
     gotChar = True
     Exit For
-  Else
   End If
-Next ch
+Next i
 If gotChar = False Then
   Beep
-  ActiveDocument.TrackRevisions = myTrack
-  Exit Sub
+Else
+  rng.Delete
+  rng.Select
+  Selection.TypeText Text:=newChar
 End If
-Selection.TypeText Text:=newChar
 ActiveDocument.TrackRevisions = myTrack
 End Sub
 

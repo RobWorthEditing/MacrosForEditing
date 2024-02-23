@@ -1,5 +1,5 @@
 Sub ProperNounAlyse()
-' Paul Beverley - Version 30.12.22
+' Paul Beverley - Version 17.02.24
 ' Analyses similar proper nouns
 
 minLengthCheck = 4
@@ -15,11 +15,12 @@ similarChars = "bb,b; b,p; sch,sh; ch,sh; c,k; ph,f; ss,z; s,z;" & _
 ignorePlurals = True
 
 myScreenOff = True
-myLanguage = Languages(Selection.LanguageID).NameLocal
-
+Set rng = Selection.Range.Duplicate
+rng.End = rng.Start + 1
+myLanguage = Languages(rng.LanguageID).NameLocal
 Set FUT = ActiveDocument
-doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
-
+doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") + _
+     InStr(FUT.Name, "Document") > 0)
 If doingSeveralMacros = False Then
   myResponse = MsgBox("    ProperNounAlyse" & vbCr & vbCr & _
        "Analyse this document?", vbQuestion _
@@ -924,13 +925,13 @@ finalList.Activate
 ' that are only case changes of one another
 totParas = ActiveDocument.Paragraphs.Count
 For i = 1 To totParas - 1
-  A = Trim(ActiveDocument.Paragraphs(i).Range.Words(1))
+  a = Trim(ActiveDocument.Paragraphs(i).Range.Words(1))
   b = Trim(ActiveDocument.Paragraphs(i + 1).Range.Words(1))
-  A = Mid(A, 2)
+  a = Mid(a, 2)
   b = Mid(b, 2)
-  If LCase(A) = LCase(b) And Len(A) > 2 Then
-    If (UCase(A) = A And LCase(b) = b) Or (UCase(b) = b And _
-         LCase(A) = A) Then
+  If LCase(a) = LCase(b) And Len(a) > 2 Then
+    If (UCase(a) = a And LCase(b) = b) Or (UCase(b) = b And _
+         LCase(a) = a) Then
       ActiveDocument.Paragraphs(i).Range.Words(1).HighlightColorIndex = 0
       ActiveDocument.Paragraphs(i + 1).Range.Words(1).HighlightColorIndex _
            = 0
@@ -1195,13 +1196,11 @@ With rng.Find
 End With
 Application.ScreenUpdating = True
 If doingSeveralMacros = False Then
-Debug.Print Timer - timeStart
   myTime = (Int(10 * (Timer - timeStart) / 60) / 10)
   Beep
   If myTime > 0 Then MsgBox myTime & "  minutes"
-Else
-  FUT.Activate
 End If
+If InStr(FUT.Name, "zzTestFile") > 0 Then FUT.Activate
 Exit Sub
 
 ReportIt:
@@ -1209,7 +1208,6 @@ Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub
-
 
 
 

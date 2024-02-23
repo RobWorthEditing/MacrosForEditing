@@ -1,0 +1,26 @@
+
+Sub FindResetParameters()
+' Paul Beverley - Version 15.01.24
+' Does a dummy find to set all the parameters to default
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "youwon'tfindthis!"
+  .Replacement.Text = ""
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Format = False
+  .MatchCase = False
+  .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
+  .Execute
+  .Text = ""
+  .Execute
+End With
+End Sub
+
+
+

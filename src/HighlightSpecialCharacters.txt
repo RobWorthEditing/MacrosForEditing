@@ -1,0 +1,37 @@
+Sub HighlightSpecialCharacters()
+' Paul Beverley - Version 06.07.23
+' Highlights all special characters in a file
+
+myHighlightColour = wdBrightGreen
+' myHighlightColour = wdNoHighlight
+
+' myTextColour = wdColorBlue
+myTextColour = wdColorBlack
+
+oldColour = Options.DefaultHighlightColorIndex
+If myHighlightColour > 0 Then _
+     Options.DefaultHighlightColorIndex = myHighlightColour
+
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[!A-Za-z 0-9.,;:\-\?\!^0001-^0064+/" & _
+       ChrW(8216) & ChrW(8217) & ChrW(8220) & ChrW(8221) _
+       & "^=^+=~\<\>\{\}\@…]"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^&"
+  If myTextColour > 0 Then _
+       .Replacement.Font.Color = myTextColour
+  If myHighlightColour > 0 Then _
+       .Replacement.Highlight = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Options.DefaultHighlightColorIndex = oldColour
+
+End Sub
+

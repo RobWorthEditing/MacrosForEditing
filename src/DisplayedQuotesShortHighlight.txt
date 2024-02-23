@@ -1,0 +1,17 @@
+Sub DisplayedQuotesShortHighlight()
+' Paul Beverley - Version 17.07.23
+' Highlights all displayed quotes that are too short
+
+maxWords = 50
+myColour = wdYellow
+
+For Each myPar In ActiveDocument.Paragraphs
+  If myPar.Range.Words.count < maxWords Then
+    If myPar.Range.ParagraphFormat.LeftIndent > 0 Then
+      myPar.Range.HighlightColorIndex = myColour
+    End If
+  End If
+  DoEvents
+Next myPar
+End Sub
+

@@ -1,6 +1,8 @@
 Sub NumberToTextUK()
-' Paul Beverley - Version 24.06.22
+' Paul Beverley - Version 13.07.23
 ' Converts next number into text
+
+doUK = True
 
 oldFind = Selection.Find.Text
 oldReplace = Selection.Find.Replacement.Text
@@ -25,42 +27,31 @@ Selection.Fields.Add Range:=Selection.Range, _
 
 ' Select the field and copy it
 Selection.MoveStart , -1
-Selection.Copy
-Selection.Delete
+Set rng = Selection.Range.Duplicate
+Selection.Fields(1).Unlink
 DoEvents
+rng.Select
 
-' Paste the text as unformatted, replacing the field
-Selection.PasteSpecial Link:=False, DataType:=wdPasteText, _
-   Placement:=wdInLine, DisplayAsIcon:=False
-
-Selection.Start = startNum
-numWords = Selection
-If Right(numWords, 4) <> "dred" Then numWords = _
-     Replace(numWords, "hundred", "hundred and")
-If InStr(numWords, "hundred") > 0 Then
-  numWords = Replace(numWords, "thousand", "thousand,")
-Else
-  If Right(numWords, 4) <> "sand" Then numWords = _
-       Replace(numWords, "thousand", "thousand and")
+If doUK = True Then
+  numWords = Selection.Text
+  If InStr(numWords, "dred") > 0 And Right(numWords, 4) <> "dred" Then numWords = _
+       Replace(numWords, "hundred", "hundred and")
+  If InStr(numWords, "hundred") > 0 And InStr(numWords, "thousand") > 0 Then
+    numWords = Replace(numWords, "thousand", "thousand,")
+  Else
+    If Right(numWords, 4) <> "sand" Then numWords = _
+         Replace(numWords, "thousand", "thousand and")
+  End If
+  
+  If numWords <> Selection.Text Then Selection.Text = numWords
 End If
-Selection.TypeText numWords
 
 With Selection.Find
   .Text = oldFind
   .Replacement.Text = oldReplace
   .MatchWildcards = False
 End With
-
-Set rng = Selection.Range.Duplicate
-rng.MoveStart , -1
-ch1 = rng.Text
-rng.MoveStart , 1
-rng.MoveEnd , 1
-ch2 = rng.Text
-If (UCase(ch1) <> LCase(ch1)) And (UCase(ch2) <> LCase(ch2)) Then
-  Selection.TypeText Text:=" "
-End If
-Set rng = ActiveDocument.Range(Start:=startNum - 1, End:=startNum)
-If rng.Text <> " " Then rng.InsertBefore Text:=" "
+Selection.Collapse wdCollapseEnd
+Selection.MoveRight wdWord, 1
 End Sub
 

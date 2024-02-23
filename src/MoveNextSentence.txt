@@ -1,0 +1,8 @@
+Sub MoveNextSentence()
+' Paul Beverley - Version 18.10.22
+' Moves the cursor ro the start of the next sentence
+
+Selection.Expand wdSentence
+Selection.Collapse wdCollapseEnd
+End Sub
+

@@ -1,5 +1,5 @@
 Sub SpracheDE()
-' Paul Beverley - Version 20.05.20
+' Paul Beverley - Version 09.04.23
 ' Sets language as German
 
 ' myLanguage = wdGermanLiechtenstein
@@ -7,8 +7,6 @@ Sub SpracheDE()
 ' myLanguage = wdGermanLuxembourg
 myLanguage = wdGerman
 
-myTrack = ActiveDocument.TrackRevisions
-ActiveDocument.TrackRevisions = False
 ActiveDocument.Content.LanguageID = myLanguage
 For Each aStory In ActiveDocument.StoryRanges
  aStory.LanguageID = myLanguage
@@ -25,7 +23,5 @@ End If
 ActiveDocument.Styles(wdStyleNormal).LanguageID = myLanguage
 ActiveDocument.Styles(wdStyleCommentText).LanguageID = myLanguage
 ActiveDocument.Styles("Balloon Text").LanguageID = myLanguage
-ActiveDocument.SpellingChecked = False
-ActiveDocument.TrackRevisions = myTrack
 End Sub
 

@@ -1,0 +1,38 @@
+Sub MoveToEnd()
+' Paul Beverley - Version 22.07.23
+' Moves the selected text to the end of the sentence
+  
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Selection.Range.Characters.Last) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.Expand wdWord
+  Selection.Start = rng.Start
+  rng.End = Selection.End
+  rng.Collapse wdCollapseEnd
+  rng.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", rng.Characters.Last) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.End = rng.End
+End If
+
+Set rng = Selection.Range.Duplicate
+rng.Select
+Selection.MoveStart , -1
+Selection.Cut
+Selection.Expand wdSentence
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 1
+Selection.Paste
+End Sub
+
+
+
+

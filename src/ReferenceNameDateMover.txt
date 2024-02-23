@@ -1,6 +1,10 @@
 Sub ReferenceNameDateMover()
-' Paul Beverley - Version 16.03.22
+' Paul Beverley - Version 10.04.23
 ' Moves forename/initials to before surname or move year to end
+
+includePublisher = True
+' needAFullStop = True
+needAFullStop = False
 
 myExtraText = "City, State: Publisher, "
 
@@ -26,11 +30,6 @@ For i = 1 To 6
 Next i
 
 deleteFstop = False
-'For i = 1 To 6
-'  Debug.Print wd(i) & "|";
-'  DoEvents
-'Next i
-' Debug.Print vbCr
 For i = 1 To 6
   Debug.Print wd(i - 1), wd(i)
   If LCase(wd(i)) = UCase(wd(i)) And wd(i) <> ". " Then Exit For
@@ -76,19 +75,50 @@ If Selection.Start = Selection.End Then
   rng.End = rng.End + 2
   If Right(rng.Text, 1) <> "." Then rng.MoveEnd , -1
   rng.Delete
-
+  rng.MoveStart , -1
+  rng.MoveEnd , 1
+  If rng.Text = ",," Then rng.Text = ","
   ' Find the end of the para
   rng.Expand wdParagraph
   rng.Collapse wdCollapseEnd
   rng.MoveStart , -2
   rng.MoveEnd , -1
   ' Add a full stop if necessary
-  If rng.Text <> "." Then
-    rng.Collapse wdCollapseEnd
-    rng.InsertAfter Text:="."
+  If needAFullStop Then
+    If rng.Text <> "." Then
+      rng.Collapse wdCollapseEnd
+      rng.InsertAfter Text:="."
+    End If
+  Else
+    If rng.Text = "." Then rng.Delete
   End If
   rng.Collapse wdCollapseStart
-  rng.InsertBefore Text:=" (" & yrText & ")"
+  If includePublisher = True Then
+    Do
+      rng.MoveStart , -1
+      DoEvents
+    Loop Until InStr(",.", Left(rng.Text, 1)) > 0
+    rng.Collapse wdCollapseStart
+    rng.MoveEnd , 1
+    If rng.Text = "." Then
+      rng.Delete
+      rng.MoveStart , 1
+    Else
+      rng.MoveStart , 2
+    End If
+    rng.InsertBefore Text:="("
+    rng.Expand wdParagraph
+    rng.MoveEnd , -1
+    rng.Start = rng.End - 1
+  rng.Select
+    If rng.Text = "." Then
+      rng.InsertBefore Text:=", " & yrText & ")"
+    Else
+      rng.InsertAfter Text:=", " & yrText & ")"
+    End If
+  Else
+    rng.InsertBefore Text:=" (" & yrText & ")"
+  End If
   rng.Collapse wdCollapseEnd
   rng.Select
 Else

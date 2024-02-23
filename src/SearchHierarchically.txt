@@ -1,29 +1,32 @@
 Sub SearchHierarchically()
-' Paul Beverley - Version 20.11.17
-' Finds
+' Paul Beverley - Version 24.11.23
+' Shell macro: Searches hierarchically for a character
 
-doSelection = (Len(Selection) > 1)
+myChar = "z"
 
-If doSelection Then
-  Set rng = Selection.Range.Duplicate
-Else
-  Set rng = ActiveDocument.Content
-End If
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
 
 For Each myPar In rng.Paragraphs
-  If InStr(myPar.Range.Text, "w") > 0 Then
+  If InStr(myPar.Range.Text, myChar) > 0 Then
     For Each wd In myPar.Range.Words
-      If InStr(wd.Text, "w") > 0 Then
+      If InStr(wd.Text, myChar) > 0 Then
         For Each ch In wd.Characters
-          If ch = "w" Then
+          If ch = myChar Then
             ch.Select
-            asjdhfkashfkjhdas = 0
+            Beep
+            Exit Sub
           End If
+          DoEvents
         Next ch
       End If
+      DoEvents
     Next wd
   End If
+  DoEvents
 Next myPar
 End Sub
+
+
 
 

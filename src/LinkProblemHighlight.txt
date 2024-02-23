@@ -1,0 +1,21 @@
+Sub LinkProblemHighlight()
+' Paul Beverley - Version 19.07.23
+' Highlights links that don't go anywhere
+
+For Each fld In ActiveDocument.Fields
+  If fld.Type > 0 Then
+    If InStr(fld.Code, "about:blank") > 0 Then
+      fld.Select
+      Selection.Range.HighlightColorIndex = wdBrightGreen
+    End If
+    If InStr(fld.Code, "wiki") > 0 Then
+      fld.Select
+      Selection.Range.HighlightColorIndex = wdYellow
+    End If
+  End If
+  DoEvents
+Next fld
+Beep
+Selection.HomeKey Unit:=wdStory
+End Sub
+

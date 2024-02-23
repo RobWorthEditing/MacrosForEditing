@@ -1,0 +1,118 @@
+Sub MultiFileDocToDocxSave()
+' Paul Beverley - Version 12.05.23
+' Save any .doc files in a folder also in .docx format
+
+newFilesInFolder = False
+' If you make the above 'True', then you must first create
+' a folder of this name:
+newFolderName = "WordFormat"
+
+
+Dim allMyFiles(200) As String
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.Start > myExtent Then rng.End = rng.Start + myExtent
+
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  myResponse = _
+       MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "Multifile Text Collection")
+  docCount = Documents.count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If Right(myFile, 4) = ".doc" Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+  
+  If pdfFilesInFolder = True Then
+    mySubFolder = "\" & pdfFolderName
+  Else
+    mySubFolder = ""
+  End If
+  myResponse = MsgBox("Save ALL the .doc files in this folder: " & mySubFolder & dirName _
+       & " ?", vbQuestion + vbYesNoCancel, "Multifile DocToDocx")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.Range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+If newFilesInFolder = True Then
+  myResponse = MsgBox("Save just the files listed here, in this folder: " & _
+       mySubFolder & myFolder & " ?", _
+       vbQuestion + vbYesNoCancel, "Multifile DocToDocx")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+For i = 1 To numFiles
+  thisName = allMyFiles(i)
+  myFileType = Mid(thisName, InStr(thisName, "."))
+  justName = Replace(thisName, myFileType, "")
+  thisFile = myFolder & myDelimiter & thisName
+  Set myDoc = Application.Documents.Open(fileName:=thisFile)
+  StatusBar = allMyFiles(i)
+  If newFilesInFolder = True Then
+    justName = newFolderName & "\" & justName
+  End If
+  DoEvents
+  'ActiveDocument.ExportAsFixedFormat OutputFileName:=justName, _
+       ExportFormat:=wdFormatXMLDocument, OpenAfterExport:=False
+  ActiveDocument.SaveAs2 fileName:=justName, FileFormat:=wdFormatXMLDocument _
+    , LockComments:=False
+  myDoc.Close SaveChanges:=wdDoNotSaveChanges
+Next
+Selection.HomeKey Unit:=wdStory
+
+' Dummy copy to clear clipboard
+Set rng = ActiveDocument.Content
+rng.End = rng.Start + 1
+rng.Copy
+
+MsgBox (numFiles & "  files saved as .docx")
+End Sub
+

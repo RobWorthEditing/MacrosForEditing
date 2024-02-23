@@ -1,0 +1,29 @@
+Sub TrackChangeCountWords()
+' Paul Beverley - Version 18.01.24
+' Checks the track changes to count words/characters added/subtracted
+
+CR = vbCr
+CR2 = CR & CR
+For Each rev In ActiveDocument.Revisions
+  Select Case rev.Type
+    Case wdRevisionInsert
+      myAddChars = myAddChars + Len(rev.Range.Text)
+      myAddWords = myAddWords + rev.Range.Words.Count
+    Case wdRevisionDelete
+      myDeletesChars = myDeletesChars + Len(rev.Range.Text)
+      myDeletesWords = myDeletesWords + rev.Range.Words.Count
+  End Select
+  i = i + 1
+  If i Mod 10 = 0 Then DoEvents
+Next rev
+myResult = "Insertions" & CR
+myResult = myResult & " Words: " & myAddWords & CR
+myResult = myResult & " Characters: " & myAddChars & CR2
+myResult = myResult & "Deletions" & CR
+myResult = myResult & " Words: " & myDeletesWords & CR
+myResult = myResult & " Characters: " & myDeletesChars & CR
+MsgBox myResult
+End Sub
+
+
+

@@ -1,0 +1,28 @@
+Sub LinkAdd()
+' Paul Beverley - Version 25.01.24
+' Selects the current word(s) and adds a link from your input
+
+Set rng = Selection.Range.Duplicate
+myEnd = rng.End
+rng.Collapse wdCollapseStart
+rng.Expand wdWord
+myStart = rng.Start
+rng.Select
+rng.End = myEnd
+rng.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+  rng.MoveEnd , -1
+  DoEvents
+Loop
+rng.MoveEnd , 1
+rng.Select
+If Right(rng, 1) <> "/" Then rng.MoveEnd , -1
+rng.Select
+Selection.Start = myStart
+myPrompt = "Type or paste in your URL"
+myText = InputBox(myPrompt, "LinkAdd", Selection.Text)
+ActiveDocument.Hyperlinks.Add Selection.Range, myText
+End Sub
+
+
+

@@ -1,0 +1,47 @@
+Sub MultiSyllableWordsHighlight()
+' Paul Beverley - Version 10.08.23
+' Highlights words of 3, 4 or 5+ syllables
+
+' Set the range to the current paragraph
+Set rng = Selection.Range.Duplicate
+If Len(rng) < 2 Then rng.Expand wdParagraph
+
+For Each wd In rng.Words
+  If wd.Font.StrikeThrough = False Then
+    ' Loop through each character in the word
+    syllCount = 0
+    myWord = Replace(LCase(wd.Text), " ", "")
+    myWord = Replace(myWord, ChrW(8217), "")
+    myWord = Replace(myWord, "'", "")
+    For i = 1 To Len(myWord)
+        ' Check if the character is a vowel
+        If InStr("aeiou", Mid(myWord, i, 1)) > 0 Then
+          ' Increment syllable count
+          If wasVowel = False Then syllCount = syllCount + 1
+          wasVowel = True
+        Else
+          wasVowel = False
+        End If
+    Next i
+
+    ' Adjust syllable count based on common patterns
+    If syllCount > 1 And InStr("ed es", Right(myWord, 2)) > 0 Then _
+        syllCount = syllCount - 1
+    If syllCount > 1 And InStr("e", Right(myWord, 1)) > 0 Then _
+        syllCount = syllCount - 1
+    
+    ' Colour according to number of syllables
+    If syllCount > 4 Then
+      wd.HighlightColorIndex = wdBrightGreen
+    Else
+      If syllCount > 2 Then _
+           wd.HighlightColorIndex = wdGray25
+      If syllCount > 3 Then _
+           wd.HighlightColorIndex = wdYellow
+    End If
+  End If
+  DoEvents
+Next wd
+Beep
+End Sub
+

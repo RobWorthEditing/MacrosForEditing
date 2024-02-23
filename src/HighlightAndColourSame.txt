@@ -1,0 +1,142 @@
+Sub HighlightAndColourSame()
+' Paul Beverley - Version 13.06.17
+' Highlights and/or colours all occurrences of this text
+
+thinSpaceHighlightColour = wdYellow
+nonTextHighlight = wdGray25
+
+myFaveHighlight = wdNoHighlight
+' myFaveHighlight = wdBrightGreen
+' myFaveColour = wdColorAutomatic
+myFaveColour = wdColorBlue
+
+' Preserve TC status and existing highlight colour
+oldColour = Options.DefaultHighlightColorIndex
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Dim v As Variable, nowHighlight As Long
+varsExist = False
+For Each v In ActiveDocument.Variables
+  If v.Name = "selStart" Then varsExist = True: Exit For
+Next v
+
+If varsExist Then
+  wasStart = ActiveDocument.Variables("selStart")
+  wasEnd = ActiveDocument.Variables("selEnd")
+  If (wasEnd - wasStart) > 100 Then wasEnd = wasStart + 1
+  If Selection.Start > wasStart - 1 And Selection.End < wasEnd + 1 Then
+    Selection.Start = wasStart
+    Selection.End = wasEnd
+  End If
+End If
+
+doWholeWord = False
+
+If Selection.End > Selection.Start Then
+' Some text is selected already
+  Selection.MoveEndWhile cset:=" ", Count:=wdBackward
+  nowHighlight = Selection.range.HighlightColorIndex
+  If nowHighlight = 0 Then
+    Selection.range.HighlightColorIndex = myFaveHighlight
+  End If
+  nowColour = Selection.range.Font.Color
+  If nowColour = 0 Then
+    Selection.range.Font.Color = myFaveColour
+  End If
+Else
+' No text is selected
+  Selection.MoveEnd , 1
+  myChar = Selection
+  nonText = (UCase(myChar) = LCase(myChar))
+  If nonText = True Then
+    nowHighlight = Selection.range.HighlightColorIndex
+    If nowHighlight > 0 Then
+      thinSpaceHighlightColour = 0
+      nonTextHighlight = 0
+    End If
+    If AscW(Selection) = 8201 Then
+      Selection.range.HighlightColorIndex = thinSpaceHighlightColour
+    Else
+      Selection.range.HighlightColorIndex = nonTextHighlight
+    End If
+  Else
+    ' if it's an alpha character,
+    ' we're inside a word, so select it
+    nowHighlight = Selection.range.HighlightColorIndex
+    nowColour = Selection.range.Font.Color
+    If nowColour > 0 Or nowHighlight > 0 Then
+      myFaveColour = 0
+      myFaveHighlight = 0
+    End If
+    doWholeWord = True
+    Selection.Expand wdWord
+    Selection.MoveEndWhile cset:=ChrW(8217) & "' ", Count:=wdBackward
+    Selection.range.HighlightColorIndex = myFaveHighlight
+    Selection.range.Font.Color = myFaveColour
+  End If
+End If
+
+' What we want to (un)highlight/(un)colour is now selected
+thisHighlight = Selection.range.HighlightColorIndex
+thisColour = Selection.range.Font.Color
+doHighlight = (thisHighlight > 0)
+doColour = (thisColour > 0)
+' Just in case the highlighting is mixed
+' highlight as per the first character
+If thisHighlight > 1000 Then
+  Set rng = Selection.range.Duplicate
+  rng.End = Selection.Start + 1
+  Selection.range.HighlightColorIndex = rng.HighlightColorIndex
+  thisHighlight = rng.HighlightColorIndex
+End If
+Options.DefaultHighlightColorIndex = thisHighlight
+
+findText = Selection
+Select Case Asc(findText)
+  Case 9:  findText = "^t"
+  Case 30:  findText = "^~": partWord = True ' non-breaking hyphen
+End Select
+
+Selection.Collapse wdCollapseStart
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = findText
+  .MatchCase = True
+  .Forward = True
+  .Replacement.Text = "^&"
+  If doHighlight Then .Replacement.Highlight = True
+  If doColour Then .Replacement.Font.Color = thisColour
+  If Not (doColour) And Not (doHighlight) Then
+    .Replacement.Font.Color = wdColorAutomatic
+    .Replacement.Highlight = False
+  End If
+  .Wrap = wdFindContinue
+  If doWholeWord = True Then .MatchWholeWord = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Restore to original state
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = oldColour
+ActiveDocument.TrackRevisions = nowTrack
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchCase = False
+  .MatchWholeWord = False
+  .Replacement.Highlight = False
+End With
+If Selection.End = Selection.Start Then
+   myChar = Selection
+  If UCase(myChar) <> LCase(myChar) Then
+    Selection.Move , 1
+  End If
+End If
+End Sub
+
+

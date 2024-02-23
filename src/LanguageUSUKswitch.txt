@@ -1,0 +1,82 @@
+
+Sub LanguageUSUKswitch()
+' Paul Beverley - Version 09.12.23
+' Switches language between UK and US English
+
+' If you want all the styles to be language-set as well,
+' make it true:
+setStyleLanguage = False
+' setStyleLanguage = True
+
+langNow = Selection.LanguageID
+If langNow = wdEnglishUK Then
+  nowLanguage = "UK English"
+  newLanguage = "US English"
+Else
+  newLanguage = "US English"
+  nowLanguage = "UK English"
+End If
+myResponse = MsgBox("Currently " & nowLanguage & vbCr _
+     & vbCr & "Switch to " & newLanguage & "?", _
+     vbQuestion + vbYesNo, "LanguageUSUKswitch")
+If myResponse <> vbYes Then
+  Beep
+  Exit Sub
+End If
+If langNow = wdEnglishUK Then
+  myLanguage = wdEnglishUS
+Else
+  myLanguage = wdEnglishUK
+End If
+
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+ActiveDocument.Content.LanguageID = myLanguage
+For Each aStory In ActiveDocument.StoryRanges
+  Do
+    aStory.LanguageID = myLanguage
+    If aStory.NextStoryRange Is Nothing Then
+        MoreStoryRanges = False
+    Else
+        MoreStoryRanges = True
+        Set aStory = aStory.NextStoryRange
+    End If
+  Loop While MoreStoryRanges
+Next aStory
+If ActiveDocument.Shapes.Count > 0 Then
+  For Each shp In ActiveDocument.Shapes
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.HasText Then
+        shp.TextFrame.TextRange.LanguageID = myLanguage
+      End If
+    End If
+  Next
+End If
+If setStyleLanguage = True Then
+  For i = 1 To ActiveDocument.Styles.Count
+    Set sty = ActiveDocument.Styles(i)
+    If sty.Type = wdStyleTypeParagraph Then _
+         sty.LanguageID = myLanguage
+  Next i
+End If
+ActiveDocument.Styles(wdStyleNormal).LanguageID = myLanguage
+ActiveDocument.Styles(wdStyleCommentText).LanguageID = myLanguage
+ActiveDocument.SpellingChecked = False
+ActiveDocument.GrammarChecked = False
+ActiveDocument.TrackRevisions = myTrack
+myspaces = ""
+For i = 1 To 100
+  DoEvents
+  myspaces = myspaces & " "
+Next i
+StatusBar = myspaces & Languages(Selection.LanguageID)
+Beep
+timeNow = Timer
+Do
+  DoEvents
+Loop Until Timer > timeNow + 2
+StatusBar = ""
+Beep
+End Sub
+

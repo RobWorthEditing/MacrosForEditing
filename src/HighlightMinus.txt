@@ -1,5 +1,5 @@
 Sub HighlightMinus()
-' Paul Beverley - Version 15.04.22
+' Paul Beverley - Version 23.01.24
 ' Removes or adds highlight in a choice of colours
 
 doUnderlinesToo = True
@@ -11,12 +11,17 @@ addWarning = True
 doParagraph = True
 ' False means act on current line
 
+myRemove = " highlight"
+If doUnderlinesToo = True Then myRemove = myRemove & ", underline"
+If doColourOffToo = True Then myRemove = myRemove & ", font colour"
+If strikeThroughToo = True Then myRemove = myRemove & ", strike-through"
+
 Set rng = ActiveDocument.Content
 If Selection.Text = rng.Text Then
   If addWarning = True Then
     Beep
-    myResponse = MsgBox("Remove colour, highlight, strike-through (and underlining)?", _
-         vbQuestion + vbYesNoCancel, "HighlightMinus")
+    myResponse = MsgBox("Remove" & myRemove & "?", _
+       vbQuestion + vbYesNoCancel, "HighlightMinus")
     If myResponse <> vbYes Then
       doUnderlinesToo = False
       doColourOffToo = False
@@ -30,7 +35,7 @@ If Selection.Text = rng.Text Then
   If strikeThroughToo = True Then rng.Font.StrikeThrough = False
   If doUnderlinesToo = True Then rng.Font.Underline = False
   
-  If ActiveDocument.Footnotes.count > 0 Then
+  If ActiveDocument.Footnotes.Count > 0 Then
     Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
     rng.HighlightColorIndex = wdNoHighlight
     If doColourOffToo = True Then rng.Font.Color = wdColorAutomatic
@@ -38,7 +43,7 @@ If Selection.Text = rng.Text Then
     If doUnderlinesToo = True Then rng.Font.Underline = False
   End If
   
-  If ActiveDocument.Endnotes.count > 0 Then
+  If ActiveDocument.Endnotes.Count > 0 Then
     Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
     rng.HighlightColorIndex = wdNoHighlight
     If strikeThroughToo = True Then rng.Font.StrikeThrough = False
@@ -126,7 +131,7 @@ If doParagraph = True Then
 Else
   Selection.HomeKey Unit:=wdLine
   clearStart = Selection.Start
-  Selection.MoveDown Unit:=wdLine, count:=1
+  Selection.MoveDown Unit:=wdLine, Count:=1
   Selection.HomeKey Unit:=wdLine
 End If
 Set rng = Selection.Range
@@ -137,4 +142,7 @@ rng.HighlightColorIndex = wdNoHighlight
 ActiveDocument.TrackRevisions = myTrack
 Selection.Collapse wdCollapseEnd
 End Sub
+
+
+
 

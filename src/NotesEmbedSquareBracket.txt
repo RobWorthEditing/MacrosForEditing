@@ -1,0 +1,66 @@
+Sub NotesEmbedSquareBrackets()
+' Paul Beverley - Version 09.06.23
+' Creates endnotes from text-based notes, numbered in square brackets
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\[[0-9]{1,}\]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  noteNum = rng.Text
+  rng.Cut
+  Set rngMarker = rng.Duplicate
+  With rng.Find
+    .Text = noteNum
+    .MatchWildcards = False
+    .Execute
+  End With
+  rng.End = rng.End + 1
+  rng.Delete
+  rng.Start = rng.Start + 1
+  rng.Expand wdParagraph
+  rng.Cut
+  With rngMarker
+    With .EndnoteOptions
+      .Location = wdBottomOfPage
+      .NumberingRule = wdRestartContinuous
+      .StartingNumber = 1
+      .NumberStyle = wdNoteNumberStyleArabic
+    End With
+    .Endnotes.Add Range:=rngMarker, Reference:=""
+  End With
+  numEnds = ActiveDocument.Endnotes.count
+  ActiveDocument.Endnotes(numEnds).Range.Select
+  Selection.Collapse wdCollapseEnd
+  Selection.Paste
+
+' Restart search for [number]
+  rng.End = myMarker
+  rng.Collapse wdCollapseEnd
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\[[0-9]{1,}\]"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .Execute
+  End With
+  DoEvents
+Loop
+End Sub
+
+
+
+
+

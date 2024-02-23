@@ -1,0 +1,14 @@
+Sub SelectionStartContract()
+' Paul Beverley - Version 03.07.23
+' Pulls the start of the selection back to the right (i.e. shrinks it)
+
+preChar = Left(Selection, 1)
+
+If LCase(preChar) <> UCase(preChar) _
+       Or preChar = "0" Or Val(preChar) <> 0 Then
+    Selection.MoveStart wdWord, 1
+  Else
+    Selection.MoveStart wdCharacter, 1
+End If
+End Sub
+

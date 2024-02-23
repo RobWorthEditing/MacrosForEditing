@@ -1,0 +1,9 @@
+Sub NTaddressCopy()
+' Paul Beverley - Version 08.02.24
+' Reports the address of the folder holding the Normal template
+
+Documents.Add
+Selection.InsertAfter NormalTemplate.Path
+Selection.Copy
+End Sub
+

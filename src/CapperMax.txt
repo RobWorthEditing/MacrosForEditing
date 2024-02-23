@@ -1,8 +1,12 @@
 Sub CapperMax()
-' Paul Beverley - Version 04.11.22
+' Paul Beverley - Version 13.11.23
 ' Uppercases initial letter of all major words (title case)
 
 doTrack = True
+
+' If True then if you click in an italic area of text,
+'  only the italic bit will be max-capped
+onlyItalic = True
 
 ' If it's mostly capitals, lowercase them all first
 deCapitate = False
@@ -16,6 +20,23 @@ uppercaseAfterHyphen = False
 
 ' uppercaseAfterColon = False
 uppercaseAfterColon = True
+
+If onlyItalic = True And Selection.Start = _
+     Selection.End And Selection.Range.Italic = True Then
+  Set rng = Selection.Range.Duplicate
+  Do
+    rng.MoveStart wdWord, -1
+    DoEvents
+  Loop Until rng.Italic = 9999999
+  rng.MoveStart wdWord, 1
+  Do
+    rng.MoveEnd wdWord, 1
+    DoEvents
+  Loop Until rng.Italic = 9999999
+  rng.MoveEnd wdWord, -1
+  rng.Select
+End If
+
 
 ' Create a range from the selection but whole words
 ' or whole paragraph, if nothing was selected
@@ -45,25 +66,23 @@ If doTrack = False Then ActiveDocument.TrackRevisions = False
 
 If deCapitate = True Then
   numUC = 0
-  allLine = rng.Text
-  For i = 1 To Len(allLine)
-    ch = Mid(allLine, i, 1)
+  allLIne = rng.Text
+  For i = 1 To Len(allLIne)
+    ch = Mid(allLIne, i, 1)
     If LCase(ch) <> UCase(ch) And LCase(ch) <> ch Then numUC = numUC + 1
   Next i
-  If numUC > rng.Characters.count / 2 Then _
-       rng.Text = Left(allLine, 1) & LCase(Mid(allLine, 2))
+  If numUC > rng.Characters.Count / 2 Then _
+       rng.Text = Left(allLIne, 1) & LCase(Mid(allLIne, 2))
   Selection.Start = hereNow
 End If
-numWds = rng.Words.count
+numWds = rng.Words.Count
 wasChar = ""
 wasWdr = ""
-'  Debug.Print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-'  Debug.Print "wd.Text", "wasChar", "wasWd", "init"
 For i = 1 To numWds
   Set wd = rng.Words(i)
   tst = LCase(Trim(wd.Text))
   init = Left(wd.Text, 1)
-  Debug.Print wd.Text, wasChar, wasWd, init
+'  Debug.Print wd.Text, wasChar, wasWd, init
   myCap = UCase(init)
   If InStr(lclist, " " & tst & " ") = 0 And myCap <> init _
        And init <> ChrW(8216) And init <> ChrW(8220) Then
@@ -96,4 +115,7 @@ myInit = rng.Characters(1)
 If UCase(myInit) <> myInit Then _
      rng.Characters(1) = UCase(myInit)
 End Sub
+
+
+
 

@@ -1,7 +1,8 @@
 Sub TrackChangeDisplaySwitch()
-' Paul Beverley - Version 26.01.21
+' Paul Beverley - Version 15.01.24
 ' Switches track change displays: Simple <=> AllMarkup
 
+Set rng = Selection.Range.Duplicate
 stateNow = ActiveWindow.View.RevisionsFilter.Markup
 Select Case stateNow
   Case wdRevisionsMarkupSimple: stateNext = wdRevisionsMarkupAll
@@ -12,7 +13,9 @@ With ActiveWindow.View.RevisionsFilter
   .Markup = stateNext
   .View = wdRevisionsViewFinal
 End With
+rng.Select
+ActiveDocument.ActiveWindow.LargeScroll up:=1
+rng.Select
+ActiveDocument.ActiveWindow.SmallScroll up:=1
 End Sub
-
-
 

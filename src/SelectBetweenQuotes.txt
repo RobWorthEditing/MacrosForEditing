@@ -1,0 +1,22 @@
+Sub SelectBetweenQuotes()
+' Paul Beverley - Version 17.07.23
+' Selects text between double quotes and optionally does a Fetch
+
+doFetchIt = True
+myFetch = "GoogleFetch"
+myRange = 100
+
+Selection.MoveStartUntil cset:=ChrW(8220) & """", count:=wdBackward
+If Len(Selection) > myRange Then
+  Beep
+  Exit Sub
+End If
+Selection.MoveEndUntil cset:=ChrW(8221) & """", count:=wdForward
+If Len(Selection) > myRange Then
+  Beep
+  Exit Sub
+End If
+Selection.MoveEnd , -1
+If doFetchIt = True Then Application.Run macroName:=myFetch
+End Sub
+

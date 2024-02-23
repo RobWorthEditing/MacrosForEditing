@@ -31,11 +31,7 @@ doTextBoxes = True
 mySFile = "C:\Documents and Settings\Paul\My Documents\IS_words.docx"
 
 ' On a Mac, it will need to be something like:
-' mySFile = "/Users/Paul/My Documents/Macro stuff/"
-
-
-
-mySFile = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\aaaStarterMacros\IS_words.docx"
+' mySFile = "/Users/Paul/My Documents/Macro stuff/IS_words.docx"
 
 ExceptionSFile = "IS_words"
 

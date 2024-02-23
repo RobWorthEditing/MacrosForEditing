@@ -1,0 +1,75 @@
+
+Sub CorrectDialogueEndGlobal()
+' Paul Beverley - Version 29.11.23
+' Correct punctuation & capitalisation at dialogue end (from a macro by Philip Ridgers)
+
+addHighlight = True
+myColour = wdYellow
+
+myVerbs = "said,replied,asked,shouted,stated,surmised,opined,"
+myVerbs = myVerbs & "whispered,requested,"
+
+myPNs = "She,He,They,It,"
+
+myNames = "Jane,Harry,Ian,Helen"
+myNames = myNames & ",Brian,Brown,Etc"
+
+showAsAllChanged = False
+
+selectOnly = (Selection.Range.Words.Count > 1)
+If selectOnly Then
+  Set rng = Selection.Range.Duplicate
+Else
+  Beep
+  myResponse = MsgBox("Work on the whole document?!", _
+       vbQuestion + vbYesNoCancel, "CorrectDialogueEndGlobal")
+  If myResponse <> vbYes Then Exit Sub
+  Set rng = ActiveDocument.Content
+End If
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+myNames = "," & myNames & ","
+myPNs = Replace(myPNs, ",", " ,")
+myEnd = rng.End
+With rng.Find
+  .MatchWildcards = True
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[\!\?.]['""" & ChrW(8217) & ChrW(8221) & "] [A-Za-z\-]{1,} [a-z\-]@>"
+  .Forward = True
+  .Wrap = wdFindStop
+  .Execute
+End With
+
+Do Until rng.Find.Found = False Or rng.End > myEnd
+  If InStr(myVerbs, Trim(rng.Words.Last)) > 0 Then
+    lwStart = InStr(rng, " " & rng.Words.Last)
+    rng.End = rng.Start + lwStart
+    thisWord = rng.Words.Last
+    If InStr(myPNs, thisWord) > 0 Then
+      If rng.Characters.First = "." Then rng.Characters.First = ","
+      rng.Characters(4) = LCase(rng.Characters(4))
+      If showAsAllChanged = True Then
+        rng.Cut
+        rng.Paste
+      End If
+      cvbnhvfdb = 0
+    End If
+    If InStr(myNames, "," & Trim(thisWord) & ",") > 0 Then
+      If rng.Characters.First = "." Then rng.Characters.First = ","
+    End If
+    If addHighlight = True Then rng.HighlightColorIndex = myColour
+    n = n + 1
+    If n Mod 10 = 1 Then rng.Select
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Options.DefaultHighlightColorIndex = oldColour
+Beep
+Selection.EndKey Unit:=wdStory
+MsgBox "All done!"
+End Sub
+

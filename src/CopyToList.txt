@@ -1,20 +1,27 @@
 Sub CopyToList()
-' Paul Beverley - Version 16.01.21
+' Paul Beverley - Version 01.09.23
 ' Copies selected text into a list file
 
+addReturn = True
+' addBlankLine = True
+addBlankLine = False
+
+' keyWord = "queries"
 keyWord = "list"
-' keyWord = "sheet"
 
 wordsToAvoid = "switch"
 ' wordsToAvoid = "FRedit,switch"
 
-copyWholePara = True
 copyWholePara = False
+' copyWholePara = True
+
+copySentenceInstead = False
+
 includeFormatting = True
 
-addReturn = True
-addBlankLine = True
-addBlankLine = False
+myHighlightColour = wdColorBlack
+' To add highlight, use:
+' myHighlightColour = wdYellow
 
 goBackToSource = True
 alwaysCopyAtEnd = False
@@ -25,7 +32,11 @@ wds = Split("," & LCase(wordsToAvoid), ",")
 
 If Selection.Start = Selection.End Then
   If copyWholePara = True Then
-    Selection.Expand wdParagraph
+    If copySentenceInstead = True Then
+      Selection.Expand wdSentence
+    Else
+      Selection.Expand wdParagraph
+    End If
   Else
     Selection.Expand wdWord
     Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
@@ -33,8 +44,25 @@ If Selection.Start = Selection.End Then
       DoEvents
     Loop
   End If
+Else
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd , -1
+  rng.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Collapse wdCollapseStart
+  Selection.Expand wdWord
+  Selection.Collapse wdCollapseStart
+  rng.Start = Selection.Start
+  rng.Select
 End If
+
+
 Set sourceText = Selection.Range
+
 gottaList = False
 For Each myDoc In Application.Documents
   thisName = myDoc.Name
@@ -85,5 +113,10 @@ If addBlankLine = True Then
   Selection.TypeText vbCr
 End If
 If goBackToSource = True Then thisDoc.Activate
+If myHighlightColour > 0 Then
+  sourceText.HighlightColorIndex = myHighlightColour
+  Selection.Collapse wdCollapseEnd
+End If
 End Sub
+
 

@@ -1,18 +1,51 @@
+
 Sub MatchDoubleQuotes()
-' Paul Beverley - Version 07.12.12
+' Paul Beverley - Version 21.02.24
 ' Check whether double quotes match up
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "''"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+
+If .Found = True Then
+Beep
+  rng.Select
+  MsgBox "Warning: this is two single quotes!"
+  Exit Sub
+End If
+
+  .Text = "`"
+  .Execute
+  DoEvents
+End With
+
+If rng.Find.Found = True Then
+Beep
+  rng.Select
+  MsgBox "Warning: backticks detected!"
+  Exit Sub
+End If
 
 For Each myPara In ActiveDocument.Paragraphs
   myText = myPara.Range.Text
-  L = Len(myText)
+  l = Len(myText)
   L1 = Len(Replace(myText, Chr(34), ""))
   Lopen = Len(Replace(myText, ChrW(8220), ""))
   Lclose = Len(Replace(myText, ChrW(8221), ""))
- 
-  If (L - L1) Mod 2 <> 0 Or Lopen <> Lclose Then
+  
+  If (l - L1) Mod 2 <> 0 Or Lopen <> Lclose Then
     myPara.Range.Font.Underline = True
     myCount = myCount + 1
     StatusBar = "Found: " & myCount
+    DoEvents ' Debug.Print "Found: " & myCount
   End If
 Next
 StatusBar = ""
@@ -21,6 +54,28 @@ If myCount = 0 Then
 Else
   MsgBox ("Number of suspect paragraphs: " & Trim(myCount))
 End If
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Wrap = wdFindStop
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+Do While rng.Find.Found = True
+  If rng.Font.Color <> 9999999 Then
+    rng.HighlightColorIndex = wdYellow
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+
 Selection.HomeKey Unit:=wdStory
 With Selection.Find
   .ClearFormatting
@@ -35,4 +90,5 @@ With Selection.Find
 End With
 
 End Sub
+
 
