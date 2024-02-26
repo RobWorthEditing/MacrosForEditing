@@ -861,7 +861,7 @@ End If
 End Sub
 
 Sub DocAlyse()
-' Paul Beverley - Version 08.02.22
+' Paul Beverley - Version 21.12.23
 ' Analyses various aspects of a document
 
 ' prompts to count number of tests
@@ -887,6 +887,45 @@ ss = "________________________________" & _
      "__________________________________"
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
+
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set tempDoc = ActiveDocument
+Set rng = ActiveDocument.Content
+rng.FormattedText = rngOld.FormattedText
+Selection.EndKey Unit:=wdStory
+
+If ActiveDocument.Footnotes.Count > 0 Then
+  ActiveDocument.StoryRanges(wdFootnotesStory).Copy
+  Selection.Paste
+  Selection.Collapse wdCollapseEnd
+End If
+
+If ActiveDocument.Endnotes.Count > 0 Then
+  ActiveDocument.StoryRanges(wdEndnotesStory).Copy
+  Selection.Paste
+  Selection.Collapse wdCollapseEnd
+End If
+
+Set endTempfile = ActiveDocument.Content
+endTempfile.Collapse wdCollapseEnd
+
+' collect text in all the textboxes (if any)
+sh = ActiveDocument.Shapes.Count
+If sh > 0 Then
+  For Each shp In ActiveDocument.Shapes
+    If shp.Type <> 24 And shp.Type <> 3 Then
+      If shp.TextFrame.HasText Then
+        shp.TextFrame.TextRange.Copy
+        endTempfile.Select
+        Selection.Paste
+      End If
+    End If
+  Next
+End If
+
+Selection.HomeKey Unit:=wdStory
+
 
 ' Use main file for italic 'et al' count...
 myTot = ActiveDocument.Range.End
@@ -1474,8 +1513,8 @@ DoEvents
 StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[bpiv]our[ ,.s]"
 rng.Find.Execute Replace:=wdReplaceAll
-A = ActiveDocument.Range.End - myTot
-If A > 0 Then WordBasic.EditUndo
+a = ActiveDocument.Range.End - myTot
+If a > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = "[a-z]{3,}elling>"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -1511,9 +1550,9 @@ rng.Find.Execute Replace:=wdReplaceAll
 k = ActiveDocument.Range.End - myTot
 If k > 0 Then WordBasic.EditUndo
 
-If A + g + f + i + q + v + k > 0 Then myRslt = _
+If a + g + f + i + q + v + k > 0 Then myRslt = _
      myRslt & "UK spelling (appx)" & vbTab & _
-     Trim(Str(A + g + f)) & CR & _
+     Trim(Str(a + g + f)) & CR & _
      "US spelling (appx)" & vbTab & _
      Trim(Str(i - q + v + k)) & CR & _
      "(For a more accurate count, please use UKUScount.)" & CR2
@@ -2058,150 +2097,43 @@ If i + j + g + k + l + m > 0 Then
 End If
 
 
+
 ' equations
+fText = ",<eq [0-9],<eq. [0-9],<eqn [0-9],<Eqn [0-9]," & _
+"eqns [0-9],eqs [0-9],<eq \(,<eq. \(,<Eq. \(" & _
+",<eqn \(,<Eqn \(,eqns \(,eqs \(,Eqs \(,Eqs. \(" & _
+",equation \(,[!.] Equation \(,equations \(" & _
+",[!.] Equations \(,equation [0-9]" & _
+",[!.] Equation [0-9],equations [0-9]" & _
+",[!.] Equations [0-9]"
+
+resText = ",eq,eq.,eqn,Eqn,eqns,eqs,eq (n.n)," & _
+"eq. (n.n),Eq. (n.n),eqn (n.n)," & _
+"Eqn (n.n),eqns (n.n),eqs,Eqs,Eqs.," & _
+"equation (n.n),Equation (n.n)," & _
+"equations (n.n),Equations (n.n),equation," & _
+"Equation,equations,Equations"
+
+myF = Split(fText, ",")
+myRes = Split(resText, ",")
+
 aBit = ""
 cc = cc - 1
 DoEvents
 StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 myTot = ActiveDocument.Range.End
 rng.Find.MatchWildcards = True
-rng.Find.Text = "<eq [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eq" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<eq. [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eq." & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<eqn [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eqn" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<Eqn [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Eqn" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "eqns [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eqns" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "eqs [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eqs" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<eq \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eq (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<eq. \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eq. (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<Eq. \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Eq. (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<eqn \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eqn (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "<Eqn \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Eqn (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "eqns \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eqns (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "eqs \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "eqs" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "Eqs \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Eqs" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "Eqs. \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Eqs." & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "equation \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "equation (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "[!.] Equation \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Equation (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "equations \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "equations (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "[!.] Equations \("
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Equations (n.n)" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "equation [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "equation" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "[!.] Equation [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Equation" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "equations [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "equations" & vbTab & Trim(Str(i)) & CR
-
-rng.Find.Text = "[!.] Equations [0-9]"
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo: _
-     aBit = aBit & "Equations" & vbTab & Trim(Str(i)) & CR
+For q = 1 To 23
+  With rng.Find
+    .Text = myF(q)
+    .Replacement.Text = "^&!"
+    .Execute Replace:=wdReplaceAll
+  End With
+  i = ActiveDocument.Range.End - myTot
+  Debug.Print ActiveDocument.Range.End, myTot, i
+  If i > 0 Then WordBasic.EditUndo: _
+       aBit = aBit & myRes(q) & vbTab & Trim(Str(i)) & CR
+Next q
 If aBit > "" Then myRslt = myRslt & aBit & CR
 
 
@@ -2768,9 +2700,11 @@ With Selection.Find
 End With
 
 Selection.HomeKey Unit:=wdStory
+tempDoc.Close SaveChanges:=False
 
 If doingSeveralMacros = False Then
   Beep
+  newDoc.Activate
 Else
   FUT.Activate
 End If
@@ -3914,7 +3848,7 @@ End If
 End Sub
 
 Sub ProperNounAlyse()
-' Paul Beverley - Version 30.12.22
+' Paul Beverley - Version 17.02.24
 ' Analyses similar proper nouns
 
 minLengthCheck = 4
@@ -3930,11 +3864,12 @@ similarChars = "bb,b; b,p; sch,sh; ch,sh; c,k; ph,f; ss,z; s,z;" & _
 ignorePlurals = True
 
 myScreenOff = True
-myLanguage = Languages(Selection.LanguageID).NameLocal
-
+Set rng = Selection.Range.Duplicate
+rng.End = rng.Start + 1
+myLanguage = Languages(rng.LanguageID).NameLocal
 Set FUT = ActiveDocument
-doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
-
+doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") + _
+     InStr(FUT.Name, "Document") > 0)
 If doingSeveralMacros = False Then
   myResponse = MsgBox("    ProperNounAlyse" & vbCr & vbCr & _
        "Analyse this document?", vbQuestion _
@@ -4839,13 +4774,13 @@ finalList.Activate
 ' that are only case changes of one another
 totParas = ActiveDocument.Paragraphs.Count
 For i = 1 To totParas - 1
-  A = Trim(ActiveDocument.Paragraphs(i).Range.Words(1))
+  a = Trim(ActiveDocument.Paragraphs(i).Range.Words(1))
   b = Trim(ActiveDocument.Paragraphs(i + 1).Range.Words(1))
-  A = Mid(A, 2)
+  a = Mid(a, 2)
   b = Mid(b, 2)
-  If LCase(A) = LCase(b) And Len(A) > 2 Then
-    If (UCase(A) = A And LCase(b) = b) Or (UCase(b) = b And _
-         LCase(A) = A) Then
+  If LCase(a) = LCase(b) And Len(a) > 2 Then
+    If (UCase(a) = a And LCase(b) = b) Or (UCase(b) = b And _
+         LCase(a) = a) Then
       ActiveDocument.Paragraphs(i).Range.Words(1).HighlightColorIndex = 0
       ActiveDocument.Paragraphs(i + 1).Range.Words(1).HighlightColorIndex _
            = 0
@@ -5110,13 +5045,11 @@ With rng.Find
 End With
 Application.ScreenUpdating = True
 If doingSeveralMacros = False Then
-Debug.Print Timer - timeStart
   myTime = (Int(10 * (Timer - timeStart) / 60) / 10)
   Beep
   If myTime > 0 Then MsgBox myTime & "  minutes"
-Else
-  FUT.Activate
 End If
+If InStr(FUT.Name, "zzTestFile") > 0 Then FUT.Activate
 Exit Sub
 
 ReportIt:
@@ -5124,7 +5057,6 @@ Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub
-
 
 
 
@@ -5258,7 +5190,7 @@ End If
 End Sub
 
 Sub SpellAlyse()
-' Paul Beverley - Version 02.03.22
+' Paul Beverley - Version 25.05.23
 ' Complete spellchecking system
 
 ignoreNumbers = True
@@ -5311,22 +5243,25 @@ timeStart = Timer
 allExcepts = CR
 'Collect all words from all word lists
 For Each myDoc In Documents
-  If InStr(myDoc.Name, ignoreDoc) = 0 Then
-    numParas = myDoc.Paragraphs.count
-    numWords = myDoc.Content.ComputeStatistics(wdStatisticWords)
-    myProfile = numWords / numParas
-    If myProfile < 1.01 Then
-      myWds = myDoc.Content.Text
-      If InStr(myWds, "|") = 0 Then
-        ' This is a list
-        docWds = Replace(myDoc.Content.Text, CR2, CR)
-        docWds = Replace(docWds, CR2, CR)
-        allExcepts = allExcepts & docWds
+Debug.Print myDoc.Name
+  pNum = myDoc.Paragraphs.count
+  myNum = 3
+  If pNum < 3 Then myNum = pNum
+  Set rng = myDoc.Paragraphs(myNum).Range
+  rng.Start = 0
+  If InStr(LCase(rng.Text), "elist") > 0 Then
+    For Each myPar In myDoc.Paragraphs
+      myWord = Trim(myPar.Range.Words(1).Text)
+      If Len(myWord) > 2 Then
+        allExcepts = allExcepts & myWord & CR
+        Debug.Print allExcepts
       End If
-    End If
+      DoEvents
+    Next myPar
   End If
   DoEvents
 Next myDoc
+Debug.Print allExcepts
 
 ' Create a text-only copy in another file
 Set rngOld = FUT.Content
@@ -5334,18 +5269,18 @@ Documents.Add
 Set erList = ActiveDocument
 Set rng = ActiveDocument.Content
 rng.LanguageID = thisLanguage
-rng.Text = rngOld.Text
+rng.FormattedText = rngOld.FormattedText
 
 numNotes = FUT.Endnotes.count
 If numNotes > 0 Then
   rng.Collapse wdCollapseEnd
-  rng.Text = FUT.StoryRanges(wdEndnotesStory).FormattedText
+  rng.FormattedText = FUT.StoryRanges(wdEndnotesStory).FormattedText
 End If
 
 numNotes = FUT.Footnotes.count
 If numNotes > 0 Then
   rng.Collapse wdCollapseEnd
-  rng.Text = FUT.StoryRanges(wdFootnotesStory).FormattedText
+  rng.FormattedText = FUT.StoryRanges(wdFootnotesStory).FormattedText
 End If
 
 ' copy all the textboxes to the end of the text
@@ -5368,14 +5303,22 @@ If shCount > 0 Then
 End If
 
 ' Add a newline for safety
-Selection.TypeText vbCr
+Selection.TypeText CR
 
 Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "^2"
+  .Text = ""
+  .Font.StrikeThrough = True
   .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^2"
   .Replacement.Text = ""
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
@@ -5421,11 +5364,13 @@ With rng.Find
      .Text = "[!a-zA-Z^13'" & ChrW(8217) _
      & ChrW(248) & "-" & ChrW(591) _
      & ChrW(697) & "-" & ChrW(703) _
+     & ChrW(&H591) & "-" & ChrW(&H5FF) _
      & ChrW(7680) & "-" & ChrW(7935) & "]"
    Else
      .Text = "[!a-zA-Z0-9^13'" & ChrW(8217) _
      & ChrW(248) & "-" & ChrW(591) _
      & ChrW(697) & "-" & ChrW(703) _
+     & ChrW(&H591) & "-" & ChrW(&H5FF) _
      & ChrW(7680) & "-" & ChrW(7935) & "]"
    End If
   .Replacement.Text = sp1
@@ -5613,6 +5558,7 @@ ActiveDocument.TrackRevisions = False
 Exit Sub
 
 createListPair:
+' Make Flist + MarkIt list + Elist
 Application.ScreenUpdating = True
 myResponse = MsgBox("Create exceptions and FRedit lists?", _
      vbQuestion + vbYesNoCancel, "SpellAlyse")
@@ -5620,33 +5566,41 @@ If myResponse <> vbYes Then Exit Sub
 
 Documents.Add
 Set eList = ActiveDocument
+Selection.TypeText Text:="| Elist" & CR2
+eList.Paragraphs(1).Style = eList.Styles(wdStyleHeading1)
 Set eRng = ActiveDocument.Content
+
 Documents.Add
-DoEvents
 Set fList = ActiveDocument
+Selection.TypeText Text:="| FRedit" & CR2
+fList.Paragraphs(1).Style = fList.Styles(wdStyleHeading1)
 Set fRng = ActiveDocument.Content
+
+' FUT is now the spelling error list
 For i = 1 To FUT.Paragraphs.count
-  Set pRng = FUT.Paragraphs(i).Range
-  If InStr(pRng.Text, spellingListName) = 0 _
-       And Len(pRng.Text) > 3 Then
+  DoEvents
+  Set itemRng = FUT.Paragraphs(i).Range
+  If InStr(itemRng.Text, spellingListName) = 0 _
+       And Len(itemRng.Text) > 3 Then
     DoEvents
-    If InStr(pRng.Text, "|") > 0 Then
+    If InStr(itemRng.Text, "|") > 0 Then
       fRng.Collapse wdCollapseEnd
-      fRng.FormattedText = pRng.FormattedText
+      fRng.FormattedText = itemRng.FormattedText
     Else
-      myFontCol = pRng.Font.Color
-      myHiCol = pRng.HighlightColorIndex
+      myFontCol = itemRng.Font.Color
+      myHiCol = itemRng.HighlightColorIndex
       If myFontCol > 0 Or myHiCol > 0 Then
         fRng.Collapse wdCollapseEnd
-        fRng.Text = "~<" & Replace(pRng.Text, CR, _
-             "") & ">" & CR
+        fRng.Text = "~<" & Replace(itemRng.Text, CR, _
+             "") & ">" & "|^&" & CR
         fRng.Expand wdParagraph
+        fRng.Font.StrikeThrough = True
         If myFontCol > 0 Then fRng.Font.Color = myFontCol
         If myHiCol > 0 Then fRng.HighlightColorIndex = myHiCol
         fRng.Collapse wdCollapseEnd
       Else
         eRng.Collapse wdCollapseEnd
-        eRng.Text = pRng.Text
+        eRng.Text = itemRng.Text
       End If
     End If
   End If
