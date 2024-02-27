@@ -1,11 +1,11 @@
 
 Sub HighlightPlus()
-' Paul Beverley - Version 18.10.23
+' Paul Beverley - Version 22.02.24
 ' Adds highlight in a choice of colours
 
 ' Make one or other True:
-highlightParagraph = False
-highlightWord = True
+doParagraph = False
+doWord = True
 
 Dim myCol(20)
 myCol(0) = wdNoHighlight
@@ -14,17 +14,16 @@ myCol(2) = wdYellow
 myCol(3) = wdTurquoise
 myCol(4) = wdPink
 myCol(5) = wdRed
-myCol(6) = wdGreen
-myCol(7) = wdDarkYellow
-myCol(9) = wdGray25
-myCol(8) = wdGray50
-myColTotal = 9
+myCol(6) = wdGray50
+myCol(7) = wdGray25
+myColTotal = 7
 
 ' Remember track changes status, then switch it off
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
-Dim v As Variable, nowColour As Long
+Dim v As Variable: Dim nowColour As Long
+Dim wasStart As Long: Dim wasEnd As Long
 numVars = 0
 For Each v In ActiveDocument.Variables
   If v.Name = "colNum" Then numVars = numVars + 1
@@ -50,31 +49,37 @@ Else
 End If
 
 ' If no text is selected ...
-If Selection.Start = Selection.End Then
-  If Selection.Text = vbCr Then Selection.MoveLeft , 1
-  ' If the cursor is outside the area, give up
-  If Selection.Start < wasStart Or Selection.End > wasEnd Then
-    If highlightParagraph = True Then
-      Selection.Expand wdParagraph
+Set rng = Selection.Range.Duplicate
+If rng.Start = rng.End Then
+  rng.MoveEnd , 1
+  If rng.Text = vbCr Then
+    rng.MoveStart , -1
+    rng.Collapse wdCollapseStart
+  Else
+    rng.MoveEnd , -1
+  End If
+  
+' Cursor outside the previous range? So start from scratch
+  If rng.Start < wasStart Or rng.End > wasEnd Then
+  ' If the cursor is outside the previous range
+    If doParagraph = True Then
+      rng.Expand wdParagraph
     Else
-      If highlightWord = True Then
-        Selection.Expand wdWord
-        Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
-          Selection.MoveEnd , -1
-          DoEvents
-        Loop
-      End If
+      rng.Expand wdWord
+      Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+        rng.MoveEnd , -1
+        DoEvents
+      Loop
     End If
-
-    If highlightParagraph = True Then Selection.Expand wdWord
-    ActiveDocument.Variables("selStart") = Selection.Start
-    ActiveDocument.Variables("selEnd") = Selection.End
+    ActiveDocument.Variables("selStart") = rng.Start
+    ActiveDocument.Variables("selEnd") = rng.End
+ '   Debug.Print rng.Start, rng.End
     nowCol = 1
   Else
     ' Otherwise check the highlight colour
-    Selection.Start = wasStart
-    Selection.End = wasStart + 1
-    nowColour = Selection.Range.HighlightColorIndex
+    rng.Start = wasStart
+    rng.End = wasStart + 1
+    nowColour = rng.HighlightColorIndex
     If nowColour <> myCol(wasCol) Then
       ' colour has changed, so go back to colour 1
       nowCol = 1
@@ -83,20 +88,22 @@ If Selection.Start = Selection.End Then
       nowCol = wasCol + 1
       If nowCol > myColTotal Then nowCol = 0
     End If
-    Selection.End = wasEnd
+    rng.End = wasEnd
   End If
 Else:  ' if some text is selected ...
   ' Record current selection range
-  ActiveDocument.Variables("selStart") = Selection.Start
-  ActiveDocument.Variables("selEnd") = Selection.End
+  ActiveDocument.Variables("selStart") = rng.Start
+  ActiveDocument.Variables("selEnd") = rng.End
   nowCol = 1
 End If
 ActiveDocument.Variables("colNum") = nowCol
-Selection.Range.HighlightColorIndex = myCol(nowCol)
-Selection.End = Selection.Start
-
+rng.HighlightColorIndex = myCol(nowCol)
+rng.Collapse wdCollapseStart
+rng.Select
 theEnd:
 ActiveDocument.TrackRevisions = myTrack
 End Sub
+
+
 
 

@@ -1,5 +1,5 @@
 Sub CommentAddAndPasteSelected()
-' Paul Beverley - Version 22.10.22
+' Paul Beverley - Version 26.02.24
 ' Copies text, adds a comment and pastes text
 
 introText = ""
@@ -7,6 +7,7 @@ introText = ""
 
 If Selection.Start = Selection.End Then Selection.Expand wdSentence
 Selection.Copy
+Dim cmt As Comment
 Set cmt = Selection.Comments.Add(Range:=Selection.Range)
 If introText > "" Then Selection.TypeText Text:=introText
 Selection.Paste

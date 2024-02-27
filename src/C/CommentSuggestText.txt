@@ -1,0 +1,34 @@
+Sub CommentSuggestText()
+' Paul Beverley - Version 26.02.24
+' Copies selected text to make a comment
+
+preText = "Suggestion: "
+doBold = True
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdSentence
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+End If
+    
+Selection.Copy
+Dim myComment As Comment
+Set myComment = Selection.Comments.Add(Range:=Selection.Range)
+If doBold = True Then Selection.Font.Bold = True
+Selection.TypeText Text:=preText & vbCr & vbCr
+Selection.Font.Bold = False
+ActiveWindow.ActivePane.Close
+myComment.Edit
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 2
+Selection.PasteAndFormat (wdFormatOriginalFormatting)
+Selection.MoveRight , 2
+End Sub
+

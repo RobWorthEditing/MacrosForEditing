@@ -1,5 +1,5 @@
 Sub CommentAdd()
-' Paul Beverley - Version 21.07.22
+' Paul Beverley - Version 26.02.24
 ' Adds a comment
 
 attachToWord = True
@@ -90,7 +90,7 @@ Selection.End = rng.End
   ' Paste in a copy of the selected text
      Selection.Paste
   ' Move back past the close quote
-    Selection.MoveRight count:=1
+    Selection.MoveRight Count:=1
   End If
   If postText > "" Then
     Selection.TypeText postText
@@ -106,6 +106,7 @@ Selection.End = rng.End
   Selection.Cut
   Selection.Start = myStart
   Selection.End = wasEnd
+  Dim cmt As Comment
   Set cmt = Selection.Comments.Add(Range:=Selection.Range)
   Selection.Paste
   ActiveDocument.TrackRevisions = myTrack
@@ -132,6 +133,7 @@ If useCommentPane = False Then
 Else
   Application.ActiveWindow.View.Zoom.Percentage = paneZoom
 End If
+Selection.MoveLeft , 2
 cmt.Edit
 End Sub
 

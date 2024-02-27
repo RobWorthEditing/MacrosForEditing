@@ -1,0 +1,20 @@
+Sub SectionHeadsInComments()
+' Paul Beverley - Version 26.02.24
+' Adds the heading style and text of each heading into a comment
+
+Dim cmt As Comment
+For i = 1 To ActiveDocument.Paragraphs.Count
+  myStyle = ActiveDocument.Paragraphs(i).Range.Style
+  If Left(myStyle, 1) = "H" Then
+    Set rng = ActiveDocument.Paragraphs(i).Range
+    rng.End = rng.End - 1
+    myText = Replace(myStyle, "eading ", "") & ": " _
+         & rng.Text
+    rng.Start = rng.End - 1
+    Set cmt = Selection.Comments.Add(Range:=rng)
+    cmt.Range.Text = myText
+  End If
+  DoEvents
+Next i
+End Sub
+

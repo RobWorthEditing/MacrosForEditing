@@ -1,8 +1,8 @@
 Sub CommentAddFromFile()
-' Paul Beverley - Version 01.08.22
+' Paul Beverley - Version 26.02.24
 ' Adds a comment from a file of ready-made comments
 
-myPartFilename = "mark"
+myPartFilename = "ample"
 myMarker = "|"
 deleteHeader = True
 
@@ -47,6 +47,7 @@ If Selection.Start = Selection.End Then
     End If
   End If
 End If
+Dim cmt As Comment
 Set cmt = Selection.Comments.Add(Range:=Selection.Range)
 Selection.Paste
 ActiveDocument.ActiveWindow.View.SplitSpecial = wdPaneNone

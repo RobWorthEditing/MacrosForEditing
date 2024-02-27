@@ -1,147 +1,108 @@
 Sub HighlightMinus()
-' Paul Beverley - Version 23.01.24
-' Removes or adds highlight in a choice of colours
+' Paul Beverley - Version 22.02.24
+' Adds highlight in a choice of colours
 
-doUnderlinesToo = True
-doColourOffToo = True
-strikeThroughToo = True
+' Make one or other True:
+doParagraph = False
+doWord = True
 
-addWarning = True
-
-doParagraph = True
-' False means act on current line
-
-myRemove = " highlight"
-If doUnderlinesToo = True Then myRemove = myRemove & ", underline"
-If doColourOffToo = True Then myRemove = myRemove & ", font colour"
-If strikeThroughToo = True Then myRemove = myRemove & ", strike-through"
-
-Set rng = ActiveDocument.Content
-If Selection.Text = rng.Text Then
-  If addWarning = True Then
-    Beep
-    myResponse = MsgBox("Remove" & myRemove & "?", _
-       vbQuestion + vbYesNoCancel, "HighlightMinus")
-    If myResponse <> vbYes Then
-      doUnderlinesToo = False
-      doColourOffToo = False
-      strikeThroughToo = False
-    End If
-  End If
-
-  Set rng = ActiveDocument.Content
-  rng.HighlightColorIndex = wdNoHighlight
-  If doColourOffToo = True Then rng.Font.Color = wdColorAutomatic
-  If strikeThroughToo = True Then rng.Font.StrikeThrough = False
-  If doUnderlinesToo = True Then rng.Font.Underline = False
-  
-  If ActiveDocument.Footnotes.Count > 0 Then
-    Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
-    rng.HighlightColorIndex = wdNoHighlight
-    If doColourOffToo = True Then rng.Font.Color = wdColorAutomatic
-    If strikeThroughToo = True Then rng.Font.StrikeThrough = False
-    If doUnderlinesToo = True Then rng.Font.Underline = False
-  End If
-  
-  If ActiveDocument.Endnotes.Count > 0 Then
-    Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
-    rng.HighlightColorIndex = wdNoHighlight
-    If strikeThroughToo = True Then rng.Font.StrikeThrough = False
-    If doColourOffToo = True Then rng.Font.Color = wdColorAutomatic
-    If doUnderlinesToo = True Then rng.Font.Underline = False
-  End If
-  Selection.HomeKey Unit:=wdStory
-  Exit Sub
-End If
-
-Dim myCol(9)
+Dim myCol(20)
 myCol(0) = wdNoHighlight
 myCol(1) = wdBrightGreen
 myCol(2) = wdYellow
 myCol(3) = wdTurquoise
 myCol(4) = wdPink
 myCol(5) = wdRed
-myCol(6) = wdGreen
-myCol(7) = wdDarkYellow
-myCol(8) = wdGray50
-myCol(9) = wdGray25
-myColTotal = 9
+myCol(6) = wdGray50
+myCol(7) = wdGray25
+myColTotal = 7
 
 ' Remember track changes status, then switch it off
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
-Dim v As Variable, nowColour As Long
-varsExist = False
+Dim v As Variable: Dim nowColour As Long
+Dim wasStart As Long: Dim wasEnd As Long
+numVars = 0
 For Each v In ActiveDocument.Variables
-  If v.Name = "colNum" Then varsExist = True: Exit For
+  If v.Name = "colNum" Then numVars = numVars + 1
+  If v.Name = "selEnd" Then numVars = numVars + 1
+  If v.Name = "selStart" Then numVars = numVars + 1
 Next v
 
-If varsExist = False Then
+If numVars = 1 Or numVars = 2 Then
+  numVars = 0
+  For i = ActiveDocument.Variables.Count To 1 Step -1
+    ActiveDocument.Variables(i).Delete
+  Next i
+End If
+
+If numVars = 0 Then
   ActiveDocument.Variables.Add "selStart", 0
   ActiveDocument.Variables.Add "selEnd", 0
   ActiveDocument.Variables.Add "colNum", 0
+Else
+  wasStart = ActiveDocument.Variables("selStart")
+  wasEnd = ActiveDocument.Variables("selEnd")
+  wasCol = ActiveDocument.Variables("colNum")
 End If
-
-wasStart = ActiveDocument.Variables("selStart")
-wasEnd = ActiveDocument.Variables("selEnd")
-wasCol = ActiveDocument.Variables("colNum")
 
 ' If no text is selected ...
-If Selection.Start = Selection.End Then
-  If Selection.Text = vbCr Then Selection.MoveLeft , 1
-  ' If the cursor is outside the area, give up
-  If Selection.Start < wasStart Or Selection.End _
-       > wasEnd - 1 Then GoTo LineClear
-  ' Otherwise check the highlight colour
-  Selection.Start = wasStart
-  Selection.End = wasStart + 1
-  nowColour = Selection.Range.HighlightColorIndex
-  If nowColour <> myCol(wasCol) Then
-    ' colour has changed, so go back to colour 1
+Set rng = Selection.Range.Duplicate
+If rng.Start = rng.End Then
+  rng.MoveEnd , 1
+  If rng.Text = vbCr Then
+    rng.MoveStart , -1
+    rng.Collapse wdCollapseStart
+  Else
+    rng.MoveEnd , -1
+  End If
+  
+' Cursor outside the previous range? So start from scratch
+  If rng.Start < wasStart Or rng.End > wasEnd Then
+  ' If the cursor is outside the previous range
+    If doParagraph = True Then
+      rng.Expand wdParagraph
+    Else
+      rng.Expand wdWord
+      Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+        rng.MoveEnd , -1
+        DoEvents
+      Loop
+    End If
+    ActiveDocument.Variables("selStart") = rng.Start
+    ActiveDocument.Variables("selEnd") = rng.End
+ '   Debug.Print rng.Start, rng.End
     nowCol = 0
   Else
-    ' go to next colour
-    nowCol = wasCol - 1
-    If nowCol < 0 Then nowCol = myColTotal
+    ' Otherwise check the highlight colour
+    rng.Start = wasStart
+    rng.End = wasStart + 1
+    nowColour = rng.HighlightColorIndex
+    If nowColour <> myCol(wasCol) Then
+      ' colour has changed, so go back to colour 7
+      nowCol = 7
+    Else
+      ' go to next colour
+      nowCol = wasCol - 1
+      If nowCol < 0 Then nowCol = myColTotal
+    End If
+    rng.End = wasEnd
   End If
-  Selection.End = wasEnd
-Else
-  ' if some text is selected
-  ' record the current selection range
-  ActiveDocument.Variables("selStart") = Selection.Start
-  ActiveDocument.Variables("selEnd") = Selection.End
-  nowCol = 0
+Else:  ' if some text is selected ...
+  ' Record current selection range
+  ActiveDocument.Variables("selStart") = rng.Start
+  ActiveDocument.Variables("selEnd") = rng.End
+  nowCol = 1
 End If
 ActiveDocument.Variables("colNum") = nowCol
-'    This following line solves the problem where text
-'    is highlighted, yet its colour is apparently 0(!)
-'    so force it to turquoise, then back to 0.
-If nowCol = 0 And Selection.Range.HighlightColorIndex = 0 Then
-  Selection.Range.HighlightColorIndex = 3
-End If
-Selection.Range.HighlightColorIndex = myCol(nowCol)
-Selection.End = Selection.Start
+rng.HighlightColorIndex = myCol(nowCol)
+rng.Collapse wdCollapseStart
+rng.Select
+theEnd:
 ActiveDocument.TrackRevisions = myTrack
-Exit Sub
-
-LineClear:
-If doParagraph = True Then
-  Selection.Expand wdParagraph
-Else
-  Selection.HomeKey Unit:=wdLine
-  clearStart = Selection.Start
-  Selection.MoveDown Unit:=wdLine, Count:=1
-  Selection.HomeKey Unit:=wdLine
-End If
-Set rng = Selection.Range
-rng.Start = clearStart
-ActiveDocument.Variables("selStart") = clearStart
-ActiveDocument.Variables("selEnd") = Selection.End
-rng.HighlightColorIndex = wdNoHighlight
-ActiveDocument.TrackRevisions = myTrack
-Selection.Collapse wdCollapseEnd
 End Sub
+
 
 
 

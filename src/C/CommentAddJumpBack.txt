@@ -1,0 +1,64 @@
+Sub CommentAddJumpBack()
+' Paul Beverley - Version 26.02.24
+' Creates a comment or jumps back to the text
+
+doRoundUpSelection = True
+  cursorAtEnd = True
+  cursorAtStart = False
+
+If Selection.Range.Information(wdInCommentPane) = True Then
+  startScope = ActiveDocument.Comments(1).Scope.Start
+  endScope = ActiveDocument.Comments(1).Scope.End
+  ActiveDocument.Range(startScope, endScope).Select
+Exit Sub
+  hereNow = Selection.Start
+  cmtPos = 0
+  For i = 1 To ActiveDocument.Comments.Count - 1
+    endCmt = ActiveDocument.Comments(i).Range.End
+    If hereNow > cmtPos And hereNow < endCmt Then Exit For
+    cmtPos = endCmt
+    DoEvents
+  Next i
+  startScope = ActiveDocument.Comments(i).Scope.Start
+  endScope = ActiveDocument.Comments(i).Scope.End
+  ActiveDocument.Range(startScope, endScope).Select
+  If cursorAtEnd = True Then Selection.Collapse wdCollapseEnd
+  If cursorAtStart = True Then Selection.Collapse wdCollapseStart
+  Exit Sub
+End If
+
+' Select word or extend selection to whole words
+If Selection.Start = Selection.End Then
+  Set rng = Selection.Range.Duplicate
+  rng.Expand wdWord
+Else
+  If doRoundUpSelection = True Then
+    Set rng = Selection.Range.Duplicate
+    rng.Collapse wdCollapseEnd
+    rng.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+      rng.MoveEnd , -1
+      DoEvents
+    Loop
+    Selection.Collapse wdCollapseStart
+    Selection.Expand wdWord
+    Selection.Collapse wdCollapseStart
+    rng.Start = Selection.Start
+  End If
+End If
+
+rng.HighlightColorIndex = wdYellow
+
+Dim cmt As Comment
+Set cmt = Selection.Comments.Add(Range:=rng)
+cmt.Edit
+Selection.TypeText Text:=myText
+Selection.MoveLeft , 1
+Selection.MoveRight , 1
+If useCommentPane = False Then
+  ActiveWindow.ActivePane.Close
+Else
+  Application.ActiveWindow.View.Zoom.Percentage = paneZoom
+End If
+End Sub
+

@@ -1,5 +1,5 @@
 Sub CommentNameChanger()
-' Paul Beverley - Version 20.07.23
+' Paul Beverley - Version 26.02.24
 ' Changes the name attached to comments
 
 newName = "Referee"
@@ -11,7 +11,8 @@ nameToChange = ""
 nameNow = Application.UserName
 Application.UserName = newName
 
-For i = 1 To ActiveDocument.Comments.count
+Dim newCmt As Comment
+For i = 1 To ActiveDocument.Comments.Count
   Set cmt = ActiveDocument.Comments(i)
   If cmt.Contact = nameToChange Or nameToChange = "" Then
     Set rng = cmt.Scope

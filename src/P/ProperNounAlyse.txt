@@ -1,5 +1,6 @@
+
 Sub ProperNounAlyse()
-' Paul Beverley - Version 17.02.24
+' Paul Beverley - Version 26.02.24
 ' Analyses similar proper nouns
 
 minLengthCheck = 4
@@ -15,7 +16,7 @@ similarChars = "bb,b; b,p; sch,sh; ch,sh; c,k; ph,f; ss,z; s,z;" & _
 ignorePlurals = True
 
 myScreenOff = True
-Set rng = Selection.Range.Duplicate
+Set rng = ActiveDocument.Content
 rng.End = rng.Start + 1
 myLanguage = Languages(rng.LanguageID).NameLocal
 Set FUT = ActiveDocument

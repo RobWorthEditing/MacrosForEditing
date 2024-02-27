@@ -1,5 +1,5 @@
 Sub CommentAddMenu()
-' Paul Beverley - Version 24.10.23
+' Paul Beverley - Version 26.02.24
 ' Adds a comment off a menu
 
 useCommentPane = False
@@ -171,6 +171,7 @@ lineNum = rng.Information(wdFirstCharacterLineNumber)
 
 
 ' Now create the comment
+Dim cmt As Comment
 Set rngText = Selection.Range.Duplicate
 Set cmt = Selection.Comments.Add(Range:=Selection.Range)
 If useCommentPane = False Then
@@ -237,6 +238,4 @@ Else
   On Error GoTo 0
 End If
 End Sub
-
-
 

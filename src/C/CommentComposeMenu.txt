@@ -1,6 +1,6 @@
 Sub CommentComposeMenu()
-' Paul Beverley - Version 26.05.22
-' Adds a comment off a menu (for modern comments only)
+' Paul Beverley - Version 26.02.24
+' Adds a comment off a menu
 
 stdName = "Document"
 
@@ -114,7 +114,7 @@ If gottaCompo = False Then
   Documents.Add
   Selection.TypeText Text:=docName & vbCr & vbCr
 Else
-  If ActiveDocument.Paragraphs.count > 2 Then
+  If ActiveDocument.Paragraphs.Count > 2 Then
     ActiveDocument.Paragraphs(3).Range.Select
     Selection.End = ActiveDocument.Content.End
     Selection.Delete
@@ -123,6 +123,7 @@ Else
     Selection.EndKey Unit:=wdStory
   End If
 End If
+DoEvents
 Selection.Paste
 
 ' Go back and get text range to quote
@@ -137,6 +138,7 @@ If quotePos > 0 Then
   Selection.Start = quotePos - 1
   Selection.End = Selection.Start + 2
   Selection.Delete
+  DoEvents
   Selection.Paste
 End If
 
@@ -144,7 +146,9 @@ quotePos = InStr(ActiveDocument.Content, "{}")
 If quotePos > 0 Then
   Selection.Start = quotePos - 1
   Selection.End = Selection.Start + 2
+  DoEvents
   Selection.Delete
+  DoEvents
   Selection.PasteSpecial DataType:=wdPasteText
 End If
 
@@ -154,6 +158,7 @@ If quotePos > 0 Then
   Selection.Start = quotePos - 1
   Selection.End = Selection.Start + 2
   Selection.Delete
+  DoEvents
   Selection.Paste
 End If
 
@@ -162,6 +167,7 @@ If quotePos > 0 Then
   Selection.Start = quotePos - 1
   Selection.End = Selection.Start + 2
   Selection.Delete
+  DoEvents
   Selection.PasteSpecial DataType:=wdPasteText
 End If
 
@@ -201,7 +207,7 @@ insertComment:
 Set rng = ActiveDocument.Paragraphs(1).Range
 rng.End = rng.End - 1
 docName = rng.Text
-If ActiveDocument.Paragraphs.count > 2 Then
+If ActiveDocument.Paragraphs.Count > 2 Then
   ActiveDocument.Paragraphs(3).Range.Select
   Selection.End = ActiveDocument.Content.End
 Else
@@ -227,7 +233,7 @@ If Selection.Start = Selection.End And sentenceSelect = True Then
   If Right(Selection, 4) = "al. " Or Right(Selection, 5) = "al., " _
        Or Right(Selection, 5) = "e.g. " Or Right(Selection, 5) = "i.e. " _
        Or Right(Selection, 6) = "e.g., " Or Right(Selection, 6) = "i.e., " Then
-    Selection.MoveRight Unit:=wdSentence, count:=1, Extend:=wdExtend
+    Selection.MoveRight Unit:=wdSentence, Count:=1, Extend:=wdExtend
   End If
   Do While InStr(" " & vbCr, Right(Selection.Text, 1)) > 0
     Selection.MoveEnd , -1
@@ -235,11 +241,12 @@ If Selection.Start = Selection.End And sentenceSelect = True Then
   Loop
 End If
 
+Dim cmt As Comment
 Set cmt = Selection.Comments.Add(Range:=Selection.Range)
+DoEvents
 Selection.Paste
 ActiveWindow.ActivePane.Close
 Exit Sub
-
 
 ReportIt:
 If Err.Number = 5174 Then

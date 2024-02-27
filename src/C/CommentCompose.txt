@@ -1,5 +1,5 @@
 Sub CommentCompose()
-' Paul Beverley - Version 06.08.21
+' Paul Beverley - Version 26.02.24
 ' Allows you to create a new (modern) comment
 
 ' sentenceSelect = False
@@ -75,7 +75,7 @@ If Selection.Start = Selection.End And sentenceSelect = True Then
     DoEvents
   Loop
 End If
-
+Dim cmt As Comment
 Set cmt = Selection.Comments.Add(Range:=Selection.Range)
 Selection.Paste
 ActiveWindow.ActivePane.Close

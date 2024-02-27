@@ -1,0 +1,76 @@
+Sub SpellingCorrect()
+' Paul Beverley - Version 24.02.24
+' Corrects spelling and wrong capitalisation
+
+Selection.Collapse wdCollapseEnd
+wasStart = Selection.Start
+Set rngWd = Selection.Range.Duplicate
+If LCase(Selection) = UCase(Selection) Then rngWd.MoveEnd , -1
+If Selection.Start = Selection.End Then rngWd.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rngWd.Text, 1)) > 0
+  rngWd.MoveEnd , -1
+  DoEvents
+Loop
+
+' Check capitalisation, e.g. BEverley
+initChar = rngWd.Characters(1)
+scndChar = rngWd.Characters(2)
+lastChar = rngWd.Characters.Last
+If UCase(initChar) = initChar And UCase(scndChar) = scndChar _
+     And UCase(lastChar) <> lastChar Then _
+     rngWd.Characters(2) = LCase(scndChar)
+myWord = rngWd
+newWord = myWord
+
+' Check spelling language
+' (check only first character, in case of split language)
+langName = Languages(rngWd.Characters(1).LanguageID).NameLocal
+
+' Check spelling
+spellOK = Application.CheckSpelling(myWord, MainDictionary:=langName)
+If Not (spellOK) Then
+  Set suggList = Application.GetSpellingSuggestions(myWord, _
+       MainDictionary:=langName)
+  If suggList.Count > 0 Then newWord = suggList.Item(1).Name
+  If newWord <> myWord Then
+    rngWd.Text = newWord
+  Else
+    spellOK = Application.CheckSpelling(myWord, _
+         MainDictionary:=langName)
+    If spellOK = False Then
+      If newWord = myWord Then
+        Beep
+        myTime = Timer
+        Do
+        Loop Until Timer > myTime + 1
+        Beep
+        If langName = "English (United States)" _
+             And Application.CheckSpelling(myWord, _
+             MainDictionary:="English (United Kingdom)") Then
+          MsgBox ("Word's spellchecker is playing sillies!")
+          Exit Sub
+        Else
+          MsgBox ("Word offers no suggestion")
+        End If
+      End If
+    End If
+  End If
+Else
+  Beep
+End If
+rngWd.Start = wasStart - 2
+rngWd.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rngWd.Text, 1)) > 0
+  rngWd.MoveEnd , -1
+  DoEvents
+Loop
+rngWd.Collapse wdCollapseEnd
+rngWd.Select
+End Sub
+
+
+
+
+
+
+
