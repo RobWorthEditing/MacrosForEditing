@@ -1,43 +1,43 @@
 Sub URLlinker()
-' Paul Beverley - Version 05.03.23
+' Paul Beverley - Version 05.03.24
 ' Finds all URLs in the text and links them
 
-charsInURLs = "[%./:a-zA-Z0-9_\-\?^38=+\(\)]"
-
 Set rng = ActiveDocument.Range
-myFind = "<[wthps]{3,5}>" & charsInURLs & "{1,}"
 With rng.Find
-  .Text = myFind
+  .Text = "^$.^$"
   .Replacement.Text = ""
   .Wrap = wdFindStop
   .Forward = True
-  .MatchWildcards = True
+  .MatchWildcards = False
   .Execute
 End With
 
 Do While rng.Find.Found = True
-  rng.Select
-  If Right(rng.Text, 1) = "." Then rng.End = rng.End - 1
-  Selection.Collapse wdCollapseStart
-  stNow = Selection.Start
-  Selection.MoveLeft , 1
-  stBefore = Selection.Start
-  If stNow = stBefore + 1 Then
-    myAddress = rng.Text
-    rng.Text = Replace(rng.Text, "https://", "")
-    rng.Text = Replace(rng.Text, "http://", "")
-    If rng.Characters.Last = "." Then rng.MoveEnd , -1
-    rng.Select
-    Set myLink = ActiveDocument.Hyperlinks.Add(Anchor:=rng, _
-          Address:=myAddress, TextToDisplay:=rng.Text)
-    rng.Start = myLink.Range.End
-    rng.End = ActiveDocument.Content.End
-  Else
-    rng.Start = rng.End
-  End If
+  Do While InStr(vbCr & " ", Right(rng.Text, 1)) = 0
+    rng.MoveEnd , 1
+    DoEvents
+  Loop
+  rng.MoveEnd , -1
+  If rng.Characters.Last = "." Then rng.MoveEnd , -1
+
+  Do While InStr(vbCr & " ", Left(rng.Text, 1)) = 0
+    rng.MoveStart , -1
+    DoEvents
+  Loop
+  rng.MoveStart , 1
+
+  myAddress = rng.Text
+  rng.Text = Replace(rng.Text, "https://", "")
+  rng.Text = Replace(rng.Text, "http://", "")
+  Set myLink = ActiveDocument.Hyperlinks.Add(Anchor:=rng, _
+        Address:=myAddress, TextToDisplay:=rng.Text)
+  rng.Start = myLink.Range.End
+  rng.End = ActiveDocument.Content.End
   rng.Find.Execute
   DoEvents
+  rng.Select
 Loop
+Selection.Collapse wdCollapseEnd
 Beep
 End Sub
 

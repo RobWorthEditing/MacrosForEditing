@@ -1,6 +1,5 @@
-
 Sub CopyToListAlphabetic()
-' Paul Beverley - Version 20.02.24
+' Paul Beverley - Version 02.03.24
 ' Copies selected text into an alphabetic list file
 
 ' keyWord = "queries"
@@ -20,7 +19,7 @@ includeFormatting = False
 
 goBackToSource = True
 
-
+Dim sourceText As Range
 Set thisDoc = ActiveDocument
 wds = Split("," & LCase(wordsToAvoid), ",")
 
@@ -51,8 +50,9 @@ Else
   rng.Select
 End If
 
-Set sourceText = Selection.Range
+Set sourceText = Selection.Range.Duplicate
 myText = sourceText.Text
+Selection.Collapse wdCollapseEnd
 
 gottaList = False
 For Each myDoc In Application.Documents
@@ -80,7 +80,7 @@ Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = followHeading
+  .Text = "^p" & followHeading
   .Wrap = wdFindStop
   .Forward = True
   .Replacement.Text = ""
@@ -90,7 +90,26 @@ With rng.Find
   DoEvents
 End With
 rng.Expand wdParagraph
-rng.Collapse wdCollapseEnd
+listStart = rng.End
+rng.Collapse wdCollapseStart
+
+' Check if it's already in the list
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p" & myText & "^p"
+  .Wrap = wdFindStop
+  .Execute
+  DoEvents
+End With
+
+If rng.Find.Found = True Then
+  Beep
+  If goBackToSource = True Then thisDoc.Activate
+  Exit Sub
+End If
+
+rng.Start = listStart
 rng.End = ActiveDocument.Content.End
 If LCase(rng) <> UCase(rng) Then
   For i = 1 To rng.Paragraphs.Count
@@ -119,5 +138,4 @@ End If
 
 If goBackToSource = True Then thisDoc.Activate
 End Sub
-
 

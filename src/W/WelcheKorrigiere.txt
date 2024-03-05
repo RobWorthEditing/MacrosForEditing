@@ -1,6 +1,9 @@
+
 Sub WelcheKorrigiere()
-' Paul Beverley - Version 02.08.22
+' Paul Beverley - Version 04.03.24
 ' Finds "welche" after a comma and corrects it
+
+myColour = wdYellow
 
 Set rng = ActiveDocument.Content
 With rng.Find
@@ -21,7 +24,8 @@ Do While rng.Find.Found = True
 ' Note where the end of the found item is
   endNow = rng.End
   rng.MoveStart , 2
-  rng.Select
+  If myCount Mod 10 = 1 Then rng.Select
+  rng.HighlightColorIndex = myColour
   Select Case rng.Text
     Case "welcher": rng.Text = "der"
     Case "auf welcher": rng.MoveStart , 4: rng.Text = "der"
@@ -48,8 +52,9 @@ Do While rng.Find.Found = True
   rng.Find.Execute
   DoEvents
 Loop
+rng.Select
+Selection.Collapse wdCollapseEnd
 MsgBox "Changed: " & myCount
 End Sub
-
 
 

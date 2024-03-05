@@ -93,7 +93,7 @@ Else:  ' if some text is selected ...
   ' Record current selection range
   ActiveDocument.Variables("selStart") = rng.Start
   ActiveDocument.Variables("selEnd") = rng.End
-  nowCol = 1
+  nowCol = 0
 End If
 ActiveDocument.Variables("colNum") = nowCol
 rng.HighlightColorIndex = myCol(nowCol)

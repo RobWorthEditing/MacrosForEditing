@@ -1,5 +1,5 @@
 Sub FormatNumbers()
-' Paul Beverley - Version 10.10.19
+' Paul Beverley - Version 02.03.24
 ' Formats number at cursor or numbers within a selection
 
 decimalFormat = "###,###,###,0.00"
@@ -10,17 +10,30 @@ commaReplacement = ""
 ' commaReplacement = ChrW(160) ' non-breaking space
 
 If Selection.Start = Selection.End Then Selection.Expand wdCharacter
-Set allSelection = Selection.range.Duplicate
+Set allSelection = Selection.Range.Duplicate
 
-Dim rng As range
+myMarkup = ActiveWindow.View.RevisionsFilter.Markup
+ActiveWindow.View.RevisionsFilter.Markup = wdRevisionsMarkupSimple
+
+Dim rng As Range
 Do
   myCount = myCount + 1
-  Selection.End = Selection.Start + 1
-  Set rng = Selection.range.Duplicate
-  ch = Selection.Text
+  Set rng = Selection.Range.Duplicate
+  rng.End = rng.Start + 1
+  ch = rng.Text
   If InStr("0123456789", ch) > 0 Then
-    rng.MoveStartWhile "0123456789.,", wdBackward
-    rng.MoveEndWhile "0123456789,."
+    Do
+      rng.MoveStart , -1
+      DoEvents
+      ch = rng.Characters.First
+    Loop Until InStr("0123456789.,", ch) = 0
+    rng.MoveStart , 1
+    Do
+      rng.MoveEnd , 1
+      DoEvents
+      ch = rng.Characters.Last
+    Loop Until InStr("0123456789.,", ch) = 0
+    rng.MoveEnd , -1
     If rng.Font.Superscript = 0 Then
       dotPos = InStr(1, rng.Text, ".")
       If dotPos > 0 Then
@@ -45,6 +58,10 @@ Do
     rng.Select
   End If
   Selection.MoveRight , 1
+  DoEvents
 Loop Until Selection.End > (allSelection.End - 1) Or myCount > 1000
+ActiveWindow.View.RevisionsFilter.Markup = myMarkup
 End Sub
+
+
 

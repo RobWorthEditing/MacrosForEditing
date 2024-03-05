@@ -1,5 +1,5 @@
 Sub WhatChar()
-' Paul Beverley - Version 07.06.23
+' Paul Beverley - Version 04.03.24
 ' Show ASCII and unicode and character names
 
 ' Decide where to show results
@@ -9,7 +9,7 @@ showInMessageBox = True
 useVoice = False
 
 ' To use voice, remove the apostrophe from the following line
-If useVoice = True Then Set speech = New SpVoice
+' If useVoice = True Then Set speech = New SpVoice
 
 ' If the macro gives an error on locked files, make this True
 lockedFile = False

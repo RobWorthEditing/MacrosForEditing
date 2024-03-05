@@ -1,0 +1,268 @@
+Sub PreferredSpellingsAlyse()
+' Paul Beverley - Version 29.02.24
+' Finds words similar to those in a preferred-spelling list
+
+
+keyWord = "list"
+wordsToAvoid = "switch"
+' wordsToAvoid = "FRedit,switch"
+
+Set sourceText = ActiveDocument
+
+myResponse = MsgBox("Have you installed a version of" & vbCr & vbCr & _
+     "ProperNounAlyse FEBRUARY 2024 or later?", vbQuestion _
+     + vbYesNoCancel, "PreferredSpellingsAlyse")
+If myResponse <> vbYes Then Exit Sub
+
+' Create a new document, copying the old
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set rng = ActiveDocument.Content
+rng.Text = LCase(rngOld.Text)
+Set copyText = ActiveDocument
+
+CR = vbCr: CR2 = CR & CR
+
+
+' Find the list
+wds = Split("," & LCase(wordsToAvoid), ",")
+gottaList = False
+For Each myDoc In Application.Documents
+  thisName = myDoc.Name
+  nm = LCase(thisName)
+  gottaList = False
+  If InStr(nm, LCase(keyWord)) > 0 Then gottaList = True
+  For i = 1 To UBound(wds)
+    If InStr(nm, wds(i)) > 0 Then gottaList = False
+  Next i
+  If gottaList = True Then
+    Exit For
+  End If
+Next myDoc
+If gottaList = False Then
+  Beep
+  MsgBox "Can't find a list."
+  Exit Sub
+End If
+
+myExtras = Trim(myDoc.Content.Text)
+Selection.EndKey Unit:=wdStory
+Selection.TypeText Text:=CR & LCase(myExtras) & CR
+Selection.HomeKey Unit:=wdStory
+
+allText = ""
+For Each wd In copyText.Words
+  init = UCase(wd.Characters(1))
+  If Len(wd.Text) > 2 Then
+    w = Trim(wd)
+    allText = allText & " " & UCase(Left(w, 1)) & Mid(w, 2)
+  End If
+  i = i + 1
+  If i Mod 200 = 0 Then
+    DoEvents
+    wd.Select
+  End If
+Next wd
+Selection.WholeStory
+Selection.Text = allText
+Application.Run macroName:="ProperNounAlyse"
+myExtras = ""
+
+' Massage the 'proper noun' frequency list
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Proper noun queries"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "Preferred spelling queries"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "*"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "  99 ="
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "^p"
+  .Replacement.Text = "^t= Z ^pqcqc "
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "^t"
+  .Replacement.Text = "^t "
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "qcqc([!^t]@)^t([a-zA-Z0-9. ]@)^13"
+  .Replacement.Text = "xcz\1dfdf \2\1^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "qcqc([!^t^13]@)^t([a-zA-Z0-9. ]@)^t(*)^13"
+  .Replacement.Text = "fgh\1abcd \2efgh \3\1^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+
+' create an array of preferred spellings
+For Each w In myDoc.Content.Words
+  schWd = UCase(Left(w, 1)) & Mid(w, 2)
+  If Len(w) > 1 Then myExtras = myExtras & "," & schWd
+Next w
+myWd = Split(myExtras, ",")
+
+' Check each preferred spelling to see if it appears
+' in the list of 'proper nouns'
+For i = 1 To UBound(myWd)
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = Trim(myWd(i)) & " . . . [0-9]{1,}"
+    .Wrap = wdFindStop
+    .Forward = True
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .Execute
+    DoEvents
+  End With
+  
+  If rng.Find.Found = True Then
+    wdText = rng.Text
+    rngStart = rng.Start
+    rng.Expand wdParagraph
+    findStart = rng.Start
+    findEnd = rng.End
+    allLine = rng.Text
+    lft = InStr(rng, wdText)
+    preText = Left(allLine, lft)
+    postText = Mid(allLine, lft + Len(wdText))
+    postText = Replace(postText, vbCr, "")
+'    Debug.Print "|" & preText & "|"
+'    Debug.Print "|" & postText & "|"
+'    Debug.Print preText & "[!^13]@" & postText
+   
+    rng.Collapse wdCollapseStart
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = preText & "[!^13]@" & postText
+      .Wrap = wdFindStop
+      .Forward = False
+      .Replacement.Text = ""
+      .MatchWildcards = True
+      .Execute
+      DoEvents
+    End With
+    'KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+'    rng.Select
+'    Debug.Print rng.Text
+'    Debug.Print rng.Find.Found
+    myDistanceUp = 9999
+    myFindSimilarUp = ""
+    If rng.Find.Found = True Then
+      myDistanceUp = findStart - rng.End
+      myFindSimilarUp = Right(preText, 1) & Replace(rng, preText, "")
+      myFindSimilarUp = Replace(myFindSimilarUp, postText, "")
+    End If
+    
+    rng.Start = findEnd
+    rng.End = findEnd
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = preText & "[!^13]@" & postText
+      .Wrap = wdFindStop
+      .Forward = True
+      .Replacement.Text = ""
+      .MatchWildcards = True
+      .Execute
+      DoEvents
+    End With
+    'LLLLLLLLLLLLLLLLLLLLLLLLLLLLL
+'    rng.Select
+ '   Debug.Print rng.Find.Found
+'    Debug.Print rng.Text
+    myFindSimilarDown = ""
+    myDistanceDown = 9999
+'    rng.Select
+    If rng.Find.Found = True Then
+      myDistanceDown = rng.Start - findEnd
+      myFindSimilarDown = Right(preText, 1) & Replace(rng, preText, "")
+      myFindSimilarDown = Replace(myFindSimilarDown, postText, "")
+    End If
+'    Debug.Print myDistanceDown, myDistanceUp
+    If myFindSimilarDown = "" Then myNewWord = myFindSimilarUp
+'    Debug.Print myFindSimilarDown, myFindSimilarUp
+    If myFindSimilarUp = "" Then
+      myNewWord = myFindSimilarDown
+    Else
+      If myDistanceDown > myDistanceUp Then
+        myNewWord = myFindSimilarUp
+      Else
+        myNewWord = myFindSimilarDown
+      End If
+    End If
+    If myNewWord = "" Then myNewWord = "Dummy . . ."
+    spcPos = InStr(myNewWord, " . . .")
+    Debug.Print spPos
+    justWord = Left(myNewWord, spcPos - 1)
+    Debug.Print justWord & "|"
+    
+    ' Add new words to the list
+    If InStr(myExtras, "," & justWord & ",") = 0 Then
+      allFinds = allFinds & CR & myNewWord & _
+      vbTab & vbTab & "(" & LCase(myWd(i)) & ")"
+      dfvzxdc = 0
+    End If
+  End If
+Next i
+
+Selection.EndKey Unit:=wdStory
+Selection.InsertAfter Text:=CR
+Selection.Start = 0
+Selection.TypeText Text:=LCase(allFinds) & CR2
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "dummy . . *^13"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Set rng = ActiveDocument.Content
+rng.Sort
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Preferred spellings queries" & CR
+ActiveDocument.Paragraphs(1).Range.Style = wdStyleHeading1
+
+' Close unwanted files
+newName = ActiveDocument.Name
+closeNumber = Replace(newName, "Document", "")
+closeNumber = Trim(Str(Val(closeNumber) - 1))
+closeName = "Document" & closeNumber
+Documents(closeName).Close SaveChanges:=False
+copyText.Close SaveChanges:=False
+Beep
+End Sub
+

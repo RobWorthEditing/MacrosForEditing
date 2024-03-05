@@ -1,11 +1,11 @@
 Sub SpellingCorrect()
-' Paul Beverley - Version 24.02.24
-' Corrects spelling and wrong capitalisation
+' Paul Beverley - Version 04.03.24
+' Immediately corrects spelling and wrong capitalisation
 
 Selection.Collapse wdCollapseEnd
 wasStart = Selection.Start
 Set rngWd = Selection.Range.Duplicate
-If LCase(Selection) = UCase(Selection) Then rngWd.MoveEnd , -1
+If LCase(Selection) = UCase(Selection) Then rngWd.MoveEnd , -3
 If Selection.Start = Selection.End Then rngWd.Expand wdWord
 Do While InStr(ChrW(8217) & "' ", Right(rngWd.Text, 1)) > 0
   rngWd.MoveEnd , -1
@@ -16,9 +16,12 @@ Loop
 initChar = rngWd.Characters(1)
 scndChar = rngWd.Characters(2)
 lastChar = rngWd.Characters.Last
+doBeep = True
 If UCase(initChar) = initChar And UCase(scndChar) = scndChar _
-     And UCase(lastChar) <> lastChar Then _
-     rngWd.Characters(2) = LCase(scndChar)
+     And UCase(lastChar) <> lastChar Then
+  doBeep = False
+  rngWd.Characters(2) = LCase(scndChar)
+End If
 myWord = rngWd
 newWord = myWord
 
@@ -56,7 +59,7 @@ If Not (spellOK) Then
     End If
   End If
 Else
-  Beep
+  If doBeep Then Beep
 End If
 rngWd.Start = wasStart - 2
 rngWd.Expand wdWord
@@ -67,10 +70,4 @@ Loop
 rngWd.Collapse wdCollapseEnd
 rngWd.Select
 End Sub
-
-
-
-
-
-
 
