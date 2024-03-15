@@ -1,0 +1,184 @@
+Sub TextPlusNumber()
+' Paul Beverley - Version 11.03.24
+' Finds numbers expressed in words + adds "(figures)"
+
+myUnits = ":one:two:three:four:five:six:seven:eight:nine:ten"
+myTens = ":ten:twenty:thirty:forty:fifty:sixty:seventy:eighty:ninety:hundred"
+myTeens = ":eleven:twelve:thirteen:fourteen:fifteen:sixteen:seventeen:eighteen:nineteen"
+allNumberWords = myUnits & myTens & myTeens & ":a:and:-:"
+
+mySmart = Options.SmartCutPaste
+Options.SmartCutPaste = False
+
+Dim wd(6) As String
+Set rng = Selection.Range.Duplicate
+Do
+  rng.Expand wdWord
+  rng.Collapse wdCollapseStart
+  
+  gottaWord = False
+  For i = 1 To 50
+    rng.MoveEnd wdWord, 1
+      thisWord = LCase(Trim(rng.Words(rng.Words.Count)))
+    If InStr("aand-", thisWord) = 0 And InStr(allNumberWords, _
+         ":" & thisWord & ":") > 0 Then
+      If Right(Trim(rng.Text), 6) = "no-one" Then
+        gottaWord = False
+      Else
+        gottaWord = True
+        Exit For
+      End If
+    End If
+  Next i
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd wdWord, -1
+  If gottaWord = False Then
+    rng.Select
+    Beep
+    myTime = Timer
+    Do
+    Loop Until Timer > myTime + 0.2
+    Beep
+    MsgBox ("Finished")
+    Exit Sub
+  End If
+  
+  gotStart = False
+  Do While gotStart = False
+    rng.MoveStart wdWord, -1
+    If InStr(allNumberWords, ":" & LCase(Trim(rng.Words(1))) & ":") = 0 Then
+      gotStart = True
+      rng.MoveStart wdWord, 1
+      gotStart = True
+    End If
+    DoEvents
+  Loop
+  
+  gotEnd = False
+  Do While gotEnd = False
+    rng.MoveEnd wdWord, 1
+    lastWord = LCase(Trim(rng.Words(rng.Words.Count)))
+    If InStr(allNumberWords, ":" & lastWord & ":") = 0 Then
+      gotEnd = True
+      rng.MoveEnd wdWord, -1
+    End If
+    DoEvents
+  Loop
+  
+  fstWd = LCase(Trim(rng.Words(1)))
+  If InStr("and", fstWd) > 0 Then rng.MoveStart wdWord, 1
+  
+  ' To catch 'a', 'an', and 'and' as final word
+  lastWd = LCase(Trim(rng.Words(rng.Words.Count)))
+  If InStr("and", lastWd) > 0 Then rng.MoveEnd wdWord, -1
+  
+  ' Catch missing "and" for American usage, e.g. "two hundred fifty-two"
+  rText = LCase(rng.Text)
+  If lastWd <> "hundred" And InStr(rText, "hundred") > 0 And _
+       InStr(rText, "hundred and") = 0 Then
+    rng.Text = Replace(rText, "hundred", "hundred and")
+  End If
+  
+  allWords = LCase(rng.Text)
+  numWords = rng.Words.Count
+  Dim n(6) As Integer
+  For i = 1 To numWords
+    wdPos = InStr(allNumberWords, ":" & LCase(Trim(rng.Words(i))) & ":")
+    leftWords = Left(allNumberWords, wdPos)
+    n(i) = Len(leftWords) - Len(Replace(leftWords, ":", ""))
+  Next
+  
+  If n(1) = 30 Then n(1) = 1
+  
+  Select Case numWords
+    Case 1
+      myResult = n(1)
+      If n(1) > 10 Then myResult = 10 * (n(1) - 10)
+      If n(1) > 20 Then myResult = n(1) - 10
+    Case 2
+      If n(2) = 20 Then ' "hundred"
+        myResult = n(1) * 100
+      Else
+        myResult = 10 * (n(1) - 10) + n(2)
+        If myResult < 21 Then
+          Beep
+          rng.Select
+          Options.SmartCutPaste = mySmart
+          Exit Sub
+        End If
+      End If
+    Case 3
+      myResult = 10 * (n(1) - 10) + n(3)
+      If n(2) <> 32 Then ' hyphen
+        If n(2) = 20 Then
+          myResult = n(3) + 100 * n(1)
+        Else
+          Beep
+          rng.Select
+          Options.SmartCutPaste = mySmart
+          Exit Sub
+        End If
+      End If
+    Case 4
+      If n(2) <> 20 Then ' "hundred"
+        Beep
+        rng.Select
+        Options.SmartCutPaste = mySmart
+        Exit Sub
+      End If
+      myResult = n(4)
+      If n(4) > 10 Then myResult = 10 * (n(4) - 10)
+      If n(4) > 20 Then myResult = n(4) - 10
+      myResult = myResult + 100 * n(1)
+    Case 5
+      If n(2) <> 20 Then ' "hundred"
+        Beep
+        rng.Select
+        Options.SmartCutPaste = mySmart
+        Exit Sub
+      End If
+      myResult = 100 * n(1) + 10 * (n(3) - 10) + n(5)
+    Case 6
+      If n(2) <> 20 Then ' "hundred"
+        Beep
+        rng.Select
+        Options.SmartCutPaste = mySmart
+        Exit Sub
+      End If
+      myResult = 100 * n(1) + 10 * (n(4) - 10) + n(6)
+    Case Else
+        Beep
+        Options.SmartCutPaste = mySmart
+        rng.Select
+        Exit Sub
+  End Select
+  Do While InStr(" ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd wdWord, 3
+  parenPos = InStr(rng.Text, "(")
+  rng.Collapse wdCollapseStart
+  If parenPos = 0 Then
+    rng.InsertAfter Text:=" (" & Trim(Str(myResult)) & ")"
+  Else
+    rng.MoveStart , 2
+    rng.MoveEnd wdWord, 1
+    If Val(rng.Text) <> myResult Then
+      rng.Select
+      Beep
+      MsgBox ("Please check!")
+      Options.SmartCutPaste = mySmart
+      Exit Sub
+    End If
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Select
+  DoEvents
+Loop Until 0
+Options.SmartCutPaste = mySmart
+End Sub
+
+
+

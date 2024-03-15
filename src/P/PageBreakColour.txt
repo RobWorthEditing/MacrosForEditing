@@ -1,0 +1,66 @@
+Sub PageBreakColour()
+' Paul Beverley - Version 14.03.24
+' Colours/highlights the lines either side of each page break
+
+
+' Select font colour and/or highlight colour
+' = 0 means don't add colour/highlight
+
+' myColour1 =wdColorBlue
+myColour1 = 0
+myColour2 = wdColorRed
+
+myHiColour1 = wdYellow
+' myHiColour2 = wdBrightGreen
+myHiColour2 = 0
+
+myScreenOff = True
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
+
+nowPos = 99
+Selection.HomeKey Unit:=wdStory
+Do
+  myCount = myCount + 1
+  Do
+    wasPos = nowPos
+    nowPos = Selection.Start
+    If nowPos = wasPos Then
+      Beep
+      Exit Sub
+    End If
+    Selection.MoveDown , 1
+    lineNo = Selection.Information(wdFirstCharacterLineNumber)
+    DoEvents
+  Loop Until lineNo = 1
+  If myCount Mod 10 = 0 Then Application.ScreenUpdating = True
+
+  Selection.Expand wdLine
+  If myColour2 <> 0 Then Selection.Font.Color = myColour2
+  If myHiColour2 <> 0 Then _
+       Selection.Range.HighlightColorIndex = myHiColour2
+  Selection.MoveUp , 1
+  Selection.Expand wdLine
+  If myColour1 <> 0 Then Selection.Font.Color = myColour1
+  If myHiColour1 <> 0 Then _
+       Selection.Range.HighlightColorIndex = myHiColour1
+  Selection.MoveDown , 3
+  DoEvents
+  Application.ScreenUpdating = False
+Loop Until 0
+Beep
+Selection.HomeKey Unit:=wdStory
+Application.ScreenUpdating = False
+Exit Sub
+
+' Switch the screen back on if there's an error
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+
+
+

@@ -1,11 +1,13 @@
+
 Sub VerbChanger()
-' Paul Beverley - Version 11.12.23
+' Paul Beverley - Version 07.03.24
 ' Changes "(to) splodge" <-> "(of/for) splodging"
 
 doBeep = False
 preps = "to of for "
 useOf = (Selection.Start = Selection.End)
-If Asc(Selection) = 32 Then Selection.MoveRight , 1
+If UCase(Selection) = LCase(Selection) Then Selection.MoveLeft , 1
+If UCase(Selection) = LCase(Selection) Then Selection.MoveLeft , 1
 Selection.Expand wdWord
 wasWord = Selection
 
@@ -91,4 +93,5 @@ End If
 rng.Collapse wdCollapseEnd
 rng.Select
 End Sub
+
 

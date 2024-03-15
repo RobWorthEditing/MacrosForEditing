@@ -1,5 +1,5 @@
 Sub CopyToListAlphabetic()
-' Paul Beverley - Version 02.03.24
+' Paul Beverley - Version 12.03.24
 ' Copies selected text into an alphabetic list file
 
 ' keyWord = "queries"
@@ -99,6 +99,7 @@ With rng.Find
   .Replacement.ClearFormatting
   .Text = "^p" & myText & "^p"
   .Wrap = wdFindStop
+  .MatchCase = True
   .Execute
   DoEvents
 End With
@@ -113,14 +114,17 @@ rng.Start = listStart
 rng.End = ActiveDocument.Content.End
 If LCase(rng) <> UCase(rng) Then
   For i = 1 To rng.Paragraphs.Count
+    Debug.Print Replace(rng.Paragraphs(i), vbCr, "<<<<")
     If LCase(rng.Paragraphs(i)) > LCase(myText) Then
       rng.Paragraphs(i).Range.Select
-      Selection.Collapse wdCollapseStart
       Exit For
     End If
+    DoEvents
   Next i
+  If i = rng.Paragraphs.Count + 1 Then rng.Paragraphs(i - 1).Range.Select
+  Selection.Collapse wdCollapseStart
 Else
-  rng.Collapse wdCollapseEnd
+  rng.Collapse wdCollapseStart
   rng.Select
 End If
 
@@ -138,4 +142,7 @@ End If
 
 If goBackToSource = True Then thisDoc.Activate
 End Sub
+
+
+
 

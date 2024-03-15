@@ -1,10 +1,14 @@
+
 Sub PunctuationFormatChecker()
-' Paul Beverley - Version 28.11.22
+' Paul Beverley - Version 07.03.24
 ' Variously highlight italic/roman punctuation
 
 markAllItalicCommas = True
 markAllItalicCommas = False
 italColour = wdGray25
+
+markAllBoldPeriods = True
+boldPeriodColour = wdTurquoise
 
 markBoldHeadwordColons = True
 boldColonColour = wdTurquoise
@@ -50,6 +54,24 @@ If markAllItalicCommas = True Then
     .Replacement.ClearFormatting
     .Text = ","
     .Font.Italic = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  Options.DefaultHighlightColorIndex = oldColour
+End If
+
+If markAllBoldPeriods = True Then
+  oldColour = Options.DefaultHighlightColorIndex
+  Options.DefaultHighlightColorIndex = boldPeriodColour
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "."
+    .Font.Bold = True
     .Wrap = wdFindContinue
     .Replacement.Text = ""
     .Replacement.Highlight = True
@@ -176,7 +198,7 @@ myMsg = "Finished!"
 ' Check headword colons
 If markBoldHeadwordColons Or markRomanHeadwordColons Then
   For Each myPar In ActiveDocument.Paragraphs
-    i = myPar.Range.Words.count
+    i = myPar.Range.Words.Count
     Set rng = myPar.Range.Words(1)
     firstBold = rng.Font.Bold
     Set rng = myPar.Range.Words(i)
@@ -210,16 +232,16 @@ If markBoldHeadwordColons Or markRomanHeadwordColons Then
 
 ' Prepare prompt
   Select Case boldColonColour
-    Case wdYellow: BoldColour = "Yellow"
-    Case wdRed: BoldColour = "Red"
-    Case wdTurquoise: BoldColour = "Turquoise"
-    Case wdBrightGreen: BoldColour = "Bright green"
-    Case wdGreen: BoldColour = "Green"
-    Case wdGray25: BoldColour = "Light grey"
-    Case wdGray50: BoldColour = "Dark grey"
-    Case wdDarkYellow: BoldColour = "Dark yellow"
-    Case wdPink: BoldColour = "Pink"
-    Case Else: BoldColour = "Unknown colour"
+    Case wdYellow: boldColour = "Yellow"
+    Case wdRed: boldColour = "Red"
+    Case wdTurquoise: boldColour = "Turquoise"
+    Case wdBrightGreen: boldColour = "Bright green"
+    Case wdGreen: boldColour = "Green"
+    Case wdGray25: boldColour = "Light grey"
+    Case wdGray50: boldColour = "Dark grey"
+    Case wdDarkYellow: boldColour = "Dark yellow"
+    Case wdPink: boldColour = "Pink"
+    Case Else: boldColour = "Unknown colour"
   End Select
   Select Case romanColonColour
     Case wdYellow: romanColour = "Yellow"
@@ -235,7 +257,7 @@ If markBoldHeadwordColons Or markRomanHeadwordColons Then
   End Select
   myMsg = myMsg & vbCr & vbCr
   If markBoldHeadwordColons Then
-    myMsg = myMsg & BoldColour & " = bold " & vbCr
+    myMsg = myMsg & boldColour & " = bold " & vbCr
   End If
   If markRomanHeadwordColons Then
     myMsg = myMsg & romanColour & " = roman " & vbCr
@@ -244,4 +266,5 @@ End If
 Beep
 MsgBox (myMsg)
 End Sub
+
 

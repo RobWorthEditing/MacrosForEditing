@@ -1,0 +1,26 @@
+
+Sub TagNamesMilan()
+' Paul Beverley - Version 07.03.24
+' Splits name tagging into surname, given name on two lines
+
+myColour = wdYellow
+
+Set rng = ActiveDocument.Content
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\<surname\>(*), (*)\</surname\>"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "<given_name>\2</given_name>^p<surname>\1</surname>"
+  .MatchWildcards = True
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+
+

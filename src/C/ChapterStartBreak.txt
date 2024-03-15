@@ -1,0 +1,30 @@
+Sub ChapterStartBreak()
+' Paul Beverley - Version 05.03.23
+' Finds all chapter titles, adds page break and removes multi-newlines
+
+myResponse = MsgBox("Is the cursor in a chapter title?", _
+     vbQuestion + vbYesNo, "ChapterStartBreak")
+If myResponse <> vbYes Then Beep: Exit Sub
+myStyle = Selection.Style
+If Selection.Style = ActiveDocument.Styles(wdStyleNormal) Then
+  myResponse = MsgBox("Are you sure?!", _
+       vbQuestion + vbYesNo, "ChapterStartBreak")
+  If myResponse <> vbYes Then Beep: Exit Sub
+End If
+ActiveDocument.Styles(myStyle).ParagraphFormat.PageBreakBefore = True
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13{3,}"
+  .Replacement.Text = "^p"
+  .Forward = True
+  .Wrap = wdFindContinue
+  .Format = False
+  .Execute Replace:=wdReplaceAll
+  .MatchWildcards = True
+End With
+End Sub
+
+
+
+
