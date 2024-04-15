@@ -1,6 +1,7 @@
 Sub MultiSwitch()
-' Paul Beverley - Version 07.12.23
+' Paul Beverley - Version 10.04.24
 ' Scripted word/phrase switching
+
 
 maxWords = 5
 myListName = "zzSwitchList.docx"
@@ -25,6 +26,8 @@ myList = "/Users/Paul/My Documents/Macro stuff/zzSwitchList.docx"
 
 ' On Windows, you will need something like this:
 myList = "C:\Documents and Settings\Paul\My Documents\zzSwitchList.docx"
+
+myList = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\zzSwitchList.docx"
 
 CR = vbCr
 CR2 = CR & CR
@@ -54,7 +57,9 @@ Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
   Selection.MoveEnd , -1
   DoEvents
 Loop
-okChars = ".,;:" & Chr(13) & ChrW(8211) & ChrW(8212) & ChrW(8221)
+okChars = ".,;:" & Chr(11) & Chr(13) & ChrW(8211) & ChrW(8212) & ChrW(8221)
+asdgfsadf = Selection
+Debug.Print asdgfsadf, Asc(asdgfsadf)
 If InStr(okChars, Left(Selection, 1)) > 0 Then
   Selection.Collapse wdCollapseStart
   Selection.MoveLeft , 1
@@ -212,11 +217,6 @@ If gottaMatch = False Then
   Options.SmartCutPaste = mySmartOpt
   Selection.Find.Text = nowSearch
   Exit Sub
-Else
-' TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO
-' What does this do, anyway
-'  Selection.Start = myPos + 20
-'  Selection.MoveLeft , 19
 End If
 
 'Offer j optional texts to the user

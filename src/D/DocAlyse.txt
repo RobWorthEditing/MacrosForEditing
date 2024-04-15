@@ -925,6 +925,34 @@ If i + j > 0 Then myRslt = myRslt & _
 
 
 
+' Types of ellipsis
+cc = cc - 1
+DoEvents
+StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
+rng.Find.Text = ChrW(8230)
+rng.Find.Execute Replace:=wdReplaceAll
+i = ActiveDocument.Range.End - myTot
+If i > 0 Then WordBasic.EditUndo
+
+rng.Find.Text = "..."
+rng.Find.Execute Replace:=wdReplaceAll
+j = ActiveDocument.Range.End - myTot
+If j > 0 Then WordBasic.EditUndo
+
+rng.Find.Text = ". . ."
+rng.Find.Execute Replace:=wdReplaceAll
+k = ActiveDocument.Range.End - myTot
+If k > 0 Then WordBasic.EditUndo
+
+If i + j + k > 0 Then
+  myRslt = myRslt & "Types of ellipsis:" & CR & _
+       "proper ellipsis" & vbTab & Trim(Str(i)) & CR _
+       & "triple dots" & vbTab & Trim(Str(j)) & CR _
+       & "spaced triple dots" & vbTab & Trim(Str(k)) & CR2
+End If
+
+
+
 ' Ellipsis, etc spacing
 cc = cc - 1
 DoEvents
@@ -976,34 +1004,6 @@ For myGo = 0 To 6
     myRslt = myRslt & CR
   End If
 Next myGo
-
-
-' Types of ellipsis
-cc = cc - 1
-DoEvents
-StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
-rng.Find.Text = ChrW(8230)
-rng.Find.Execute Replace:=wdReplaceAll
-i = ActiveDocument.Range.End - myTot
-If i > 0 Then WordBasic.EditUndo
-
-rng.Find.Text = "..."
-rng.Find.Execute Replace:=wdReplaceAll
-j = ActiveDocument.Range.End - myTot
-If j > 0 Then WordBasic.EditUndo
-
-rng.Find.Text = ". . ."
-rng.Find.Execute Replace:=wdReplaceAll
-k = ActiveDocument.Range.End - myTot
-If k > 0 Then WordBasic.EditUndo
-
-If i + j + k > 0 Then
-  myRslt = myRslt & "Types of ellipsis:" & CR & _
-       "proper ellipsis" & vbTab & Trim(Str(i)) & CR _
-       & "triple dots" & vbTab & Trim(Str(j)) & CR _
-       & "spaced triple dots" & vbTab & Trim(Str(k)) & CR2
-End If
-
 
 
 ' line breaks

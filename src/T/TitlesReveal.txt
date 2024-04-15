@@ -1,13 +1,16 @@
 Sub TitlesReveal()
-' Paul Beverley - Version 25.11.20
+' Paul Beverley - Version 13.04.24
 ' Switches the next light grey font colour to full colour
 
-preBlue = &HF6F6F6
+' preBlue = &HF6F6F6
 preRed = &HF4F4F4
 preBlack = &HF5F5F5
 
 pbTitlesFile.Activate
 myMix = 9999999
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
 Do
   Selection.Expand wdParagraph
   ln = Len(Selection)
@@ -21,22 +24,26 @@ Loop Until ln > 1
 Selection.MoveUp wdParagraph, 1
 Selection.MoveEnd , 1
 nowCol = Selection.Font.Color
+Set rng = Selection.Range.Duplicate
+strt = rng.Start
+i = 1
 If nowCol <> preBlue And nowCol <> preRed _
      And nowCol <> preBlack Then
   Do
     i = i + 1
-    Selection.MoveRight , 1
-    Selection.MoveEnd , 1
+    rng.Start = strt + i
+    rng.End = strt + i + 1
     If i > 500 Then
       MsgBox "Can't find anything to reveal!"
       Exit Sub
     End If
     DoEvents
-  Loop Until Selection.Font.Color = preBlue _
-       Or Selection.Font.Color = preRed _
-       Or Selection.Font.Color = preBlack _
-       Or Selection.End > ActiveDocument.Content.End - 10
+  Loop Until rng.Font.Color = preBlue _
+       Or rng.Font.Color = preRed _
+       Or rng.Font.Color = preBlack _
+       Or rng.End > ActiveDocument.Content.End - 10
 End If
+rng.Select
 Selection.MoveEndUntil cset:=vbCr & ChrW(160), Count:=wdForward
 
 Set rng = Selection.Range.Duplicate
@@ -51,5 +58,6 @@ For i = 1 To Len(Selection)
 Next i
 Selection.Collapse wdCollapseEnd
 If Selection.Text = vbCr Then Selection.MoveRight , 1
+ActiveDocument.TrackRevisions = myTrack
 End Sub
 

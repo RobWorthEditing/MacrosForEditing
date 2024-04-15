@@ -1,0 +1,169 @@
+
+Sub SemicolonAlyse()
+' Paul Beverley - Version 01.04.24
+' Highlights all changes needed for the new semicolon
+
+
+myHighColour = wdBrightGreen
+myContextColour = wdColorBlue
+highlightParagraph = False
+
+Set rngFind = Selection.Range.Duplicate
+myEnd = rngFind.End
+rngFind.Collapse wdCollapseStart
+rngFind.Expand wdWord
+myStart = rngFind.Start
+rngFind.Select
+rngFind.End = myEnd
+rngFind.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rngFind.Text, 1)) > 0
+  rngFind.MoveEnd , -1
+  DoEvents
+Loop
+rngFind.Select
+myFind = rngFind.Text
+Beep
+MsgBox "April Fool!"
+Exit Sub
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  myEnd = rng.End
+  rng.HighlightColorIndex = myHighColour
+  If highlightParagraph = True Then
+    rng.Expand wdParagraph
+  Else
+    rng.Expand wdSentence
+  End If
+  rng.Font.Color = myContextColour
+  If myCount Mod 20 = 0 Then rng.Select
+  rng.End = myEnd
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+rngFind.Select
+rngFind.Collapse wdCollapseEnd
+MsgBox "Found: " & myCount ' Paul Beverley - Version 30.03.24
+' Highlights a word or phrase in its context in a sentence/paragraph
+
+myHighColour = wdBrightGreen
+myContextColour = wdColorBlue
+highlightParagraph = False
+
+Set rngFind = Selection.Range.Duplicate
+myEnd = rngFind.End
+rngFind.Collapse wdCollapseStart
+rngFind.Expand wdWord
+myStart = rngFind.Start
+rngFind.Select
+rngFind.End = myEnd
+rngFind.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rngFind.Text, 1)) > 0
+  rngFind.MoveEnd , -1
+  DoEvents
+Loop
+rngFind.Select
+myFind = rngFind.Text
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  myEnd = rng.End
+  rng.HighlightColorIndex = myHighColour
+  If highlightParagraph = True Then
+    rng.Expand wdParagraph
+  Else
+    rng.Expand wdSentence
+  End If
+  rng.Font.Color = myContextColour
+  If myCount Mod 20 = 0 Then rng.Select
+  rng.End = myEnd
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+rngFind.Select
+rngFind.Collapse wdCollapseEnd
+MsgBox "Found: " & myCount ' Paul Beverley - Version 30.03.24
+' Highlights a word or phrase in its context in a sentence/paragraph
+
+myHighColour = wdBrightGreen
+myContextColour = wdColorBlue
+highlightParagraph = False
+
+Set rngFind = Selection.Range.Duplicate
+myEnd = rngFind.End
+rngFind.Collapse wdCollapseStart
+rngFind.Expand wdWord
+myStart = rngFind.Start
+rngFind.Select
+rngFind.End = myEnd
+rngFind.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rngFind.Text, 1)) > 0
+  rngFind.MoveEnd , -1
+  DoEvents
+Loop
+rngFind.Select
+myFind = rngFind.Text
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  myEnd = rng.End
+  rng.HighlightColorIndex = myHighColour
+  If highlightParagraph = True Then
+    rng.Expand wdParagraph
+  Else
+    rng.Expand wdSentence
+  End If
+  rng.Font.Color = myContextColour
+  If myCount Mod 20 = 0 Then rng.Select
+  rng.End = myEnd
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+rngFind.Select
+rngFind.Collapse wdCollapseEnd
+MsgBox "Found: " & myCount
+End Sub
+
+

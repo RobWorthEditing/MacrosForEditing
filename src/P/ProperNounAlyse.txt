@@ -1,11 +1,13 @@
-
 Sub ProperNounAlyse()
-' Paul Beverley - Version 26.02.24
+' Paul Beverley - Version 25.03.24
 ' Analyses similar proper nouns
 
-minLengthCheck = 4
+minLengthCheck = 5
 
 includeAcronyms = True
+
+myLanguage = "English(United Kingdom)"
+' myLanguage = "English(United States)"
 
 ignoreWords = "The This There Those Their They Then These That"
 
@@ -16,9 +18,6 @@ similarChars = "bb,b; b,p; sch,sh; ch,sh; c,k; ph,f; ss,z; s,z;" & _
 ignorePlurals = True
 
 myScreenOff = True
-Set rng = ActiveDocument.Content
-rng.End = rng.Start + 1
-myLanguage = Languages(rng.LanguageID).NameLocal
 Set FUT = ActiveDocument
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") + _
      InStr(FUT.Name, "Document") > 0)
@@ -926,13 +925,13 @@ finalList.Activate
 ' that are only case changes of one another
 totParas = ActiveDocument.Paragraphs.Count
 For i = 1 To totParas - 1
-  a = Trim(ActiveDocument.Paragraphs(i).Range.Words(1))
+  A = Trim(ActiveDocument.Paragraphs(i).Range.Words(1))
   b = Trim(ActiveDocument.Paragraphs(i + 1).Range.Words(1))
-  a = Mid(a, 2)
+  A = Mid(A, 2)
   b = Mid(b, 2)
-  If LCase(a) = LCase(b) And Len(a) > 2 Then
-    If (UCase(a) = a And LCase(b) = b) Or (UCase(b) = b And _
-         LCase(a) = a) Then
+  If LCase(A) = LCase(b) And Len(A) > 2 Then
+    If (UCase(A) = A And LCase(b) = b) Or (UCase(b) = b And _
+         LCase(A) = A) Then
       ActiveDocument.Paragraphs(i).Range.Words(1).HighlightColorIndex = 0
       ActiveDocument.Paragraphs(i + 1).Range.Words(1).HighlightColorIndex _
            = 0

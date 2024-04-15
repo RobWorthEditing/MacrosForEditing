@@ -1,0 +1,38 @@
+
+Sub TrackReapply()
+' Paul Beverley - Version 24.03.24
+' Rejects and reapplies each track change, with a delay
+
+numRev = ActiveDocument.Revisions.Count
+myDelay = 10
+totTime = Int(numRev * myDelay / 60 / 60 + 0.5)
+myResponse = MsgBox("This will take about " & Str(totTime) & " hours.", _
+     vbQuestion + vbOKCancel, "TrackReapply")
+If myResponse <> vbOK Then Exit Sub
+
+
+For i = 1 To numRev
+  Set rng = ActiveDocument.Revisions(i).Range.Duplicate
+  If ActiveDocument.Revisions(i).Type = wdRevisionDelete Then
+    rng.Select
+    ActiveDocument.Revisions(i).Reject
+    rng.Delete
+  End If
+  If ActiveDocument.Revisions(i).Type = wdRevisionInsert Then
+    nowText = rng.Text
+    rng.Select
+    ActiveDocument.Revisions(i).Reject
+    Selection.InsertAfter Text:=nowText
+  End If
+  myTime = Timer
+  Do
+    DoEvents
+  Loop Until Timer > myTime + myDelay
+  Beep
+  StatusBar = "                           " & _
+       ": " & Str(numRev - i)
+  Debug.Print numRev - i
+Next i
+End Sub
+
+

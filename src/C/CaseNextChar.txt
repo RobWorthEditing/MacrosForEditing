@@ -1,40 +1,40 @@
 Sub CaseNextChar()
-' Paul Beverley - Version 18.04.19
+' Paul Beverley - Version 13.04.24
 ' Changes case of the next character/selection
 
-trackIt = True
+trackit = True
 trackIfSelected = False
 
 myShow = ActiveWindow.View.ShowRevisionsAndComments
+myView = ActiveWindow.View.RevisionsView
 myTrack = ActiveDocument.TrackRevisions
 
 ' Don't track case change if TC is OFF
-If myTrack = False Then trackIt = False
+If myTrack = False Then trackit = False
 
 ' If an area of text is NOT selected ...
 If Selection.End = Selection.Start Then
-  If trackIt = False Then
-    ActiveDocument.TrackRevisions = False
-    Selection.MoveRight Unit:=wdCharacter, Count:=1, Extend:=wdExtend
-    Selection.Range.Case = wdToggleCase
-    Selection.MoveRight Unit:=wdCharacter, Count:=1
+  If trackit = False Then _
+       ActiveDocument.TrackRevisions = False
+  Set rng = Selection.Range.Duplicate
+  rng.MoveEnd , 1
+  Do While LCase(rng) = UCase(rng)
+    rng.MoveEnd , 1
+    rng.MoveStart , 1
+    DoEvents
+  Loop
+  rng.Select
+  If UCase(rng) = rng Then
+    myNewChar = LCase(rng)
   Else
-    myChar = Selection
-    Selection.MoveRight Unit:=wdCharacter, Count:=1
-    char = Asc(myChar)
-    If char > 64 And char < 123 Then
-      If char > 96 Then
-        myChar = UCase(myChar)
-      Else
-        myChar = LCase(myChar)
-      End If
-      Selection.TypeBackspace
-      Selection.TypeText Text:=myChar
-    End If
+    myNewChar = UCase(rng)
   End If
+  rng.Delete
+  rng.Select
+  Selection.TypeText Text:=myNewChar
 Else
 ' If an area of text is selected ...
-  If trackIfSelected = False Then trackIt = False
+  If trackIfSelected = False Then trackit = False
   If Selection.Information(wdWithInTable) = True Then
     If Selection.Range.Case = wdLowerCase Then
       Selection.Range.Case = wdUpperCase
@@ -52,7 +52,7 @@ Else
     Next myCount
     myUpper = (voteUpper > voteLower)
     If voteLower = 0 Then myUpper = False
-    If trackIt = False Then
+    If trackit = False Then
       ActiveDocument.TrackRevisions = False
       If myUpper = True Then
         Selection.Range.Case = wdUpperCase

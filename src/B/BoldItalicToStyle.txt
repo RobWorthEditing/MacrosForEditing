@@ -1,0 +1,158 @@
+Sub BoldItalicToStyle()
+' Paul Beverley - Version 27.03.24
+' Changes bold, italic and bold-italic applied directly, into character styles
+
+doHighlight = True
+myHiColour = wdYellow
+
+myItalicStyle = "Emphasis"
+myBoldStyle = "Strong"
+myBoldItalicStyle = "Intense Emphasis"
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myHiColour
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Replacement.Text = ""
+  .Font.Bold = True
+  .Font.Italic = True
+  .Replacement.Font.Bold = False
+  .Replacement.Font.Italic = False
+  .Replacement.Font.StrikeThrough = True
+  .Replacement.Style = ActiveDocument.Styles(myBoldItalicStyle)
+  If doHighlight = True Then .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceAll
+  
+  DoEvents
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Style = ActiveDocument.Styles(myBoldItalicStyle)
+  .Replacement.Font.StrikeThrough = True
+  .Execute Replace:=wdReplaceAll
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Font.StrikeThrough = False
+  .Font.Italic = True
+  .Font.Bold = False
+  .Replacement.Font.Italic = False
+  .Replacement.Style = ActiveDocument.Styles(myItalicStyle)
+  If doHighlight = True Then .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Font.StrikeThrough = False
+  .Font.Bold = True
+  .Font.Italic = False
+  .Replacement.Font.Bold = False
+  .Replacement.Style = ActiveDocument.Styles(myBoldStyle)
+  If doHighlight = True Then .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+End With
+rng.Font.StrikeThrough = False
+
+If ActiveDocument.Footnotes.Count > 0 Then
+  For Each nt In ActiveDocument.Footnotes
+  ' Strike through all footnote numbers
+    Set rng = nt.Range
+    rng.Collapse wdCollapseStart
+    rng.MoveStart , -2
+    rng.Font.StrikeThrough = True
+    rng.Collapse wdCollapseEnd
+  Next nt
+  For Each nt In ActiveDocument.Footnotes
+' Now make the style changes
+    With nt.Range.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ""
+      .Wrap = wdFindContinue
+      .Font.Superscript = True
+      .Font.StrikeThrough = False
+      .Forward = True
+      .Replacement.Font.Superscript = False
+      .Replacement.Style = ActiveDocument.Styles("Superscript")
+      .Replacement.Text = "^&"
+      .MatchWildcards = False
+      If doHighlight = True Then .Replacement.Highlight = True
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+      
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Font.StrikeThrough = False
+      .Font.Subscript = True
+      .Replacement.Font.Subscript = False
+      .Replacement.Style = ActiveDocument.Styles("Subscript")
+      If doHighlight = True Then .Replacement.Highlight = True
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Font.StrikeThrough = False
+      .Font.Italic = True
+      .Font.Bold = False
+      .Replacement.Font.Italic = False
+      .Replacement.Style = ActiveDocument.Styles("Italic")
+      If doHighlight = True Then .Replacement.Highlight = True
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Font.Bold = True
+      .Font.StrikeThrough = False
+      .Font.Italic = False
+      .Replacement.Font.Bold = False
+      .Replacement.Style = ActiveDocument.Styles("Bold")
+      If doHighlight = True Then .Replacement.Highlight = True
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Font.Underline = True
+      .Font.StrikeThrough = False
+      .Replacement.Font.Underline = False
+      .Replacement.Style = ActiveDocument.Styles("Underline")
+      .Replacement.Highlight = True
+      If doHighlight = True Then .Replacement.Highlight = True
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Font.Bold = True
+      .Font.Italic = True
+      .Font.StrikeThrough = False
+      .Replacement.Font.Bold = False
+      .Replacement.Font.Italic = False
+      .Replacement.Style = ActiveDocument.Styles("Bold Italic")
+      If doHighlight = True Then .Replacement.Highlight = True
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    End With
+  Next nt
+End If
+
+If ActiveDocument.Footnotes.Count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+  rng.Font.StrikeThrough = False
+End If
+If ActiveDocument.Endnotes.Count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  rng.Font.StrikeThrough = False
+End If
+Options.DefaultHighlightColorIndex = oldColour
+Beep
+End Sub
+

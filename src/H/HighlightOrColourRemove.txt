@@ -1,0 +1,101 @@
+Sub HighlightOrColourRemove()
+' Paul Beverley - Version 15.04.24
+' Removes the current highlight or font colour from the whole text
+
+Selection.Collapse wdCollapseStart
+Selection.MoveEnd , 1
+Set rngWas = Selection.Range.Duplicate
+
+myHighlight = Selection.Range.HighlightColorIndex
+myFontColour = Selection.Range.Font.ColorIndex
+
+Set rng = ActiveDocument.Content
+If Selection.Information(wdInEndnote) Then _
+  Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+If Selection.Information(wdInFootnote) Then _
+  Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+
+If myHighlight = wdNoHighlight Then
+  If myFontColour <> wdColorAutomatic And _
+       myFontColour <> wdColorBlack Then
+    DoEvents
+    rngWas.selct
+    myResponse = MsgBox("Remove this font colour from this area?", _
+         vbQuestion + vbYesNo, "HighlightOrColourRemove")
+    Selection.Collapse wdCollapseStart
+    If myResponse = vbNo Then Exit Sub
+    
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = ""
+      .Font.ColorIndex = myFontColour
+      .Wrap = wdFindContinue
+      .Replacement.Font.ColorIndex = wdColorBlack
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    End With
+    Beep
+  Else
+    myResponse = MsgBox("But this character has no highlight or colour!", _
+             vbOK, "HighlightOrColourRemove")
+  End If
+  Exit Sub
+Else
+  myResponse = MsgBox("Remove this highlight from this area?", _
+       vbQuestion + vbYesNo, "HighlightOrColourRemove")
+  DoEvents
+  Selection.Collapse wdCollapseStart
+  If myResponse = vbNo Then Exit Sub
+End If
+
+rng.Start = 0
+rng.End = endDoc
+With rng.Find
+  .ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+
+  While .Found
+    If rng.HighlightColorIndex = myHighlight Then
+      rng.HighlightColorIndex = wdNoHighlight
+    End If
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+    DoEvents
+  Wend
+End With
+
+rng.Start = 0
+rng.End = endDoc
+With rng.Find
+  .ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+  While .Found
+    If rng.HighlightColorIndex = 9999999 Then
+      For Each ch In rng.Characters
+        If ch.HighlightColorIndex = myHighlight Then _
+              ch.HighlightColorIndex = wdNoHighlight
+      Next ch
+    End If
+    rng.Collapse wdCollapseEnd
+    .Execute
+    DoEvents
+  Wend
+End With
+Beep
+End Sub
+
+
+

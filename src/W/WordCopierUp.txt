@@ -1,0 +1,30 @@
+Sub WordCopierUp()
+' Paul Beverley - Version 25.03.24
+' Copies the word from the end of the selection to the beginning
+
+' insertWord = True
+insertWord = False
+' i.e. overwrite the word
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+rng.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+  rng.MoveEnd , -1
+  DoEvents
+Loop
+goodWord = rng.Text
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+rng.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+  rng.MoveEnd , -1
+  DoEvents
+Loop
+If insertWord = True Then
+  rng.InsertBefore Text:=goodWord & " "
+Else
+  rng.Text = goodWord
+End If
+End Sub
+

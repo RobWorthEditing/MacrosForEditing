@@ -1,0 +1,66 @@
+Sub ShiftIn()
+' Paul Beverley - Version 10.04.24
+' Moves items from the list back into the current document
+
+keyWord = "List"
+
+wordsToAvoid = "switch,FRedit"
+
+Set mainDoc = ActiveDocument
+
+wds = Split("," & LCase(wordsToAvoid), ",")
+gottaList = False
+For Each myDoc In Application.Documents
+  thisName = myDoc.Name
+  nm = LCase(thisName)
+  If InStr(nm, LCase(keyWord)) > 0 Then gottaList = True
+  For i = 1 To UBound(wds)
+    If InStr(nm, wds(i)) > 0 Then gottaList = False
+  Next i
+  If gottaList = True Then
+    Exit For
+  End If
+Next myDoc
+
+If gottaList = False Then
+  Beep
+  MsgBox "Can't find a list."
+  Exit Sub
+End If
+
+If myDoc.Name = mainDoc.Name Then
+  Beep
+  MsgBox "Place cursor in main document."
+  Exit Sub
+End If
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+rng.Collapse wdCollapseStart
+rng.Select
+
+myDoc.Activate
+If InStr(Selection, vbCr) = 0 Then
+  Selection.Expand wdParagraph
+  If Len(Selection) < 3 Then
+    rng.Collapse wdCollapseEnd
+    rng.Expand wdParagraph
+  End If
+Else
+  Set rng2 = Selection.Range.Duplicate
+  rng2.Collapse wdCollapseStart
+  rng2.Expand wdParagraph
+  myStart = rng2.Start
+  rng2.Start = Selection.End
+  rng2.Expand wdParagraph
+  rng2.Start = myStart
+  rng2.Select
+End If
+
+Selection.Cut
+mainDoc.Activate
+Selection.Paste
+Selection.Collapse wdCollapseEnd
+End Sub
+
+

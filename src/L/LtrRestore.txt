@@ -1,0 +1,20 @@
+
+Sub LtrRestore()
+' Paul Beverley - Version 29.03.24
+' Restores text direction to left-to-right
+
+If Selection.Start = Selection.End Then
+  myResponse = MsgBox("Restore the whole document?!", _
+       vbQuestion + vbYesNo, "LtrRestore")
+  If myResponse <> vbYes Then Exit Sub
+  
+  Selection.WholeStory
+  Selection.LtrPara
+  Selection.Collapse wdCollapseStart
+  Beep
+Else
+  Selection.LtrPara
+End If
+End Sub
+
+

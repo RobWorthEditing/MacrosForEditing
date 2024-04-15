@@ -1,42 +1,66 @@
 Sub SpellingCorrect()
-' Paul Beverley - Version 04.03.24
-' Immediately corrects spelling and wrong capitalisation
+' Paul Beverley - Version 13.04.24
+' Corrects spelling and wrong capitalisation
+
+elistNameContains = "elist"
 
 Selection.Collapse wdCollapseEnd
 wasStart = Selection.Start
-Set rngWd = Selection.Range.Duplicate
-If LCase(Selection) = UCase(Selection) Then rngWd.MoveEnd , -3
-If Selection.Start = Selection.End Then rngWd.Expand wdWord
-Do While InStr(ChrW(8217) & "' ", Right(rngWd.Text, 1)) > 0
-  rngWd.MoveEnd , -1
+Set rng = Selection.Range.Duplicate
+rng.MoveStart , -1
+While UCase(rng) = LCase(rng)
+  rng.MoveStart , -1
+  rng.MoveEnd , -1
+  DoEvents
+Wend
+rng.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+  rng.MoveEnd , -1
   DoEvents
 Loop
-
+' Avoid single-character words
+If Len(rng) < 2 Then
+  rng.Select
+  Beep
+  MsgBox "Spellcheck this?!"
+  Exit Sub
+End If
 ' Check capitalisation, e.g. BEverley
-initChar = rngWd.Characters(1)
-scndChar = rngWd.Characters(2)
-lastChar = rngWd.Characters.Last
+initChar = rng.Characters(1)
+scndChar = rng.Characters(2)
+lastChar = rng.Characters.Last
 doBeep = True
 If UCase(initChar) = initChar And UCase(scndChar) = scndChar _
      And UCase(lastChar) <> lastChar Then
   doBeep = False
-  rngWd.Characters(2) = LCase(scndChar)
+  rng.Characters(2) = LCase(scndChar)
 End If
-myWord = rngWd
+myWord = rng
 newWord = myWord
 
 ' Check spelling language
 ' (check only first character, in case of split language)
-langName = Languages(rngWd.Characters(1).LanguageID).NameLocal
+langName = Languages(rng.Characters(1).LanguageID).NameLocal
 
 ' Check spelling
 spellOK = Application.CheckSpelling(myWord, MainDictionary:=langName)
+
+If Not (spellOK) Then
+  For Each myDoc In Documents
+    If InStr(LCase(myDoc.Name), elistNameContains) > 0 Then
+      If InStr(myDoc.Content, vbCr & "myWord" & vbCr) > 0 Then
+        spellOK = True
+      End If
+    End If
+    DoEvents
+  Next myDoc
+End If
 If Not (spellOK) Then
   Set suggList = Application.GetSpellingSuggestions(myWord, _
        MainDictionary:=langName)
   If suggList.Count > 0 Then newWord = suggList.Item(1).Name
   If newWord <> myWord Then
-    rngWd.Text = newWord
+    rng.Text = newWord
   Else
     spellOK = Application.CheckSpelling(myWord, _
          MainDictionary:=langName)
@@ -61,13 +85,13 @@ If Not (spellOK) Then
 Else
   If doBeep Then Beep
 End If
-rngWd.Start = wasStart - 2
-rngWd.Expand wdWord
-Do While InStr(ChrW(8217) & "' ", Right(rngWd.Text, 1)) > 0
-  rngWd.MoveEnd , -1
+rng.Start = wasStart - 2
+rng.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+  rng.MoveEnd , -1
   DoEvents
 Loop
-rngWd.Collapse wdCollapseEnd
-rngWd.Select
+rng.Collapse wdCollapseEnd
+rng.Select
 End Sub
 

@@ -1,0 +1,88 @@
+Sub HighlightRemovePerColour()
+' Paul Beverley - Version 03.04.24
+' Removes highlight of one colour from selection or whole text
+
+Dim myCol(20)
+myCol(0) = wdNoHighlight
+myCol(1) = wdBrightGreen
+myCol(2) = wdYellow
+myCol(3) = wdTurquoise
+myCol(4) = wdPink
+myCol(5) = wdRed
+myCol(6) = wdGray50
+myCol(7) = wdGray25
+myColTotal = 7
+
+allColours = "No highlight,Bright green,Yellow,Turquoise,Pink,Red,Gray50,Gray25"
+
+myWord = Split(allColours, ",")
+For i = 1 To UBound(myWord)
+  myPrompt = myPrompt & Trim(Str(i)) & " - " & myWord(i) & vbCr
+Next i
+
+If Selection.End = Selection.Start Then
+  myResponse = MsgBox("Remove highlight from the WHOLE file?", _
+         vbQuestion + vbYesNo, "HighlightRemovePerColour")
+  If myResponse = vbNo Then Exit Sub
+  Set rng = ActiveDocument.Content
+Else
+  Set rng = Selection.Range.Duplicate
+End If
+rngEnd = rng.End
+rngStart = rng.Start
+
+Do
+  myText = InputBox(myPrompt, "HighlightRemovePerColour")
+  myNumber = Val(myText)
+  If myNumber = 0 Then Beep: Exit Sub
+  DoEvents
+Loop Until myNumber > 0 And myNumber <= myColTotal
+myHighlight = myCol(myNumber)
+
+With rng.Find
+  .ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+While rng.Find.Found = True
+  If rng.HighlightColorIndex = myHighlight Then
+    rng.HighlightColorIndex = wdNoHighlight
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.End = rngEnd
+  rng.Find.Execute
+'  DoEvents
+Wend
+
+rng.End = rngEnd
+rng.Start = rngStart
+With rng.Find
+  .ClearFormatting
+  .Text = ""
+  .Highlight = True
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+While .Found
+  If rng.HighlightColorIndex = 9999999 Then
+    For Each ch In rng.Characters
+      If ch.HighlightColorIndex = myHighlight Then _
+            ch.HighlightColorIndex = wdNoHighlight
+    Next ch
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.End = rngEnd
+  .Execute
+  DoEvents
+Wend
+End With
+End Sub
+

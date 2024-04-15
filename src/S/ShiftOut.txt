@@ -1,0 +1,61 @@
+Sub ShiftOut()
+' Paul Beverley - Version 09.04.24
+' Moves items out into a separate list
+
+keyWord = "List"
+
+wordsToAvoid = "switch,FRedit"
+
+putCursorAtStart = True
+
+Set mainDoc = ActiveDocument
+Set rng = Selection.Range.Duplicate
+If Selection.Start = Selection.End Then
+  rng.Expand wdParagraph
+Else
+  rng.Collapse wdCollapseStart
+  rng.Expand wdParagraph
+  myStart = rng.Start
+  rng.Start = Selection.End
+  rng.Expand wdParagraph
+  rng.Start = myStart
+End If
+
+wds = Split("," & LCase(wordsToAvoid), ",")
+gottaList = False
+For Each myDoc In Application.Documents
+  thisName = myDoc.Name
+  nm = LCase(thisName)
+  If InStr(nm, LCase(keyWord)) > 0 Then gottaList = True
+  For i = 1 To UBound(wds)
+    If InStr(nm, wds(i)) > 0 Then gottaList = False
+  Next i
+  If gottaList = True Then
+    Exit For
+  End If
+Next myDoc
+
+If gottaList = False Then
+  Beep
+  MsgBox "Can't find a list."
+  Exit Sub
+End If
+
+If myDoc.Name = mainDoc.Name Then
+  Beep
+  MsgBox "Place cursor in main document."
+  Exit Sub
+End If
+
+rng.Cut
+myDoc.Activate
+myStart = Selection.Start
+Selection.Paste
+If putCursorAtStart = True Then
+  Selection.Start = myStart
+  Selection.Collapse wdCollapseStart
+End If
+rng.Select
+End Sub
+
+

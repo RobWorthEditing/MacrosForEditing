@@ -1,6 +1,6 @@
-Sub CitationListSortByYear()
-' Paul Beverley - Version 16.01.21
-' Sorts items in a citation list in the text by date.
+Sub CitationListSortByName()
+' Paul Beverley - Version 10.04.24
+' Sorts items in a citation list in the text by name.
 
 sortReversed = False
 
@@ -31,23 +31,11 @@ lastItem = UBound(myBits)
 ReDim myGroup(lastItem) As String
 myGroup = myBits
 
-For i = 0 To lastItem
-  txt = myGroup(i)
-  myYear = Right(txt, 5)
-  myGroup(i) = myYear & Left(txt, Len(txt) - 5)
-Next i
-
 If sortReversed Then
   WordBasic.SortArray myGroup(), 1
 Else
   WordBasic.SortArray myGroup(), 0
 End If
-
-For i = 0 To lastItem
-  txt = myGroup(i)
-  myYear = Left(txt, 5)
-  myGroup(i) = Mid(txt, 6) & myYear
-Next i
 
 tempStr = ""
 For i = 0 To lastItem - 1
@@ -56,4 +44,6 @@ Next i
 tempStr = tempStr & myGroup(i)
 Selection.TypeText tempStr
 End Sub
+
+
 

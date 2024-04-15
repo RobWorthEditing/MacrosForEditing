@@ -1,0 +1,97 @@
+
+Sub AynHamzaFormat()
+' Paul Beverley - Version 28.03.24
+' Corrects formatting of ayns and hamzas
+
+aynColour = wdYellow
+hamzaColour = wdBrightGreen
+
+' Superscripted c's
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "c"
+  .Font.Superscript = True
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ChrW(703)
+  .Replacement.Font.Superscript = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Set rng = ActiveDocument.Content
+' Find ayns
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[" & ChrW(703) & "]{1,2}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCountAyn = 0
+Do While rng.Find.Found = True
+  myCountAyn = myCountAyn + 1
+  rng.Select
+  Set rngTest = rng.Duplicate
+  rngTest.Collapse wdCollapseEnd
+  rngTest.MoveEnd , 1
+  If UCase(rngTest.Text) = LCase(rngTest.Text) Then
+    rngTest.MoveStart , -2
+    rngTest.MoveEnd , -2
+  End If
+
+  nextChar = rngTest.Text
+  If myCountHamza Mod 20 = 0 Then rng.Select
+  rng.Font.Size = rngTest.Font.Size
+  rng.Font.Italic = rngTest.Font.Italic
+  rng.Font.Bold = rngTest.Font.Bold
+  rng.Font.Name = rngTest.Font.Name
+  rng.HighlightColorIndex = aynColour
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+
+Set rng = ActiveDocument.Content
+' Find hamzas
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(702)
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .Execute
+End With
+
+myCountHamza = 0
+Do While rng.Find.Found = True
+  myCountHamza = myCountHamza + 1
+  Set rngTest = rng.Duplicate
+  rngTest.MoveStart , -1
+  rngTest.MoveEnd , -1
+  
+  If myCountHamza Mod 20 = 0 Then rng.Select
+  rng.Font.Size = rngTest.Font.Size
+  rng.Font.Italic = rngTest.Font.Italic
+  rng.Font.Bold = rngTest.Font.Bold
+  rng.Font.Name = rngTest.Font.Name
+  rng.HighlightColorIndex = hamzaColour
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+
+MsgBox "Changed ayns: " & myCountAyn & vbCr & "Changed hamzas: " & myCountHamza
+End Sub
+
+
+

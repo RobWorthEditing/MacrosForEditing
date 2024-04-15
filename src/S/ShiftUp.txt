@@ -1,0 +1,22 @@
+
+Sub ShiftUp()
+' Paul Beverley - Version 09.04.24
+' Moves a list item up
+
+If Selection.Start = Selection.End Then
+  Set rng = Selection.Range.Duplicate
+  rng.Expand wdParagraph
+  rng.Cut
+  rng.MoveStart , -1
+  rng.Expand wdParagraph
+  rng.Collapse wdCollapseStart
+  myStart = rng.Start
+  rng.Paste
+  rng.End = myStart
+  rng.Select
+Else
+End If
+End Sub
+
+
+

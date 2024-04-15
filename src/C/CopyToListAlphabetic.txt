@@ -1,6 +1,7 @@
 Sub CopyToListAlphabetic()
-' Paul Beverley - Version 12.03.24
+' Paul Beverley - Version 31.03.24
 ' Copies selected text into an alphabetic list file
+
 
 ' keyWord = "queries"
 ' keyWord = "list"
@@ -14,12 +15,12 @@ wordsToAvoid = "switch"
 ' copyWholePara = True
 copyWholePara = False
 
-' includeFormatting = True
-includeFormatting = False
+includeFormatting = True
+' includeFormatting = False
 
 goBackToSource = True
 
-Dim sourceText As Range
+Dim sourceText As Range, tgt As Range
 Set thisDoc = ActiveDocument
 wds = Split("," & LCase(wordsToAvoid), ",")
 
@@ -52,6 +53,7 @@ End If
 
 Set sourceText = Selection.Range.Duplicate
 myText = sourceText.Text
+Selection.Copy
 Selection.Collapse wdCollapseEnd
 
 gottaList = False
@@ -63,10 +65,7 @@ For Each myDoc In Application.Documents
   For i = 1 To UBound(wds)
     If InStr(nm, wds(i)) > 0 Then gottaList = False
   Next i
-  If gottaList = True Then
-    myDoc.Activate
-    Exit For
-  End If
+  If gottaList = True Then Exit For
 Next myDoc
 
 If gottaList = False Then
@@ -76,73 +75,72 @@ If gottaList = False Then
 End If
 
 ' Decide where to put the item
-Set rng = ActiveDocument.Content
+Set rng = myDoc.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "^p" & followHeading
+  .Text = followHeading
   .Wrap = wdFindStop
   .Forward = True
   .Replacement.Text = ""
-  .MatchCase = True
+  .MatchCase = False
   .MatchWildcards = False
   .Execute
   DoEvents
 End With
+
 rng.Expand wdParagraph
 listStart = rng.End
+If rng.Find.Found = False Then
+  Beep
+  MsgBox "Can't find heading: """ & followHeading & """"
+  rng.Start = 0
+  rng.End = 0
+  listStart = 0
+  Selection.HomeKey Unit:=wdStory
+End If
 rng.Collapse wdCollapseStart
-
 ' Check if it's already in the list
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "^p" & myText & "^p"
   .Wrap = wdFindStop
-  .MatchCase = True
   .Execute
   DoEvents
 End With
 
 If rng.Find.Found = True Then
   Beep
-  If goBackToSource = True Then thisDoc.Activate
+  If goBackToSource = False Then myDoc.Activate
   Exit Sub
 End If
 
 rng.Start = listStart
-rng.End = ActiveDocument.Content.End
+rng.End = myDoc.Content.End
 If LCase(rng) <> UCase(rng) Then
   For i = 1 To rng.Paragraphs.Count
-    Debug.Print Replace(rng.Paragraphs(i), vbCr, "<<<<")
-    If LCase(rng.Paragraphs(i)) > LCase(myText) Then
-      rng.Paragraphs(i).Range.Select
+    myNextItem = Replace(rng.Paragraphs(i).Range.Text, vbCr, "")
+'    Debug.Print myText & ":", "|" & myNextItem & "|"
+    If LCase(myNextItem) > LCase(myText) Or _
+        LCase(myNextItem) = UCase(myNextItem) Then
+      Set rng = rng.Paragraphs(i).Range.Duplicate
       Exit For
     End If
-    DoEvents
   Next i
-  If i = rng.Paragraphs.Count + 1 Then rng.Paragraphs(i - 1).Range.Select
-  Selection.Collapse wdCollapseStart
-Else
-  rng.Collapse wdCollapseStart
-  rng.Select
 End If
+rng.Collapse wdCollapseStart
 
 ' Paste it in
 If includeFormatting = True Then
-  Selection.Range.FormattedText = sourceText.FormattedText
-  If InStr(sourceText, vbCr) = 0 Then
-    Selection.MoveRight , Len(sourceText)
-    Selection.TypeText vbCr
+  rng.FormattedText = sourceText.FormattedText
+  If InStr(myText, vbCr) = 0 Then
+    rng.InsertAfter vbCr
   End If
 Else
-  Selection.TypeText Text:=myText
-  If InStr(sourceText, vbCr) = 0 Then Selection.TypeText vbCr
+  rng.InsertAfter myText
+  If InStr(myText, vbCr) = 0 Then rng.InsertAfter vbCr
 End If
-
-If goBackToSource = True Then thisDoc.Activate
+If goBackToSource = False Then myDoc.Activate
 End Sub
-
-
-
 

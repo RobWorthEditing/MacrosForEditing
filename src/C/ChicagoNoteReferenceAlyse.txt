@@ -1,0 +1,113 @@
+Sub ChicagoNoteReferenceAlyse()
+' Paul Beverley - Version 31.12.21
+' Helps to check note-based reference citations
+
+myColour = wdGray25
+myColour = wdYellow
+
+If InStr(ActiveDocument.Paragraphs(1), "References") > 0 Then GoTo mySurname
+
+myScreenOff = True
+
+myResponse = MsgBox("Analyse Chicago references?", vbQuestion _
+     + vbOK, "ChicagoNoteReferenceAlyse")
+If myResponse <> vbOK Then Exit Sub
+
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
+
+Set myDoc = ActiveDocument
+Documents.Add
+Set rng = ActiveDocument.Content
+
+If myDoc.Endnotes.count > 0 Then
+  Set rngOld = myDoc.StoryRanges(wdEndnotesStory)
+  rng.FormattedText = rngOld.FormattedText
+End If
+
+If myDoc.Footnotes.count > 0 Then
+  Set rngOld = myDoc.StoryRanges(wdFootnotesStory)
+  rng.FormattedText = rngOld.FormattedText
+End If
+
+Set rng = ActiveDocument.Content
+rng.InsertBefore Text:="References list" & vbCr
+
+rng.ParagraphFormat.LineSpacingRule = wdLineSpaceSingle
+rng.ParagraphFormat.SpaceBefore = 12
+ActiveDocument.Paragraphs(1).Range.Style = wdStyleHeading2
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^02^32"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' Highlight the "surname"
+For Each myPar In ActiveDocument.Paragraphs
+  prevWord = myPar.Range.Words(1)
+  For i = 2 To myPar.Range.Words.count
+    wd = myPar.Range.Words(i).Text
+    Debug.Print wd
+    If Left(wd, 1) = "," Or Left(wd, 1) = "and" Then
+      myPar.Range.Words(i - 1).HighlightColorIndex = myColour
+      Exit For
+    End If
+  DoEvents
+  Next i
+Next myPar
+
+Application.ScreenUpdating = True
+Exit Sub
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "ibid"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+' If you want to count them...
+  myCount = myCount + 1
+' Note where the end of the found item is
+  endNow = rng.End
+  fsdfsdf = rng.Font.Italic
+  rng.Select
+  ' Be sure you're past the previous occurrence
+  rng.Start = endNow
+  rng.End = endNow
+
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+  DoEvents
+Loop
+
+mySurname:
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+Set rng = Selection.Range.Duplicate
+For i = 1 To rng.Words.count
+  ' ????????????????????
+Next i
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+

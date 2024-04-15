@@ -1,0 +1,82 @@
+Sub MatchSquareBrackets()
+' Paul Beverley - Version 13.04.24
+' Check whether square brackets match up
+
+stopEachTime = True
+
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+Set rngToGo = Selection.Range.Duplicate
+rngToGo.End = ActiveDocument.Content.End
+For Each myPara In rngToGo.Paragraphs
+  myText = myPara.Range.Text
+  If Len(myText) > 4 Then
+    myLen = Len(myText)
+    myOpenNum = myLen - Len(Replace(myText, "[", ""))
+    myCloseNum = myLen - Len(Replace(myText, "]", ""))
+    
+  ' Ignore "1)", or "a)" type lists
+    Set rng = myPara.Range
+    Debug.Print rng.Words(1) & rng.Words(2)
+    rng.End = rng.Start + 3
+    If InStr(rng.Text, "]") > 0 Then myCloseNum = myCloseNum - 1
+    
+    If myOpenNum <> myCloseNum Then
+      If stopEachTime = True Then
+        Beep
+        rng.Expand wdParagraph
+        parenPos = InStr(rng.Text, "[")
+        If parenPos = 0 Then parenPos = InStr(rng.Text, "]")
+        If parenPos < 3 Then
+          rng.Start = rng.Start + 3
+          parenPos = InStr(rng.Text, "[")
+          If parenPos = 0 Then parenPos = InStr(rng.Text, "]")
+        End If
+        rng.Start = rng.Start + parenPos - 1
+        rng.End = rng.Start + 1
+        rng.Select
+        ActiveDocument.ActiveWindow.LargeScroll down:=1
+        rng.Select
+        ActiveDocument.ActiveWindow.SmallScroll down:=1
+        rng.Select
+        myResponse = MsgBox("Continue?", _
+             vbQuestion + vbYesNo, "MatchParentheses")
+        If myResponse <> vbYes Then Exit Sub
+      Else
+        myPara.Range.Font.Underline = True
+        myCount = myCount + 1
+        StatusBar = "Found: " & myCount
+        DoEvents ' Debug.Print "Found: " & myCount
+      End If
+    End If
+    DoEvents
+  End If
+Next
+StatusBar = ""
+Selection.HomeKey Unit:=wdStory
+If myCount = 0 Then
+  Beep
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + 0.2
+  Beep
+  MsgBox ("All clear!")
+Else
+  MsgBox ("Number of suspect paragraphs: " & Trim(myCount))
+End If
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+End With
+End Sub
+
+
+
+

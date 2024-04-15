@@ -1,0 +1,33 @@
+Sub NumberSelectedList()
+' Paul Beverley - Version 12.03.24
+' Applies (or corrects the existing) numbering on the selected text paragraphs
+
+myStart = 1
+' myLink = ")" & vbTab
+myLink = ") "
+Dim rng As Range
+i = myStart
+For Each myPara In Selection.Range.Paragraphs
+  Set rng = myPara.Range
+  If LCase(rng) <> UCase(rng) Then
+    ch = rng.Characters(1)
+    If LCase(ch) <> UCase(ch) Then
+      rng.InsertBefore Text:=Trim(Str(i)) & myLink
+    Else
+      j = 1
+      Do
+        j = j + 1
+        ch = rng.Characters(j)
+      Loop Until LCase(ch) <> UCase(ch)
+      rng.End = rng.Start + j - 1
+      rng.Text = Trim(Str(i)) & myLink
+    End If
+    i = i + 1
+    DoEvents
+  End If
+Next myPara
+Beep
+End Sub
+
+
+

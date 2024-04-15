@@ -1,0 +1,16 @@
+Sub CopyAllComments()
+' Paul Beverley - Version 17.03.24
+' Copies all the comments into a new document
+
+If ActiveDocument.Comments.Count > 0 Then
+  Set rng = ActiveDocument.StoryRanges(wdCommentsStory)
+  Documents.Add
+  Selection.FormattedText = rng.FormattedText
+Else
+  Beep
+  MsgBox "No comments found!"
+End If
+End Sub
+
+
+

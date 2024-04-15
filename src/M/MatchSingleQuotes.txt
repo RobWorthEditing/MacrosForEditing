@@ -1,9 +1,9 @@
 Sub MatchSingleQuotes()
-' Paul Beverley - Version 18.03.21
+' Paul Beverley - Version 22.03.24
 ' Check whether single quotes match up
 
 Dim myList As String
-myList = "'s,s','t,'v,'r,'l,'m,'d,'y,'c,'n" ' UK list
+myList = "'s,s','t,'v,'r,'l,'m,'d,'y,'c,'n,'o" ' UK list
 ' myList = "'i,'k,'m,'n,'s,'t,'r,'n" ' Dutch list
 myColour = wdYellow
 

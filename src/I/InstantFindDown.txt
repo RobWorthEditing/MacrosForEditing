@@ -1,9 +1,6 @@
-
 Sub InstantFindDown()
-' Paul Beverley - Version 08.03.23
+' Paul Beverley - Version 14.03.24
 ' Finds selected text downwards
-
-Call MacroNameShow("InstantFindDown")
 
 doTrim = True
 addBookmark = True
@@ -12,6 +9,12 @@ butNotTheseFiles = "zzSwitchList,ComputerTools4Eds,TheMacros,5_Library,VideoList
 
 Set rng = Selection.Range.Duplicate
 If rng.Start = rng.End Then
+  rng.MoveEnd , 1
+  If rng.Text = vbCr Then
+    rng.MoveEnd , -2
+  Else
+    rng.Collapse wdCollapseStart
+  End If
   rng.Expand wdWord
   For i = 1 To 3
     If InStr(ChrW(8217) & " '", Right(rng.Text, 1)) > 0 Then _

@@ -1,0 +1,36 @@
+
+Sub RevisionFindSameDate()
+' Paul Beverley - Version 19.03.24
+' Finds the next revision (track change) with the same date
+
+numRevs = Selection.Range.Revisions.Count
+If numRevs = 0 Then
+  Beep
+  MsgBox "Place the cursor in a revision (track change)."
+  Exit Sub
+End If
+myDate = Left(Selection.Range.Revisions(1).Date, 10)
+' Debug.Print myDate
+myEnd = Selection.Range.Revisions(1).Range.End
+Set rng = ActiveDocument.Content
+rng.Start = myEnd
+
+' rng.Select
+For Each rv In rng.Revisions
+  newDate = Left(rv.Date, 10)
+'                        rv.Range.Select
+'  Debug.Print "         " & myDate, newDate
+  If newDate = myDate Then
+    rv.Range.Select
+    Selection.Collapse wdCollapseStart
+    Exit Sub
+  End If
+  DoEvents
+Next rv
+Beep
+Selection.Collapse wdCollapseEnd
+Selection.MoveLeft , 1
+MsgBox ("No more found")
+End Sub
+
+
