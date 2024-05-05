@@ -1,10 +1,9 @@
 Sub CopyToListAlphabetic()
-' Paul Beverley - Version 31.03.24
+' Paul Beverley - Version 17.04.24
 ' Copies selected text into an alphabetic list file
 
-
 ' keyWord = "queries"
-' keyWord = "list"
+keyWord = "list"
 keyWord = "sheet"
 
 followHeading = "Word list"
@@ -15,8 +14,8 @@ wordsToAvoid = "switch"
 ' copyWholePara = True
 copyWholePara = False
 
-includeFormatting = True
-' includeFormatting = False
+includeFormatting = False
+' includeFormatting = True
 
 goBackToSource = True
 
@@ -29,12 +28,28 @@ If Selection.Start = Selection.End Then
   If copyWholePara = True Then
     Selection.Expand wdParagraph
   Else
-    Selection.Expand wdWord
-    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
-      Selection.MoveEnd , -1
+    Set rng = Selection.Range.Duplicate
+    rng.Expand wdWord
+    rng.MoveEnd wdWord, 1
+    chkWd = rng.Words.Last
+    If chkWd = "-" Then
+      rng.MoveEnd wdWord, 2
+      chkWd = rng.Words.Last
+      If chkWd = "-" Then
+        rng.MoveEnd wdWord, 1
+      Else
+        rng.MoveEnd wdWord, -1
+      End If
+    Else
+      rng.MoveEnd wdWord, -1
+    End If
+    DoEvents
+    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+      rng.MoveEnd , -1
       DoEvents
     Loop
   End If
+  rng.Select
 Else
   Set rng = Selection.Range.Duplicate
   rng.Collapse wdCollapseEnd
@@ -51,10 +66,22 @@ Else
   rng.Select
 End If
 
-Set sourceText = Selection.Range.Duplicate
-myText = sourceText.Text
-Selection.Copy
-Selection.Collapse wdCollapseEnd
+With ActiveWindow.View.RevisionsFilter
+  mState = .Markup
+  .Markup = wdRevisionsMarkupSimple
+  vState = .View
+  .View = wdRevisionsViewFinal
+
+  Set sourceText = Selection.Range.Duplicate
+  myText = sourceText.Text
+  numTracks = Selection.Range.Revisions.Count
+  sourceText.Copy
+  Selection.Collapse wdCollapseEnd
+
+  .Markup = mState
+  .View = vState
+End With
+
 
 gottaList = False
 For Each myDoc In Application.Documents
@@ -83,7 +110,7 @@ With rng.Find
   .Wrap = wdFindStop
   .Forward = True
   .Replacement.Text = ""
-  .MatchCase = False
+  .MatchCase = True
   .MatchWildcards = False
   .Execute
   DoEvents
@@ -121,7 +148,6 @@ rng.End = myDoc.Content.End
 If LCase(rng) <> UCase(rng) Then
   For i = 1 To rng.Paragraphs.Count
     myNextItem = Replace(rng.Paragraphs(i).Range.Text, vbCr, "")
-'    Debug.Print myText & ":", "|" & myNextItem & "|"
     If LCase(myNextItem) > LCase(myText) Or _
         LCase(myNextItem) = UCase(myNextItem) Then
       Set rng = rng.Paragraphs(i).Range.Duplicate
@@ -141,6 +167,7 @@ Else
   rng.InsertAfter myText
   If InStr(myText, vbCr) = 0 Then rng.InsertAfter vbCr
 End If
+rng.Revisions.AcceptAll
 If goBackToSource = False Then myDoc.Activate
 End Sub
 

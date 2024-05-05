@@ -1,0 +1,17 @@
+Sub FReditListTidy()
+' Paul Beverley - Version 24.04.24
+' Tidies up a FRedit list
+
+Set rng = ActiveDocument.Content
+myTest = rng
+myTest = Replace(myTest, " ", "")
+If InStr(rng, "|FRedit") = 0 Then rng.InsertBefore _
+     Text:="| FRedit" & vbCr & vbCr
+For i = ActiveDocument.Paragraphs.Count To 1 Step -1
+  myText = ActiveDocument.Paragraphs(i).Range.Text
+  If Len(myText) > 3 And InStr(myText, ChrW(124)) = 0 Then _
+       ActiveDocument.Paragraphs(i).Range.Delete
+  DoEvents
+Next i
+End Sub
+

@@ -1,0 +1,85 @@
+Sub StyleLister()
+' Paul Beverley - Version 18.04.24
+' Lists all paragraph and character styles used
+
+paraStyles = CR & "Normal" & CR
+chStyles = CR & "Default Paragraph Font" & CR
+CR = vbCr
+
+For myArea = 1 To 3
+  doThisArea = False
+  'Main text area
+  If myArea = 1 Then
+    If Selection.Start = Selection.End Then
+      myResponse = MsgBox("Scan the whole document?!", _
+           vbQuestion + vbYesNo, "StyleLister")
+      If myResponse <> vbYes Then Exit Sub
+      Set rng = ActiveDocument.Content
+    Else
+      Set rng = Selection.Range.Duplicate
+    End If
+    doThisArea = True
+  End If
+  ' Footnotes, if any
+  If ActiveDocument.Footnotes.Count > 0 And myArea = 2 Then
+    doThisArea = True
+    Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    StatusBar = "Scanning footnotes"
+  End If
+  ' Endnotes, if any
+  If ActiveDocument.Endnotes.Count > 0 And myArea = 3 Then
+    doThisArea = True
+    Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    StatusBar = "Scanning endnotes"
+  End If
+  If doThisArea = True Then
+    For Each pa In rng.Paragraphs
+      stName = pa.Style
+      If InStr(paraStyles, CR & stName & CR) = 0 Then _
+         paraStyles = paraStyles & stName & CR
+      DoEvents
+    Next pa
+    i = rng.Characters.Count
+    For Each ch In rng.Characters
+      If myArea = 1 Then
+        i = i - 1
+        If i Mod 1000 = 0 Then
+          DoEvents
+          ch.Select
+        End If
+      End If
+      If ch.Fields.Count = 0 Then
+        stName = ch.CharacterStyle
+        If InStr(chStyles, CR & stName & CR) = 0 Then _
+           chStyles = chStyles & stName & CR
+      End If
+    Next ch
+  End If
+Next myArea
+StatusBar = ""
+Selection.HomeKey Unit:=wdStory
+
+' Add para styles list & sort
+Documents.Add
+paraStyles = Mid(paraStyles, 9)
+Selection.TypeText Text:=paraStyles
+Set rng = ActiveDocument.Content
+rng.Sort
+paraStylesSorted = rng.Text
+
+' Replace with chara styles list & sort
+chStyles = Mid(chStyles, 25)
+rng.Text = chStyles
+rng.Sort
+rng.InsertAfter Text:=CR
+Selection.HomeKey Unit:=wdStory
+myText = "Paragraph styles" & paraStylesSorted
+myText = myText & CR & "Character styles"
+Selection.TypeText Text:=myText
+Set rng = ActiveDocument.Content
+rng.Paragraphs(1).Range.Style = wdStyleHeading1
+headingPos = InStr(rng, "Character styles")
+rng.Start = headingPos
+rng.Paragraphs(1).Range.Style = wdStyleHeading1
+End Sub
+

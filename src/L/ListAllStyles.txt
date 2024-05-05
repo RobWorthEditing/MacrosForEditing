@@ -1,42 +1,77 @@
 Sub ListAllStyles()
-' Paul Beverley - Version 12.01.21
+' Paul Beverley - Version 22.04.24
 ' Creates a list of all styles name
 
-myStyles = "Normal,Default,"
 myStyles = ""
+myStyles = "Normal,Default,"
 
 displayParaWords = True
 numWords = 6
-deleteTableBorders = True
+deleteTableBorders = False
 
 Set myFile = ActiveDocument
 myAllText = ""
-For Each myPara In myFile.Paragraphs
-  Set myPar = myPara.Range
-  If myPar.Hyperlinks.Count = 0 Then
-    thisStyle = myPar.Style
-    If InStr(myStyles, thisStyle) = 0 Then
-      myStyles = myStyles & thisStyle & ","
-      Set testChar = myPar.Characters(1)
-      pageNum = testChar.Information(wdActiveEndAdjustedPageNumber)
-      myLineText = thisStyle & vbTab & "p." & Trim(Str(pageNum))
-      If displayParaWords Then
-        myStart = testChar.Start
-        If myPar.Words.Count > numWords Then
-          myEnd = myPar.Words(numWords).End
-        Else
-          myEnd = myPar.End - 1
-        End If
-        myLen = myEnd - myStart
-        myWords = Left(myPar.Text, myLen)
-        myLineText = myLineText & vbTab & """" & Trim(myWords) & """"
-        Debug.Print myLineText
-        myAllText = myAllText & myLineText & vbCr
-      End If
+
+For myArea = 1 To 3
+  doThisArea = False
+  ' Main text area
+  If myArea = 1 Then
+    If Selection.Start = Selection.End Then
+      myResponse = MsgBox("Scan the whole document?!", _
+           vbQuestion + vbYesNo, "StyleLister")
+      If myResponse <> vbYes Then Exit Sub
+      Set rng = ActiveDocument.Content
+    Else
+      Set rng = Selection.Range.Duplicate
     End If
-    DoEvents
+    doThisArea = True
   End If
-Next myPara
+  ' Footnotes, if any
+  If ActiveDocument.Footnotes.Count > 0 And myArea = 2 Then
+    doThisArea = True
+    Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    StatusBar = "Scanning footnotes"
+  End If
+  ' Endnotes, if any
+  If ActiveDocument.Endnotes.Count > 0 And myArea = 3 Then
+    doThisArea = True
+    Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    StatusBar = "Scanning endnotes"
+  End If
+  If doThisArea = True Then
+    For Each myPar In rng.Paragraphs
+      Set myPar = myPar.Range
+      myPar.Select
+      If myPar.Hyperlinks.Count = 0 Then
+        thisStyle = myPar.Style
+        If InStr(myStyles, thisStyle) = 0 Then
+          myStyles = myStyles & thisStyle & ","
+          Set testChar = myPar.Characters(1)
+          pageNum = testChar.Information(wdActiveEndAdjustedPageNumber)
+          myLineText = thisStyle & vbTab & "p." & Trim(Str(pageNum))
+          If displayParaWords Then
+            myStart = testChar.Start
+            If myPar.Words.Count > numWords Then
+              myEnd = myPar.Words(numWords).End
+            Else
+              myEnd = myPar.End - 1
+            End If
+            myLen = myEnd - myStart
+            myWords = Left(myPar.Text, myLen)
+            ' Get rid of footnote markers
+            myWords = Replace(myWords, Chr(2), "")
+            myLineText = myLineText & vbTab & Trim(myWords)
+            Debug.Print myLineText
+            myAllText = myAllText & myLineText & vbCr
+          End If
+        End If
+        DoEvents
+      End If
+    Next myPar
+  End If
+Next myArea
+
+' Display the results in a table
 Documents.Add
 Selection.TypeText Text:=myAllText
 Set rng = ActiveDocument.Content
@@ -61,4 +96,6 @@ If deleteTableBorders = True Then
   tb.Borders(wdBorderVertical).LineStyle = wdLineStyleNone
 End If
 End Sub
+
+
 

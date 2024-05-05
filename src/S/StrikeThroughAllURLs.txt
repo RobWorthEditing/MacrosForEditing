@@ -1,44 +1,63 @@
 Sub StrikeThroughAllURLs()
-' Paul Beverley - Version 24.02.22
+' Paul Beverley - Version 18.04.24
 ' Strikes through all URLs to protect them from changes
-
-charsInURLs = "[%./:a-zA-Z0-9_\-+\?=&,]"
-
-myFind = "[wh][wt][wt][ps.]" & charsInURLs & "{1,}"
 
 highlightToo = True
 myColour = wdBrightGreen
 
+charsInURLs = "[%./:a-zA-Z0-9_\-+\?=&,]"
+
+myFind = "[wh][wt][wt][ps.]" & charsInURLs & "{1,}"
 oldColour = Options.DefaultHighlightColorIndex
 Options.DefaultHighlightColorIndex = myColour
-
-Set rng = ActiveDocument.Content
-
-doFootnotes = Selection.Information(wdInFootnote)
-doEndnotes = Selection.Information(wdInEndnote)
-
-If doFootnotes Then Set rng = _
-     ActiveDocument.StoryRanges(wdFootnotesStory)
-
-If doEndnotes Then Set rng = _
-     ActiveDocument.StoryRanges(wdEndnotesStory)
-
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = myFind
-  .Wrap = wdFindContinue
-  .Replacement.Text = ""
-  .Replacement.Font.StrikeThrough = True
-  If highlightToo Then .Replacement.Highlight = True
-  .Forward = True
-  .MatchCase = False
-  .MatchWildcards = True
-  .MatchWholeWord = False
-  .MatchSoundsLike = False
-  .Execute Replace:=wdReplaceAll
-  DoEvents
-End With
+For myArea = 1 To 3
+  doThisArea = False
+  ' Main text area
+  If myArea = 1 Then
+    If Selection.Start = Selection.End Then
+      myResponse = MsgBox("Scan the whole document?!", _
+           vbQuestion + vbYesNo, "StrikeThroughAllURLs")
+      If myResponse <> vbYes Then Exit Sub
+      Set rng = ActiveDocument.Content
+    Else
+      Set rng = Selection.Range.Duplicate
+    End If
+    doThisArea = True
+  End If
+  ' Footnotes, if any
+  If ActiveDocument.Footnotes.Count > 0 And myArea = 2 Then
+    doThisArea = True
+    Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    StatusBar = "Scanning footnotes"
+  End If
+  ' Endnotes, if any
+  If ActiveDocument.Endnotes.Count > 0 And myArea = 3 Then
+    doThisArea = True
+    Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    StatusBar = "Scanning endnotes"
+  End If
+  If doThisArea = True Then
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = myFind
+      .Wrap = wdFindContinue
+      .Replacement.Text = ""
+      .Replacement.Font.StrikeThrough = True
+      If highlightToo Then .Replacement.Highlight = True
+      .Forward = True
+      .MatchCase = False
+      .MatchWildcards = True
+      .MatchWholeWord = False
+      .MatchSoundsLike = False
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    End With
+  End If
+Next myArea
 Options.DefaultHighlightColorIndex = oldColour
 End Sub
+
+
+
 

@@ -1,34 +1,32 @@
 Sub MacroNameShow(macroName As String)
-' Paul Beverley - Version 05.06.23
+' Paul Beverley - Version 18.04.24
 ' Displays the current macro name in a display file
 
 ' Needs a line: Private pbDoShow As Boolean
 '   at the top of the VBA area
+
+bigFont = 14
+smallFont = 9
+bigColor = wdColorRed
+myFile = "Macro display.docx"
 
 If Not pbDoShow Then Exit Sub
 
 myScreen = Application.ScreenUpdating
 Application.ScreenUpdating = True
 
-myFile = "Macro_list"
 
 Set myDoc = ActiveDocument
 Documents(myFile).Activate
 Selection.HomeKey Unit:=wdStory
 Set rng = ActiveDocument.Content
-rng.HighlightColorIndex = wdNoHighlight
+rng.Font.Size = smallFont
+rng.Font.Color = wdColorBlack
 
-nowColour = rng.Characters(1).Font.Color
-Selection.InsertBefore Text:=macroName & " "
-spPos = InStr(ActiveDocument.Content.Text, " ")
-If spPos = 0 Then spPos = ActiveDocument.Content.End
-rng.End = spPos
-If nowColour = wdColorBlue Then
-  rng.Font.Color = wdColorRed
-Else
-  rng.Font.Color = wdColorBlue
-End If
-rng.HighlightColorIndex = wdGray25
+Selection.InsertBefore Text:=macroName & vbCr
+Selection.Collapse wdCollapseStart
+rng.Words(1).Font.Color = bigColor
+rng.Words(1).Font.Size = bigFont
 Documents(myDoc).Activate
 Application.ScreenUpdating = myScreen
 End Sub

@@ -1,5 +1,5 @@
 Sub SpellingCorrect()
-' Paul Beverley - Version 13.04.24
+' Paul Beverley - Version 17.04.24
 ' Corrects spelling and wrong capitalisation
 
 elistNameContains = "elist"
@@ -8,10 +8,12 @@ Selection.Collapse wdCollapseEnd
 wasStart = Selection.Start
 Set rng = Selection.Range.Duplicate
 rng.MoveStart , -1
-While UCase(rng) = LCase(rng)
+i = 0
+While UCase(rng) = LCase(rng) And i < 5
   rng.MoveStart , -1
   rng.MoveEnd , -1
   DoEvents
+  i = i + 1
 Wend
 rng.Expand wdWord
 Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
@@ -85,12 +87,18 @@ If Not (spellOK) Then
 Else
   If doBeep Then Beep
 End If
+Debug.Print myWord
 rng.Start = wasStart - 2
 rng.Expand wdWord
-Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
-  rng.MoveEnd , -1
-  DoEvents
-Loop
+If Len(rng) > 2 Then
+  i = 0
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0 _
+         And i < 9
+    rng.MoveEnd , -1
+    DoEvents
+    i = i + 1
+  Loop
+End If
 rng.Collapse wdCollapseEnd
 rng.Select
 End Sub

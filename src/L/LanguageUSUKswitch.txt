@@ -1,6 +1,5 @@
-
 Sub LanguageUSUKswitch()
-' Paul Beverley - Version 09.12.23
+' Paul Beverley - Version 22.04.24
 ' Switches language between UK and US English
 
 ' If you want all the styles to be language-set as well,
@@ -13,22 +12,18 @@ If langNow = wdEnglishUK Then
   nowLanguage = "UK English"
   newLanguage = "US English"
 Else
-  newLanguage = "US English"
-  nowLanguage = "UK English"
+  nowLanguage = "US English"
+  newLanguage = "UK English"
 End If
 myResponse = MsgBox("Currently " & nowLanguage & vbCr _
      & vbCr & "Switch to " & newLanguage & "?", _
      vbQuestion + vbYesNo, "LanguageUSUKswitch")
-If myResponse <> vbYes Then
-  Beep
-  Exit Sub
-End If
+If myResponse <> vbYes Then Exit Sub
 If langNow = wdEnglishUK Then
   myLanguage = wdEnglishUS
 Else
   myLanguage = wdEnglishUK
 End If
-
 
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
@@ -65,18 +60,5 @@ ActiveDocument.Styles(wdStyleCommentText).LanguageID = myLanguage
 ActiveDocument.SpellingChecked = False
 ActiveDocument.GrammarChecked = False
 ActiveDocument.TrackRevisions = myTrack
-myspaces = ""
-For i = 1 To 100
-  DoEvents
-  myspaces = myspaces & " "
-Next i
-StatusBar = myspaces & Languages(Selection.LanguageID)
-Beep
-timeNow = Timer
-Do
-  DoEvents
-Loop Until Timer > timeNow + 2
-StatusBar = ""
-Beep
 End Sub
 

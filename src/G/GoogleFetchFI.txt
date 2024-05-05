@@ -1,9 +1,11 @@
 
-Sub MacquarieFetch()
-' Paul Beverley - Version 03.04.24
-' Launches selected text to Macquarie
+Sub GoogleFetchFI()
+' Paul Beverley - Version 23.04.24
+' Launches selected text on Google
 
-mySite = "https://app.macquariedictionary.com.au/?search_word_type=dictionary&word="
+alsoCopySubject = True
+
+mySite = "http://www.google.fi/search?q="
 
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord
@@ -23,12 +25,15 @@ Else
   Loop
   Selection.Start = startNow
 End If
+
+If alsoCopySubject = True Then Selection.Copy
+
 mySubject = Trim(Selection)
 mySubject = Replace(mySubject, " ", "+")
 mySubject = Replace(mySubject, "&", "%26")
 mySubject = Replace(mySubject, ChrW(8217), "'")
+Debug.Print mySite & mySubject
 ActiveDocument.FollowHyperlink Address:=mySite & mySubject
-Selection.Collapse wdCollapseEnd
 End Sub
 
 

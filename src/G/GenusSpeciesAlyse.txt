@@ -1,0 +1,96 @@
+Sub GenusSpeciesAlyse()
+' Paul Beverley - Version 18.04.24
+' Checks the abbreviation of genus/species names
+
+okColour1 = wdGray25
+okColour2 = wdGray50
+warningColour1 = wdBrightGreen
+warningColour2 = wdYellow
+warningColour3 = wdRed
+
+doAbbreviate = False
+doAbbreviate = True
+
+CR = vbCr
+spList = CR
+errorList = CR
+For myArea = 1 To 3
+  doThisArea = False
+  ' Main text area
+  If myArea = 1 Then
+    If Selection.Start = Selection.End Then
+      myResponse = MsgBox("Scan the whole document?!", _
+           vbQuestion + vbYesNo, "StyleLister")
+      If myResponse <> vbYes Then Exit Sub
+      Set rng = ActiveDocument.Content
+    Else
+      Set rng = Selection.Range.Duplicate
+    End If
+    doThisArea = True
+  End If
+  ' Footnotes, if any
+  If ActiveDocument.Footnotes.Count > 0 And myArea = 2 Then
+    doThisArea = True
+    Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    StatusBar = "Scanning footnotes"
+  End If
+  ' Endnotes, if any
+  If ActiveDocument.Endnotes.Count > 0 And myArea = 3 Then
+    doThisArea = True
+    Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    StatusBar = "Scanning endnotes"
+  End If
+  
+  If doThisArea = True Then
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "[A-Z][a-zA-Z.]{1,} [a-z]{1,}"
+      .Font.Italic = True
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = True
+      .Execute
+    End With
+    
+    myCount = 0
+    Do While rng.Find.Found = True
+      myText = rng.Text
+      If InStr(myText, ".") = 0 Then
+        spacePos = InStr(myText, " ")
+        abbrev = Left(myText, 1) & "." & Mid(myText, spacePos)
+      End If
+ '         Debug.Print CR & spList
+      myCount = myCount + 1
+      If myCount Mod 20 = 0 Then rng.Select
+      If InStr(spList, CR & myText & CR) > 0 Then
+        If rng.Words(2) = ". " Then
+          rng.HighlightColorIndex = okColour1
+        Else
+          rng.HighlightColorIndex = warningColour1
+          If doAbbreviate = True Then rng.Text = abbrev
+        End If
+      Else
+        If rng.Words(2) = ". " Then
+          rng.HighlightColorIndex = warningColour2
+          errorList = errorList & myText & CR
+        Else
+          spList = spList & myText & CR & abbrev & CR
+          If InStr(errorList, CR & abbrev & CR) > 0 Then
+            rng.HighlightColorIndex = warningColour3
+          Else
+            rng.HighlightColorIndex = okColour2
+          End If
+        End If
+      End If
+      rng.Collapse wdCollapseEnd
+      rng.Find.Execute
+      DoEvents
+    Loop
+  End If
+Next myArea
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

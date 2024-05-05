@@ -2,7 +2,7 @@ Sub TitlesReveal()
 ' Paul Beverley - Version 13.04.24
 ' Switches the next light grey font colour to full colour
 
-' preBlue = &HF6F6F6
+preBlue = &HF6F6F6
 preRed = &HF4F4F4
 preBlack = &HF5F5F5
 

@@ -1,20 +1,23 @@
 Sub UKUScount()
-' Paul Beverley - Version 15.06.21
+' Paul Beverley - Version 18.04.24
 ' Counts relative spellings between UK and US English
 
 minLengthSpell = 5
-countIt = True
+doCount = True
 
 timeStart = Timer
 UKcount = 0
 UScount = 0
+CR = vbCr
+UKwords = CR
+USwords = CR
+Selection.HomeKey Unit:=wdStory
 i = ActiveDocument.Words.Count
 iStart = i
 StatusBar = "Spellchecking. To go:   100%"
 On Error GoTo ReportIt
 Application.ScreenUpdating = False
 For Each wd In ActiveDocument.Words
-  DoEvents
   If Len(wd) >= minLengthSpell And wd.Font.StrikeThrough = False Then
     UKok = Application.CheckSpelling(wd, _
          MainDictionary:=Languages(wdEnglishUK).NameLocal)
@@ -23,8 +26,12 @@ For Each wd In ActiveDocument.Words
     If UKok <> USok Then
       If UKok Then
         UKcount = UKcount + 1
+        If InStr(UKwords, "!" & LCase(wd) & CR) = 0 Then _
+             UKwords = UKwords & "!" & LCase(wd) & CR
       Else
         UScount = UScount + 1
+        If InStr(USwords, "$" & LCase(wd) & CR) = 0 Then _
+             USwords = USwords & "$" & LCase(wd) & CR
       End If
       wd.Select
       StatusBar = "Spellchecking. To go:   " & Trim(Str(Int((i / iStart) _
@@ -36,21 +43,62 @@ For Each wd In ActiveDocument.Words
     End If
   End If
   i = i - 1
-  If i Mod 1000 = 0 Then StatusBar = "Spellchecking. To go:   " & _
-       Trim(Str(Int((i / iStart) * 100))) & _
-       "%                           UK:  " & _
-       UKcount & "      US:  " & UScount
+  If i Mod 1000 = 0 Then
+    StatusBar = "Spellchecking. To go:   " & _
+         Trim(Str(Int((i / iStart) * 100))) & _
+         "%                           UK:  " & _
+         UKcount & "      US:  " & UScount
+    DoEvents
+  End If
 Next wd
 Application.ScreenUpdating = True
 endTime = Timer
-MsgBox "UK: " & UKcount & vbCr & vbCr & "US: " & UScount
+MsgBox "Total words" & CR & CR & "UK: " & UKcount _
+     & CR & CR & "US: " & UScount
 totTime = endTime - timeStart
-If countIt = True Then
+If doCount = True Then
    If totTime > 60 Then MsgBox ((Int(10 * totTime / 60) / 10) & _
      "  minutes")
 End If
 Selection.HomeKey Unit:=wdStory
 Beep
+myResponse = MsgBox("List the different words found?", _
+     vbQuestion + vbYesNo, "UKUScount")
+If myResponse <> vbYes Then Exit Sub
+
+Documents.Add
+Selection.TypeText Text:=UKwords & CR & USwords
+Set rng = ActiveDocument.Content
+rng.Sort
+rng.InsertAfter Text:=CR
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[^13]{1,}\!"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceOne
+  DoEvents
+  .Text = "$"
+  .Replacement.Text = "^p^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceOne
+  Set rng2 = ActiveDocument.Content
+  lenOne = Len(rng2)
+  .Text = "$"
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+  lenTwo = Len(rng2)
+  .Text = "!"
+  .Execute Replace:=wdReplaceAll
+  lenThree = Len(rng2)
+End With
+Selection.TypeText Text:=CR & "US: " & Trim(Str(lenOne - lenTwo)) & CR
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Distinct words" & CR & CR & "UK: " & _
+     Trim(Str(lenTwo - lenThree)) & CR
 Exit Sub
 
 ReportIt:

@@ -1,0 +1,61 @@
+Sub SpellAlyseToFRedit()
+' Paul Beverley - Version 23.04.24
+' Corrects spelling and wrong capitalisation
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdWord
+If Len(rng) < 3 Then
+  rng.MoveEnd , -3
+  rng.Expand wdWord
+End If
+myWord = rng.Text
+' Check spelling language
+' (check only first character, in case of split language)
+langName = Languages(rng.Characters(1).LanguageID).NameLocal
+
+' Check spelling
+spellOK = Application.CheckSpelling(myWord, MainDictionary:=langName)
+Debug.Print myWord
+If spellOK Then
+  Beep
+  MsgBox "No change: """ & myWord & _
+       """ is a correct spelling in " & langName & "."
+  Exit Sub
+Else
+  Set suggList = rng.GetSpellingSuggestions(myWord, _
+       MainDictionary:=langName)
+  If suggList.Count > 0 Then
+    newWord = suggList.Item(1).Name
+  Debug.Print myWord & "|" & newWord
+    fghdfg = 0
+    If newWord <> myWord Then
+      rng.Text = ChrW(172) & myWord & "|" & newWord
+    Else
+      Beep
+      myTime = Timer
+      Do
+      Loop Until Timer > myTime + 1
+      Beep
+      If langName = "English (United States)" _
+           And Application.CheckSpelling(myWord, _
+           MainDictionary:="English (United Kingdom)") Then
+        MsgBox ("Word's spellchecker is playing sillies!")
+        Exit Sub
+      Else
+        MsgBox ("Word offers no suggestion")
+      End If
+    End If
+  Else
+    Beep
+    MsgBox "Word offers no alternative! (Empty suggList)"
+  End If
+End If
+rng.MoveEnd , 2
+rng.Collapse wdCollapseEnd
+rng.Select
+End Sub
+
+
+
+
+
