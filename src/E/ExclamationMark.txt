@@ -5,7 +5,18 @@ Sub ExclamationMark()
 
 newBit = "! "
 myQuotes = Chr(34) & Chr(39) & ChrW(8220) & ChrW(8216)
-Selection.Collapse wdCollapseEnd
+oldBits = ";:.,!?" & ChrW(8211) & ChrW(8211)
+Set rng = Selection.Range.Duplicate
+rng.MoveEnd , 50
+For i = 1 To rng.Characters.Count
+  If InStr(oldBits, rng.Characters(i)) > 0 Then Exit For
+Next i
+If i > 50 Then
+  Beep
+  MsgBox "No relevant punctuation found."
+  Exit Sub
+End If
+rng.Characters(i - 2).Select
 While (LCase(Selection) <> UCase(Selection))
   Selection.MoveRight 1
   DoEvents

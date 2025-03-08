@@ -1,5 +1,6 @@
+
 Sub NumberRangeHyphenToDash()
-' Paul Beverley - Version 26.10.22
+' Paul Beverley - Version 18.01.25
 ' Changes all hyphens in number ranges to en dashes
 
 notThese = "ISBN ISO BS EN doi www http"
@@ -7,43 +8,63 @@ wdsBefore = 8
 
 thisArray = Split(" " & notThese & " ", " ")
 
-Set rng = ActiveDocument.Content
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "[0-9]-[0-9]"
-  .Wrap = wdFindStop
-  .Replacement.Text = ""
-  .Forward = True
-  .MatchWildcards = True
-  .MatchWholeWord = False
-  .Execute
-End With
-
-Do While rng.Find.Found = True
-  endNow = rng.End
-  Set rng2 = rng.Duplicate
-  rng2.Start = 0
-  If rng2.Words.count < wdsBefore Then wdsBefore = rng2.Words.count
-  rng2.MoveStart wdWord, -wdsBefore
-  doThisOne = True
-  doThisOne = True
-  For i = 1 To UBound(thisArray)
-    If Len(thisArray(i)) > 0 Then
-      If InStr(rng2.Text, thisArray(i)) > 0 Then doThisOne = False
+myDo = "TEF"
+If ActiveDocument.Footnotes.count = 0 Then myDo = Replace(myDo, "F", "")
+If ActiveDocument.Endnotes.count = 0 Then myDo = Replace(myDo, "E", "")
+For r = 1 To Len(myDo)
+  doIt = Mid(myDo, r, 1)
+  Select Case doIt
+     Case "T": Set rng = ActiveDocument.Content
+     Case "E": Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+     Case "F": Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+  End Select
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "[0-9]-[0-9]"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .Font.StrikeThrough = False
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .Execute
+  End With
+  
+  Do While rng.Find.Found = True
+    endNow = rng.End
+    Set rng2 = rng.Duplicate
+    rng2.start = 0
+    numWords = rng2.Words.count
+    rng2.Collapse wdCollapseEnd
+    If numWords < wdsBefore Then
+      rng2.start = 0
+    Else
+      rng2.MoveStart wdWord, -wdsBefore
     End If
-  Next i
-
-  If doThisOne = True Then
-    rng.MoveEnd , -1
-    rng.MoveStart , 1
-    ' The range is now just the hyphen
-    rng.Text = ChrW(8211)
-    rng.End = endNow + 1
-  End If
-  rng.Collapse wdCollapseEnd
-  rng.Find.Execute
-  DoEvents
-Loop
+    doThisOne = True
+    For i = 1 To UBound(thisArray)
+      If Len(thisArray(i)) > 0 Then
+        If InStr(rng2.Text, thisArray(i)) > 0 Then
+          doThisOne = False
+          Exit For
+        End If
+      End If
+    Next i
+  
+    If doThisOne = True Then
+      rng.MoveEnd , -1
+      rng.MoveStart , 1
+      ' The range is now just the hyphen
+      rng.Text = ChrW(8211)
+      rng.End = endNow + 1
+    End If
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+    DoEvents
+  Loop
+Next r
 End Sub
+
 

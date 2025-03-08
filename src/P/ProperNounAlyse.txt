@@ -1,13 +1,17 @@
+
 Sub ProperNounAlyse()
-' Paul Beverley - Version 25.03.24
+' Paul Beverley - Version 06.03.25
 ' Analyses similar proper nouns
 
-minLengthCheck = 5
+minLengthCheck = 4
 
 includeAcronyms = True
 
 myLanguage = "English(United Kingdom)"
 ' myLanguage = "English(United States)"
+
+' keepWholeList = True
+keepWholeList = False
 
 ignoreWords = "The This There Those Their They Then These That"
 
@@ -17,12 +21,13 @@ similarChars = "bb,b; b,p; sch,sh; ch,sh; c,k; ph,f; ss,z; s,z;" & _
 ' With non-English languages, you might need to make this False
 ignorePlurals = True
 
+CR = vbCr: CR2 = CR & CR
 myScreenOff = True
 Set FUT = ActiveDocument
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") + _
      InStr(FUT.Name, "Document") > 0)
 If doingSeveralMacros = False Then
-  myResponse = MsgBox("    ProperNounAlyse" & vbCr & vbCr & _
+  myResponse = MsgBox("    ProperNounAlyse" & CR2 & _
        "Analyse this document?", vbQuestion _
        + vbYesNoCancel, "ProperNounAlyse")
   If myResponse <> vbYes Then Exit Sub
@@ -35,11 +40,6 @@ End If
 myDummy = ChrW(222)
 For i = 1 To 100
   spcs = " " & spcs
-Next i
-
-dummyText = ChrW(197) & "zzzx "
-For i = 65 To 90
-  dummyText = dummyText & ChrW(i) & "zzzz "
 Next i
 
 checkFinalLetters = True
@@ -79,7 +79,6 @@ Options.DefaultHighlightColorIndex = wdGray25
 leadDots = " . . . "
 title1 = "Proper noun list"
 title2 = "Proper noun queries"
-CR = vbCr: CR2 = CR & CR
 convCharsUC = "AAAAAAA.EEEEIIII..OOOOO.OUUUU" & _
      "...aaaaaaa.eeeeiiiio.ooooo.ouuuu......"
 convCharsLC = LCase(convCharsUC)
@@ -113,17 +112,11 @@ End If
 
 ' Create various documents
 Set rng = ActiveDocument.Content
-Documents.Add
-Set firstDoc = ActiveDocument
+
+Set firstDoc = Documents.Add
 Set fnl = ActiveDocument.Content
 
-Documents.Add
-Set tempDoc = ActiveDocument
-Set tmp = ActiveDocument.Content
-
-Documents.Add
-Set allText = ActiveDocument
-Selection.TypeText dummyText & vbCr
+Set allText = Documents.Add
 Selection.FormattedText = rng.FormattedText
 Selection.Collapse wdCollapseEnd
 
@@ -134,13 +127,14 @@ If shCount > 0 Then
     Selection.TypeText shText(i) & CR
   Next i
 End If
+'Add dummy name
+Selection.TypeText Text:="Aaaaa" & CR
 Selection.HomeKey Unit:=wdStory
 
 Set rng = allText.Content
 rng.Revisions.AcceptAll
 DoEvents
 StatusBar = spcs & "Preparing copied file - 1"
-DoEvents
 
 ' Delete struck-through text
 With rng.Find
@@ -177,9 +171,9 @@ DoEvents
 
 ' Cut all and replace as pure text
 Set rng = allText.Content
-tmp.FormattedText = rng.FormattedText
-rng.Text = tmp.Text
-tmp.Delete
+allJustText = allText.Content.Text
+allText.Content.Delete
+rng.Text = allJustText
 DoEvents
 StatusBar = spcs & "Preparing copied file - 3"
 
@@ -206,7 +200,6 @@ End With
 ' Find initial cap words
 DoEvents
 StatusBar = spcs & "Preparing copied file - 4"
-DoEvents
 myChopNum = minLengthCheck - 2
 If myChop < 1 Then myChop = 1
 myChop = Trim(Str(myChopNum))
@@ -214,118 +207,74 @@ myFind = "<[A-Z][a-z][a-zA-Z]{" & myChop & ",}"
 If includeAcronyms = True Then myFind = _
      "<[A-Z][a-zA-Z][a-zA-Z]{" & myChop & ",}"
 Set rng = allText.Range
+
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = myFind
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
   .MatchWildcards = True
-  .MatchCase = True
-  .Replacement.Text = "^&"
-  .Replacement.Highlight = True
-  .Replacement.Font.StrikeThrough = True
-  .Execute Replace:=wdReplaceAll
+  .MatchWholeWord = False
+  .Execute
 End With
 
-' Delete all non-strikethrough words
-DoEvents
-StatusBar = spcs & "Preparing copied file - 5"
-DoEvents
-
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = ""
-  .Font.StrikeThrough = False
-  .MatchWildcards = False
-  .MatchCase = True
-  .Replacement.Text = "^p"
-  .Execute Replace:=wdReplaceAll
-End With
-
-' Delete the unwanted "proper nouns"
-DoEvents
-StatusBar = spcs & "Preparing copied file - 6"
-igWords = Split(Trim(ignoreWords), " ")
-
-For Each wd In igWords
-  Set rng = allText.Content
-  With rng.Find
-    .ClearFormatting
-    .Replacement.ClearFormatting
-    .Text = wd & "^p"
-    .Wrap = wdFindContinue
-    .Replacement.Text = ""
-    .MatchCase = True
-    .MatchWildcards = False
-    .Execute Replace:=wdReplaceAll
-  End With
+myPNlist = ""
+ignoreWords = ignoreWords & " "
+Do While rng.Find.Found = True
+  myWd = rng.Text
+  If InStr(ignoreWords, myWd & " ") = 0 Then _
+       myPNlist = myPNlist & myWd & CR
+  rng.Collapse wdCollapseEnd
+  i = i + 1: If i Mod 100 = 0 Then DoEvents
+  rng.Find.Execute
   DoEvents
-Next wd
+Loop
+allText.Content.Text = myPNlist
 
 StatusBar = spcs & "Sorting whole file"
-DoEvents
-i = 0
 
-For ch = 65 To 90
-  For Each myPara In allText.Paragraphs
-    If Asc(myPara.Range) = ch Then
-      DoEvents
-      myPara.Range.Font.StrikeThrough = False
-      tmp.InsertAfter myPara.Range.Text
-    End If
-  Next myPara
-  tmp.InsertAfter Text:="Zzzzz" & CR
+Set allText = ActiveDocument
+wordArray = Split(allText.Content.Text, CR)
 
-  Set rng = tempDoc.Content
-  rng.Sort SortOrder:=wdSortOrderAscending, CaseSensitive:=True
+' Sort the array alphabetically
+Call QuickSort(wordArray, LBound(wordArray), UBound(wordArray))
+StatusBar = spcs & "After sorting"
 
-  ' delete initial blank line
-  If Len(tempDoc.Paragraphs(1)) < 3 Then _
-       tempDoc.Paragraphs(1).Range.Delete
+' Clear the content of the document
+allText.Content.Delete
 
-  ' Create a frequency for each highlighted word
-  thisWord = ""
-  myCount = 0
-  For Each myPara In tempDoc.Paragraphs
-    Set rng = myPara.Range.Words(1)
-    DoEvents
-    nextWord = rng
-    If nextWord <> thisWord Then
-    ' This is a new word
-      If Len(thisWord) > 1 Then
-        fnl.InsertAfter Text:=thisWord _
-             & leadDots & Trim(Str(myCount)) & CR
-      End If
-      thisWord = nextWord
-      myCount = 1
-    Else
-      myCount = myCount + 1
-    End If
-    If nextWord = "Zzzzz" Then Exit For
-    i = i + 1:
-    If i Mod 400 = 4 Then
-      DoEvents
-      prmt = Left(thisWord, 1) & " "
-      prmt = prmt & prmt & prmt & prmt
-      StatusBar = spcs & _
-           "Preparing words for frequency list - " & prmt
-      DoEvents
-    End If
-  Next myPara
+' Insert sorted words into the document
+For i = LBound(wordArray) To UBound(wordArray)
+  allText.Content.InsertAfter wordArray(i) & CR
+Next i
 
-  ' Remove all words except frequency counts
-  Set rng = tempDoc.Content
-  rng.Delete
-Next ch
+' delete initial blank line
+If Len(allText.Paragraphs(1)) < 3 Then _
+     allText.Paragraphs(1).Range.Delete
+If Len(allText.Paragraphs(1)) < 3 Then _
+     allText.Paragraphs(1).Range.Delete
 
-' Find any unaccounted-for words, e.g. Ångstrom
+' Create a frequency for each highlighted word
+thisWord = ""
+myCount = 0
 For Each myPara In allText.Paragraphs
-  If myPara.Range.Words(1).Font.StrikeThrough = True Then
-    tmp.InsertAfter myPara.Range.Text
+  nextWord = myPara.Range.Words(1)
+  If nextWord <> thisWord Then
+  ' This is a new word
+    If Len(thisWord) > 1 Then
+      fnl.InsertAfter Text:=thisWord _
+           & leadDots & Trim(Str(myCount)) & CR
+    End If
+    thisWord = nextWord
+    myCount = 1
+  Else
+    myCount = myCount + 1
   End If
+  i = i + 1:  If i Mod 400 = 4 Then DoEvents
 Next myPara
 
-tempDoc.Close SaveChanges:=False
 allText.Close SaveChanges:=False
 firstDoc.Activate
 
@@ -379,8 +328,8 @@ Loop Until Len(rng.Text) >= 2
 
 ' Create another copy for doing extra tests
 Set rng = ActiveDocument.Content
-Documents.Add
-Set finalList = ActiveDocument
+
+Set finalList = Documents.Add
 finalList.Range.Text = rng.Text
 Selection.HomeKey Unit:=wdStory
 
@@ -1194,6 +1143,11 @@ With rng.Find
   .Execute Replace:=wdReplaceAll
   DoEvents
 End With
+
+Beep
+If keepWholeList = False Then _
+     finalList.Close SaveChanges:=False
+
 Application.ScreenUpdating = True
 If doingSeveralMacros = False Then
   myTime = (Int(10 * (Timer - timeStart) / 60) / 10)
@@ -1210,5 +1164,37 @@ Resume
 End Sub
 
 
+Sub QuickSort(arr As Variant, ByVal low As Long, ByVal high As Long)
+' Paul Beverley - Version 21.12.24
+' Sorts an array of text at high speed
+
+Dim i As Long
+Dim j As Long
+Dim pivot As String
+Dim temp As String
+
+i = low
+j = high
+pivot = arr((low + high) \ 2)
+
+Do While i <= j
+  Do While arr(i) < pivot
+      i = i + 1
+  Loop
+  Do While arr(j) > pivot
+      j = j - 1
+  Loop
+  If i <= j Then
+    temp = arr(i)
+    arr(i) = arr(j)
+    arr(j) = temp
+    i = i + 1
+    j = j - 1
+  End If
+Loop
+
+If low < j Then QuickSort arr, low, j
+If i < high Then QuickSort arr, i, high
+End Sub
 
 

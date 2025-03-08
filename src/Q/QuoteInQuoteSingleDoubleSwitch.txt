@@ -1,0 +1,82 @@
+
+Sub QuoteInQuoteSingleDoubleSwitch()
+' Paul Beverley - Version 15.05.24
+' Changes double quotes to single or vice versa, avoiding apostrophes
+
+myColour = wdBrightGreen
+
+myFind = """,',!t,!ve,!n,!m,!s,!d,!r,!l,s!,',zczc"
+myFind = Replace(myFind, "!", ChrW(8217))
+
+myReplace = myReplace & "zczc,',^&,^&,^&,^&,^&,^&,^&,^&,^&,"",'"
+fnd = Split(myFind, ",")
+rpl = Split(myReplace, ",")
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+
+Set rngT = ActiveDocument.Content
+If ActiveDocument.Footnotes.Count > 0 Then _
+  Set rngF = ActiveDocument.StoryRanges(wdFootnotesStory)
+If ActiveDocument.Endnotes.Count > 0 Then _
+  Set rngE = ActiveDocument.StoryRanges(wdEndnotesStory)
+
+For i = 0 To UBound(fnd)
+  Debug.Print fnd(i), rpl(i)
+  With rngT.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = fnd(i)
+    If rpl(i) = """" Then .Font.StrikeThrough = False
+    .Wrap = wdFindContinue
+    .Replacement.Text = rpl(i)
+    .MatchCase = False
+    .MatchWildcards = False
+    If rpl(i) = "^&" Then .Replacement.Font.StrikeThrough = True
+    If Asc(fnd(i)) = Asc("s") Then .Replacement.Highlight = True
+    .Execute Replace:=wdReplaceAll
+  End With
+  DoEvents
+  If ActiveDocument.Footnotes.Count > 0 Then
+    With rngF.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = fnd(i)
+      If rpl(i) = """" Then .Font.StrikeThrough = False
+      .Wrap = wdFindContinue
+      .Replacement.Text = rpl(i)
+      .MatchCase = False
+      .MatchWildcards = False
+      If rpl(i) = "^&" Then .Replacement.Font.StrikeThrough = True
+      If Asc(fnd(i)) = Asc("s") Then .Replacement.Highlight = True
+      .Execute Replace:=wdReplaceAll
+    End With
+    DoEvents
+  End If
+  If ActiveDocument.Endnotes.Count > 0 Then
+    With rngE.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = fnd(i)
+      If rpl(i) = """" Then .Font.StrikeThrough = False
+      .Wrap = wdFindContinue
+      .Replacement.Text = rpl(i)
+      .MatchCase = False
+      .MatchWildcards = False
+      If rpl(i) = "^&" Then .Replacement.Font.StrikeThrough = True
+      If Asc(fnd(i)) = Asc("s") Then .Replacement.Highlight = True
+      .Execute Replace:=wdReplaceAll
+    End With
+    DoEvents
+  End If
+Next i
+rngT.Font.StrikeThrough = False
+If ActiveDocument.Footnotes.Count > 0 Then _
+  rngF.Font.StrikeThrough = False
+If ActiveDocument.Endnotes.Count > 0 Then _
+  rngE.Font.StrikeThrough = False
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+
+
+

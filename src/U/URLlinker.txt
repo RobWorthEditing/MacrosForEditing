@@ -1,10 +1,12 @@
-Sub URLlinker()
-' Paul Beverley - Version 05.03.24
-' Finds all URLs in the text and links them
 
-Set rng = ActiveDocument.Range
+Sub URLlinker()
+' Paul Beverley - Version 30.07.24
+' Finds all URLs and emails in the text and links them
+
+Set rng = Selection.Range.Duplicate
 With rng.Find
   .Text = "^$.^$"
+  .Font.Underline = False
   .Replacement.Text = ""
   .Wrap = wdFindStop
   .Forward = True
@@ -19,23 +21,39 @@ Do While rng.Find.Found = True
   Loop
   rng.MoveEnd , -1
   If rng.Characters.Last = "." Then rng.MoveEnd , -1
-
+  If rng.Characters.Last = "," Then rng.MoveEnd , -1
   Do While InStr(vbCr & " ", Left(rng.Text, 1)) = 0
     rng.MoveStart , -1
+    If rng = rngWas Then Exit Do
+    rngWas = rng.Text
     DoEvents
   Loop
+  Debug.Print rng.start
   rng.MoveStart , 1
-
   myAddress = rng.Text
-  rng.Text = Replace(rng.Text, "https://", "")
-  rng.Text = Replace(rng.Text, "http://", "")
-  Set myLink = ActiveDocument.Hyperlinks.Add(Anchor:=rng, _
-        Address:=myAddress, TextToDisplay:=rng.Text)
-  rng.Start = myLink.Range.End
-  rng.End = ActiveDocument.Content.End
+  Debug.Print myAddress
+  If InStr(rng, "@") Or InStr(rng, "/") Or InStr(rng, "www") _
+       Or InStr(rng, "http") Then
+    If InStr(rng, "http") > 0 Then
+      rng.Text = Replace(rng.Text, "https://", "")
+      rng.Text = Replace(rng.Text, "http://", "")
+    End If
+    If InStr(rng, "@") > 0 Then
+      emailText = rng.Text
+      Set myLink = ActiveDocument.Hyperlinks.Add(Anchor:=rng, _
+            Address:="mailto:" & myAddress, TextToDisplay:=rng.Text)
+    Else
+      Set myLink = ActiveDocument.Hyperlinks.Add(Anchor:=rng, _
+            Address:=myAddress, TextToDisplay:=rng.Text)
+    End If
+    rng.start = myLink.Range.End
+    rng.Select
+    rng.Collapse wdCollapseStart
+  End If
+  rng.MoveStart , 10
+  rng.Collapse wdCollapseEnd
   rng.Find.Execute
   DoEvents
-  rng.Select
 Loop
 Selection.Collapse wdCollapseEnd
 Beep

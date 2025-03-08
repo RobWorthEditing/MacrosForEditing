@@ -1,0 +1,74 @@
+
+Sub TextHoover()
+' Paul Beverley - Version 13.07.24
+' Copies formatted text from all of the text areas
+
+' mainTextFirst = True
+mainTextFirst = False
+tidyFormatting = True
+
+timeNow = Timer
+Set sourceDoc = ActiveDocument
+Documents.Add
+
+'Iterate through all story types in the current document
+For Each rngStory In sourceDoc.StoryRanges
+  'Iterate through all linked stories
+  Do
+    If rngStory.StoryType <> wdMainTextStory Then
+      rngStory.Copy
+      Selection.Paste
+    End If
+    'Get next linked story (if any)
+    Set rngStory = rngStory.NextStoryRange
+  Loop Until rngStory Is Nothing
+  DoEvents
+Next
+
+' Add main story, but it brings text frames too
+Set rng = ActiveDocument.Content
+If mainTextFirst = True Then
+  rng.Collapse wdCollapseStart
+Else
+  rng.Collapse wdCollapseEnd
+End If
+rng.FormattedText = sourceDoc.Content.FormattedText
+
+' Delete the text frames
+numShapes = ActiveDocument.Shapes.Count
+For i = numShapes To 1 Step -1
+  ActiveDocument.Shapes(i).Delete
+Next i
+
+' Improve the formatting
+Set rng = ActiveDocument.Content
+If tidyFormatting = True Then
+  rng.ParagraphFormat.Alignment = wdAlignParagraphLeft
+  rng.PageSetup.TextColumns.SetCount NumColumns:=1
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = " ^p"
+    .Wrap = wdFindContinue
+    .Forward = True
+    .Replacement.Text = " "
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  
+    .Text = "-^p"
+    .Replacement.Text = "-"
+    .Execute Replace:=wdReplaceAll
+    
+    ' Turn white text black
+    .Text = ""
+    .Replacement.Text = "^&"
+    .Font.Color = wdColorWhite
+    .Replacement.Font.Color = wdColorBlack
+    .Execute Replace:=wdReplaceAll
+  End With
+End If
+MsgBox "Finished in " & Str(Int(Timer - timeNow)) & " secs"
+End Sub
+
+
+

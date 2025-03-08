@@ -1,0 +1,74 @@
+
+Sub NTFEconcord()
+' Paul Beverley - Version 22.02.25
+' Formats the BibleGateway results page held in the clipboard
+
+Set newDoc = Documents.Add
+Selection.Paste
+Selection.HomeKey Unit:=wdStory
+Set rng = newDoc.Content
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "Bible results for "
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+
+If rng.Find.Found = False Then
+  Beep
+  myResponse = MsgBox("Select and copy the NTFE web page", _
+       vbOKOnly, "NTFEformat")
+  newDoc.Close SaveChanges:=False
+  Exit Sub
+End If
+
+rng.Expand wdParagraph
+rng.Collapse wdCollapseStart
+rng.start = 0
+rng.Delete
+rng.Collapse wdCollapseStart
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "New Testament for Everyone"
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+  rng.Select
+  rng.Collapse wdCollapseEnd
+  .Execute
+  DoEvents
+End With
+rng.Select
+If rng.Find.Found Then
+  rng.Expand wdParagraph
+  rng.Collapse wdCollapseStart
+  rng.End = newDoc.Content.End
+  rng.Delete
+End If
+Set pa = newDoc.Paragraphs(1).Range
+pa.Text = "Results for " & pa.Words(6) & " (" & _
+     Trim(pa.Words(1)) & ")" & vbCr
+Selection.HomeKey Unit:=wdStory
+newDoc.Paragraphs(3).Range.Delete
+For i = 3 To newDoc.Paragraphs.count
+  Set pa = newDoc.Paragraphs(i).Range
+  numLinks = pa.Hyperlinks.count
+  Select Case numLinks
+    Case 0: pa.Font.Color = wdColorBlue
+    If InStr(myTest, ".") = 0 Then pa.Font.Color = wdColorBlue
+    Case 1: pa.Font.Bold = True
+    Case Else: pa.Font.Color = wdColorGray25
+  End Select
+Next i
+Beep
+End Sub
+

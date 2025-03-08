@@ -1,0 +1,450 @@
+
+Sub CitationAlyseAlpha()
+' Paul Beverley - Version 28.10.24
+' Checks citations against references
+
+myColour = wdBrightGreen
+myFontColour = wdColorBlue
+myDateColour = wdColorRed
+
+includeNotes = True
+
+notNames = "In From For Act Jan January Feb February "
+notNames = notNames & " Mar March Apr April NotMay June "
+notNames = notNames & " July Aug August Sept September Oct Initially "
+notNames = notNames & " October Nov November Dec December Finally "
+notNames = notNames & " Also As Conversely Correspondingly Consequently "
+notNames = notNames & " Equally Furthermore Lastly Moreover However "
+notNames = notNames & " Secondly Thirdly Similarly Additionally "
+
+CR = vbCr
+CR2 = CR & CR
+myScreenOff = False
+
+Dim myCol(4)
+myCol(0) = wdYellow
+myCol(1) = wdBrightGreen
+myCol(2) = wdRed
+myCol(3) = wdTurquoise
+myCol(4) = wdGray25
+
+' If text is selected, sort it
+If Selection.start <> Selection.End Then
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.Expand wdParagraph
+  Selection.start = rng.start
+  Set rng = Selection.Range.Duplicate
+  If Right(rng.Text, 1) <> vbCr Then
+    rng.Collapse wdCollapseEnd
+    rng.Expand wdParagraph
+    Selection.End = rng.End
+  End If
+  
+  myResponse = MsgBox("Sort selection by year?", vbQuestion _
+       + vbOK, "CitationAlyse")
+  If myResponse <> vbOK Then Exit Sub
+  If myScreenOff = True Then
+    Application.ScreenUpdating = False
+    On Error GoTo ReportIt
+  End If
+  Dim myPara As Paragraph
+  Set rng = Selection.Range.Duplicate
+  For Each myPara In rng.Paragraphs
+    myText = myPara.Range.Text
+    For i = 2 To Len(myText) - 3
+      myYearText = Mid(myText, i, 5)
+      If InStr("abcdefghijkl", Right(myYearText, 1)) = 0 Then _
+           myYearText = Left(myYearText, 4)
+      myYear = Val(myYearText)
+      If myYear > 1000 And Left(myYearText, 1) <> " " Then
+        myPara.Range.InsertBefore Text:="]" & myYearText & "["
+        Exit For
+      End If
+      DoEvents
+    Next i
+    DoEvents
+  Next myPara
+  Selection.Sort
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "\][0-9a-h]@\["
+    .Wrap = wdFindStop
+    .Forward = True
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+  Application.ScreenUpdating = True
+  Exit Sub
+End If
+
+' Main citation listing section
+Beep
+myResponse = MsgBox("Is the cursor placed in the first item" _
+     & CR2 & "of the references list?", vbQuestion _
+     + vbYesNoCancel, "CitationAlyse")
+If myResponse <> vbYes Then Exit Sub
+On Error GoTo ReportIt
+Application.ScreenUpdating = False
+
+' copy references right to the end
+Selection.Expand wdParagraph
+Selection.Collapse wdCollapseStart
+startRefs = Selection.start
+Set rngOld = ActiveDocument.Content
+rngOld.start = startRefs
+rngOld.Copy
+rngOld.Collapse wdCollapseStart
+rngOld.start = 0
+
+' create new file of the text (not refs) + notes
+Set mainDoc = ActiveDocument
+Documents.Add
+Selection.Text = rngOld.Text
+
+' Copy footnotes and endnotes, text only
+gotFoots = (mainDoc.Footnotes.Count > 0)
+gotEnds = (mainDoc.Endnotes.Count > 0)
+DoEvents
+
+If gotFoots = True And includeNotes = True Then
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText Text:=vbCr
+  Selection.Text = mainDoc.StoryRanges(wdFootnotesStory).Text
+End If
+If gotEnds = True And includeNotes = True Then
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText Text:=vbCr
+  Selection.Text = mainDoc.StoryRanges(wdEndnotesStory).Text
+End If
+DoEvents
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ",([0-9]{4})"
+  .Wrap = wdFindStop
+  .Replacement.Text = ", \1"
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[a-z] \([A-Z]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  endNow = rng.End
+  rng.MoveStart wdWord, -1
+  rng.MoveEnd wdCharacter, -1
+  rng.Select
+  rng.Text = LCase(rng.Text)
+  rng.MoveStart wdWord, -1
+  rng.Select
+  myMidWord = Left(rng, 3)
+  If myMidWord = "und" Or myMidWord = "and" Then
+    rng.MoveStart wdWord, -1
+    rng.Text = LCase(rng.Text)
+  End If
+  rng.Select
+  rng.start = endNow + 2
+  rng.End = endNow + 2
+  rng.Find.Execute
+  DoEvents
+Loop
+
+
+' Find and replace to create easy-to-search text
+myList = "#ü|uu#û|qcq#~<([A-Z]{2}).|\1# in press| 2999#/| #" & _
+     "~<([A-Z]).|\1#(| #)| #:| #;| #, | #" & _
+     "~<([A-Z])> ([A-Z])|\1ü\2#~<([A-Z]{2})> ([A-Z])|\1ü\2#" & _
+     "#.|ü#(|ü#)|ü#[|ü#]|ü#" & _
+     " et alii|üetüal# et al|üetüal# & |üandü# und |üandü#-|û#" & _
+     "~<de la |DeüLaü#~<De la |DeüLaü#~<De La |DeüLaü#" & _
+     " e |üeü# y |üyü#~<van |Vanü#~<de |Deü#" & _
+     " and |üandü#~<von |Vonü#~<van |Vanü#~<de |Deü#" & _
+     "~<El |Elü#~<del |Delü#~<Del |Delü#~<la |Laü#~<La |Laü#" & _
+     "~<le |Leü#~<di |Diü#~<dos |Dosü#~<la |Laü#~<le |Leü#" & _
+     "~<der |Derü#üvon |üVonü#üvan |üVanü#üde |üDeü#üder |üDerü#" & _
+     "üdi |üDiü#üdos |üDosü#üla |üLaü#üle |üLeü# ü| #ü | #" & _
+     "~([0-9])ü|\1 #~ü([0-9])| \1#  | #"
+
+FandR = Split(myList, "#")
+Set rng = ActiveDocument.Content
+For i = 1 To UBound(FandR)
+  myFR = FandR(i)
+  If Left(myFR, 1) <> ChrW(124) And _
+       InStr(myFR, ChrW(124)) > 0 Then
+    If Left(myFR, 1) = "~" Then
+      myWild = True
+      myFR = Mid(myFR, 2)
+    Else
+      myWild = False
+    End If
+    barpos = InStr(myFR, ChrW(124))
+    myFind = Left(myFR, barpos - 1)
+    myRep = Mid(myFR, barpos + 1)
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = myFind
+      .Wrap = wdFindContinue
+      .Forward = True
+      .Replacement.Text = myRep
+      .Replacement.Highlight = True
+      .MatchWildcards = myWild
+      .Execute Replace:=wdReplaceAll
+    End With
+    DoEvents
+  End If
+Next i
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[12][0-9]{3}[!0-9]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+' Find & Do to find all years
+Do While rng.Find.Found = True
+  myEnd = rng.End
+  myYear = Replace(rng, "ü", "")
+  myYear = Replace(myYear, ",", "")
+  myYear = Replace(myYear, ";", "")
+  myYear = Trim(myYear)
+  rng.Collapse wdCollapseStart
+  rng.MoveStart wdWord, -1
+  myInit = Left(rng, 1)
+  If UCase(myInit) <> myInit Or UCase(myInit) _
+       = LCase(myInit) Then GoTo getNext
+  wd1 = Trim(rng)
+  rng.Collapse wdCollapseStart
+  rng.MoveStart wdWord, -1
+  wd2 = Trim(rng)
+  myInit = Left(wd2, 1)
+  gotTwo = (UCase(myInit) = myInit) And _
+       (UCase(myInit) <> LCase(myInit))
+' Find surname one and add to citeList1
+  citeList1 = citeList1 & wd1 & " " & myYear & CR
+' Find surname two and add to citeList2
+  If gotTwo Then citeList2 = citeList2 & wd2 & _
+       " " & wd1 & " " & myYear & CR
+' Check if another date follows
+  rng.start = myEnd
+  rng.End = myEnd
+  Do
+    rng.MoveEnd wdWord, 1
+    If Len(rng) < 4 Then
+      rng.Collapse wdCollapseEnd
+      rng.MoveEnd wdWord, 1
+    End If
+    myYearNumber = Val(rng)
+    If Val(rng) > 1000 Then
+      myYear = Trim(rng)
+      citeList1 = citeList1 & wd1 & " " & myYear & CR
+      If gotTwo Then citeList2 = citeList2 & wd2 & _
+           " " & wd1 & " " & myYear & CR
+    End If
+    rng.MoveStart wdWord, 1
+    myEnd = rng.start
+    DoEvents
+  Loop Until myYearNumber < 1000
+getNext:
+  rng.start = myEnd
+  rng.End = myEnd
+  rng.Find.Execute
+Loop
+
+Set rng = ActiveDocument.Content
+rng.Delete
+Selection.TypeText Text:=citeList1
+myEnd = ActiveDocument.Content.End
+Selection.TypeText Text:=citeList2
+Set rng = ActiveDocument.Content
+rng.start = myEnd
+' rng.Font.Italic = True
+Set rng = ActiveDocument.Content
+rng.Font.Color = myFontColour
+
+' Change by F&R û to -, ü to space, uu to ü, qcq to û
+myList = "#ü| #uu|ü#û|-#qcq|û# 2999| in press#"
+
+FandR = Split(myList, "#")
+Set rng = ActiveDocument.Content
+For i = 1 To UBound(FandR)
+  myFR = FandR(i)
+  If Left(myFR, 1) <> ChrW(124) And _
+       InStr(myFR, ChrW(124)) > 0 Then
+    barpos = InStr(myFR, ChrW(124))
+    myFind = Left(myFR, barpos - 1)
+    myRep = Mid(myFR, barpos + 1)
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = myFind
+      .Wrap = wdFindContinue
+      .Forward = True
+      .Replacement.Text = myRep
+      .MatchWildcards = False
+      .Execute Replace:=wdReplaceAll
+    End With
+    DoEvents
+  End If
+Next i
+
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+
+' Remove duplicates
+numPars = ActiveDocument.Paragraphs.Count
+For j = numPars To 2 Step -1
+  Set rng1 = ActiveDocument.Paragraphs(j).Range
+  Set rng2 = ActiveDocument.Paragraphs(j - 1).Range
+  If rng1 = rng2 Then rng1.Delete
+  DoEvents
+Next j
+
+' Highlight multiple part citations
+numPars = ActiveDocument.Paragraphs.Count
+Set rng = ActiveDocument.Content
+allText = rng
+myStrike = False
+
+For i = 1 To numPars
+  myText = ActiveDocument.Paragraphs(i).Range.Text
+  numTimes = Len(Replace(allText, myText, myText & "!")) - Len(allText)
+  If numTimes > 1 And Len(myText) > 2 Then
+    addCol = Int(5 * Rnd())
+    baseCol = Int(5 * Rnd())
+    Set rng = ActiveDocument.Content
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = Replace(myText, vbCr, "")
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .MatchWildcards = False
+      .Execute
+      DoEvents
+    End With
+    Do While rng.Find.Found
+      rng.HighlightColorIndex = myCol(baseCol)
+      For j = 1 To rng.Characters.Count
+        If (j Mod 5) < 2 Then
+          rng.Characters(j).HighlightColorIndex = myCol(addCol)
+        End If
+      Next j
+      DoEvents
+      rng.Collapse wdCollapseEnd
+      rng.Find.Execute
+    Loop
+  End If
+  DoEvents
+Next i
+Options.DefaultHighlightColorIndex = oldColour
+
+Selection.EndKey Unit:=wdStory
+Selection.TypeText Text:=vbCr
+wasEnd = Selection.End
+Selection.Paste
+Set rng = ActiveDocument.Content
+rng.start = wasEnd
+rng.Fields.Unlink
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p "
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+' Add author name to "ditto" type references
+myPrevAuthor = ""
+For i = 1 To rng.Paragraphs.Count
+  Set myRef = rng.Paragraphs(i).Range
+  myWord = Trim(myRef.Words(1))
+  
+  If Len(myRef.Text) > 1 And Len(myWord) = 1 Then
+    myRef.Select
+    myWord = myRef.Words(2)
+  End If
+  mySample = Left(myRef.Text, 2)
+  If Len(myRef.Text) > 1 And LCase(mySample) = _
+       UCase(mySample) Then
+    myRef.Words(1) = myPrevAuthor & " "
+  Else
+    myPrevAuthor = myWord
+  End If
+  DoEvents
+Next i
+
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+DoEvents
+
+Set rng = ActiveDocument.Content
+rng.InsertAfter Text:=CR2
+Set rng = ActiveDocument.Content
+
+With rng.ParagraphFormat
+  .LineSpacingRule = wdLineSpaceSingle
+  .SpaceBefore = 12
+  .LeftIndent = CentimetersToPoints(2.5)
+  .FirstLineIndent = CentimetersToPoints(-2.5)
+End With
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+' Do F&R
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[0-9]{4}>"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Options.DefaultHighlightColorIndex = oldColour
+
+Beep
+Application.ScreenUpdating = True
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+
+
+

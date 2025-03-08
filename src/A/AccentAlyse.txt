@@ -1,18 +1,29 @@
+
 Sub AccentAlyse()
-' Paul Beverley - Version 06.02.20
-' Analyses all the words that contain an accent
-
-' These are the accents to watch out for
-allAccents = "áÁàÀâÂäÄÃãÅåçÇéÉèÈêÊëËíÍìÌîÎñÑóÓòÒôÔöÖõÕøØßúÚùÙûÛüÜýÝÿŸ"
-
-' For including 'Central European' characters
-addExtraCharacters = True
-fromUnicode = 256
-toUnicode = 382
+' Paul Beverley - Version 03.03.25
+' Analyses all the words that contain accents
 
 ' Minimum word length
 minLength = 3
 
+myLead = " . . . "
+' For including 'Central European' characters
+addExtraCharacters = True
+fromUnicode = 256
+toUnicode = 385
+
+' These are the accents to watch out for
+allAccents = ""
+For i = 192 To 214
+  allAccents = allAccents & ChrW(i)
+Next i
+For i = 216 To 246
+  allAccents = allAccents & ChrW(i)
+Next i
+For i = 248 To 255
+  allAccents = allAccents & ChrW(i)
+Next i
+CR = vbCr: CR2 = CR & CR
 Set FUT = ActiveDocument
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
 If doingSeveralMacros = False Then
@@ -28,178 +39,208 @@ If addExtraCharacters = True Then
 End If
 
 myLead = " . . . "
-Set rng = ActiveDocument.Content
-Documents.Add
-Set resultDoc = ActiveDocument
-Set res = ActiveDocument.Content
-Documents.Add
-Set testDoc = ActiveDocument
-Selection.Text = rng.Text
-Selection.HomeKey Unit:=wdStory
-Selection.TypeText "Finding accented words..." & vbCr _
-     & vbCr & vbCr
-Selection.Start = 0
-Selection.range.Style = ActiveDocument.Styles(wdStyleHeading1)
-Selection.Font.Underline = True
-
+Set rngOld = FUT.Content
+Set testDoc = Documents.Add
 Set rng = testDoc.Content
+rng.Text = rngOld.Text
+For i = 1 To 10
+  DoEvents
+Next i
+rng.Collapse wdCollapseEnd
+numFoots = FUT.Footnotes.Count
+If numFoots > 0 Then
+  rng.Text = FUT.StoryRanges(wdFootnotesStory)
+  rng.Collapse wdCollapseEnd
+End If
+numEnds = FUT.Endnotes.Count
+If numEnds > 0 Then
+  rng.Text = FUT.StoryRanges(wdEndnotesStory)
+  rng.Collapse wdCollapseEnd
+End If
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[" & ChrW(8217) & "']"
+  .Wrap = wdFindContinue
+  .Replacement.Text = " "
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+End With
+
+Set rsltDoc = Documents.Add
+Set rsltRng = rsltDoc.Content
+rsltRng.Text = testDoc.Content.Text
+For i = 1 To 10
+  DoEvents
+Next i
+Set rng = testDoc.Content
+
+rng.Font.color = wdColorAutomatic
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "[" & allAccents & "]"
-  .Font.Underline = False
-  .Wrap = wdFindStop
-  .Replacement.Text = ""
-  .Forward = True
+  .Replacement.Text = "^&"
+  .Replacement.Font.color = wdColorRed
   .MatchWildcards = True
-  .Execute
-End With
+  .Execute Replace:=wdReplaceAll
 
-Do While rng.Find.Found = True
-  DoEvents
-  rng.Expand wdWord
-  myEnd = rng.End
-  If InStr(" " & ChrW(8217), Right(rng.Text, 1)) _
-       > 0 Then rng.End = rng.End - 1
-  If InStr(" " & ChrW(8217), Right(rng.Text, 1)) _
-       > 0 Then rng.End = rng.End - 1
-  myAccWord = rng.Text
-  If Len(myAccWord) >= minLength Then
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[a-zA-Z0-9]@>"
+  .Font.color = wdColorAutomatic
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[!a-zA-Z0-9]@"
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[^13]{1,}"
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.color = wdColorRed
+  .Replacement.Text = "[^&]"
+  .Execute Replace:=wdReplaceAll
+End With
+If rng.Paragraphs(1).Range = CR Then _
+     rng.Paragraphs(1).Range.Delete
+
+allWords = CR
+Dim wrd(5) As String
+Dim num(5) As Integer
+Dim schWd(2) As String
+
+For Each pa In rng.Paragraphs
+  wd = pa
+  If InStr(allWords, CR & wd & CR) = 0 And Len(wd) > minLength + 2 Then
+    allWords = allWords & wd & CR
+  End If
+Next pa
+rng.Text = Replace(allWords, CR2, CR)
+rng.Sort
+rng.InsertAfter Text:=CR
+If rng.Paragraphs(1) = CR Then rng.Paragraphs(1) = ""
+If rng.Paragraphs(1) = CR Then rng.Paragraphs(1) = ""
+
+For Each pa In rng.Paragraphs
+  wd = Replace(pa, vbCr, "")
+  If Len(wd) - Len(Replace(wd, "[", "")) = 2 Then
+    sqPos1 = InStr(wd, "[")
+    sqPos2 = InStrRev(wd, "[")
+    schWd(1) = Left(wd, sqPos1 - 1) & "[^?]" & Mid(wd, sqPos1 + 3, sqPos2 - sqPos1 - 3) & "^?" & Mid(wd, sqPos2 + 3)
+    schWd(2) = Left(wd, sqPos1 - 1) & "^?" & Mid(wd, sqPos1 + 3, sqPos2 - sqPos1 - 3) & "[^?]" & Mid(wd, sqPos2 + 3)
     Set rng2 = testDoc.Content
-    myTot = rng2.End
-    DoEvents
-    With rng2.Find
-      .ClearFormatting
-      .Replacement.ClearFormatting
-      .Text = myAccWord
-      .Wrap = wdFindContinue
-      .MatchWholeWord = True
-      .Replacement.Text = "^&!"
-      .MatchWildcards = False
-      .Execute Replace:=wdReplaceAll
-    End With
-    myCount = testDoc.Content.End - myTot
-    WordBasic.EditUndo
-    DoEvents
-    Selection.End = 0
-    With rng2.Find
-      .Replacement.Text = "^&"
-      .Replacement.Font.Underline = True
-      .MatchWholeWord = True
-      .MatchWildcards = False
-      .Execute Replace:=wdReplaceAll
-    End With
-    DoEvents
-    
-    ' Find an accent-different word
-    findWord = ""
-    myAltWord = ""
-    For i = 1 To Len(myAccWord)
-      myChar = Mid(myAccWord, i, 1)
-      If InStr(allAccents, myChar) > 0 Then
-        findWord = findWord & "^$"
-      Else
-        findWord = findWord & myChar
-      End If
-    Next i
-    testDoc.Content.Font.StrikeThrough = False
-    With rng2.Find
-      .ClearFormatting
-      .Replacement.ClearFormatting
-      .Text = findWord
-      .Font.Underline = False
-      .Font.StrikeThrough = False
-      .Wrap = wdFindStop
-      .Replacement.Text = ""
-      .Forward = True
-      .MatchWildcards = False
-      .Execute
-    End With
-    Do While rng2.Find.Found = True
-      DoEvents
-      myAltWord = rng2.Text
-      Set rng3 = testDoc.Content
-      myTot = rng3.End
-      With rng3.Find
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Text = myAltWord
-        .Font.Underline = False
-        .Wrap = wdFindContinue
-        .MatchWholeWord = True
-        .Replacement.Text = "^&!"
-        .MatchWildcards = False
-        .Execute Replace:=wdReplaceAll
-      End With
-      DoEvents
-      myAltCount = testDoc.Content.End - myTot
-      WordBasic.EditUndo
-      DoEvents
-      Selection.End = 0
-      DoEvents
-      With rng3.Find
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Replacement.Text = "^&"
-        .Replacement.Font.StrikeThrough = True
-        .MatchWholeWord = True
-        .MatchWildcards = False
-        .Execute Replace:=wdReplaceAll
-      End With
-      DoEvents
-      
-      If InStr(res.Text, myAltWord & myLead) = 0 Then
-        myLine = myAltWord & myLead & Trim(Str(myAltCount)) & vbCr
-        res.InsertAfter myLine
-        ActiveDocument.Paragraphs(2).range.Text = myLine
-        ActiveDocument.Paragraphs(2).range.Font.StrikeThrough = True
-      End If
-      rng2.Start = myEnd
+    For i = 1 To 2
       With rng2.Find
         .ClearFormatting
         .Replacement.ClearFormatting
-        .Text = findWord
-        .Font.Underline = False
-        .Font.StrikeThrough = False
-        .Wrap = wdFindStop
-        .Replacement.Text = ""
+        .Text = schWd(i) & "^p"
+        .Wrap = wdFindContinue
+        .Replacement.Text = "^p"
         .Forward = True
         .MatchWildcards = False
-        .Execute
+        .MatchWholeWord = False
+        .Execute Replace:=wdReplaceAll
       End With
-    Loop
-    If myAltWord > "" Then
-      myLine = myAccWord & myLead & Trim(Str(myCount)) & vbCr
-      res.InsertAfter myLine
-      ActiveDocument.Paragraphs(1).range.Text = myLine
-    End If
+    Next i
   End If
-  rng.Start = myEnd
-  With rng.Find
-    .ClearFormatting
-    .Replacement.ClearFormatting
-    .Text = "[" & allAccents & "]"
-    .Font.Underline = False
-    .Wrap = wdFindStop
-    .Replacement.Text = ""
-    .Forward = True
-    .MatchWildcards = True
-    .Execute
-  End With
+Next pa
+
+DoEvents
+allWords = Replace(CR & rng.Text & CR, CR2, CR)
+allWords = Replace(allWords, CR2, CR)
+allWords = Left(allWords, Len(allWords) - 1)
+sqPos = InStr(allWords, "[")
+Do While sqPos > 0
+  allWords = Left(allWords, sqPos - 1) & "?" & Mid(allWords, sqPos + 3)
+  sqPos = InStr(allWords, "[")
 Loop
+allWords = allWords
+DoEvents
 
-testDoc.Close SaveChanges:=False
-resultDoc.Activate
-Set rng = ActiveDocument.Content
-rng.Sort SortOrder:=wdSortOrderAscending
+myWord = Split(allWords, CR)
 
+'Copy all the text back into the test doc
+rng.Text = rsltDoc.Content.Text
+rsltDoc.Content.Text = ""
+
+wdsDone = "!"
+For i = 1 To UBound(myWord)
+  If InStr(wdsDone, "!" & myWord(i) & "!") = 0 Then
+    wdsDone = wdsDone & myWord(i) & "!"
+    Set rng = testDoc.Content
+    StatusBar = "Counting words...  " & myWord(i)
+    For n = 1 To 5
+      wrd(n) = ""
+      num(n) = 0
+    Next n
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "<" & myWord(i) & ">"
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = True
+      .MatchWholeWord = False
+      .Execute
+    End With
+    
+    Do While rng.Find.Found = True
+      fndWd = rng.Text
+      gotThis = False
+      For n = 1 To 5
+        If wrd(n) = fndWd Then
+          num(n) = num(n) + 1
+          gotThis = True
+        End If
+      Next n
+      If gotThis = False Then
+        For n = 1 To 5
+          If wrd(n) = "" Then
+            wrd(n) = fndWd
+            num(n) = 1
+            Exit For
+          End If
+        Next n
+      End If
+      rng.Collapse wdCollapseEnd
+      
+    ' Go and find the next occurrence (if there is one)
+      rng.Find.Execute
+      DoEvents
+    Loop
+    For n = 1 To 5
+      If wrd(n) = "" Then
+        Exit For
+      Else
+        Selection.TypeText Text:=wrd(n) & myLead & Trim(Str(num(n))) & CR
+      End If
+    Next n
+    Selection.TypeText Text:=CR
+    DoEvents
+  End If
+Next i
+Set rng = rsltDoc.Content
+rng.InsertBefore Text:="AccentAlyse report" & CR2
+rng.Paragraphs(1).Range.Style = "Heading 1"
 Selection.HomeKey Unit:=wdStory
-Selection.TypeText "Accent Use" & vbCr
-ActiveDocument.Paragraphs(1).Style = ActiveDocument.Styles(wdStyleHeading1)
-If doingSeveralMacros = False Then
-  Beep
-Else
-  FUT.Activate
-End If
+testDoc.Close SaveChanges:=False
+rsltDoc.Activate
+Beep
 End Sub
+
+
+
+
 

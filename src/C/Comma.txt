@@ -1,50 +1,63 @@
+
 Sub Comma()
-' Paul Beverley - Version 23.01.23
-' Make adjacent words into comma separated
+' Paul Beverley - Version 30.12.24
+' Make adjacent words into comma-separated
 
 newBit = ", "
 myQuotes = Chr(34) & Chr(39) & ChrW(8220) & ChrW(8216)
-Selection.Collapse wdCollapseEnd
-While (LCase(Selection) <> UCase(Selection))
-  Selection.MoveRight 1
-  DoEvents
-Wend
-myStart = Selection.Start
+oldBits = ";:.,!?" & ChrW(8211) & ChrW(8212)
+Set rng = Selection.Range.Duplicate
+rng.MoveEnd , 50
+For i = 1 To rng.Characters.count
+  If InStr(oldBits, rng.Characters(i)) > 0 Then Exit For
+Next i
+If i > 50 Then
+  Beep
+  MsgBox "No relevant punctuation found."
+  Exit Sub
+End If
+rng.Characters(i).Select
+Selection.Collapse wdCollapseStart
+If i > 1 Then
+  If rng.Characters(i - 1) = " " Then _
+       rng.Characters(i - 1).Delete
+End If
+myStart = Selection.start
 If Selection = ChrW(8217) Then myStart = myStart + 1
 Do
   Selection.MoveRight 1
   DoEvents
-  If Selection.Start = ActiveDocument.Content.End - 1 _
+  If Selection.start = ActiveDocument.Content.End - 1 _
      Then Beep: Exit Sub
 Loop Until LCase(Selection) <> UCase(Selection) Or Asc(Selection) = 1
-myEnd = Selection.Start
+myEnd = Selection.start
 Set rng = ActiveDocument.Content
 rng.End = myEnd
-rng.Start = myStart
+rng.start = myStart
 wasMiddle = rng
 lastChar = Right(rng, 1)
 If LCase(Selection) <> Selection Then
 ' It needs lowercasing
-  Selection.Start = Selection.Start - 1
+  Selection.start = Selection.start - 1
   preChar = Selection
   Selection.MoveStart 1
   Selection.MoveEnd 1
   newLetter = LCase(Selection)
   If InStr(myQuotes, preChar) > 0 Then
     Selection.Delete
-    Selection.TypeText Text:=newLetter
+    Selection.TypeText newLetter
     Selection.End = myEnd - 1
   Else
     newBit = newBit & newLetter
   End If
-  Selection.Start = myStart
+  Selection.start = myStart
 Else
   If lastChar = " " And Len(rng) > 1 Then newBit = Trim(newBit)
   Selection.MoveLeft 1
 End If
-Selection.Start = myStart
+Selection.start = myStart
 Selection.Delete
-Selection.TypeText Text:=newBit
-Selection.MoveRight Count:=2
+Selection.TypeText newBit
+Selection.MoveRight count:=1
 End Sub
 

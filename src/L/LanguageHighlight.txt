@@ -1,15 +1,29 @@
+
 Sub LanguageHighlight()
-' Paul Beverley - Version 05.12.11
-' Highlight all text not in main language
+' Paul Beverley - Version 11.02.25
+' Highlights all text NOT in this language
 
-myColour = wdGray25
+' Some colours you might use:
+myColour = wdGray50
+' myColour = wdGray25
+' myColour = wdyellow
 
-mainLanguage = Selection.LanguageID
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+rng.MoveEnd , 1
+myLanguage = rng.LanguageID
+langName = Languages(myLanguage).NameLocal
+CR = vbCr
+CR2 = CR & CR
+myResponse = MsgBox("Highlight all text NOT in this language?" & CR2 & _
+     "          " & langName, vbQuestion + vbYesNo, "LanguageHighlight")
+If myResponse <> vbYes Then Exit Sub
+
 For Each myPara In ActiveDocument.Paragraphs
-  If myPara.Range.LanguageID <> mainLanguage Then
+  If myPara.Range.LanguageID <> myLanguage Then
     If myPara.Range.LanguageID = 9999999 Then
       For Each myWord In myPara.Range.Words
-        If myWord.LanguageID <> mainLanguage Then
+        If myWord.LanguageID <> myLanguage Then
           myWord.HighlightColorIndex = myColour
         End If
       Next myWord

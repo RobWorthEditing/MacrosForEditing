@@ -1,10 +1,33 @@
 Sub GoogleFetchNL()
-' Paul Beverley - Version 08.08.20
+' Paul Beverley - Version 02.05.22
 ' Launches selected text on GoogleNL
 
 mySite = "http://www.google.nl/search?q="
 
-If Len(Selection) = 1 Then Selection.Expand wdWord
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  If Len(Selection) < 3 Then
+    Selection.Collapse wdCollapseStart
+    Selection.MoveLeft , 1
+    Selection.Expand wdWord
+  End If
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.Start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Start = startNow
+End If
+
 mySubject = Trim(Selection)
 mySubject = Replace(mySubject, " ", "+")
 mySubject = Replace(mySubject, "&", "%26")

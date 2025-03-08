@@ -1,5 +1,6 @@
+
 Sub HighlightYellow()
-' Paul Beverley - Version 15.03.24
+' Paul Beverley - Version 11.11.24
 ' Highlights the selected text (or a word or a paragraph)
 
 defaultSelect = "word"
@@ -15,6 +16,7 @@ myColour = wdYellow
 ' myColour = wdGray50
 ' myColour = wdGray25
 
+If Selection.start = Selection.End Then
   If defaultSelect = "para" Then
     Selection.Expand wdParagraph
   Else
@@ -36,7 +38,7 @@ Else
     Selection.Collapse wdCollapseStart
     Selection.Expand wdWord
     Selection.Collapse wdCollapseStart
-    rng.Start = Selection.Start
+    rng.start = Selection.start
     rng.Select
   End If
 End If

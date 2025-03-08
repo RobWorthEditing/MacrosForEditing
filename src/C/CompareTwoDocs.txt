@@ -1,0 +1,56 @@
+
+Sub CompareTwoDocs()
+' Paul Beverley - Version 03.02.25
+' Creates a really instant comparison of two open Word files
+
+
+' doShowPrompt = True
+doShowPrompt = False
+
+' showDetail = wdGranularityCharLevel
+showDetail = wdGranularityWordLevel
+
+' checkFormatting = False
+checkFormatting = True
+
+checkSpaces = False
+' checkSpaces = True
+
+' checkCase = False
+checkCase = True
+
+checkTables = True
+' checkTables = False
+
+showMoves = False
+' showMoves = True
+
+Set beforeDoc = ActiveDocument
+nameA = Replace(beforeDoc.Name, ".docx", "")
+If doShowPrompt = True Then
+  myResponse = MsgBox("Click in file to compare with > " & nameA & " <", _
+       vbQuestion + vbInformation, "CompareTwoDocs")
+End If
+t = Timer
+Do
+  newName = Replace(ActiveDocument.Name, ".docx", "")
+  DoEvents
+Loop Until newName <> nameA Or (Timer - t) > 5
+If newName = nameA Then
+  Beep
+  MsgBox "Too slow! Run it again.", vbInformation
+  Exit Sub
+End If
+Set afterDoc = ActiveDocument
+Application.CompareDocuments _
+     OriginalDocument:=beforeDoc, _
+     RevisedDocument:=afterDoc, _
+     Destination:=wdCompareDestinationNew, _
+     Granularity:=showDetail, _
+     CompareFormatting:=checkFormatting, _
+     CompareCaseChanges:=checkCase, _
+     CompareWhitespace:=checkSpaces, _
+     Comparetables:=checkTables, _
+     CompareMoves:=showMoves
+End Sub
+

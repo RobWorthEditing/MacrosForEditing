@@ -10,6 +10,11 @@ myWait2 = 2.5
 
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord
+  If Len(Selection) < 3 Then
+    Selection.Collapse wdCollapseStart
+    Selection.MoveLeft , 1
+    Selection.Expand wdWord
+  End If
   Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
     Selection.MoveEnd , -1
     DoEvents

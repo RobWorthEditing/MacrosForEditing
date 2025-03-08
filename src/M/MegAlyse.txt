@@ -80,7 +80,7 @@ myAlyses = Replace("," & myAlyses & ",", ",,", ",")
 myAlyses = Replace(myAlyses, " ", "")
 thisArray = Split(myAlyses, ",")
 For i = 1 To UBound(thisArray) - 1
-  rprt = thisArray(i) & " started?????: " & Left(Time, 5) & vbCr
+  rprt = thisArray(i) & " started about: " & Left(Time, 5) & vbCr
   Debug.Print rprt
   Application.Run MacroName:=thisArray(i)
   DoEvents

@@ -1,0 +1,113 @@
+
+Sub MultiFileOpener()
+' Paul Beverley - Version 19.02.25
+' Opens a set of files from a folder
+
+myLeft = 1440
+myTop = 0
+myWidth = 1130
+myHeight = 800
+myZoom = 200
+  Application.ActiveWindow.View.Zoom.Percentage = myZoom
+Dim allMyFiles2(200) As String
+Set rng = ActiveDocument.Content
+myExtent = 250
+
+' First find if this is a Mac or a PC!
+myFullName = ActiveDocument.FullName
+myName = ActiveDocument.Name
+myFolder = Replace(myFullName, myName, "")
+myDelimiter = Application.PathSeparator
+If myDelimiter = "/" Then
+  InAMac = True
+Else
+  InAMac = False
+End If
+
+If rng.End - rng.start > myExtent Then rng.End = rng.start + myExtent
+If InStr(LCase(rng.Text), ".doc") = 0 _
+     And InStr(LCase(rng.Text), ".rtf") = 0 _
+     And InStr(LCase(rng.Text), ".pdf") = 0 Then
+' If not a file list then navigate to the required folder
+  If remindAboutCancel = True Then myResponse = _
+       MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "MultiFileLoader")
+  docCount = Documents.count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & myDelimiter)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or _
+         InStr(LCase(myFile), ".rtf") > 0 Or _
+         InStr(LCase(myFile), ".pdf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=myDelimiter, count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+
+  myResponse = MsgBox("Collect unformatted text from ALL the files in" & _
+       " directory: " & dirName & "?", vbQuestion + vbYesNoCancel, _
+       "MultiFileLoader")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.Range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=myDelimiter, count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Left(thisFile, 1) = "#" Then Exit For
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "=" Then
+        numFiles = numFiles + 1
+        allMyFiles2(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+For i = 1 To numFiles
+' Get the folder name, and open the file
+  StatusBar = allMyFiles2(i)
+  thisFile = myFolder & myDelimiter & allMyFiles2(i)
+  Set myDoc = Application.Documents.Open(fileName:=thisFile)
+  With Application.ActiveWindow
+    .WindowState = wdWindowStateNormal
+    .Top = myTop
+    .Left = myLeft
+    .Width = myWidth
+    .Height = myHeight
+    .View.Zoom.Percentage = myZoom
+  End With
+Next i
+End Sub
+

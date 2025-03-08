@@ -1,0 +1,48 @@
+
+Sub TextPickup()
+' Paul Beverley - Version 06.07.24
+' Collects text from a series of text areas
+
+maxWords = 1000
+beepTime = 3
+
+Set rng = Selection.Range.Duplicate
+CR = vbCr
+nameNow = ActiveDocument.Name
+Set myDoc = ActiveDocument
+Do
+  DoEvents
+Loop Until ActiveDocument.Name <> nameNow
+
+Do
+  Selection.WholeStory
+  If Selection.Words.Count > maxWords Then
+    myResponse = MsgBox("Add this large area of text?", _
+         vbQuestion + vbYesNo, "Text Pickup")
+    If myResponse <> vbYes Then Exit Sub
+  End If
+  Selection.Copy
+  rng.Paste
+  If Right(rng, 2) = " " & CR Or Right(rng, 2) = "-" & CR Then
+    rng.start = rng.End - 1
+    rng.Delete
+  End If
+  rng.Collapse wdCollapseEnd
+  myTime = Timer
+  Do
+    DoEvents
+    If Timer - myTime > beepTime Then
+      Beep
+      myTime = Timer
+      StatusBar = "Press up-arrow key to stop"
+    End If
+  Loop Until Selection.start = Selection.End
+  DoEvents
+Loop Until Selection.End = 0
+MsgBox "Finished by user"
+End Sub
+
+
+
+
+

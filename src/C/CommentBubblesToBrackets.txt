@@ -1,27 +1,47 @@
+
 Sub CommentBubblesToBrackets()
-' Paul Beverley - Version 26.05.18
+' Paul Beverley - Version 10.08.24
 ' Copies comments into brackets in running text
 
-addBold = True
-addHighlight = True
-myColour = wdBrightGreen
-removeComments = True
+addBold = False
+highlightComment = True
+colourComment = wdColorBlue
 
-For Each cmt In ActiveDocument.Comments
-  Set rng = cmt.Scope
-  cmt.range.Copy
-  rng.Start = rng.Start + Len(rng.Text)
-  myStart = rng.Start
-  rng.InsertAfter Text:="["
-  rng.Collapse wdCollapseEnd
-  rng.Paste
-  rng.InsertAfter Text:="]"
-  rng.Start = myStart
-  If addBold = True Then rng.Font.Bold = True
-  If addHighlight = True Then rng.HighlightColorIndex = myColour
-Next cmt
-If removeComments = True Then
-  ActiveDocument.DeleteAllComments
-End If
+highlightRange = True
+colourRange = wdYellow
+
+removeComments = True
+numCmts = ActiveDocument.Comments.Count
+ReDim rStart(numCmts) As Long
+ReDim rEnd(numCmts) As Long
+
+For i = 1 To numCmts
+  Set myCmt = ActiveDocument.Comments(i)
+  myCmt.Range.Copy
+  Set cmnt = myCmt.Scope
+  rStart(i) = cmnt.start
+  rEnd(i) = cmnt.End
+  cmnt.start = cmnt.start + Len(cmnt.Text)
+  myStart = cmnt.start
+  cmnt.InsertAfter Text:=" []"
+  cmnt.Collapse wdCollapseEnd
+  cmnt.MoveEnd , -1
+  cmnt.Paste
+  cmnt.start = myStart
+  If addBold = True Then cmnt.Font.Bold = True
+  If highlightComment Then
+    cmnt.MoveStart , 2
+    cmnt.Font.Color = colourComment
+  End If
+Next i
+If removeComments = True Then ActiveDocument.DeleteAllComments
+Set rng = ActiveDocument.Content
+nudge = 0
+For i = 1 To numCmts
+  rng.start = rStart(i) - nudge
+  rng.End = rEnd(i) - nudge
+  rng.HighlightColorIndex = colourRange
+  nudge = nudge + 1
+Next i
 End Sub
 

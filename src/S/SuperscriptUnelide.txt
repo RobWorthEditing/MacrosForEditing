@@ -1,0 +1,39 @@
+
+Sub SuperscriptUnelide()
+' Paul Beverley - Version 25.02.25
+' Finds any superscripted number ranges and unelides them
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Superscript = True
+  .Wrap = wdFindStop
+  .Forward = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  hyphPos = InStr(rng, "-")
+  If hyphPos = 0 Then hyphPos = InStr(rng, ChrW(8211))
+  numOne = Val(rng)
+  If hyphPos > 0 And numOne > 0 Then
+    myCount = myCount + 1
+    rng.Select
+    numTwo = Val(Mid(rng, hyphPos + 1))
+    myNums = ""
+    For i = numOne To numTwo
+      myNums = myNums & Trim(Str(i)) & ","
+    Next i
+    myNums = Left(myNums, Len(myNums) - 1)
+    rng.Text = myNums
+    rng.Collapse wdCollapseEnd
+  End If
+  rng.Find.Execute
+  DoEvents
+Loop
+MsgBox "Changed: " & myCount
+End Sub
+

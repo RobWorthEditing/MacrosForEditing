@@ -1,63 +1,86 @@
+
 Sub TitlesReveal()
-' Paul Beverley - Version 13.04.24
+' Paul Beverley - Version 25.09.24
 ' Switches the next light grey font colour to full colour
+
+
+' PB blue
+myColorBlue = &HFF0000
+' JY blue
+myColorBlue = &HF0B000
 
 preBlue = &HF6F6F6
 preRed = &HF4F4F4
 preBlack = &HF5F5F5
 
+Set docNow = ActiveDocument
 pbTitlesFile.Activate
-myMix = 9999999
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
-Do
-  Selection.Expand wdParagraph
-  ln = Len(Selection)
-  Selection.Collapse wdCollapseEnd
-  DoEvents
-  If Selection.Start = ActiveDocument.Content.End Then
-    Beep
-    Exit Sub
-  End If
-Loop Until ln > 1
-Selection.MoveUp wdParagraph, 1
-Selection.MoveEnd , 1
-nowCol = Selection.Font.Color
+stopNow = False
+doneSome = False
 Set rng = Selection.Range.Duplicate
-strt = rng.Start
-i = 1
-If nowCol <> preBlue And nowCol <> preRed _
-     And nowCol <> preBlack Then
+rng.Expand wdParagraph
+rng.Collapse wdCollapseStart
+Do While stopNow = False And doneSome = False
   Do
-    i = i + 1
-    rng.Start = strt + i
-    rng.End = strt + i + 1
-    If i > 500 Then
-      MsgBox "Can't find anything to reveal!"
+    rng.Collapse wdCollapseEnd
+    rng.Expand wdParagraph
+    ln = Len(rng)
+    DoEvents
+    If rng.start = ActiveDocument.Content.End Then
+      Beep
       Exit Sub
     End If
     DoEvents
-  Loop Until rng.Font.Color = preBlue _
-       Or rng.Font.Color = preRed _
-       Or rng.Font.Color = preBlack _
-       Or rng.End > ActiveDocument.Content.End - 10
+  Loop Until ln > 1 And Asc(rng) <> 12
+  gotBox = False
+  rng.Select
+  Selection.Collapse wdCollapseStart
+  
+  For Each wd In rng.Words
+    newColor = 99
+    myColour = wd.Font.Color
+    If myColour = 9999999 Then
+      For Each ch In wd.Characters
+        myColour = ch.Font.Color
+        Select Case myColour
+          Case preBlue: newColor = myColorBlue
+          Case preRed: newColor = wdColorRed
+          Case preBlack: newColor = wdColorBlack
+        End Select
+        If newColor <> 99 Then
+          ch.Font.Color = newColor
+          doneSome = True
+        End If
+      Next ch
+    Else
+      Select Case myColour
+        Case preBlue: newColor = myColorBlue
+        Case preRed: newColor = wdColorRed
+        Case preBlack: newColor = wdColorBlack
+      End Select
+      If newColor <> 99 Then
+        wd.Font.Color = newColor
+        doneSome = True
+      End If
+    End If
+    stopMiddle = (AscW(Right(wd, 1)) = 160 Or Asc(wd) = 11)
+    If doneSome = True And (stopMiddle Or wd = vbCr) Then
+      stopNow = True
+      Exit For
+    End If
+  Next wd
+  DoEvents
+Loop
+If stopMiddle Then
+  wd.Select
+Else
+  rng.Select
 End If
-rng.Select
-Selection.MoveEndUntil cset:=vbCr & ChrW(160), Count:=wdForward
-
-Set rng = Selection.Range.Duplicate
-For i = 1 To Len(Selection)
-  rng.End = Selection.Start + i
-  rng.Start = rng.End - 1
-  Select Case rng.Font.Color
-    Case preBlue: rng.Font.Color = wdColorBlue
-    Case preRed: rng.Font.Color = wdColorRed
-    Case preBlack: rng.Font.Color = wdColorBlack
-  End Select
-Next i
 Selection.Collapse wdCollapseEnd
-If Selection.Text = vbCr Then Selection.MoveRight , 1
 ActiveDocument.TrackRevisions = myTrack
+docNow.Activate
 End Sub
 

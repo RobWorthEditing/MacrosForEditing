@@ -224,7 +224,6 @@ End With
 Selection.WholeStory
 Selection.MoveEnd , -1
 Selection.ConvertToTable Separator:=wdSeparateByTabs
-Selection.Tables(1).Style = "Table Grid"
 Selection.Tables(1).AutoFitBehavior (wdAutoFitContent)
 Selection.Tables(1).Borders(wdBorderTop).LineStyle = wdLineStyleNone
 Selection.Tables(1).Borders(wdBorderLeft).LineStyle = wdLineStyleNone

@@ -1,16 +1,23 @@
+
 Sub ParaSplitJoin()
-' Paul Beverley - Version 13.09.19
-' Splits the para after current word or joins to next para
+' Paul Beverley - Version 04.12.24
+' Splits the para after current sentence or joins to next para
 
-Selection.MoveEndUntil cset:=" " & Chr(13), Count:=wdForward
-Selection.MoveEnd , 1
-Selection.Start = Selection.End - 1
-If Selection = " " Then
-  Selection.Text = Chr(13)
+addBlankLine = False
+' addBlankLine = True
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdSentence
+CR = vbCr
+If addBlankLine = True Then CR = CR & CR
+
+If Right(rng.Text, 1) = " " Then
+  rng.start = rng.End - 1
+  rng.Text = CR
 Else
-  Selection.Text = " "
+  rng.start = rng.End - 2
+  If Left(rng.Text, 1) <> vbCr Then rng.MoveStart , 1
+  rng.Text = " "
 End If
-Selection.Collapse wdCollapseEnd
 End Sub
-
 

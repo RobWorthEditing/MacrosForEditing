@@ -1,0 +1,173 @@
+
+Sub ItalicAlyse()
+' Paul Beverley - Version 29.01.25
+' Creates a frequency list of words in italic (or not)
+
+caseSensitive = True
+
+Application.ScreenUpdating = True
+strttime = Timer
+Set testDoc = ActiveDocument
+Set rngOld = testDoc.Content
+Set copyDoc = Documents.Add
+Set rng = copyDoc.Content
+rng.FormattedText = rngOld.FormattedText
+ActiveDocument.Fields.Unlink
+myTot = copyDoc.Paragraphs.count
+myMax = 100 * Int(myTot / 100)
+For i = 1 To 80
+  mySpaces = mySpaces & " "
+Next i
+For i = 1 To myTot
+  Set rng = copyDoc.Paragraphs(i).Range
+  rng.MoveEnd , -1
+  If rng.Font.Italic = True Then rng.Font.Italic = False
+  If i Mod 100 = 0 Then
+    DoEvents
+    myLine = Str((myMax - i) / 100)
+    StatusBar = mySpaces & "Preparing text for test:  " & myLine
+  End If
+Next i
+CR = vbCr: CR2 = CR & CR
+Application.ScreenUpdating = False
+For i = 1 To 50
+  mySpaces = mySpaces & " "
+Next i
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Italic = False
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Text = "[!a-zA-Z]{1,}"
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  Application.ScreenUpdating = True
+  DoEvents
+  Application.ScreenUpdating = False
+End With
+Set rng = ActiveDocument.Content
+rng.Sort SortOrder:=wdSortOrderAscending
+allText = ""
+For Each pa In copyDoc.Paragraphs
+  If caseSensitive = True Then
+    myText = pa.Range.Text
+  Else
+    myText = LCase(pa.Range.Text)
+  End If
+  If InStr(allText, myText) = 0 And Len(myText) > 2 Then _
+       allText = allText & myText
+Next pa
+rng.Text = allText
+myResults = ChrW(160) & vbTab & "Italic" & vbTab & "Roman" & CR2
+
+numWds = copyDoc.Paragraphs.count
+ReDim wds(numWds) As String
+For i = 1 To numWds - 1
+  wds(i) = Replace(copyDoc.Paragraphs(i), CR, "")
+Next i
+testDoc.Activate
+
+On Error GoTo ReportIt
+Application.ScreenUpdating = False
+
+Set rng = ActiveDocument.Content
+myTot = testDoc.Content.End
+For i = 1 To numWds - 1
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = wds(i)
+    .Font.Italic = True
+    .Wrap = wdFindContinue
+    .MatchWholeWord = True
+    .Replacement.Text = "^&!"
+    .MatchWildcards = False
+    If caseSensitive = True Then
+      .MatchCase = True
+    Else
+      .MatchCase = False
+    End If
+    .Execute Replace:=wdReplaceAll
+  End With
+  myCountItal = testDoc.Content.End - myTot
+  If myCountItal > 0 Then WordBasic.EditUndo
+  
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Font.Italic = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  myCountRom = testDoc.Content.End - myTot
+  If myCountRom > 0 Then WordBasic.EditUndo
+  myLine = wds(i) & vbTab & _
+       Trim(Str(myCountItal)) & vbTab & _
+       Trim(Str(myCountRom))
+  myResults = myResults & myLine & CR
+
+  Debug.Print myLine
+  StatusBar = mySpaces & myLine
+  Application.ScreenUpdating = True
+  DoEvents
+  Application.ScreenUpdating = False
+Next i
+Selection.HomeKey Unit:=wdStory
+copyDoc.Activate
+Application.ScreenUpdating = True
+Selection.WholeStory
+Selection.TypeText Text:=myResults
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText "Italic word use" & CR
+startTable = Selection.End + 1
+ActiveDocument.Paragraphs(1).Style = _
+     ActiveDocument.Styles(wdStyleHeading1)
+Selection.start = startTable
+Selection.End = ActiveDocument.Range.End
+Selection.ConvertToTable Separator:=wdSeparateByTabs
+
+ActiveDocument.Tables(1).AutoFitBehavior (wdAutoFitContent)
+Application.ScreenUpdating = True
+Set TB = ActiveDocument.Tables(1)
+TB.Cell(1, 2).Range.ParagraphFormat.Alignment = wdAlignParagraphCenter
+TB.Cell(1, 3).Range.ParagraphFormat.Alignment = wdAlignParagraphCenter
+For i = 3 To TB.Rows.count
+  TB.Cell(i, 2).Range.ParagraphFormat.Alignment = wdAlignParagraphCenter
+  TB.Cell(i, 3).Range.ParagraphFormat.Alignment = wdAlignParagraphCenter
+  myText3 = TB.Cell(i, 3).Range.Text
+  myText3 = Left(myText3, Len(myText3) - 2)
+  If myText3 <> "0" Then
+    TB.Rows(i).Range.Font.Color = wdColorBlue
+    TB.Rows(i).Range.Font.Bold = True
+  End If
+  DoEvents
+Next i
+
+timGone = Timer - strttime
+Beep
+myTime = Timer
+Do
+Loop Until Timer > myTime + 0.2
+Beep
+m = Int(timGone / 60)
+s = Int(timGone) - m * 60
+MsgBox "Time:  " & Trim(Str(m)) & " m " & _
+     Trim(Str(s)) & " s"
+Selection.HomeKey Unit:=wdStory
+Exit Sub
+
+' Switch the screen back on if there's an error
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+

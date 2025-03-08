@@ -1,9 +1,9 @@
+
 Sub HyphenSpaceWordCount()
-' Paul Beverley - Version 29.06.23
+' Paul Beverley - Version 13.05.24
 ' Counts hyphenated word forms
 
 numChars = Len(Selection.Text)
-Set oldRng = Selection.Range.Duplicate
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord
   Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
@@ -39,15 +39,13 @@ Else
   myPair = Selection
 End If
 Debug.Print myPair
-If Len(myPair) < 1.5 * numChars And Len(myPair) > 8 _
-     Then myPair = oldRng.Text
 brkPos = InStr(myPair, " ")
 If brkPos = 0 Then brkPos = InStr(myPair, "-")
 If brkPos = 0 Then brkPos = InStr(myPair, ChrW(8211))
 If brkPos = 0 Then brkPos = InStr(myPair, "/")
 If brkPos = 0 Then
   Beep
-  myResponse = MsgBox("Invalid input", vbOKOnly, _
+  myResponse = MsgBox("Can't work out where the spilt is, sorry.", vbOKOnly, _
        "HyphenSpaceWordCount")
   Exit Sub
 End If

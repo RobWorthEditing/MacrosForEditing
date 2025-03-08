@@ -1,7 +1,12 @@
+
 Sub TypeThat()
-' Paul Beverley - Version 30.06.23
+' Paul Beverley - Version 20.07.24
 ' Types 'that' after the current word.
 
+
+Set rng = Selection.Range.Duplicate
+rng.MoveStart , -1
+If Left(rng.Text, 1) = " " Then Selection.MoveLeft , 1
 Selection.Expand wdWord
 Selection.Collapse wdCollapseEnd
 Selection.TypeText "that "

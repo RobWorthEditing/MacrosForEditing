@@ -1,0 +1,68 @@
+Sub PeriodInDialogue()
+' Paul Beverley - Version 17.02.21
+' Make adjacent words into sentence end
+
+makeCaseChange = (Selection.Start = Selection.End)
+
+Selection.Expand wdWord
+Selection.MoveEnd wdCharacter, 1
+
+wasStart = Selection.Start
+wasEnd = Selection.End
+
+newBit = ". "
+Selection.Collapse wdCollapseStart
+
+findChars = ".:,;\!\?" & ChrW(8211) & ChrW(8222) & ChrW(8212)
+Selection.MoveEndUntil cset:=findChars, Count:=wdForward
+Selection.Collapse wdCollapseEnd
+Selection.Start = Selection.Start - 1
+Selection.End = Selection.End + 3
+
+If Selection.Start > wasEnd Then
+  Selection.Start = wasStart
+  Selection.End = wasEnd
+  spacePos = InStr(Selection, " ")
+  Selection.Start = wasStart + spacePos - 1
+  Selection.InsertBefore Trim(newBit)
+  Selection.Start = wasStart
+  Selection.Collapse wdCollapseStart
+  Exit Sub
+End If
+
+preChar = Left(Selection, 1)
+midChar = Mid(Selection, 3, 1)
+postChar = Right(Selection, 1)
+
+If midChar <> " " Then
+  Selection.MoveEnd wdCharacter, -1
+  postChar = Right(Selection, 1)
+End If
+
+If preChar <> " " Then Selection.MoveStart wdCharacter, 1
+
+' If the middle char is a close quote go past it
+If InStr(ChrW(8217) & ChrW(8221) & """'", midChar) > 0 Then
+  Selection.MoveEnd wdCharacter, 2
+  newBit = Replace(newBit, " ", postChar & " ")
+  postChar = Right(Selection, 1)
+End If
+
+' If the next char is an open quote go past it
+If InStr(ChrW(8216) & ChrW(8220) & """'", postChar) > 0 Then
+  Selection.MoveEnd wdCharacter, 1
+  newBit = newBit & postChar
+  postChar = Right(Selection, 1)
+End If
+
+' If the case of the next letter needs changing
+If UCase(postChar) <> postChar And makeCaseChange Then
+  newBit = newBit & UCase(postChar)
+Else
+  Selection.MoveEnd wdCharacter, -1
+End If
+
+Selection.Delete
+Selection.TypeText Text:=newBit
+End Sub
+

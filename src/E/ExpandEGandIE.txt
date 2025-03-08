@@ -1,0 +1,41 @@
+
+Sub ExpandEGandIE()
+' Paul Beverley - Version 25.07.24
+' Expands abbreviations e.g. and i.e.
+
+myEG = "for example,"
+myIE = "this is,"
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[ei].[ge].,"
+  .Wrap = wdFindStop
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCountEG = 0
+myCountIE = 0
+Do While rng.Find.Found = True
+  If rng.Text = "e.g.," Then
+    myCountEG = myCountEG + 1
+    If myCountEG Mod 10 = 0 Then rng.Select
+    rng.Text = myEG
+  Else
+    myCountIE = myCountIE + 1
+    If myCountIE Mod 10 = 0 Then rng.Select
+    rng.Text = myIE
+  End If
+  rng.Font.Italic = False
+  rng.Collapse wdCollapseEnd
+  rng.MoveStart , 10
+  rng.Find.Execute
+  DoEvents
+Loop
+MsgBox "Changed: " & Trim(Str(myCountIE)) & " IEs" & _
+     vbCr & "and   " & Trim(Str(myCountEG)) & " EGs"
+End Sub
+
+

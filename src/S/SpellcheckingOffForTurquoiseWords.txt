@@ -1,0 +1,38 @@
+
+Sub SpellcheckingOffForTurquoiseWords()
+' Paul Beverley - Version 30.09.24
+' Set any words in turquoise to not be spellchecked
+
+Selection.HomeKey Unit:=wdStory
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Application.ScreenUpdating = False
+
+' For each highlight colour
+modifiedCount = 0
+fNotes = ActiveDocument.Footnotes.Count
+eNotes = ActiveDocument.Endnotes.Count
+For j = 1 To 3
+  If j = 1 And fNotes = 0 Then j = 2
+  If j = 2 And eNotes = 0 Then j = 3
+  Select Case j
+    Case 1: Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    Case 2: Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    Case 3: Set rng = ActiveDocument.Content
+  End Select
+  ' Loop through all the words in the document
+  For Each wd In rng.Words
+    ' Check if the word is highlighted in turquoise
+    If wd.HighlightColorIndex = wdTurquoise Then
+      ' Apply SpellingChecked to the word
+      wd.SpellingChecked = True
+      modifiedCount = modifiedCount + 1
+      DoEvents
+    End If
+  Next wd
+Next
+Application.ScreenUpdating = True
+ActiveDocument.TrackRevisions = myTrack
+MsgBox """Spelling Checked"" has been applied to " & modifiedCount & " turquoise-highlighted words."
+End Sub
+

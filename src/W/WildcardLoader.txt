@@ -1,11 +1,31 @@
+
 Sub WildcardLoader()
-' Paul Beverley - Version 15.12.23
+' Paul Beverley - Version 07.02.24
 ' Tool for using wildcard searches
+
 
 doPrompt = False
 
+' These pre-checks were aimed at use with Macro Menu
+If Selection.start = Selection.End Then
+  Set rng = Selection.Range.Duplicate
+  rng.Expand wdParagraph
+  rng.MoveEnd , -1
+  mySearch = rng.Text
+  myCheck = Replace(mySearch, "[", "")
+  myCheck = Replace(myCheck, "*", "")
+  myCheck = Replace(myCheck, "<", "")
+  myCheck = Replace(myCheck, ">", "")
+  If myCheck = mySearch And rng.Words.count = 2 Then
+    If Selection.End = rng.End Then rng.Select
+    If Selection.End = rng.start Then Selection.MoveEnd , 2
+  End If
+End If
+
 On Error GoTo ReportIt
-If Selection.Start = Selection.End Then
+If Selection.start = Selection.End Then
+  ' Add a delay to let blasted MS Word catch up, and
+  ' if there's no delay, it goes wrong!
   Set rng = Selection.Range.Duplicate
   rng.Expand wdParagraph
   If Len(rng) = 1 Then
@@ -72,7 +92,7 @@ Else
     Selection.Collapse wdCollapseStart
     Selection.Expand wdWord
     Selection.Collapse wdCollapseStart
-    rng.Start = Selection.Start
+    rng.start = Selection.start
     rng.Select
     myFirst = Trim(Selection.Range.Words.First)
     apoPos = InStr(myFirst, ChrW(8217))
@@ -93,7 +113,7 @@ End If
 
 ' Go find WC
 Selection.Collapse wdCollapseEnd
-hereNow = Selection.Start
+hereNow = Selection.start
 Set rng = Selection.Range.Duplicate
 With Selection.Find
   .ClearFormatting
@@ -111,7 +131,7 @@ With Selection.Find
   End If
 
 End With
-If Selection.Start = hereNow And _
+If Selection.start = hereNow And _
      Selection.Find.Found = False Then Beep
 ' Leaves F&R dialogue in a sensible state
 Selection.Find.Wrap = wdFindContinue
@@ -124,7 +144,8 @@ If Selection.End = 0 Then
   Beep
 
   rng.Select
-  If doPrompt = True Then myResponse = MsgBox("Sorry, Word's Find is confused by the embedded fields." _
+  If doPrompt = True Then myResponse = _
+       MsgBox("Sorry, Word's Find is confused by the embedded fields." _
        & vbCr & vbCr _
        & "Try searching in a text-only copy.", _
        vbOKOnly, "WildcardLoader")

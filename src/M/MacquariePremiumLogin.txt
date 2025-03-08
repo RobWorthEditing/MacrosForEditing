@@ -1,0 +1,35 @@
+
+Sub MacquariePremiumLogin()
+' Paul Beverley - Version 30.11.24
+' Logs in to the Macquarie dictionary
+
+myWait = 1
+myWaitPW = 0
+
+mySite = "https://app.macquariedictionary.com.au/login"
+uName = "my username"
+pWord = "my password"
+
+numTabs = 2
+
+ActiveDocument.FollowHyperlink Address:=mySite
+' Wait a bit to let the site settle
+myTime = Timer
+Do
+Loop Until Timer > myTime + myWait
+
+For i = 1 To numTabs
+  SendKeys "{TAB}"
+Next i
+SendKeys uName
+SendKeys "{TAB}"
+
+' Wait another bit, just in case
+myTime = Timer
+Do
+Loop Until Timer > myTime + myWaitPW
+SendKeys pWord
+SendKeys "{ENTER}"
+SendKeys "{NUMLOCK}"
+End Sub
+

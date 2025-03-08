@@ -1,0 +1,30 @@
+Sub TwoSpaceToIndentStyle()
+' Paul Beverley - Version 31.05.24
+' Finds something specific and does things to each one
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^13[^32^t]{1,}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  rng.MoveStart , 1
+  rng.Delete
+  rng.Style = "Normal Indent1"
+  myCount = myCount + 1
+  If myCount Mod 10 = 0 Then rng.Select
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+MsgBox "Changed: " & myCount
+End Sub
+

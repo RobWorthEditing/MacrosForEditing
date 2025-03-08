@@ -85,7 +85,6 @@ rng.Start = startTable
 rng.End = ActiveDocument.Range.End
 rng.ConvertToTable Separator:=wdSeparateByTabs
 Set tb = ActiveDocument.Tables(1)
-tb.Style = "Table Grid"
 tb.AutoFitBehavior (wdAutoFitContent)
 If deleteTableBorders = True Then
   tb.Borders(wdBorderTop).LineStyle = wdLineStyleNone

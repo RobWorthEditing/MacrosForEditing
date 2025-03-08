@@ -1,0 +1,48 @@
+
+Sub BibleGatewayFetchNTFE()
+' Paul Beverley - Version 21.02.25
+' Launches selected text on BibleGateway for NTFE
+
+alsoCopySubject = False
+
+mySite = "https://www.biblegateway.com/quicksearch/?quicksearch="
+myResPerPage = 100
+myVersion = "NTFE"
+
+If Selection.start = Selection.End Then
+  Selection.Expand wdWord
+  If Len(Selection) < 3 Then
+    Selection.Collapse wdCollapseStart
+    Selection.MoveLeft , 1
+    Selection.Expand wdWord
+  End If
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.start = startNow
+End If
+
+If alsoCopySubject = True Then Selection.Copy
+
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubject, ChrW(8217), "'")
+Debug.Print mySite & mySubject
+myExtra = "&version=" & myVersion
+myExtra = myExtra & "&resultspp=" & Trim(Str(myResPerPage))
+ActiveDocument.FollowHyperlink Address:=mySite & mySubject & myExtra
+Selection.Collapse wdCollapseEnd
+End Sub
+

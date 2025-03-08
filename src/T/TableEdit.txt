@@ -1,5 +1,6 @@
+
 Sub TableEdit()
-' Paul Beverley - Version 01.10.18
+' Paul Beverley - Version 03.08.24
 ' Edits items in the cells of some or all tables
 
 stripEnds = True
@@ -7,25 +8,27 @@ stripThese = "^p^t., "
 
 addEmDash = True
 
+doTrack = False
 doHighlight = True
 myColour = wdGray25
 
 myTrack = ActiveDocument.TrackRevisions
-ActiveDocument.TrackRevisions = False
+If doTrack = False Then ActiveDocument.TrackRevisions = False
 stripThese = Replace(stripThese, "^p", vbCr)
 stripThese = Replace(stripThese, "^t", vbTab)
-If Selection.Start = Selection.End Then
+If Selection.start = Selection.End Then
   Set workRange = ActiveDocument.Tables
   doTheLot = True
 Else
   Set workRange = Selection.Tables
 End If
+Set rng = ActiveDocument.Content
 
 For Each myTable In workRange
-  For Each myCell In myTable.range.Cells
-    myText = Left(myCell.range, Len(myCell.range) - 2)
+  For Each myCell In myTable.Range.Cells
+    myText = Left(myCell.Range, Len(myCell.Range) - 2)
     newText = ""
-    
+   
     ' an em dash
     If addEmDash = True And Trim(myText) = "" Then newText = ChrW(8212): myText = ""
     If Trim(myText) = ChrW(8211) Then newText = ChrW(8212): myText = ""
@@ -47,15 +50,19 @@ For Each myTable In workRange
     End If
     
     If newText > "" Then
-      myCell.range = newText
-      If doHighlight = True Then myCell.range.HighlightColorIndex = myColour
+      myCell.Range = newText
+      If doHighlight = True Then
+        ActiveDocument.TrackRevisions = False
+        myCell.Range.HighlightColorIndex = myColour
+        ActiveDocument.TrackRevisions = myTrack
+      End If
     End If
 
   ' Now strip any trailing tabs or CRs
     If stripEnds = True Then
-      Set rng = myCell.range
+      Set rng = myCell.Range
       rng.MoveEnd , -1
-      rng.Start = rng.End - 1
+      rng.start = rng.End - 1
 
       ' Strip odd unwanted characters
       Do While InStr(stripThese, rng.Text) > 0
@@ -63,10 +70,13 @@ For Each myTable In workRange
         DoEvents
         rng.MoveStart , -1
       Loop
-      xdgfhf = 0
     End If
+    If myCell.Range.Characters(1) = "." Then myCell.Range.InsertBefore "0"
   Next myCell
 Next myTable
+Beep
 ActiveDocument.TrackRevisions = myTrack
 End Sub
+
+
 

@@ -1,0 +1,88 @@
+
+Sub CompareTwoLists()
+' Paul Beverley - Version 03.02.25
+' Compares two lists, and highlights and lists the items unique to each
+
+promptForResponse = True
+' promptForResponse = False
+
+CaseSensitive = True
+' caseSensitive = False
+
+uniqueItemsInSeparateLists = False
+uniqueItemsInSeparateLists = True
+' False means all unique items listed in one single file
+
+myColour = wdBrightGreen
+
+Set docA = ActiveDocument
+nameA = Replace(docA.Name, ".docx", "")
+CR = vbCr: CR2 = CR & CR
+If promptForResponse = True Then _
+     myResponse = MsgBox("Please click in the file to be compared with > " _
+     & nameA & " <", vbQuestion + vbInformation, _
+     "CompareTwoLists")
+
+' Give user five seconds to respond
+myTime = 5
+t = Timer
+Do
+  newName = Replace(ActiveDocument.Name, ".docx", "")
+  DoEvents
+Loop Until newName <> nameA Or Timer - t > myTime
+If newName = nameA Then
+  Beep
+  MsgBox "Please try again with the two files open.", vbInformation
+  Exit Sub
+End If
+nameB = newName
+
+Set docB = Documents(nameB)
+If CaseSensitive = True Then
+  wrdsA = CR & docA.Content.Text & CR
+  wrdsB = CR & docB.Content.Text & CR
+Else
+  wrdsA = CR & LCase(docA.Content.Text) & CR
+  wrdsB = CR & LCase(docB.Content.Text) & CR
+End If
+
+Set docC = Documents.Add
+Selection.TypeText Text:="Unique words in " & nameA & CR2
+docC.Paragraphs(1).Range.Font.Bold = True
+For Each pa In docA.Paragraphs
+  If CaseSensitive = True Then
+    wd = pa.Range.Text
+  Else
+    wd = LCase(pa.Range.Text)
+  End If
+  If InStr(wrdsB, wd) = 0 Then
+    Selection.TypeText Text:=Mid(wd, 1)
+    pa.Range.HighlightColorIndex = myColour
+  End If
+  DoEvents
+Next pa
+If uniqueItemsInSeparateLists = True Then
+  Set docD = Documents.Add
+Else
+  Selection.TypeText Text:=CR2
+End If
+Selection.TypeText Text:="Unique words in " & nameB & CR2
+Selection.MoveStart wdParagraph, -2
+Selection.MoveEnd wdParagraph, -1
+Selection.Range.Font.Bold = True
+Selection.Collapse wdCollapseEnd
+Selection.MoveRight , 1
+For Each pa In docB.Paragraphs
+  If CaseSensitive = True Then
+    wd = pa.Range.Text
+  Else
+    wd = LCase(pa.Range.Text)
+  End If
+  If InStr(wrdsA, wd) = 0 Then
+    Selection.TypeText Text:=Mid(wd, 1)
+    pa.Range.HighlightColorIndex = myColour
+  End If
+  DoEvents
+Next pa
+End Sub
+

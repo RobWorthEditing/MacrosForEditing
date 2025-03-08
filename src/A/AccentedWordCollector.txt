@@ -1,5 +1,5 @@
 Sub AccentedWordCollector()
-' Paul Beverley - Version 03.02.20
+' Paul Beverley - Version 03.02.25
 ' Creates a list of all the accented words in a text
 
 Set rng = ActiveDocument.Content
@@ -177,12 +177,12 @@ rng.Sort SortOrder:=wdSortOrderAscending
 DoEvents
 Selection.EndKey Unit:=wdStory
 Selection.TypeText vbCr
-' Exchange rogue linefeed (ascii 10)
+' Exchange rogue linefeed (ascii 11)
 Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "^10"
+  .Text = "^11"
   .Wrap = wdFindContinue
   .Replacement.Text = "^p"
   .Forward = True

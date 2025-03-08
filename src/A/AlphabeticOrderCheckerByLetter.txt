@@ -1,0 +1,56 @@
+
+Sub AlphabeticOrderCheckerByLetter()
+' Paul Beverley - Version 07.02.25
+' Finds any suspicious non-alphabetism
+
+byLetter = True
+
+Selection.Collapse wdCollapseEnd
+Selection.Expand wdParagraph
+firstWordOne = Selection.Words(1)
+If firstWordOne = ChrW(8220) Or firstWordOne = ChrW(8216) Then _
+     firstWordOne = Selection.Words(2)
+Do
+  Selection.MoveEnd Unit:=wdParagraph, count:=1
+' Stop if the second line is blank
+  If Len(Selection.Range.Paragraphs(2).Range.Text) < 2 Then
+    Beep
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveRight , 1
+    Exit Sub
+  End If
+  firstWordTwo = Selection.Range.Paragraphs(2).Range.Words(1)
+  If firstWordTwo = ChrW(8220) Or firstWordTwo = ChrW(8216) Then _
+       firstWordTwo = Selection.Words(2)
+
+  myLine1 = LCase(Selection.Range.Paragraphs(1).Range.Text)
+  myLine2 = LCase(Selection.Range.Paragraphs(2).Range.Text)
+  myLine1 = Replace(myLine1, "-", "")
+  If byLetter = True Then myLine1 = Replace(myLine1, " ", "")
+  myLine1 = Replace(myLine1, ChrW(8216), "")
+  myLine1 = Replace(myLine1, ChrW(8220), "")
+  myLine1 = Replace(myLine1, "'", "")
+  myLine1 = Replace(myLine1, """", "")
+  myLine1 = Replace(myLine1, ",", "")
+  myLine2 = Replace(myLine2, "-", "")
+  If byLetter = True Then myLine2 = Replace(myLine2, " ", "")
+  myLine2 = Replace(myLine2, ChrW(8216), "")
+  myLine2 = Replace(myLine2, ChrW(8220), "")
+  myLine2 = Replace(myLine2, """", "")
+  myLine2 = Replace(myLine2, "'", "")
+  myLine2 = Replace(myLine2, ",", "")
+' Check the alphabetism
+  If myLine1 > myLine2 And firstWordTwo <> firstWordOne Then
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveDown Unit:=wdParagraph, count:=1
+    Selection.MoveUp Unit:=wdParagraph, count:=1
+    Selection.MoveStart Unit:=wdParagraph, count:=-2
+    Exit Sub
+  End If
+  Selection.MoveStart Unit:=wdParagraph, count:=1
+  firstWordOne = firstWordTwo
+Loop Until Selection.End = ActiveDocument.Content.End
+Selection.MoveLeft , 1
+Beep
+End Sub
+

@@ -1,0 +1,31 @@
+
+Sub ItalicQuickSwitch()
+' Paul Beverley - Version 01.07.24
+' Adds/removes italic to/from selected text
+
+If Selection.start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.start = startNow
+End If
+Set firstChar = Selection.Range.Characters(1)
+Selection.Font.Italic = Not (firstChar.Font.Italic)
+Selection.Collapse wdCollapseStart
+End Sub
+
+
+
+

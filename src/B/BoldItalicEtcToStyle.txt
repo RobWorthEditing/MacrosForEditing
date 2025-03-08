@@ -1,9 +1,16 @@
+
 Sub BoldItalicEtcToStyle()
-' Paul Beverley - Version 18.02.24
+' Paul Beverley - Version 16.11.24
 ' Changes bold, italic, etc to character styles
 
 doHighlight = True
 myHiColour = wdYellow
+
+doSuperscript = False
+doSubscript = False
+' If you want super and sub, make these True, but
+' make sure your file has styles called Superscript
+' and Subscript
 
 oldColour = Options.DefaultHighlightColorIndex
 Options.DefaultHighlightColorIndex = myHiColour
@@ -22,6 +29,7 @@ With rng.Find
   DoEvents
 
 ' Make the style changes
+If doSuperscript = True Then
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = ""
@@ -36,7 +44,9 @@ With rng.Find
   If doHighlight = True Then .Replacement.Highlight = True
   .Execute Replace:=wdReplaceAll
   DoEvents
+End If
   
+If doSubscript = True Then
   .ClearFormatting
   .Replacement.ClearFormatting
   .Font.StrikeThrough = False
@@ -46,7 +56,7 @@ With rng.Find
   If doHighlight = True Then .Replacement.Highlight = True
   .Execute Replace:=wdReplaceAll
   DoEvents
-
+End If
   .ClearFormatting
   .Replacement.ClearFormatting
   .Font.StrikeThrough = False
@@ -105,6 +115,7 @@ If ActiveDocument.Footnotes.Count > 0 Then
   For Each nt In ActiveDocument.Footnotes
 ' Now make the style changes
     With nt.Range.Find
+    If doSuperscript = True Then
       .ClearFormatting
       .Replacement.ClearFormatting
       .Text = ""
@@ -119,7 +130,9 @@ If ActiveDocument.Footnotes.Count > 0 Then
       If doHighlight = True Then .Replacement.Highlight = True
       .Execute Replace:=wdReplaceAll
       DoEvents
-      
+    End If
+    If doSubscript = True Then
+
       .ClearFormatting
       .Replacement.ClearFormatting
       .Font.StrikeThrough = False
@@ -129,7 +142,7 @@ If ActiveDocument.Footnotes.Count > 0 Then
       If doHighlight = True Then .Replacement.Highlight = True
       .Execute Replace:=wdReplaceAll
       DoEvents
-    
+    End If
       .ClearFormatting
       .Replacement.ClearFormatting
       .Font.StrikeThrough = False
@@ -190,6 +203,7 @@ If ActiveDocument.Endnotes.Count > 0 Then
   For Each nt In ActiveDocument.Endnotes
 ' Now make the style changes
     With nt.Range.Find
+    If doSuperscript = True Then
       .ClearFormatting
       .Replacement.ClearFormatting
       .Text = ""
@@ -204,7 +218,9 @@ If ActiveDocument.Endnotes.Count > 0 Then
       If doHighlight = True Then .Replacement.Highlight = True
       .Execute Replace:=wdReplaceAll
       DoEvents
-      
+    End If
+    If doSubscript = True Then
+
       .ClearFormatting
       .Replacement.ClearFormatting
       .Font.StrikeThrough = False
@@ -214,7 +230,7 @@ If ActiveDocument.Endnotes.Count > 0 Then
       If doHighlight = True Then .Replacement.Highlight = True
       .Execute Replace:=wdReplaceAll
       DoEvents
-    
+    End If
       .ClearFormatting
       .Replacement.ClearFormatting
       .Font.StrikeThrough = False
@@ -274,7 +290,5 @@ End If
 Options.DefaultHighlightColorIndex = oldColour
 Beep
 End Sub
-
-
 
 

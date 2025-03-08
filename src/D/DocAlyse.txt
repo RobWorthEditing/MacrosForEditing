@@ -1,5 +1,6 @@
+
 Sub DocAlyse()
-' Paul Beverley - Version 21.12.23
+' Paul Beverley - Version 18.01.25
 ' Analyses various aspects of a document
 
 ' prompts to count number of tests
@@ -63,11 +64,12 @@ If sh > 0 Then
 End If
 
 Selection.HomeKey Unit:=wdStory
-
-
+Set rng = ActiveDocument.Content
+rng.Revisions.AcceptAll
+DoEvents
+DoEvents
 ' Use main file for italic 'et al' count...
 myTot = ActiveDocument.Range.End
-Set rng = ActiveDocument.Content
 
 cc = cc - 1
 DoEvents
@@ -83,14 +85,12 @@ With rng.Find
   .MatchWholeWord = False
   .MatchSoundsLike = False
   .Execute Replace:=wdReplaceAll
-End With
 italEtAls = ActiveDocument.Range.End - myTot
 If italEtAls > 0 Then WordBasic.EditUndo
 
 ' ...and superscript degree count
 cc = cc - 1
 DoEvents
-With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "[oO0]"
@@ -133,7 +133,7 @@ myRslt = ""
 Set rng = ActiveDocument.Content
 myTot = ActiveDocument.Range.End
 CR = vbCr: CR2 = CR & CR
-tr = Chr(9) & "0zczc" & CR: SP = "     "
+tr = Chr(9) & "0zczc" & CR: sp = "     "
 Selection.HomeKey Unit:=wdStory
 
 Set newDoc = ActiveDocument
@@ -142,14 +142,13 @@ Set newDoc = ActiveDocument
 cc = cc - 1
 DoEvents
 myTot = ActiveDocument.Range.End
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "<ten>"
-  .Replacement.Text = "!^&"
-  .MatchWildcards = True
-  .Execute Replace:=wdReplaceAll
-End With
+
+rng.Find.ClearFormatting
+rng.Find.Replacement.ClearFormatting
+rng.Find.Text = "<ten>"
+rng.Find.Replacement.Text = "!^&"
+rng.Find.MatchWildcards = True
+rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
 If i > 0 Then WordBasic.EditUndo
 
@@ -651,8 +650,8 @@ DoEvents
 StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[bpiv]our[ ,.s]"
 rng.Find.Execute Replace:=wdReplaceAll
-a = ActiveDocument.Range.End - myTot
-If a > 0 Then WordBasic.EditUndo
+A = ActiveDocument.Range.End - myTot
+If A > 0 Then WordBasic.EditUndo
 
 rng.Find.Text = "[a-z]{3,}elling>"
 rng.Find.Execute Replace:=wdReplaceAll
@@ -688,9 +687,9 @@ rng.Find.Execute Replace:=wdReplaceAll
 k = ActiveDocument.Range.End - myTot
 If k > 0 Then WordBasic.EditUndo
 
-If a + g + f + i + q + v + k > 0 Then myRslt = _
+If A + g + f + i + q + v + k > 0 Then myRslt = _
      myRslt & "UK spelling (appx)" & vbTab & _
-     Trim(Str(a + g + f)) & CR & _
+     Trim(Str(A + g + f)) & CR & _
      "US spelling (appx)" & vbTab & _
      Trim(Str(i - q + v + k)) & CR & _
      "(For a more accurate count, please use UKUScount.)" & CR2
@@ -1268,7 +1267,6 @@ For q = 1 To 23
     .Execute Replace:=wdReplaceAll
   End With
   i = ActiveDocument.Range.End - myTot
-  Debug.Print ActiveDocument.Range.End, myTot, i
   If i > 0 Then WordBasic.EditUndo: _
        aBit = aBit & myRes(q) & vbTab & Trim(Str(i)) & CR
 Next q
@@ -1347,12 +1345,12 @@ cc = cc - 1
 DoEvents
 StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 myTot = ActiveDocument.Range.End
-rng.Find.Text = "[abcdfiknoprtuw]{2,4}ward>"
+rng.Find.Text = "[acdlmnostuw][deknort]ward>"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
 If i > 0 Then WordBasic.EditUndo
 
-rng.Find.Text = "[abcdfiknoprtuw]{2,4}wards>"
+rng.Find.Text = "[acdlmnostuw][deknort]wards>"
 rng.Find.Execute Replace:=wdReplaceAll
 j = ActiveDocument.Range.End - myTot
 If j > 0 Then WordBasic.EditUndo

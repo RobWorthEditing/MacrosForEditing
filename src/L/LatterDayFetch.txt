@@ -1,0 +1,49 @@
+
+
+LatterDayFetch()
+' Paul Beverley - Version 25.01.25
+' Launches selected text on Mormon (Latter-day Saints) site
+
+alsoCopySubject = False
+
+mySite = "https://www.churchofjesuschrist.org/search?facet=all&lang=eng&query="
+
+If Selection.start = Selection.End Then
+  Selection.expand wdWord
+  If Len(Selection) < 3 Then
+    Selection.Collapse wdCollapseStart
+    Selection.MoveLeft , 1
+    Selection.expand wdWord
+  End If
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.start
+  Selection.End = endNow
+  Selection.expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.start = startNow
+End If
+
+If alsoCopySubject = True Then Selection.Copy
+
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubject, ":", "%3A")
+mySubject = Replace(mySubject, ChrW(8217), "'")
+Debug.Print mySite & mySubject
+ActiveDocument.FollowHyperlink Address:=mySite & mySubject
+Selection.Collapse wdCollapseEnd
+End Sub
+
+
+
+

@@ -1,0 +1,200 @@
+
+Sub DateFormatAlyse()
+' Paul Beverley - Version 29.08.24
+' Counts the occurences of different date formats
+
+
+' dateRange = "[12][09][0-9][0-9]>"
+' or include 19th century – 18xx
+dateRange = "[12][089][0-9][0-9]>"
+
+doSummary = True
+doHighColour = True
+doFontColour = True
+Dim myCount(10) As Integer
+Dim myHighColour(10) As Variant
+Dim myFontColour(10) As Variant
+Dim mySummary(10) As Variant
+
+myHighColour(1) = wdNoHighlight
+myHighColour(2) = wdNoHighlight
+myHighColour(3) = wdNoHighlight
+myHighColour(4) = wdNoHighlight
+myHighColour(5) = wdYellow
+myHighColour(6) = wdBrightGreen
+myHighColour(7) = wdPink
+myHighColour(8) = wdTurquoise
+myHighColour(9) = wdGray25
+myHighColour(10) = wdGray50
+
+myFontColour(1) = wdColorRed
+myFontColour(2) = wdColorBlue
+myFontColour(3) = wdColorGreen
+myFontColour(4) = wdColorPink
+myFontColour(5) = wdBlack
+myFontColour(6) = wdBlack
+myFontColour(7) = wdBlack
+myFontColour(8) = wdBlack
+myFontColour(9) = wdBlack
+myFontColour(10) = wdBlack
+
+CR = vbCr
+allMonths = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec"
+allDays = "Mon Tue Wed Thu Fri Sat Sun"
+Set rng = ActiveDocument.Content
+dateRange = "[ ]{1,}" & dateRange
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = dateRange
+  .Replacement.Text = ""
+  .Wrap = wdFindStop
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  myIndex = myIndex + 1
+  If myIndex Mod 20 = 0 Then rng.Select
+  Do
+    rng.MoveStart , -1
+    DoEvents
+  Loop Until InStr(ChrW(13) & " ", Left(rng.Text, 1)) > 0
+  rng.MoveStart , 1
+  wd1 = Trim(rng.Words(1))
+  If Trim(rng.Words(1)) = "," Then wd1 = wd1 & ","
+  rng.MoveStart , -1
+  
+  Do
+    rng.MoveStart , -1
+    DoEvents
+  Loop Until InStr(ChrW(13) & " ", Left(rng.Text, 1)) > 0
+  rng.MoveStart , 1
+  wd2 = Trim(rng.Words(1))
+  rng.MoveStart , -1
+  
+  Do
+    rng.MoveStart , -1
+    DoEvents
+  Loop Until InStr(ChrW(13) & " ", _
+       Left(rng.Text, 1)) > 0 Or rng.start = 0
+  rng.MoveStart , 1
+  wd3 = Trim(rng.Words(1))
+
+  ' Debug.Print wd1 & "|" & wd2 & "|" & wd3 & "|"
+  n = 0
+  ' December|3|? - 1
+  If n = 0 And Val(wd2) > 0 And LCase(wd2) = UCase(wd2) _
+       And InStr(allDays, Left(wd3, 3)) = 0 _
+       And InStr(allMonths, Left(wd1, 3)) > 0 Then n = 1
+  
+  ' February|31st|? - 2
+  If n = 0 And Val(wd2) > 0 And LCase(wd2) <> UCase(wd2) _
+        And InStr(allDays, Left(wd3, 3)) = 0 Then n = 2
+  
+  ' March|of|31st - 3
+  If Val(wd3) > 0 And wd2 = "of" And _
+       InStr(allMonths, Left(wd1, 3)) > 0 Then n = 3:
+  
+  ' 31st|July|? - 6
+  If n = 0 And Val(wd1) > 0 And LCase(wd1) <> UCase(wd1) _
+        And InStr(allDays, Left(wd3, 3)) = 0 Then n = 6
+  
+  ' August|31|Wednesday - 7
+  If n = 0 And Val(wd2) > 0 And InStr(allDays, Left(wd3, 3)) > 0 _
+         And InStr(allMonths, Left(wd1, 3)) > 0 Then n = 7
+  
+  ' 31|September|Tuesday - 8
+  If n = 0 And InStr(allDays, Left(wd3, 3)) > 0 And _
+       InStr(allMonths, Left(wd2, 3)) > 0 _
+       And Val(wd1) > 0 Then n = 8
+  
+  ' August|31st|Wednesday - 9
+  If n = 7 And LCase(wd2) <> UCase(wd2) Then n = 9
+  
+  ' 31st|September|Tuesday - 10
+  If n = 8 And LCase(wd1) <> UCase(wd1) Then n = 10
+  
+  
+  ' April|? - 4
+  If n = 0 And Len(wd1) > 3 And _
+       InStr(allMonths, Left(wd1, 3)) > 0 Then n = 4
+  
+  ' 3|May|? - 5
+  If n = 0 And Val(wd1) > 0 And _
+       InStr(allMonths, Left(wd2, 3)) > 0 Then n = 5
+  
+  myCount(n) = myCount(n) + 1
+  ' Debug.Print n
+  cn = cn + 1
+  If cn Mod 10 = 0 Then rng.Select
+  
+  If n > 0 Then
+  ' Reduce range of highlighting
+    Select Case n
+      Case 1: mv = 1
+      Case 2: mv = 1
+      Case 3: mv = 0
+      Case 4: mv = 2
+      Case 5: mv = 1
+      Case 6: mv = 1
+      Case 7: mv = 0
+      Case 8: mv = 0
+      Case 9: mv = 0
+      Case 10: mv = 0
+      If n < 7 And n <> 3 Then rng.MoveStart wdWord, 1
+      If n = 4 Then rng.MoveStart wdWord, 1
+    End Select
+    If mv > 0 Then rng.MoveStart wdWord, mv
+    
+    If doHighColour = True Then _
+         rng.HighlightColorIndex = myHighColour(n)
+    If doFontColour = True Then _
+         rng.Font.Color = myFontColour(n)
+    If doSummary = True Then _
+         mySummary(n) = mySummary(n) & rng.Text & CR
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+
+Selection.HomeKey Unit:=wdStory
+Documents.Add
+Selection.TypeText Text:="Date format analysis" & CR & CR
+ActiveDocument.Paragraphs(1).Range.Style = wdStyleHeading2
+
+For n = 1 To 10
+  Select Case n
+    Case 1: typeDescrip = "1) 3 July 2024" & vbTab & vbTab
+    Case 2: typeDescrip = "2) 31st December 2024" & vbTab
+    Case 3: typeDescrip = "3) 31st of December 2024" & vbTab
+    Case 4: typeDescrip = "4) December 2024" & vbTab & vbTab
+    Case 5: typeDescrip = "5) December 31, 2024" & vbTab
+    Case 6: typeDescrip = "6) December 31st, 2024" & vbTab
+    Case 7: typeDescrip = "7) Tuesday, 31 July 2024" & vbTab
+    Case 8: typeDescrip = "8) Tuesday, July 31, 2024" & vbTab
+    Case 9: typeDescrip = "9) Tuesday, 31st July 2024" & vbTab
+    Case 10: typeDescrip = "10) Tuesday, July 31st, 2024"
+  End Select
+  Selection.TypeText Text:=typeDescrip & vbTab & _
+       Str(myCount(n)) & CR
+Next n
+Selection.HomeKey Unit:=wdStory
+If doSummary = True Then
+  Documents.Add
+  For i = 1 To 10
+    Selection.TypeText Text:=mySummary(i) & ChrW(12)
+    DoEvents
+  Next i
+End If
+Beep
+End Sub
+
+
+
+
+
+

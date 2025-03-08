@@ -1,0 +1,93 @@
+
+Sub ProperNounsInSectionsMultiword()
+' Paul Beverley - Version 30.01.23
+' Collects multi-word proper nouns by section and alpha lists
+
+myHeading = "Heading 1"
+minLength = 3
+
+notWords = " and for the this there those their they then these that "
+notWords = notWords & " when you "
+
+Dim headStart(1000) As Long
+Dim textStart(1000) As Long
+pf = Split(" " & Trim(notPrefixes), " ")
+CR = vbCr
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Style = ActiveDocument.Styles(myHeading)
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+' If you want to count them...
+  myCount = myCount + 1
+' Note where the end of the found item is
+  headStart(myCount) = rng.Start
+  textStart(myCount) = rng.End
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+headStart(myCount + 1) = ActiveDocument.Content.End
+myResponse = MsgBox("Found: " & Trim(Str(myCount)) & _
+     "  Headings." & vbCr & vbCr & "Continue?", vbQuestion _
+     + vbYesNoCancel, "ProperNounsInSectionsMultiword")
+If myResponse <> vbYes Then Exit Sub
+
+Set rng = ActiveDocument.Content
+Documents.Add
+Set rng2 = ActiveDocument.Content
+Set rng3 = ActiveDocument.Content
+For i = 1 To myCount
+  rng.Start = headStart(i)
+  rng.End = textStart(i)
+  rng.Copy
+  rng2.Paste
+  rng2.Collapse wdCollapseEnd
+  rng2.Select
+  rng.Start = textStart(i)
+  rng.End = headStart(i + 1)
+  rng3.Start = rng2.End - 1
+  rng3.End = ActiveDocument.Content.End
+  myEnd = rng.End
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "from"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = False
+    .MatchWholeWord = False
+    .Execute
+  End With
+  Do While rng.Find.Found = True And rng.Start < myEnd
+   Debug.Print rng.Start, rng.End, myEnd
+    rng.Select
+    rng.HighlightColorIndex = wdBrightGreen
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+    DoEvents
+  Loop
+  
+  rng2.End = ActiveDocument.Content.End
+  rng2.Sort
+  rng2.Characters(1).Delete
+  rng2.Collapse wdCollapseEnd
+  rng2.InsertAfter Text:=CR & CR
+  rng2.Start = ActiveDocument.Content.End
+Next i
+Beep
+Selection.HomeKey Unit:=wdStory
+End Sub
+

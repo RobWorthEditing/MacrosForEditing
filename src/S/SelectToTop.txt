@@ -1,0 +1,7 @@
+Sub SelectToTop()
+' Paul Beverley - Version 31.05.24
+' Selects all the text from the cursor to the top of the document (for Mac users)
+
+Selection.HomeKey Unit:=wdStory, Extend:=wdExtend
+End Sub
+

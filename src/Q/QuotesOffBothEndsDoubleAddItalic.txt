@@ -1,6 +1,7 @@
+
 Sub QuotesOffBothEndsDoubleAddItalic()
-' Paul Beverley - Version 03.02.23
-' Removes double quotations marks from both ends of some text + italicises
+' Paul Beverley - Version 09.01.25
+' Removes double quotations marks from both ends of a test
 
 Set rng = Selection.Range.Duplicate
 rng.Collapse wdCollapseStart
@@ -15,7 +16,7 @@ With rng.Find
   .Execute Replace:=wdReplaceOne
   DoEvents
 End With
-myStart = rng.Start
+myStart = rng.start
 
 Set rng = Selection.Range.Duplicate
 rng.Collapse wdCollapseEnd
@@ -30,11 +31,10 @@ With rng.Find
   .Execute Replace:=wdReplaceOne
   DoEvents
 End With
-rng.Start = myStart
-rng.Style = "i"
+rng.start = myStart
+rng.Font.Italic = True
 rng.Collapse wdCollapseEnd
 rng.Select
 End Sub
-
 
 

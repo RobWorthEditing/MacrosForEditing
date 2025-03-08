@@ -1,5 +1,6 @@
+
 Sub BoldItalicToStyle()
-' Paul Beverley - Version 27.03.24
+' Paul Beverley - Version 21.09.24
 ' Changes bold, italic and bold-italic applied directly, into character styles
 
 doHighlight = True
@@ -8,6 +9,10 @@ myHiColour = wdYellow
 myItalicStyle = "Emphasis"
 myBoldStyle = "Strong"
 myBoldItalicStyle = "Intense Emphasis"
+
+doItalic = True
+doBold = True
+doBoldItalic = True
 
 oldColour = Options.DefaultHighlightColorIndex
 Options.DefaultHighlightColorIndex = myHiColour
@@ -32,6 +37,7 @@ With rng.Find
   .Replacement.ClearFormatting
   .Style = ActiveDocument.Styles(myBoldItalicStyle)
   .Replacement.Font.StrikeThrough = True
+  If doItalic = True Then .Execute Replace:=wdReplaceAll
   .Execute Replace:=wdReplaceAll
 
   .ClearFormatting
@@ -42,7 +48,7 @@ With rng.Find
   .Replacement.Font.Italic = False
   .Replacement.Style = ActiveDocument.Styles(myItalicStyle)
   If doHighlight = True Then .Replacement.Highlight = True
-  .Execute Replace:=wdReplaceAll
+  If doBold = True Then .Execute Replace:=wdReplaceAll
   DoEvents
 
   .ClearFormatting
@@ -53,7 +59,7 @@ With rng.Find
   .Replacement.Font.Bold = False
   .Replacement.Style = ActiveDocument.Styles(myBoldStyle)
   If doHighlight = True Then .Replacement.Highlight = True
-  .Execute Replace:=wdReplaceAll
+  If doBoldItalic = True Then .Execute Replace:=wdReplaceAll
   DoEvents
 
 End With

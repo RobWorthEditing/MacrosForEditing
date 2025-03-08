@@ -1,6 +1,9 @@
+
 Sub PunctuationToEmDash()
-' Paul Beverley - Version 19.11.21
+' Paul Beverley - Version 03.05.24
 ' Changes next hyphen/em/en dash to an em dash
+
+emDashSpaced = False
 
 myDash = ChrW(8212) ' em dash
 
@@ -15,17 +18,29 @@ rng.End = ActiveDocument.Content.End
 If Len(rng) > 1000 Then rng.End = rng.Start + 1000
 
 For Each ch In rng.Characters
-  If InStr(searchChars, ch.Text) > 0 Then
-    ch.Select
-    gotChar = True
-    Exit For
-  Else
-  End If
+  If InStr(searchChars, ch.Text) > 0 Then
+    ch.Select
+    gotChar = True
+    Exit For
+  Else
+  End If
+  DoEvents
 Next ch
 If gotChar = False Then
-  Beep
+  Beep
 Else
-  Selection.TypeText Text:=myDash
+  Selection.TypeText Text:=myDash
+End If
+If emDashSpaced = True Then
+  Set rng = Selection.Range.Duplicate
+  rng.MoveStart , -2
+  If Left(rng, 1) <> " " Then
+    rng.Text = Left(rng, 1) & " " & Right(rng, 1)
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd , 1
+  If rng <> " " Then rng.Text = " " & rng.Text
+  Selection.MoveRight , 4
 End If
 ActiveDocument.TrackRevisions = myTrack
 End Sub

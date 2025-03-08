@@ -1,6 +1,7 @@
+
 Sub DuplicateSentenceCount()
-' Paul Beverley - Version 27.10.18
-' Counts frequency of any duplicated sentences
+' Paul Beverley - Version 21.05.21
+' Counts frequency of any duplicated sentences + highlights
 
 minWords = 10
 
@@ -69,6 +70,7 @@ For a = Asc("A") To Asc("Z") + 1
               DoEvents
             End If
           End If
+          DoEvents
         Next sent
       Else
         For Each sent In myDoc.Sentences
@@ -89,6 +91,7 @@ For a = Asc("A") To Asc("Z") + 1
             End If
           End If
         Next sent
+        DoEvents
       End If
       numSents = ActiveDocument.Sentences.Count
       dupSents = ""
@@ -119,6 +122,7 @@ For a = Asc("A") To Asc("Z") + 1
       Next i
       If dupSents > "" Then myFinal.Content.InsertAfter Text:=dupSents
       tmp.Text = ""
+      DoEvents
     Next b
   Else
     Set tmp = ActiveDocument.Content
@@ -160,6 +164,7 @@ For a = Asc("A") To Asc("Z") + 1
           End If
         End If
       End If
+      DoEvents
     Next i
     If dupSents > "" Then myFinal.Content.InsertAfter Text:=dupSents
     tmp.Text = ""
@@ -189,28 +194,30 @@ Do While gogo = True
   ' But if any of the FRedit items is too long, it'll
   ' cause an error in FRedit, so split them into sub-items
   For i = ActiveDocument.Paragraphs.Count To 1 Step -1
-    myLine = ActiveDocument.Paragraphs(i).range.Text
+    myLine = ActiveDocument.Paragraphs(i).Range.Text
     myLen = Len(myLine)
     If myLen > 200 Then
       gogo = True
       myLeft = Int(myLen / 2)
       newLine1 = Left(myLine, myLeft) & "|^&"
       newLine2 = Mid(myLine, myLeft + 1)
-      ActiveDocument.Paragraphs(i).range.Text = newLine1 _
+      ActiveDocument.Paragraphs(i).Range.Text = newLine1 _
            & vbCr & newLine2
     End If
+    DoEvents
   Next i
 Loop
 
 Set rng = ActiveDocument.Content
 rng.HighlightColorIndex = myColour
 Selection.HomeKey Unit:=wdStory
-Selection.TypeText Text:=vbCr
-ActiveDocument.Paragraphs(1).range.HighlightColorIndex _
+Selection.TypeText Text:="|!FRedit" & vbCr & vbCr
+ActiveDocument.Paragraphs(1).Range.HighlightColorIndex _
      = wdNoHighlight
 Selection.HomeKey Unit:=wdStory
 Selection.TypeText Text:=myExtraLines
 myFinal.Activate
 Beep
 End Sub
+
 

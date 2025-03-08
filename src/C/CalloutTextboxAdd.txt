@@ -1,0 +1,40 @@
+
+Sub CalloutTextboxAdd()
+' Paul Beverley - Version 16.01.25
+' Adds a call-out box of the selected text
+
+' If useTextbox = False then the macro uses a single-cell table
+useTextbox = True
+' useTextbox = False
+
+If Selection.Type = wdNoSelection Then
+  Beep
+  MsgBox "Please select the text you want to call out.", _
+       vbExclamation
+  Exit Sub
+End If
+Selection.Copy
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+rng.Collapse wdCollapseEnd
+If useTextbox = True Then
+  rng.InsertAfter Text:=vbCr & vbCr
+  rng.Collapse wdCollapseStart
+  rng.Select
+  hPosition = Selection.Information(wdHorizontalPositionRelativeToPage)
+  vPosition = Selection.Information(wdVerticalPositionRelativeToPage)
+  Dim shape As shape
+  Set shape = ActiveDocument.Shapes.AddTextbox(msoTextOrientationHorizontal, _
+       hPosition, vPosition, 200, 50)
+  shape.TextFrame.TextRange.Paste
+  Selection.Collapse wdCollapseEnd
+Else
+  rng.InsertAfter Text:=vbCr
+  rng.Collapse wdCollapseEnd
+  rng.Select
+  Set tbl = ActiveDocument.Tables.Add(Range:=rng, NumRows:=1, NumColumns:=1)
+  tbl.Cell(1, 1).Range.Paste
+  tbl.Style = "Table Grid"
+End If
+End Sub
+

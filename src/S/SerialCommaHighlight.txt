@@ -1,5 +1,6 @@
+
 Sub SerialCommaHighlight()
-' Paul Beverley - Version 18.05.19
+' Paul Beverley - Version 08.06.24
 ' Highlight or underline text that appears to have a serial comma
 
 maxWords = 7
@@ -13,7 +14,7 @@ Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "[a-zA-Z\-]@, [a-zA-Z\- ]@, and "
+  .Text = "[0-9a-zA-Z'" & ChrW(8217) & "\-]@, [0-9a-zA-Z'" & ChrW(8217) & "\- ]@, and "
   .Replacement.Text = ""
   .MatchWildcards = True
   .MatchWholeWord = False
@@ -38,7 +39,7 @@ Wend
 
 Set rng = ActiveDocument.Content
 With rng.Find
-  .Text = "[a-zA-Z\-]@, [a-zA-Z\- ]@, or "
+  .Text = "[0-9a-zA-Z'" & ChrW(8217) & "\-]@, [0-9a-zA-Z'" & ChrW(8217) & "\- ]@, or "
   .Replacement.Text = ""
   .Execute
 End With
@@ -78,4 +79,6 @@ If Selection.Find.Found = False Then
 End If
 Beep
 End Sub
+
+
 

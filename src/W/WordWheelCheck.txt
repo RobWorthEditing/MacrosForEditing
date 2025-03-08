@@ -1,0 +1,67 @@
+
+Sub WordWheelCheck()
+' Paul Beverley - Version 28.01.25
+' Checks the list of words against the nine letters of a wordwheel puzzle
+
+CR = vbCr
+numWds = 0
+wwText = LCase(ActiveDocument.words(1))
+init = LCase(ActiveDocument.Characters(1))
+allText = " "
+For i = 2 To ActiveDocument.Paragraphs.Count
+  Set rng = ActiveDocument.Paragraphs(i).Range
+  myText = Replace(LCase(rng.Text), CR, "")
+  If Len(myText) > 1 Then
+    If Application.CheckSpelling(myText, _
+           MainDictionary:=Languages(wdEnglishUK).NameLocal) = False Then
+      Beep
+      rng.Select
+      MsgBox ("Spelling error!")
+      Exit Sub
+    End If
+    If InStr(myText, init) = 0 Then
+      Beep
+      rng.Select
+      MsgBox ("Must include: " & init)
+      Exit Sub
+    End If
+    If InStr(allText, " " & myText & " ") > 0 Then
+      Beep
+      rng.Select
+      MsgBox ("Duplicate: " & myText)
+      Exit Sub
+    End If
+    DoEvents
+    myText = Replace(myText, CR, "")
+    wLen = Len(myText)
+    myRem = wwText
+    For j = 1 To wLen
+      ch = Mid(myText, j, 1)
+      chPos = InStr(myRem, ch)
+      If chPos = 0 Then
+        rng.Select
+        Beep
+        MsgBox ("Not a valid word")
+        Exit Sub
+      End If
+      If chPos = 1 Then
+        myRem = Right(myRem, Len(myRem) - 1)
+      Else
+        myRem = Left(myRem, chPos - 1) & Mid(myRem, chPos + 1)
+      End If
+'      Debug.Print myRem
+    Next j
+    DoEvents
+    numWds = numWds + 1
+    allText = allText & myText & " "
+    Debug.Print allText
+    Debug.Print myText, numWds
+    vbxcfv = 0
+  End If
+Next i
+MsgBox ("Number of words: " & Trim(Str(numWds)))
+End Sub
+
+
+
+

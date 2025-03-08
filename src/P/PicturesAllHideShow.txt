@@ -1,0 +1,40 @@
+
+Sub PicturesAllHideShow()
+' Paul Beverley - Version 07.03.25
+' Shows all pictures as white (or black) rectangles
+
+myColour = 1
+' If you prefer black, use:
+' myColour = 0
+
+If Selection.start <> Selection.End Then
+  Set rng = Selection.Range
+Else
+  myResponse = MsgBox("Work on whole document?!", _
+       vbQuestion + vbYesNoCancel, _
+       "PicturesAllHideShow")
+  If myResponse <> vbYes Then Beep: Exit Sub
+  Set rng = ActiveDocument.Content
+End If
+
+rng.InlineShapes(1).Select
+If rng.InlineShapes(1).PictureFormat.Brightness = 0.5 Then
+  myResponse = MsgBox("Hide all pictures?", _
+         vbQuestion + vbYesNoCancel, _
+         "PicturesAllHideShow")
+  If myResponse <> vbYes Then Beep: Exit Sub
+  newColour = myColour
+Else
+  myResponse = MsgBox("Show all pictures?", _
+         vbQuestion + vbYesNoCancel, _
+         "PicturesAllHideShow")
+  If myResponse <> vbYes Then Beep: Exit Sub
+  newColour = 0.5
+End If
+
+For Each sh In rng.InlineShapes
+  If sh.Type = wdInlineShapePicture Then _
+    sh.PictureFormat.Brightness = newColour
+Next sh
+End Sub
+

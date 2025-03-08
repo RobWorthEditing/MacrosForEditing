@@ -1,0 +1,40 @@
+
+Sub FigNoteCalloutSwap()
+' Paul Beverley - Version 13.11.24
+' Moves the note callout to after the figure citation
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^2 ("
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  rng.MoveStart , 1
+  rng.MoveEnd wdWord, 7
+  parPosn = InStr(rng, ").")
+  If Left(rng, 5) = " (fig" And parPosn > 0 Then
+    rng.End = rng.start + parPosn + 1
+    rng.Select
+    rng.Cut
+    rng.MoveStart , -1
+    rng.Collapse wdCollapseStart
+    rng.Paste
+    myCount = myCount + 1
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+MsgBox "Changed: " & myCount
+End Sub
+
+

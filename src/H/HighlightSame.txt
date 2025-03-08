@@ -1,16 +1,14 @@
-Sub HighlightSame()
-' Paul Beverley - Version 16.01.21
-' Highlight all occurrences of this text in this colour
 
+Sub HighlightSame()
+' Paul Beverley - Version 07.01.25
+' Highlights all occurrences of this text in this colour
+
+' doMatchCase = True
+doMatchCase = False
 nonTextColour = wdGray25
 textColour = wdBrightGreen
-' colour for thin spaces
-otherColour = wdYellow
 
 ' Preserve TC status and existing highlight colour
-oldColour = Options.DefaultHighlightColorIndex
-oldFind = Selection.Find.Text
-oldReplace = Selection.Find.Replacement.Text
 nowTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
@@ -23,21 +21,17 @@ Next v
 If varsExist Then
   wasStart = ActiveDocument.Variables("selStart")
   wasEnd = ActiveDocument.Variables("selEnd")
-  If Selection.Start > wasStart - 1 And Selection.End < wasEnd + 1 Then
-    Selection.Start = wasStart
+  If Selection.start > wasStart - 1 And Selection.End < _
+       wasEnd + 1 And wasEnd - wasStart < 200 Then
+    Selection.start = wasStart
     Selection.End = wasEnd
   End If
 End If
 
-Set rng = ActiveDocument.Content
-rng.Start = Selection.Start - 1
-rng.End = Selection.Start
-If Selection.End = Selection.Start Then
-  If AscW(Selection) = 8201 Then nonTextColour = otherColour
-  partWord = False
-  Selection.MoveEnd , 1
-  myChar = Selection
-  nonText = (UCase(myChar) = LCase(myChar))
+Set rng = Selection.Range.Duplicate
+nonText = (rng.Text = " ")
+wasSelected = (rng.End > rng.start + 1)
+If Not (wasSelected) Then
   If nonText = True Then
     nowColour = Selection.Range.HighlightColorIndex
     If nowColour = wdNoHighlight Then
@@ -56,9 +50,9 @@ If Selection.End = Selection.Start Then
         Options.DefaultHighlightColorIndex = nowColour
       End If
     End If
-    Selection.Expand wdWord
-    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
-      Selection.MoveEnd , -1
+    rng.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+      rng.MoveEnd , -1
       DoEvents
     Loop
   End If
@@ -68,8 +62,8 @@ Else
 '  If nowColour = 0 Then nowColour = nontextColour
   If nowColour > 1000 Then
     Set rng = ActiveDocument.Content
-    rng.Start = Selection.Start
-    rng.End = Selection.Start + 1
+    rng.start = Selection.start
+    rng.End = Selection.start + 1
     nowColour = rng.HighlightColorIndex
   End If
   Options.DefaultHighlightColorIndex = nowColour
@@ -86,12 +80,13 @@ With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = findText
-  .MatchCase = True
+  .MatchCase = doMatchCase
   .Forward = True
   .Replacement.Text = "^&"
   .Replacement.Highlight = True
   .Wrap = wdFindContinue
-  If partWord = False And nonText = False Then .MatchWholeWord = True
+  Debug.Print partWord, nonText
+  If textSelected = True And nonText = False Then .MatchWholeWord = True
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
 End With
@@ -100,18 +95,5 @@ End With
 oldColour = Options.DefaultHighlightColorIndex
 Options.DefaultHighlightColorIndex = oldColour
 ActiveDocument.TrackRevisions = nowTrack
-With Selection.Find
-  .Text = oldFind
-  .Replacement.Text = oldReplace
-  .MatchCase = False
-  .MatchWholeWord = False
-  .Replacement.Highlight = False
-End With
-If Selection.End = Selection.Start Then
-   myChar = Selection
-  If UCase(myChar) <> LCase(myChar) Then
-    Selection.Move , 1
-  End If
-End If
 End Sub
 

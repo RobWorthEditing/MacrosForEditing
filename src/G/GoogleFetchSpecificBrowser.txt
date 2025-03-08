@@ -1,0 +1,43 @@
+
+Sub GoogleFetchSpecificBrowser()
+' Paul Beverley - Version 24.07.24
+' Launches selected text to Google using a specified browser
+
+runBrowser = "C:\Program Files\Mozilla Firefox\Firefox"
+' runBrowser = "C:\Program Files\Google\Chrome\Application\chrome"
+' runBrowser = "C:\Program Files\Internet Explorer\iexplore"
+
+mySite = "http://www.google.co.uk/search?q="
+
+If Selection.start = Selection.End Then
+  Selection.Expand wdWord
+  If Len(Selection) < 3 Then
+    Selection.Collapse wdCollapseStart
+    Selection.MoveLeft , 1
+    Selection.Expand wdWord
+  End If
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.start = startNow
+End If
+mySubject = Trim(Selection)
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubject, " ", "+")
+Shell (runBrowser & " " & mySite & mySubject)
+End Sub
+
+
+
+

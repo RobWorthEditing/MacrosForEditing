@@ -1,21 +1,40 @@
+
 Sub PatternClear()
-' Paul Beverley - Version 13.03.14
-' Remove shading and other funny colours!
+' Paul Beverley - Version 10.01.25
+' Removes shading and other funny colours
+
+myDo = "S"
+If Selection.start = Selection.End Then
+  Beep
+  myResponse = MsgBox("Clear patterns from the whole document?!", _
+       vbQuestion + vbYesNoCancel, "PatternClear")
+  If myResponse <> vbYes Then Exit Sub
+  myDo = "TEF"
+End If
+
+If ActiveDocument.Footnotes.count = 0 Then myDo = Replace(myDo, "F", "")
+If ActiveDocument.Endnotes.count = 0 Then myDo = Replace(myDo, "E", "")
 
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
-If Selection.Start = Selection.End Then
-  Set rng = ActiveDocument.Content
-Else
-  Set rng = Selection.Range
-End If
-rng.Font.Shading.BackgroundPatternColor = wdColorAutomatic
-rng.ParagraphFormat.Shading.BackgroundPatternColor = wdColorAutomatic
-rng.Shading.Texture = wdTextureNone
-rng.Shading.ForegroundPatternColor = wdColorAutomatic
-rng.Shading.BackgroundPatternColor = wdColorAutomatic
-ActiveDocument.TrackRevisions = myTrack
 
+For i = 1 To Len(myDo)
+  doIt = Mid(myDo, i, 1)
+  Select Case doIt
+     Case "S": Set rng = Selection.Range.Duplicate
+     Case "T": Set rng = ActiveDocument.Content
+     Case "F": Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+     Case "E": Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  End Select
+  
+  ' Do whatever with rng
+  rng.Font.Shading.BackgroundPatternColor = wdColorAutomatic
+  rng.ParagraphFormat.Shading.BackgroundPatternColor = wdColorAutomatic
+  rng.Shading.Texture = wdTextureNone
+  rng.Shading.ForegroundPatternColor = wdColorAutomatic
+  rng.Shading.BackgroundPatternColor = wdColorAutomatic
+Next i
+ActiveDocument.TrackRevisions = myTrack
 End Sub
 
 

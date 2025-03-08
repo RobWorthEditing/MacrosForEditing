@@ -19,6 +19,7 @@ For i = 1 To 1000
     gotChar = True
     Exit For
   End If
+  DoEvents
 Next i
 If gotChar = False Then
   Beep

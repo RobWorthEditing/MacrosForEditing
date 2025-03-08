@@ -1,0 +1,36 @@
+
+Sub SentenceHighlight()
+' Paul Beverley - Version 25.05.24
+' Creates a list of all styles name
+ 
+If Selection.Start = Selection.End Then
+  Set rng = ActiveDocument.Content
+Else
+  Set rng = Selection.Range.Duplicate
+End If
+If rng.Font.DoubleStrikeThrough <> False Then
+  foundDstrike = False
+  For i = 2 To rng.Sentences.Count
+    If rng.Sentences(i).Font.DoubleStrikeThrough <> False Then
+      foundDstrike = True
+      Exit For
+      Beep
+    End If
+    If i Mod 20 = 0 Then DoEvents
+  Next i
+  If foundDstrike = True Then
+    rng.Font.DoubleStrikeThrough = False
+    Beep
+    Exit Sub
+  End If
+End If
+For Each sn In rng.Sentences
+  i = i + 1
+  If i Mod 2 = 0 Then
+    sn.Font.DoubleStrikeThrough = True
+  End If
+  DoEvents
+Next sn
+Beep
+End Sub
+

@@ -24,6 +24,7 @@ For Each ch In rng.Characters
     Exit For
   Else
   End If
+  DoEvents
 Next ch
 If gotChar = False Then
   Beep

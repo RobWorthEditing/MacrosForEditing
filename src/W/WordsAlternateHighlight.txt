@@ -1,0 +1,16 @@
+
+Sub WordsAlternateHighlight()
+' Paul Beverley - Version 03.02.25
+' Highlights alternate "words" in a selection
+
+For Each wd In Selection.Range.Words
+i = i + 1
+If i Mod 2 = 0 Then
+  wd.HighlightColorIndex = wdYellow
+Else
+  wd.HighlightColorIndex = wdBrightGreen
+End If
+Next wd
+End Sub
+
+

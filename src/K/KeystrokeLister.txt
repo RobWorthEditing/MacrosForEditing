@@ -1,19 +1,20 @@
+
 Sub KeystrokeLister()
-' Paul Beverley - Version 03.02.10
-' Create a list of custom key allocations
+' Paul Beverley - Version 13.12.24
+' Creates a list of custom key allocations
+
 Dim myKeys As String
 Dim KeyCat As String
 Dim Cmnd As String
 Dim kb As KeyBinding
 
 myKeys = "KeyString" & vbTab & "Category" _
-   & vbTab & "Command" & vbTab & _
-   "CommandParameter" & vbCrLf
+   & vbTab & "Command" & vbCrLf
 Documents.Add
 Selection.InsertAfter myKeys
 Selection.Collapse wdCollapseEnd
 
-For Each kb In Keybindings
+For Each kb In KeyBindings
   Select Case kb.KeyCategory
      Case 0: KeyCat = "Disable"
      Case 1: KeyCat = "Command"
@@ -24,27 +25,46 @@ For Each kb In Keybindings
      Case 6: KeyCat = "Symbol"
      Case 7: KeyCat = "Prefix"
   End Select
-  Cmnd = Replace(kb.Command, "Normal.NewMacros.", "Nml.")
-  myKeys = kb.KeyString & vbTab & KeyCat _
-    & vbTab & Cmnd & vbTab _
-    & kb.CommandParameter & vbCrLf
+  If KeyCat <> "Disable" Then
+    Cmnd = Replace(kb.Command, "Normal.NewMacros.", "111")
+    myKeys = kb.KeyString & vbTab & KeyCat _
+      & vbTab & Cmnd & vbCr
+  End If
   Selection.InsertAfter myKeys
   Selection.Collapse wdCollapseEnd
 Next kb
  
 ActiveDocument.Paragraphs(1).Range.Font.Bold = True
-ActiveDocument.Select
+Set rng = ActiveDocument.Content
  
-Set tbl = Selection.ConvertToTable(Separator:=wdSeparateByTabs)
+Set tbl = rng.ConvertToTable(Separator:=wdSeparateByTabs)
+tbl.Style = "Table Grid"
+tbl.Sort ExcludeHeader:=True, FieldNumber:="Column 3"
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "111"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
 tbl.Columns.AutoFit
-
 ' Now create a second copy of the list, but sorted by command
-Selection.Copy
-Selection.Sort ExcludeHeader:=True, FieldNumber:="Column 3"
-
-Selection.Collapse wdCollapseStart
-Selection.InsertBreak Type:=wdPageBreak
 Selection.HomeKey Unit:=wdStory
-Selection.Paste
+Selection.InsertBreak Type:=wdPageBreak
+Set rng = ActiveDocument.Content
+rng.MoveStart , 1
+Set rng2 = ActiveDocument.Content
+rng2.Collapse wdCollapseStart
+rng2.FormattedText = rng.FormattedText
+ActiveDocument.Tables(1).Sort ExcludeHeader:=True, _
+      FieldNumber:="Column 1"
+Selection.HomeKey Unit:=wdStory
 End Sub
+
 

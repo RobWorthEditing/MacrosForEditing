@@ -1,33 +1,52 @@
+
 Sub TrackOnOffVisible()
-' Paul Beverley - Version 19.06.19
+' Paul Beverley - Version 25.11.24
 ' Switches tracking on/off with visible background
 
-myColNumber = 200
-myColour = RGB(255, 255, myColNumber)
+myColourNumber = 200
 
-ActiveDocument.TrackRevisions = Not ActiveDocument.TrackRevisions
+markupNow = ActiveWindow.View.RevisionsFilter.Markup
+If ActiveDocument.TrackRevisions = False Then GoTo turnTrackOn
+
+Beep
+ActiveDocument.TrackRevisions = False
+myColour = RGB(255, 255, myColourNumber)
 With ActiveDocument.Styles(wdStyleNormal).ParagraphFormat
-  If ActiveDocument.TrackRevisions = False Then
-    .Shading.BackgroundPatternColor = myColour
-  Else
-    .Shading.BackgroundPatternColor = wdColorAutomatic
-  End If
+   .Shading.BackgroundPatternColor = myColour
 End With
 
-If ActiveDocument.TrackRevisions = False Then _
-     myColNumber = 200 Else myColNumber = 255
-'  ActiveDocument.ActiveWindow.View.DisplayBackgrounds = True
+With ActiveDocument.Background.Fill
+  .ForeColor.RGB = RGB(255, 255, 255)
+  .Visible = msoTrue
+  .Solid
+End With
+With ActiveWindow.View.RevisionsFilter
+  .Markup = markupNow
+  .View = wdRevisionsViewFinal
+End With
+Exit Sub
+
+turnTrackOn:
+' Switch tracking back on
+ActiveDocument.TrackRevisions = True
+myColour = RGB(255, 255, 255)
+With ActiveDocument.Styles(wdStyleNormal).ParagraphFormat
+   .Shading.BackgroundPatternColor = myColour
+End With
+
 With ActiveDocument.Background.Fill
   .ForeColor.RGB = RGB(255, 255, myColNumber)
   .Visible = msoTrue
   .Solid
 End With
+With ActiveWindow.View.RevisionsFilter
+  .Markup = markupNow
+  .View = wdRevisionsViewFinal
+End With
 Beep
 myTime = Timer
-If ActiveDocument.TrackRevisions = True Then
-  Do
-  Loop Until Timer > myTime + 0.2
-  Beep
-End If
+Do
+Loop Until Timer > myTime + 0.2
+Beep
 End Sub
 

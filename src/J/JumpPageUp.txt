@@ -1,0 +1,14 @@
+
+Sub JumpPageUp()
+' Paul Beverley - Version 31.07.24
+' Jumps to the head of the next page
+
+myExtra = 4
+
+Selection.GoTo What:=wdGoToPage, Which:=wdGoToNext
+Set rng = Selection.Range.Duplicate
+Selection.GoTo What:=wdGoToPage, Which:=wdGoToNext
+rng.Select
+ActiveDocument.ActiveWindow.SmallScroll up:=myExtra
+End Sub
+

@@ -1,0 +1,14 @@
+Sub DocumentAddMyBlank()
+' Paul Beverley - Version 20.04.24
+' Adds document at specific window size, based on my template
+
+Documents.Add Template:= _
+    "C:\Users\Paul\AppData\Roaming\Microsoft\Templates\MyBlank.dotx", _
+    NewTemplate:=False, DocumentType:=0
+
+ActiveDocument.Windows(1).WindowState = wdWindowStateNormal
+Application.Resize Width:=1000, Height:=500
+Application.ActiveWindow.View.Zoom.Percentage = 200
+End Sub
+
+

@@ -1,22 +1,23 @@
+
 Sub MultiSwitch()
-' Paul Beverley - Version 10.04.24
+' Paul Beverley - Version 28.01.25
 ' Scripted word/phrase switching
 
 
 maxWords = 5
-myListName = "zzSwitchList.docx"
-Set rng = ActiveDocument.Content
+listNameIncludes = "switch"
 commentNearCheck = True
 
 ' Set min number of chars for an abbreviation
 minChars = 3
 includeApostrophe = True
+removeHighlight = True
 
 linksOFF = True
 
 addMarkerInList = True
 
-notTheseChars = ",!?. "
+notTheseChars = ",!?.)>] "
 
 ' If you want to load the SwitchList file automatically...
 ' then...
@@ -26,8 +27,6 @@ myList = "/Users/Paul/My Documents/Macro stuff/zzSwitchList.docx"
 
 ' On Windows, you will need something like this:
 myList = "C:\Documents and Settings\Paul\My Documents\zzSwitchList.docx"
-
-myList = "C:\VirtualAcorn\VirtualRPC-SA\HardDisc4\MyFiles2\WIP\zzzTheBook\zzSwitchList.docx"
 
 CR = vbCr
 CR2 = CR & CR
@@ -43,23 +42,18 @@ Options.SmartCutPaste = False
 nowSearch = Selection.Find.Text
 
 ' Read the context, noting if the word is selected
-wasSelected = (Selection.End > Selection.Start)
-If wasSelected = True Then
-  maxWords = 1
-Else
-  myTest = Selection.Text
-  If InStr(notTheseChars, myTest) > 0 Then Selection.MoveLeft , 1
-  Selection.Expand wdWord
-End If
-
-' If no word selected
+wasSelected = (Selection.End > Selection.start)
+If wasSelected = True Then maxWords = 1
+myTest = Selection.Text
+If Asc(myTest) = 13 Then Selection.MoveLeft , 1
+If InStr(notTheseChars, myTest) > 0 Then Selection.MoveLeft , 1
+Selection.Expand wdWord
 Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
   Selection.MoveEnd , -1
   DoEvents
 Loop
-okChars = ".,;:" & Chr(11) & Chr(13) & ChrW(8211) & ChrW(8212) & ChrW(8221)
-asdgfsadf = Selection
-Debug.Print asdgfsadf, Asc(asdgfsadf)
+
+okChars = ".,;:" & Chr(11) & vbCr & ChrW(8211) & ChrW(8212) & ChrW(8221)
 If InStr(okChars, Left(Selection, 1)) > 0 Then
   Selection.Collapse wdCollapseStart
   Selection.MoveLeft , 1
@@ -67,21 +61,20 @@ If InStr(okChars, Left(Selection, 1)) > 0 Then
 End If
 
 isAbbrev = Not (Len(Selection) > minChars)
-startNow = Selection.Start
+startNow = Selection.start
 Set startRng = Selection.Range.Duplicate
 iMax = maxWords
 
 Set rng = Selection.Range.Duplicate
 rng.Collapse wdCollapseStart
-rng.MoveEnd Unit:=wdWord, Count:=maxWords
-numTCs = rng.Revisions.Count
-
+rng.MoveEnd Unit:=wdWord, count:=maxWords
+numTCs = rng.Revisions.count
 If numTCs > 0 Then
   rng.Revisions.AcceptAll
-  rng.MoveEnd Unit:=wdWord, Count:=maxWords
+  rng.MoveEnd Unit:=wdWord, count:=maxWords
 End If
 
-wdsLeft = rng.Words.Count
+wdsLeft = rng.Words.count
 If maxWords > wdsLeft Then maxWords = wdsLeft
 If Asc(rng.Words(wdsLeft)) = 13 Then maxWords = maxWords - 1
 For i = 1 To maxWords
@@ -91,7 +84,7 @@ For i = 1 To maxWords
     Exit For
   End If
   If Right(rng.Words(i), 1) = " " Then endStr(i) = endStr(i) - 1
-  myStr(i) = Left(rng, endStr(i) - rng.Start)
+  myStr(i) = Trim(Left(rng, endStr(i) - rng.start))
   DoEvents
 Next i
 If numTCs > 0 Then WordBasic.EditUndo
@@ -102,8 +95,8 @@ iMax = maxWords
 gottaList = False
 For Each myDoc In Application.Documents
   thisName = myDoc.Name
-  If thisName = myListName Then
-    Set theList = Documents(myListName)
+  If InStr(LCase(thisName), LCase(listNameIncludes)) > 0 Then
+    Set theList = Documents(thisName)
     gottaList = True
     Exit For
   End If
@@ -128,7 +121,7 @@ With rng.Find
   DoEvents
   If .Found = True Then
     Beep
-    rng.Start = rng.Start - 1
+    rng.start = rng.start - 1
     rng.Collapse wdCollapseStart
     rng.Expand wdWord
     rng.HighlightColorIndex = wdYellow
@@ -147,14 +140,16 @@ If linksOFF = True Then
 End If
 lastTwo = Right(rng, 2)
 If lastTwo <> CR2 Then rng.InsertAfter Text:=CR2
+firstTwo = Left(rng, 2)
+If firstTwo <> CR2 Then rng.InsertBefore Text:=CR2
 
-rng.Start = 0
+rng.start = 0
 rng.End = theList.Content.End
 ' Try to locate the selected text in the switch list
 allWords = rng.Text
 lfPos = InStr(allWords, ChrW(11))
 If lfPos > 0 Then
-  rng.Start = lfPos - 2
+  rng.start = lfPos - 2
   rng.End = lfPos + 1
   rng.Select
   Beep
@@ -216,6 +211,10 @@ If gottaMatch = False Then
   Beep
   Options.SmartCutPaste = mySmartOpt
   Selection.Find.Text = nowSearch
+  Debug.Print "|" & myStr(1) & "|"
+  myPrompt = "Can't find """ & myStr(1) & """"
+  myResponse = MsgBox(myPrompt, vbOKOnly, "MultiSwitch")
+  theDoc.Activate
   Exit Sub
 End If
 
@@ -235,7 +234,7 @@ If numAlts > 1 And wasSelected = False Then
 Else
   myChoice = 1
 End If
-rng.Start = myPos + 2
+rng.start = myPos + 2
 rng.Collapse wdCollapseStart
 rng.Expand wdParagraph
 
@@ -250,7 +249,8 @@ myNewItem = rng
 Dim gotFormat As Boolean
 gotFormat = rng.Font.Bold Or rng.Font.Italic Or rng.Font.SmallCaps _
      Or rng.Font.Underline Or rng.Font.Superscript Or rng.Font.Subscript _
-     Or rng.InlineShapes.Count > 0
+     Or rng.InlineShapes.count > 0
+If rng.Text = "" Then Beep: Exit Sub
 If AscW(rng) = 172 Or gotFormat Then
   useFormat = True
   If AscW(rng) = 172 Then rng.MoveStart , 1
@@ -265,20 +265,20 @@ If Selection.Information(wdInCommentPane) = 0 And _
      Selection.Information(wdInFootnote) = 0 And _
      Selection.Information(wdInEndnote) = 0 Then
 
-  numCmts = ActiveDocument.Comments.Count
+  numCmts = ActiveDocument.Comments.count
   If numCmts > 0 And commentNearCheck = True Then
   ' Find scope of (range covered by) the next comment
     Set rng = Selection.Range.Duplicate
     rng.Collapse wdCollapseStart
-    rng.Start = 0
-    cmtNumber = rng.Comments.Count + 1
+    rng.start = 0
+    cmtNumber = rng.Comments.count + 1
     If cmtNumber <= numCmts Then
       Set nextCmtRange = ActiveDocument.Comments(cmtNumber).Scope
       
     ' Does the scope of that comment overlap the current word?
       Set rng = Selection.Range.Duplicate
       rng.Expand wdWord
-      If rng.End > nextCmtRange.Start Then
+      If rng.End > nextCmtRange.start Then
         Beep
         rng.Select
         myResponse = MsgBox("Selection contains a comment. Word might crash!" _
@@ -292,16 +292,25 @@ If Selection.Information(wdInCommentPane) = 0 And _
   End If
 End If
 
+With ActiveWindow.View.RevisionsFilter
+  myMarkup = .Markup
+  myView = .View
+End With
 myTrack = ActiveDocument.TrackRevisions
-myState = ActiveWindow.View.ShowInsertionsAndDeletions
 If noTrack Then ActiveDocument.TrackRevisions = False
 If useFormat = True Then
   Selection.Delete
   Selection.Paste
 Else
+  If removeHighlight = True Then
+    myTrack = ActiveDocument.TrackRevisions
+    ActiveDocument.TrackRevisions = False
+    Selection.Range.HighlightColorIndex = wdNoHighlight
+    ActiveDocument.TrackRevisions = myTrack
+  End If
   Selection.Text = myNewItem
 End If
-Selection.Start = startNow
+Selection.start = startNow
 textEnd = Selection.End
 If InStr(Selection, "^p") > 0 Then
   numCRs = 0
@@ -317,12 +326,12 @@ If InStr(Selection, "^p") > 0 Then
     .MatchWildcards = False
     .Execute
   End With
-  Do While Selection.Find.Found = True And Selection.Start < textEnd
+  Do While Selection.Find.Found = True And Selection.start < textEnd
     Selection.TypeText Text:=vbCr
     Selection.Find.Execute
     numCRs = numCRs + 1
   Loop
-  Selection.Start = startNow
+  Selection.start = startNow
   Selection.End = textEnd - numCRs
   Selection.Find.Text = oldFind
 End If
@@ -340,19 +349,19 @@ If InStr(Selection, "^t") > 0 Then
     .MatchWildcards = False
     .Execute
   End With
-  Do While Selection.Find.Found = True And Selection.Start < textEnd
+  Do While Selection.Find.Found = True And Selection.start < textEnd
     Selection.TypeText Text:=vbTab
     Selection.Find.Execute
     numTabs = numTabs + 1
   Loop
-  Selection.Start = startNow
+  Selection.start = startNow
   Selection.End = textEnd - numCRs - numTabs
   Selection.Find.Text = oldFind
 End If
 If Asc(Selection) = Asc("!") Then
   myLen = Len(Selection)
-  Selection.End = Selection.Start + 1
-  Selection.Start = Selection.Start - 1
+  Selection.End = Selection.start + 1
+  Selection.start = Selection.start - 1
   Selection.Delete
   Selection.MoveEnd , myLen - 1
 End If
@@ -385,7 +394,10 @@ End If
 
 If noTrack Then
   ActiveDocument.TrackRevisions = myTrack
-  ActiveWindow.View.ShowInsertionsAndDeletions = myState
+  With ActiveWindow.View.RevisionsFilter
+    .Markup = myMarkup
+    .View = myView
+  End With
 End If
 Options.SmartCutPaste = mySmartOpt
 Selection.Find.Text = "^p^p" & myStr(1)
@@ -398,6 +410,7 @@ If myErr = 4160 Then
   gottaList = False
   Resume Next
 Else
+  If myErr = 438 Then Beep: Exit Sub
   If myErr = 5174 Then
     Beep
     myPrompt = "Please open your switch list file: " & myListName _

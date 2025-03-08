@@ -1,0 +1,117 @@
+
+Sub MultiFileBackgroundColourChange()
+' Paul Beverley - Version 03.07.24
+' Changes the background colour of all files in a list
+
+' pale blue
+' myColour = RGB(202, 237, 251)
+
+' yellow
+myColour = RGB(255, 255, 200)
+
+' back to white
+' myColour = RGB(255, 255, 255)
+
+
+Dim allMyFiles2(200) As String
+Set rng = ActiveDocument.Content
+myExtent = 250
+If rng.End - rng.start > myExtent Then rng.End = rng.start + myExtent
+
+If InStr(LCase(rng.Text), ".doc") = 0 And InStr(LCase(rng.Text), ".rtf") = 0 Then
+' If not a file list then open a file in the relevant folder
+  myResponse = MsgBox("Navigate to the required folder; then press 'Cancel'" _
+      , , "MultifilePDF")
+  docCount = Documents.Count
+  Dialogs(wdDialogFileOpen).Show
+  If Documents.Count > docCount Then ActiveDocument.Close
+  dirPath = CurDir()
+  ChDir dirPath
+' Read the names of all the files in this directory
+  myFile = Dir(CurDir() & Application.PathSeparator)
+  Documents.Add
+  numFiles = 0
+  Do While myFile <> ""
+    If InStr(LCase(myFile), ".doc") > 0 Or InStr(LCase(myFile), ".rtf") > 0 Then
+      Selection.TypeText myFile & vbCr
+      numFiles = numFiles + 1
+    End If
+    myFile = Dir()
+  Loop
+
+' Now sort the file list (only actually needed for Macs)
+  Selection.WholeStory
+  Selection.Sort SortOrder:=wdSortOrderAscending, _
+       SortFieldType:=wdSortFieldAlphanumeric
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeParagraph
+  Selection.HomeKey Unit:=wdStory
+  Selection.TypeText dirPath
+' Go back until you hit myDelimiter
+  Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+  dirName = Selection
+  Selection.HomeKey Unit:=wdStory
+  
+  If pdfFilesInFolder = True Then
+    mySubFolder = "\" & pdfFolderName
+  Else
+    mySubFolder = ""
+  End If
+  myResponse = MsgBox("Change the screen colour and resave ALL the files in this folder: " & mySubFolder & dirName _
+       & " ?", vbQuestion + vbYesNoCancel, "MultiFile Background Colour Change")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+' Pick up the folder name and the filenames from the file list
+numFiles = 0
+myFolder = ""
+For Each myPara In ActiveDocument.Paragraphs
+  myPara.Range.Select
+  Selection.MoveEnd , -1
+  lineText = Selection
+  If myFolder = "" Then
+    myFolder = lineText
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveStartUntil cset:=":\", Count:=wdBackward
+    Selection.MoveStart , -1
+    myDelimiter = Left(Selection, 1)
+  Else
+    thisFile = lineText
+    If Len(thisFile) > 2 Then
+      If Left(thisFile, 1) <> "|" Then
+        numFiles = numFiles + 1
+        allMyFiles2(numFiles) = thisFile
+      End If
+    End If
+  End If
+Next myPara
+
+If pdfFilesInFolder = True Then
+  myResponse = MsgBox("Change the screen colour and resave ALL the files listed here, in this folder: " & _
+       mySubFolder & myFolder & " ?", _
+       vbQuestion + vbYesNoCancel, "Multifile Background Colour Change")
+  If myResponse <> vbYes Then Exit Sub
+End If
+
+For i = 1 To numFiles
+  thisName = allMyFiles2(i)
+  myFileType = Mid(thisName, InStr(thisName, "."))
+  justName = Replace(thisName, myFileType, "")
+  thisFile = myFolder & myDelimiter & thisName
+  Set myDoc = Application.Documents.Open(fileName:=thisFile)
+  StatusBar = thisName
+  With ActiveDocument.Background.Fill
+    .ForeColor.RGB = myColour
+    .Visible = msoTrue
+    .Solid
+  End With
+  myDoc.Save
+  myDoc.Close
+Next
+Selection.HomeKey Unit:=wdStory
+
+MsgBox (numFiles & "  files saved with new screen colour")
+End Sub
+
+
+

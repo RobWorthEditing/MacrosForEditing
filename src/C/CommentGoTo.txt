@@ -1,0 +1,17 @@
+
+Sub CommentGoTo()
+' Paul Beverley - Version 19.08.24
+' Moves to a specific numbered comment
+
+maxNum = ActiveDocument.Comments.Count
+myPrompt = "Go to comment number (max: " & _
+       Trim(Str(maxNum)) & "):"
+Do
+  myText = InputBox(myPrompt, "CommentGoTo")
+  myNumber = Val(myText)
+  If myNumber = 0 Then Beep: Exit Sub
+  If myNumber > maxNum Then Beep: myPrompt = "Maximum is <" & Trim(Str(maxNum)) & ">!"
+Loop Until Not (myNumber > maxNum)
+Selection.GoTo What:=wdGoToComment, Count:=myNumber
+End Sub
+

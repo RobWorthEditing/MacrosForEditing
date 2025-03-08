@@ -1,0 +1,135 @@
+
+Sub WordCountByHeading()
+' Paul Beverley - Version 04.02.25
+' Counts all the words in each section, based on Headings 1 and 2
+
+h1 = "Heading 1"
+h2 = "Heading 2"
+
+CR = vbCr: CR2 = CR & CR
+Set rngOld = ActiveDocument.Content
+Set copyDoc = Documents.Add
+Set rng = copyDoc.Content
+rng.FormattedText = rngOld.FormattedText
+rng.Fields.Unlink
+rng.Revisions.AcceptAll
+
+CR = vbCr: CR2 = CR & CR
+
+'Replace tables with the text
+For i = rng.Tables.count To 1 Step -1
+  tableWords = rng.Tables(i).Range.Text
+  tableWords = Replace(tableWords, CR, " ")
+  tableWords = Replace(tableWords, ChrW(7), " ")
+  rng.Tables(i).Range.Select
+  Selection.Collapse wdCollapseEnd
+  Debug.Print tableWords
+  Selection.TypeText Text:=tableWords
+  rng.Tables(i).Delete
+Next i
+
+numParas = ActiveDocument.Paragraphs.count
+ReDim wdCount(numParas) As Integer
+For p = 1 To numParas
+  Set rng = copyDoc.Paragraphs(p).Range
+  If myText <> CR Then
+    numWds = rng.ComputeStatistics(wdStatisticWords)
+    numFootWds = 0
+    numEndWds = 0
+    numFoots = rng.Footnotes.count
+    If numFoots > 0 Then
+      For i = 1 To numFoots
+        numFootWds = numFootWds & _
+             rng.Footnotes(i).Range.ComputeStatistics(wdStatisticWords)
+      Next i
+    End If
+    numEnds = rng.Endnotes.count
+    If numEnds > 0 Then
+      For i = 1 To numEnds
+        numEndWds = numEndWds & _
+             rng.Endnotes(i).Range.ComputeStatistics(wdStatisticWords)
+      Next i
+    End If
+    wdCount(p) = numWds + numFootWds + numEndWds
+  Else
+    wdCount(p) = 0
+  End If
+Next p
+h1Tot = 0
+h2Tot = 0
+totTot = 0
+preTot = 0
+Set newDoc = Documents.Add
+Set rngResults = newDoc.Content
+
+'Find first H1 heading
+For p = 1 To numParas
+  If InStr(copyDoc.Paragraphs(p).Range.Style, h1) > 0 Then Exit For
+Next p
+ph1 = p
+If ph1 > 1 Then
+  For p = 1 To ph1 - 1
+    If copyDoc.Paragraphs(p).Range.Text <> CR Then
+      preTot = preTot + wdCount(p)
+      totTot = totTot + wdCount(p)
+    End If
+    Next p
+  Selection.TypeText Text:="Prelims" & vbTab & preTot & CR
+End If
+
+For p = ph1 To numParas
+  totTot = totTot + wdCount(p)
+  Set rng = copyDoc.Paragraphs(p).Range
+  If InStr(rng.Style, h1) > 0 Then
+    h1Tot = wdCount(p)
+    For i = p + 1 To numParas
+      If InStr(copyDoc.Paragraphs(p).Range.Style, h1) > 0 Then
+        h1Tot = h1Tot + wdCount(i)
+      Else
+        resText = Replace(rng.Text, CR, "")
+        resText = Replace(resText, ChrW(2), " ")
+        myLine = "H1H1" & resText & vbTab & h1Tot & CR
+        Selection.InsertAfter myLine
+        Exit For
+      End If
+    Next i
+    If i = numParas + 1 Then
+      resText = Replace(rng.Text, CR, "")
+      resText = Replace(resText, ChrW(2), " ")
+      myLine = "H1H1" & resText & vbTab & h1Tot & CR
+      Selection.InsertAfter myLine
+    End If
+  End If
+  If InStr(rng.Style, h2) > 0 Then
+    h2Tot = wdCount(p)
+    For i = p + 1 To numParas
+      thisStyle = copyDoc.Paragraphs(i).Range.Style
+      If InStr(thisStyle, h2) = 0 And InStr(thisStyle, h1) = 0 Then
+        h2Tot = h2Tot + wdCount(i)
+      Else
+        resText = Replace(rng.Text, CR, "")
+        resText = Replace(resText, ChrW(2), " ")
+        Selection.InsertAfter resText & vbTab & h2Tot & CR
+        Exit For
+      End If
+    Next i
+    If i = numParas + 1 Then
+      myLine = Replace(rng.Text, CR, "") & vbTab & h2Tot & CR
+      Selection.InsertAfter myLine
+    End If
+  End If
+  DoEvents
+Next p
+Set rng = ActiveDocument.Content
+rng.InsertAfter Text:=CR & "H1H1Total word count" & vbTab & totTot
+For Each pa In ActiveDocument.Paragraphs
+  Set rng = pa.Range
+  If Left(rng.Text, 4) = "H1H1" Then
+    rng.Text = Mid(rng.Text, 5)
+    rng.Font.Bold = True
+  End If
+Next pa
+copyDoc.Close SaveChanges:=False
+newDoc.Activate
+End Sub
+

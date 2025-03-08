@@ -1,5 +1,6 @@
+
 Sub SwapPunctuation()
-' Paul Beverley - Version 05.07.23
+' Version 25.05.24
 ' Swaps the next pair of punctuation marks
 
 Set rng = Selection.Range.Duplicate
@@ -9,7 +10,7 @@ For i = 1 To Len(rng) - 1
   ch1 = Mid(rng, i, 1)
   If (UCase(ch1) = LCase(ch1) And ch1 <> " ") Then
     ch2 = Mid(rng, i + 1, 1)
-    If (UCase(ch2) = LCase(ch2) And ch <> " ") Then Exit For
+    If (UCase(ch2) = LCase(ch2) And ch2 <> " ") Then Exit For
   End If
 Next i
 Selection.MoveStart , i - 1

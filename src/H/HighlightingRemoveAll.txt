@@ -1,0 +1,35 @@
+Sub HighlightingRemoveAll()
+' Paul Beverley - Version 12.07.24
+' Remove all highlighting, including in notes, boxes & comments
+
+' Main text
+ActiveDocument.Content.HighlightColorIndex = wdNoHighlight
+
+' Notes
+If ActiveDocument.Footnotes.Count > 0 Then _
+     ActiveDocument.StoryRanges(wdFootnotesStory).HighlightColorIndex = wdNoHighlight
+If ActiveDocument.Endnotes.Count > 0 Then _
+     ActiveDocument.StoryRanges(wdEndnotesStory).HighlightColorIndex = wdNoHighlight
+
+' Comments
+If ActiveDocument.Comments.Count > 0 Then
+  For Each cmt In ActiveDocument.Comments
+    cmt.Range.HighlightColorIndex = wdNoHighlight
+    DoEvents
+  Next cmt
+End If
+
+' Text boxes
+If ActiveDocument.Shapes.Count > 0 Then
+  For Each Shp In ActiveDocument.Shapes
+    If Shp.Type <> 24 And Shp.Type <> 3 Then
+      If Shp.TextFrame.HasText Then
+        Shp.TextFrame.TextRange.HighlightColorIndex = 0
+      End If
+    End If
+  Next
+DoEvents
+End If
+Beep
+End Sub
+

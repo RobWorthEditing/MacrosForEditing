@@ -5,7 +5,7 @@ Sub NormaliseText()
 removeHighlight = True
 removeColour = True
 
-' Toe reset some features, not all, set to False:
+' To reset some features, not all, set to False:
 resetAllFormat = False
 
 ' which, if true, makes these redundant

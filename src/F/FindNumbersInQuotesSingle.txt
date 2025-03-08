@@ -1,0 +1,52 @@
+
+Sub FindNumbersInQuotesSingle()
+' Paul Beverley - Version 14.12.24
+' Finds numbers (numerals) inside single quotes
+
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(8216) & "*[0-9]{1,}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+rng.Select
+  If InStr(rng, ChrW(8217)) = 0 Then
+    rng.MoveEnd , -1
+    rng.Collapse wdCollapseEnd
+    rng.Select
+    Selection.MoveUp , 1
+    Selection.MoveDown , 1
+    Exit Sub
+  Else
+    apos = InStr(rng, ChrW(8217) & "s")
+    rng.MoveStart , apos
+    sapo = InStr(rng, "s" & ChrW(8217))
+    rng.MoveStart , sapo
+    If InStr(rng, ChrW(8217)) = 0 Then
+      rng.MoveEnd , -1
+      rng.Collapse wdCollapseEnd
+      rng.Select
+      Selection.MoveUp , 1
+      Selection.MoveDown , 1
+      Exit Sub
+    End If
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Beep
+Selection.Collapse wdCollapseEnd
+MsgBox "No more found"
+End Sub
+
+

@@ -1,0 +1,34 @@
+
+Sub ClipboardSave()
+' Paul Beverley - Version 15.06.24
+' Saves contents of clipboard as a new file in your temp folder
+
+leaveFileOpen = False
+myName = "tmp"
+
+' Choose your temporary folder:
+
+' On a Mac, it will need to be something like:
+tempFolder = "/Users/Paul/My Documents/Temp_files/"
+' On Windows, it will need to be something like:
+tempFolder = "C:\Documents and Settings\Paul\Temp_files\"
+
+Randomize
+ltrOne = Chr(64 + Int(26 * Rnd() + 1))
+ltrTwo = Chr(64 + Int(26 * Rnd() + 1))
+myName = myName & "_" & ltrOne & ltrTwo
+Documents.Add
+Selection.Paste
+Selection.HomeKey Unit:=wdStory
+For i = 1 To 10
+  DoEvents
+Next i
+myNewFile = tempFolder & myName
+myWords = ActiveDocument.Words.Count
+' myResponse = MsgBox("Save file with " & Str(myWords) & " words?", _
+     vbQuestion + vbYesNoCancel, "ClipboardSave")
+' If myResponse <> vbYes Then Exit Sub
+ActiveDocument.SaveAs fileName:=myNewFile
+If leaveFileOpen = False Then ActiveDocument.Close SaveChanges:=wdDoNotSaveChanges
+End Sub
+

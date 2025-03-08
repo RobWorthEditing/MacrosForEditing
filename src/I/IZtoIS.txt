@@ -1,5 +1,6 @@
+
 Sub IZtoIS()
-' Paul Beverley - Version 14.06.22
+' Paul Beverley - Version 01.10.24
 ' Corrects text to give -is-, -ys- spellings
 
 promptForConfirmation = True
@@ -17,11 +18,16 @@ bothTCandHighlight = False
 closeExceptionsFile = True
 
 ' Address where the IZ exceptions file is held
-' On Windows, it will need to be something like:
-myZFile = "C:\Documents and Settings\Paul\My Documents\IZ_words.docx"
 
+' On Windows, it will need to be something like:
+' myZFile = "C:\Documents and Settings\Paul\My Documents\IZ_words.docx"
+' ...but remove the apostrophe in front of myZFile
+ 
+ 
 ' On a Mac, it will need to be something like:
-myZFile = "/Users/Paul/My Documents/Macro stuff/IZ_words.docx"
+' myZFile = "/Users/Paul/My Documents/Macro stuff/IZ_words.docx"
+' ...but remove the apostrophe in front of myZFile' mySFile = "/Users/Paul/My Documents/Macro stuff/IS_words.docx"
+
 
 
 ExceptionZFile = "IZ_words"
@@ -31,12 +37,12 @@ nonoStyles = "," & nonoStyles & ","
 Set mainDoc = ActiveDocument
 
 myTrack = ActiveDocument.TrackRevisions
-gottadoc = False
+gottaDoc = False
 For Each thisDoc In Application.Documents
   thisName = thisDoc.Name
   Debug.Print thisDoc
   If InStr(thisName, ExceptionZFile) > 0 Then
-    gottadoc = True
+    gottaDoc = True
     closeExceptionsFile = False
     thisDoc.Activate
     Exit For
@@ -44,7 +50,7 @@ For Each thisDoc In Application.Documents
 Next thisDoc
 
 On Error Resume Next
-If gottadoc = False Then
+If gottaDoc = False Then
   Documents.Open myZFile
   If Err.Number = 5174 Then
     MsgBox ("Please open the IZ exceptions file")
@@ -64,7 +70,7 @@ For Each wd In ActiveDocument.Words
 Next wd
 allWords = LCase(allWords)
 
-If closeExceptionsFile = True And gottadoc = False Then
+If closeExceptionsFile = True And gottaDoc = False Then
   ActiveDocument.Close SaveChanges:=False
 End If
 
@@ -89,13 +95,13 @@ totChanges = 0
 For hit = 1 To 4
   goes = 0
   If hit = 1 Then
-    thisMany = ActiveDocument.Endnotes.count
+    thisMany = ActiveDocument.Endnotes.Count
     If thisMany > 0 Then
       Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
     End If
   End If
   If hit = 2 Then
-    thisMany = ActiveDocument.Footnotes.count
+    thisMany = ActiveDocument.Footnotes.Count
     If thisMany > 0 Then
       Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
     End If
@@ -109,7 +115,7 @@ For hit = 1 To 4
   goes = 1
   someText = True
   If hit = 4 Then
-    thisMany = ActiveDocument.Shapes.count
+    thisMany = ActiveDocument.Shapes.Count
     goes = thisMany
   End If
   If goes > 0 And thisMany > 0 Then
@@ -155,18 +161,18 @@ For hit = 1 To 4
               rng1.MoveEnd , -1
               DoEvents
             Loop
-            startWord = rng1.Start
+            startWord = rng1.start
             endWord = rng1.End
  
-            changeIt = True
+            ChangeIt = True
             ' But don't make the change if...
             thisStyle = "," & rng.Style & ","
-            If InStr(nonoStyles, thisStyle) > 0 Then changeIt = False
-            If rng.Font.StrikeThrough = True Then changeIt = False
+            If InStr(nonoStyles, thisStyle) > 0 Then ChangeIt = False
+            If rng.Font.StrikeThrough = True Then ChangeIt = False
   
           ' if it's not in the list of z's
             If InStr(allWords, "!" & LCase(rng1) & "!") = 0 _
-                 And changeIt = True Then
+                 And ChangeIt = True Then
           ' then definitely change it to an s
               If myResponse = vbYes Then
                 rng.Text = opposite
@@ -190,7 +196,7 @@ For hit = 1 To 4
           Else
             stopNow = True
           End If
-          rng.Start = rng.End + 2
+          rng.start = rng.End + 2
         Loop Until stopNow = True
       End If
       DoEvents

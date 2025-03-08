@@ -1,0 +1,23 @@
+
+Sub EndNotePunctuationFix()
+' Paul Beverley - Version 06.03.25
+' Corrects the punctuation of EndNote citations
+
+allPuncs = "!?;:.,"
+For Each en In ActiveDocument.Fields
+Debug.Print en.Type
+  If en.Type = 81 Then
+    en.Select
+    Set rng = Selection.Range.Duplicate
+    rng.Collapse wdCollapseStart
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveEnd , 1
+    myPunc = Selection.Text
+    If InStr(allPuncs, myPunc) > 0 Then
+      Selection.Delete
+      rng.InsertAfter Text:=myPunc
+    End If
+  End If
+Next en
+End Sub
+

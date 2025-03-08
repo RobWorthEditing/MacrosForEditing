@@ -1,0 +1,16 @@
+
+Sub ListHeadWords()
+' Paul Beverley - Version 01.02.25
+' Creates a separate list of the head words of a list
+
+allText = ""
+For Each myPar In ActiveDocument.Paragraphs
+  myText = Trim(myPar.Range.Words(1).Text)
+  allText = allText & myText & vbCr
+  DoEvents
+Next myPar
+Set newDoc = Documents.Add
+Set rng = newDoc.Content
+rng.InsertAfter Text:=allText
+End Sub
+

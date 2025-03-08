@@ -536,7 +536,6 @@ ActiveDocument.Paragraphs(3).Style = ActiveDocument.Styles(wdStyleHeading2)
 Selection.Start = startTable
 Selection.End = ActiveDocument.Range.End
 Selection.ConvertToTable Separator:=wdSeparateByTabs
-Selection.Tables(1).Style = "Table Grid"
 Selection.Tables(1).AutoFitBehavior (wdAutoFitContent)
 Selection.Tables(1).Borders(wdBorderTop).LineStyle = wdLineStyleNone
 Selection.Tables(1).Borders(wdBorderLeft).LineStyle = wdLineStyleNone

@@ -1,0 +1,31 @@
+
+Sub PatternedTextHighlight()
+' Paul Beverley - Version 09.12.24
+' Highlights all text in the document in a background pattern colour
+
+myColour = wdYellow
+
+removePattern = True
+For Each pa In ActiveDocument.Paragraphs
+  If pa.Range.Shading.BackgroundPatternColor <> 0 Then
+    pa.Range.Select
+    Selection.Collapse wdCollapseStart
+    For Each ch In pa.Range.Characters
+      If ch.Shading.BackgroundPatternColor > 0 Then
+        ch.HighlightColorIndex = myColour
+        If removePattern = True Then _
+             ch.Shading.BackgroundPatternColor = wdColorAutomatic
+        i = i + 1
+        If i Mod 50 = 0 Then
+          ch.Select
+          DoEvents
+        End If
+      End If
+    Next ch
+  End If
+Next pa
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+
+

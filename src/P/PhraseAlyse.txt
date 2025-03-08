@@ -1,0 +1,195 @@
+
+Sub PhraseAlyse()
+' Paul Beverley - Version 24.08.24
+' Lists phrases that are duplicated
+
+minWords = 4
+maxWords = 8
+minFreqToList = 3
+
+doNotesToo = True
+
+strttime = Timer
+On Error GoTo ReportIt
+Set myDoc = ActiveDocument
+Set copyDoc = Documents.Add
+Set rngOld = myDoc.Content
+Set rng = copyDoc.Content
+rng.Text = rngOld.Text
+rng.Collapse wdCollapseEnd
+If myDoc.Footnotes.Count > 0 And doNotesToo = True Then
+  rng.InsertAfter Text:=myDoc.StoryRanges(wdFootnotesStory)
+End If
+If myDoc.Endnotes.Count > 0 And doNotesToo = True Then
+  rng.InsertAfter Text:=myDoc.StoryRanges(wdEndnotesStory)
+End If
+
+Set rng = copyDoc.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[;:,^t" & ChrW(8211) & ChrW(8212) & "]"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ". "
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "^13[0-9]{1,}[.\) ]{1,2}"
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "[ ]{2,}"
+  .Replacement.Text = " "
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "N.B."
+  .Replacement.Text = " "
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "^p "
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Set tempDoc = Documents.Add
+Set myResults = Documents.Add
+Set res = myResults.Content
+
+
+totalNumSents = copyDoc.Sentences.Count
+' This should be enough, as we're doing it
+' one letter at a time
+Dim myText(30000) As String
+
+allInits = ""
+j = 0
+For sn = 1 To totalNumSents
+  thisSentence = Trim(Replace(copyDoc.Sentences(sn).Text, vbCr, ""))
+  numWds = copyDoc.Sentences(sn).Words.Count
+  If InStr(Right(thisSentence, 2), ".") Then numWds = numWds - 1
+  If (numWds < minWords) = False And Len(thisSentence) > 10 Then
+    ' Three goes at removing start & end 'stuff'
+    For k = 1 To 3
+      myInit = Left(thisSentence, 1)
+      If UCase(myInit) = LCase(myInit) Then
+        thisSentence = Mid(thisSentence, 2)
+      End If
+      myLast = Right(thisSentence, 1)
+      If UCase(myLast) = LCase(myLast) Then
+        thisSentence = Left(thisSentence, Len(thisSentence) - 1)
+      End If
+    Next k
+    myInit = LCase(Left(thisSentence, 1))
+    If InStr(allInits, myInit) = 0 Then
+      allInits = allInits & myInit
+    End If
+    j = j + 1
+    myText(j) = thisSentence
+    If j Mod 100 = 0 Then Debug.Print "Phrases logged: ", j
+  End If
+  DoEvents
+Next sn
+
+numSentencesNow = j
+numInits = Len(allInits)
+sp = ChrW(160)
+For i = 1 To 4
+sp = sp & sp
+Next i
+init = ""
+For a = 1 To numInits
+  Debug.Print sp & "To go: " & Str(numInits - a)
+  Set rng = tempDoc.Content
+  rng.Text = ""
+  fstLttr = Mid(allInits, a, 1)
+  Debug.Print fstLttr
+  Application.ScreenUpdating = False
+  For sn = 1 To numSentencesNow
+    pText = myText(sn)
+    init = LCase(Left(pText, 1))
+    If init = fstLttr Then
+      rng.InsertAfter Text:=pText
+      totWords = rng.Words.Count
+      rng.Delete
+      If totWords > maxWords Then totWords = maxWords
+      For n = minWords To totWords
+        ' Paste in the whole sentence
+        rng.InsertAfter Text:=pText & " Dummy"
+        rng.MoveStart wdWord, n
+        rng.Select
+        rng.Text = vbCr
+        rng.Expand wdParagraph
+        If InStr(rng, "Dummy") > 0 Then rng.Delete
+        rng.Collapse wdCollapseEnd
+      Next n
+    End If
+    DoEvents
+  Next sn
+  Application.ScreenUpdating = True
+  Set rng = tempDoc.Content
+  rng.Sort
+  tempDoc.Paragraphs(1).Range.Text = "Rubbish" & vbCr
+  rng.InsertAfter Text:=vbCr & "Rubbish" & vbCr
+  numParas = tempDoc.Paragraphs.Count
+  prevPara = tempDoc.Paragraphs(1).Range.Text
+  wasAmatch = False
+  numDupl = 1
+  For i = 2 To numParas
+    thisPara = tempDoc.Paragraphs(i).Range.Text
+    gottaMatch = (thisPara = prevPara)
+    If Not (gottaMatch) Then
+      If wasAmatch Then
+        lenDiff = Len(prevPara) - Len(Replace(prevPara, ".", ""))
+        If Not (numDupl < minFreqToList) And lenDiff = 0 Then
+          res.InsertAfter Text:=Trim(Replace(prevPara, vbCr, "")) _
+               & " . . [" & Trim(Str(numDupl)) & "]" & vbCr
+        End If
+        numDupl = 1
+      End If
+    Else
+      numDupl = numDupl + 1
+    End If
+    wasAmatch = gottaMatch
+    prevPara = thisPara
+  Next i
+  Application.ScreenUpdating = True
+  DoEvents
+Next a
+tempDoc.Close SaveChanges:=False
+copyDoc.Close SaveChanges:=False
+myResults.Activate
+Set rng = ActiveDocument.Content
+rng.Sort
+rng.InsertAfter Text:=vbCr
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Duplicates List" & vbCr
+Beep
+timGone = Timer - strttime
+Application.ScreenUpdating = True
+Beep
+myTime = Timer
+Do
+Loop Until Timer > myTime + 0.2
+Beep
+m = Int(timGone / 60)
+s = Int(timGone) - m * 60
+timeAll = "Time:  " & Trim(Str(m)) & " m " & _
+     Trim(Str(s)) & " s"
+MsgBox ("Phrases checked: " & Trim(Str(numSentencesNow)) _
+     & vbCr & vbCr & timeAll)
+Exit Sub
+
+' Switch the screen back on if there's an error
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+

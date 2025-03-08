@@ -1,0 +1,9 @@
+
+Sub SelectToBottom()
+' Paul Beverley - Version 31.05.24
+' Selects all the text from the cursor to the bottom of the document (for Mac users)
+
+Selection.EndKey Unit:=wdStory, Extend:=wdExtend
+End Sub
+
+

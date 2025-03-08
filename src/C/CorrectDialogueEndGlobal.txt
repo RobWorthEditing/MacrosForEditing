@@ -54,7 +54,6 @@ Do Until rng.Find.Found = False Or rng.End > myEnd
         rng.Cut
         rng.Paste
       End If
-      cvbnhvfdb = 0
     End If
     If InStr(myNames, "," & Trim(thisWord) & ",") > 0 Then
       If rng.Characters.First = "." Then rng.Characters.First = ","

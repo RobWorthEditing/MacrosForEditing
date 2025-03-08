@@ -1,44 +1,73 @@
+
 Sub SpellingCorrect()
-' Paul Beverley - Version 17.04.24
+' Paul Beverley - Version 03.02.25
 ' Corrects spelling and wrong capitalisation
 
 elistNameContains = "elist"
 
+useEqualAsDelete = True
+
+okChars = "=" & ChrW(8217)
+
 Selection.Collapse wdCollapseEnd
-wasStart = Selection.Start
+wasStart = Selection.start
+
 Set rng = Selection.Range.Duplicate
-rng.MoveStart , -1
-i = 0
-While UCase(rng) = LCase(rng) And i < 5
+rng.expand wdWord
+If Left(rng, 1) = "'" Then
+  Set rngCH = rng.Duplicate
+  rngCH.End = rngCH.start + 1
+  rngCH.Text = ChrW(8216)
+  rng.MoveStart , 1
+End If
+Do
   rng.MoveStart , -1
-  rng.MoveEnd , -1
+  ch = Left(rng, 1)
   DoEvents
-  i = i + 1
-Wend
-rng.Expand wdWord
+Loop Until UCase(ch) = LCase(ch) And InStr(okChars, ch) = 0
+rng.MoveStart , 1
+equalPos = InStr(rng, "=")
+If equalPos > 0 And useEqualAsDelete = True Then
+  Set rng2 = rng.Duplicate
+  rng2.start = rng.start + equalPos - 2
+  rng2.End = rng.start + equalPos
+  rng2.Delete
+  Beep
+End If
+
+If LCase(rng) = UCase(rng) Then
+  If Len(rng) > 2 Then
+  ' it's a number, give up
+    Beep
+    rng.Select
+    Exit Sub
+  Else
+    rng.Collapse wdCollapseStart
+    rng.MoveEnd , -2
+    rng.expand wdWord
+  End If
+End If
+
+' No non-alpha characters at the end of the word
 Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
   rng.MoveEnd , -1
   DoEvents
 Loop
-' Avoid single-character words
-If Len(rng) < 2 Then
-  rng.Select
-  Beep
-  MsgBox "Spellcheck this?!"
-  Exit Sub
-End If
+
 ' Check capitalisation, e.g. BEverley
-initChar = rng.Characters(1)
-scndChar = rng.Characters(2)
-lastChar = rng.Characters.Last
-doBeep = True
-If UCase(initChar) = initChar And UCase(scndChar) = scndChar _
-     And UCase(lastChar) <> lastChar Then
-  doBeep = False
-  rng.Characters(2) = LCase(scndChar)
+If Len(rng) > 2 Then
+  initChar = rng.Characters(1)
+  scndChar = rng.Characters(2)
+  lastChar = rng.Characters.Last
+  doBeep = True
+  If UCase(initChar) = initChar And UCase(scndChar) = scndChar _
+       And UCase(lastChar) <> lastChar Then
+    doBeep = False
+    rng.Characters(2) = LCase(scndChar)
+  End If
 End If
+If Right(rng, 1) = vbCr Then rng.MoveEnd , -1
 myWord = rng
-newWord = myWord
 
 ' Check spelling language
 ' (check only first character, in case of split language)
@@ -50,8 +79,9 @@ spellOK = Application.CheckSpelling(myWord, MainDictionary:=langName)
 If Not (spellOK) Then
   For Each myDoc In Documents
     If InStr(LCase(myDoc.Name), elistNameContains) > 0 Then
-      If InStr(myDoc.Content, vbCr & "myWord" & vbCr) > 0 Then
+      If InStr(myDoc.Content, vbCr & myWord & vbCr) > 0 Then
         spellOK = True
+        Exit For
       End If
     End If
     DoEvents
@@ -60,7 +90,13 @@ End If
 If Not (spellOK) Then
   Set suggList = Application.GetSpellingSuggestions(myWord, _
        MainDictionary:=langName)
-  If suggList.Count > 0 Then newWord = suggList.Item(1).Name
+  If suggList.Count > 0 Then
+    newWord = suggList.item(1).Name
+    If suggList.Count > 1 And LCase(newWord) = myWord _
+         Then newWord = suggList.item(2).Name
+  Else
+    newWord = myWord
+  End If
   If newWord <> myWord Then
     rng.Text = newWord
   Else
@@ -87,19 +123,14 @@ If Not (spellOK) Then
 Else
   If doBeep Then Beep
 End If
-Debug.Print myWord
-rng.Start = wasStart - 2
-rng.Expand wdWord
-If Len(rng) > 2 Then
-  i = 0
-  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0 _
-         And i < 9
-    rng.MoveEnd , -1
-    DoEvents
-    i = i + 1
-  Loop
-End If
+rng.start = wasStart - 2
+rng.expand wdWord
+apoPos = InStr(rng, "'")
+If apoPos > 0 Then rng.Characters(apoPos) = ChrW(8217)
 rng.Collapse wdCollapseEnd
 rng.Select
 End Sub
+
+
+
 

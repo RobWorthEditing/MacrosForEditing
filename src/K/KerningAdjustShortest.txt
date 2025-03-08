@@ -1,0 +1,58 @@
+
+Sub KerningAdjustShortest()
+' Paul Beverley - Version 24.07.24
+' Kerns selected text or selects the shortest line in the paragraph
+
+inc = 0.05
+
+If Selection.start <> Selection.End Then
+  Set rng = Selection.Range.Duplicate
+  rng.Expand wdParagraph
+  If rng.start = Selection.start And _
+       rng.End = Selection.End Then
+    Selection.Range.Font.Spacing = 0
+  End If
+  Selection.Range.Font.Spacing _
+       = Selection.Range.Font.Spacing + inc
+  Exit Sub
+End If
+
+Dim lineLen(100)
+Dim lineStart(100) As Long
+Selection.HomeKey Unit:=wdLine
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+paraEnd = rng.End
+rng.Collapse wdCollapseStart
+rng.Select
+i = 0
+' Locate the start of each line of text
+Do Until Selection.End > paraEnd
+  i = i + 1
+  lineStart(i) = Selection.start
+  Selection.MoveDown Unit:=wdLine, Count:=1
+  DoEvents
+Loop
+iMax = i - 1
+' iMax = number of lines in the para
+
+minLen = 1000
+For i = 1 To iMax - 1
+' i.e. ignore the final line
+
+  Selection.End = lineStart(i + 1) - 1
+  Selection.Collapse wdCollapseEnd
+  lineLen(i) = Selection.Information(wdHorizontalPositionRelativeToPage)
+  If lineLen(i) < minLen Then
+    shortLine = i
+    minLen = lineLen(i)
+  End If
+  DoEvents
+Next i
+Selection.start = lineStart(shortLine)
+Selection.End = lineStart(shortLine + 1)
+End Sub
+
+
+
+

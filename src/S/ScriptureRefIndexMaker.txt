@@ -1,0 +1,42 @@
+
+Sub ScriptureRefIndexMaker()
+' Not adopted to book
+' Paul Beverley - Version 28.01.25
+' Creates a file of all references in parentheses, with page number
+
+Set rng = ActiveDocument.Content
+Set indexDoc = Documents.Add
+
+Dim tot As Integer
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\(*\)"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  idxText = Mid(rng, 2, Len(rng) - 2)
+  tot = 0
+  For i = 1 To Len(idxText)
+    tot = tot + Val(Mid(idxText, i, 1))
+  Next i
+  If tot > 0 Then
+    pageNum = rng.Information(wdActiveEndAdjustedPageNumber)
+    Selection.TypeText Text:=idxText & vbTab & Trim(Str(pageNum)) & vbCr
+'    Debug.Print idxText & vbTab & Trim(Str(pageNum))
+  End If
+  rng.Collapse wdCollapseEnd
+  
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+  DoEvents
+Loop
+End Sub
+

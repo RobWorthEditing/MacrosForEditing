@@ -1,33 +1,42 @@
+
 Sub Dash()
-' Paul Beverley - Version 23.01.23
-' Makes adjacent words into sentence end
+' Paul Beverley - Version 30.12.24
+' Makes adjacent words into dash-separated
 
 newBit = " " & ChrW(8212) & " "
+newBit = ChrW(8212)
 newBit = " " & ChrW(8211) & " "
 
 myQuotes = Chr(34) & Chr(39) & ChrW(8220) & ChrW(8216)
-
-If Selection.Start <> Selection.End Then
-  Selection.Delete
-  Selection.MoveLeft , 2
+oldBits = ";:.,!?" & ChrW(8211) & ChrW(8212)
+Set rng = Selection.Range.Duplicate
+rng.MoveEnd , 50
+For i = 1 To rng.Characters.count
+  If InStr(oldBits, rng.Characters(i)) > 0 Then Exit For
+Next i
+If i > 50 Then
+  Beep
+  MsgBox "No relevant punctuation found."
+  Exit Sub
 End If
-Selection.Collapse wdCollapseEnd
-While (LCase(Selection) <> UCase(Selection))
-  Selection.MoveRight 1
-  DoEvents
-Wend
-myStart = Selection.Start
+rng.Characters(i).Select
+Selection.Collapse wdCollapseStart
+If i > 1 Then
+  If rng.Characters(i - 1) = " " Then _
+       rng.Characters(i - 1).Delete
+End If
+myStart = Selection.start
 If Selection = ChrW(8217) Then myStart = myStart + 1
 Do
   Selection.MoveRight 1
   DoEvents
-  If Selection.Start = ActiveDocument.Content.End - 1 _
+  If Selection.start = ActiveDocument.Content.End - 1 _
      Then Beep: Exit Sub
 Loop Until LCase(Selection) <> UCase(Selection) Or Asc(Selection) = 1
-myEnd = Selection.Start
+myEnd = Selection.start
 If LCase(Selection) <> Selection Then
 ' It needs lowercasing
-  Selection.Start = Selection.Start - 1
+  Selection.start = Selection.start - 1
   preChar = Selection
   Selection.MoveStart 1
   Selection.MoveEnd 1
@@ -39,9 +48,9 @@ If LCase(Selection) <> Selection Then
   Else
     newBit = newBit & newLetter
   End If
-  Selection.Start = myStart
+  Selection.start = myStart
 End If
-Selection.Start = myStart
+Selection.start = myStart
 If Selection.End <> myStart Then Selection.Delete
 Selection.TypeText newBit
 End Sub

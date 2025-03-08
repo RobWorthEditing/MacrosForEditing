@@ -1,0 +1,52 @@
+
+Sub TitlesRevealBoxes()
+' Paul Beverley - Version 08.08.24
+' Switches the next light grey font colour to full colour
+
+
+' myColorBlue = &HF0B000
+myColorBlue = &HFF0000
+
+preBlue = &HF6F6F6
+preRed = &HF4F4F4
+preBlack = &HF5F5F5
+
+Set docNow = ActiveDocument
+pbTitlesFile.Activate
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+rng.MoveStart wdParagraph, -2
+stopNow = False
+If rng.ShapeRange.Count = 0 Then Beep: Exit Sub
+For Each myShp In rng.ShapeRange
+  If myShp.TextFrame.HasText Then
+    Set rngBox = myShp.TextFrame.TextRange
+    For Each wd In rngBox.Words
+      myColour = wd.Font.Color
+      If myColour = 9999999 Then
+        For Each ch In wd.Characters
+          myColour = ch.Font.Color
+          Select Case myColour
+            Case preBlue: wd.Font.Color = myColorBlue: stopNow = True
+            Case preRed: wd.Font.Color = wdColorRed: stopNow = True
+            Case preBlack: wd.Font.Color = wdColorBlack: stopNow = True
+          End Select
+        Next ch
+      Else
+        Select Case myColour
+          Case preBlue: wd.Font.Color = myColorBlue: stopNow = True
+          Case preRed: wd.Font.Color = wdColorRed: stopNow = True
+          Case preBlack: wd.Font.Color = wdColorBlack: stopNow = True
+        End Select
+      End If
+    Next wd
+  End If
+  If stopNow = True Then Exit For
+Next myShp
+ActiveDocument.TrackRevisions = myTrack
+docNow.Activate
+End Sub
+

@@ -1,0 +1,64 @@
+
+Sub CommentNameChangerWithReplies()
+' Paul Beverley - Version 19.08.24
+' Changes the name attached to comments
+
+newName = "Referee"
+
+nameNow = Application.UserName
+Application.UserName = newName
+CR = vbCr
+Set myDoc = ActiveDocument
+Set commentsDoc = Documents.Add
+Selection.TypeText Text:="===" & CR
+numCmts = myDoc.Comments.Count
+ReDim myStart(numCmts) As Long
+ReDim myEnd(numCmts) As Long
+ReDim cmtStart(numCmts) As Long
+ReDim cmtEnd(numCmts) As Long
+For i = 1 To numCmts
+  Set cmt = myDoc.Comments(i)
+  myStart(i) = cmt.Scope.start
+  myEnd(i) = cmt.Scope.End
+  cmt.Range.Copy
+  cmtStart(i) = Selection.start
+  Selection.Paste
+  cmtEnd(i) = Selection.start
+  Selection.TypeText Text:=vbCr & "===" & CR
+Next i
+
+myStart(0) = 0
+myEnd(0) = 0
+
+myDoc.Activate
+ActiveDocument.DeleteAllComments
+Set cmt = commentsDoc.Content
+Set rngDoc = myDoc.Content
+
+For i = 1 To numCmts
+  cmt.start = cmtStart(i)
+  cmt.End = cmtEnd(i)
+  cmt.Copy
+  rngDoc.start = myStart(i)
+  rngDoc.End = myEnd(i)
+  If myStart(i) = myStart(i - 1) Then
+    rngDoc.start = myEnd(i)
+    rngDoc.End = myEnd(i) + 1
+    Set newCmt = rngDoc.Comments.Add(Range:=rngDoc)
+    ActiveDocument.Comments(i).Edit
+    Selection.InsertAfter Text:="Reply:" & vbCr
+    Selection.Font.Bold = True
+    Selection.Collapse wdCollapseEnd
+  Else
+    Set newCmt = rngDoc.Comments.Add(Range:=rngDoc)
+    ActiveDocument.Comments(i).Edit
+  End If
+  Selection.Paste
+  DoEvents
+Next i
+commentsDoc.Close SaveChanges:=False
+Application.UserName = nameNow
+ActiveDocument.ActiveWindow.View.SplitSpecial = wdPaneNone
+Beep
+End Sub
+

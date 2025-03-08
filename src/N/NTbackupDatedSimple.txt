@@ -1,8 +1,22 @@
+
 Sub NTbackupDatedSimple()
-' Paul Beverley - Version 28.10.23
+' Paul Beverley - Version 20.07.24
 ' Backs up the Normal template with date and time
 
 backupFolder = "Backup"
+nmlName = ThisDocument.Name
+If nmlName <> "Normal.dotm" Then
+  Beep
+  CR2 = vbCr & vbCr
+  myPmt = "Possible issue with Normal file (" & nmlName & ")" & CR2
+  myPmt = myPmt & "Have you copied the macro text somewhere safe?" & CR2
+  myResponse = MsgBox(myPmt & "Continue with backup?", _
+     vbQuestion + vbYesNoCancel, "NTbackupDatedSimple")
+  If myResponse <> vbYes Then
+    MsgBox ("For safety, copy all the VBA text and save it to a new Word file. OK?")
+    Exit Sub
+  End If
+End If
 
 NTname = NormalTemplate.FullName
 
@@ -18,6 +32,9 @@ mySuffix = " " & Format(Now, "_YY-MM-DD-hh-mm")
 mySuffix = Replace(mySuffix, " _", " 20")
 
 newName = Replace(NTname, "Normal", backupFolder & "Normal" & mySuffix)
+Debug.Print newName
 ThisDocument.SaveAs newName
+Beep
+MsgBox ("Backup completed.")
 End Sub
 

@@ -27,6 +27,7 @@ Do While InStr(searchChars, Selection) = 0
     ActiveDocument.TrackRevisions = myTrack
     Exit Sub
   End If
+  DoEvents
 Loop
 Selection.MoveEnd wdCharacter, 1
 thisChar = Selection

@@ -1,0 +1,46 @@
+Sub FReditCommentToggle()
+' Paul Beverley - Version 17.04.24
+' Adds or removes the vertical bar that turns FRedit items into comments
+
+' This macro assumes that you've selected whole lines
+' But you could add some checking code
+
+FReditComment = "| "
+Set rng = Selection.Range.Duplicate
+
+' Include the previous New Line
+rng.MoveStart , -1
+rng.MoveEnd , -1
+pipeFound = InStr(Selection, vbCr & FReditComment) > 0
+If pipeFound Then
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^p" & FReditComment
+    .Wrap = wdFindStop
+    .Forward = True
+    .Replacement.Text = "^p"
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+Else
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "^p"
+    .Wrap = wdFindStop
+    .Forward = True
+    .Replacement.Text = "^p" & FReditComment
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+rng.MoveStart , 1
+rng.MoveEnd , 1
+rng.Select
+End Sub
+
+
+

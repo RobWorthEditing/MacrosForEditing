@@ -1,0 +1,18 @@
+
+Sub ParensContentsDelete()
+' Paul Beverley - Version 16.08.23
+' Deletes the current parenthetical text and parentheses
+
+Set rng = Selection.Range.Duplicate
+Do
+  rng.MoveStart , -1
+  DoEvents
+Loop Until Left(rng.Text, 1) = "("
+rng.MoveStart , -1
+
+rng.End = ActiveDocument.Content.End
+parenPos = InStr(rng, ")")
+rng.End = rng.start + parenPos
+rng.Delete
+End Sub
+

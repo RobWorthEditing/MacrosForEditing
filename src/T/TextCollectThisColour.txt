@@ -1,0 +1,44 @@
+
+Sub TextCollectThisColour()
+' Paul Beverley - Version 17.12.24
+' Copies any text in the colour at the cursor into a new document
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+rng.MoveEnd , 1
+myColour = rng.Font.color
+If myColour = 0 Then
+  Beep
+  MsgBox "Place the cursor in the colour to be collected"
+  Exit Sub
+End If
+rng.start = 0
+rng.Collapse wdCollapseStart
+
+Documents.Add
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Wrap = wdFindStop
+  .Font.color = myColour
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  rng.Copy
+  Selection.Paste
+  Selection.Collapse wdCollapseEnd
+  Selection.TypeText Text:=vbCr
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+End Sub
+
+

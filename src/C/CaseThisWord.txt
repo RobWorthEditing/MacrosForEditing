@@ -1,5 +1,6 @@
+
 Sub CaseThisWord()
-' Version 17.04.24
+' Paul Beverley Version 23.05.24
 ' Changes initial case of current word and jumps to next word
 
 showSingleTrack = False
@@ -43,7 +44,8 @@ If Selection.End > Selection.Start Then
   Else
     For wd = 1 To rng.Words.Count
       myWd = rng.Words(wd)
-      If UCase(myWd) <> myWd Then
+      checkWd = " " & Trim(myWd) & " "
+      If InStr(lclist, checkWd) = 0 And UCase(myWd) <> myWd Then
         ch = rng.Words(wd).Characters(1)
         rng.Words(wd).Characters(1) = LCase(ch)
       End If
@@ -81,6 +83,9 @@ Else
     Selection.Collapse wdCollapseEnd
   End If
 End If
-Selection.MoveRight wdWord, 1
+Set rng = Selection.Range.Duplicate
+rng.Expand wdWord
+rng.Collapse wdCollapseEnd
+rng.Select
 End Sub
 

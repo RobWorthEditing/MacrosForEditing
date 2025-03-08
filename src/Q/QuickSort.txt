@@ -1,0 +1,34 @@
+
+Sub QuickSort(arr As Variant, ByVal low As Long, ByVal high As Long)
+' Paul Beverley - Version 21.12.24
+' Sorts an array of text at high speed
+
+Dim i As Long
+Dim j As Long
+Dim pivot As String
+Dim temp As String
+
+i = low
+j = high
+pivot = arr((low + high) \ 2)
+
+Do While i <= j
+  Do While arr(i) < pivot
+      i = i + 1
+  Loop
+  Do While arr(j) > pivot
+      j = j - 1
+  Loop
+  If i <= j Then
+    temp = arr(i)
+    arr(i) = arr(j)
+    arr(j) = temp
+    i = i + 1
+    j = j - 1
+  End If
+Loop
+
+If low < j Then QuickSort arr, low, j
+If i < high Then QuickSort arr, i, high
+End Sub
+

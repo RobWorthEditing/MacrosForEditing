@@ -1,0 +1,40 @@
+
+Sub FindSpecialCharacters()
+' Paul Beverley - Version 08.08.24
+' Finds next group of special characters, e.g. Chinese/Arabic
+
+
+myRange = "100-7FFF"
+
+' decimal characters to ignore
+notRangeFrom = 8211 ' en dash
+'notRangeTo = 8221 ' close double quote
+'notRangeTo = 8226 ' bullet
+notRangeTo = 8230 ' ellipsis
+
+myStart = Val("&H" & Left(myRange, 4))
+myEnd = Val("&H" & Right(myRange, 4))
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindStop
+  .Text = "[" & ChrW(myStart) & "-" & ChrW(myEnd) & "]{1,}"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  gotSome = False
+  Do
+    .Execute
+    ' Test if at least one actual 'special'
+    myText = Selection
+    For i = 1 To Len(myText)
+      tst = AscW(Mid(myText, i, 1))
+      If tst < notRangeFrom Or tst > notRangeTo Then
+        gotSome = True
+        Exit For
+      End If
+    Next i
+  Loop Until gotSome = True
+End With
+End Sub
+

@@ -1,0 +1,322 @@
+
+Sub DocumentCleaner()
+' Paul Beverley - Version 19.06.24
+' Removes styles and fonts but preserves bold, italic, highlights and font colours
+
+doBoldItalAsStyle = False
+myItalStyle = "Emphasis"
+myBoldStyle = "Strong"
+
+Set rngOld = ActiveDocument.Content
+Documents.Add
+Set rng = ActiveDocument.Content
+rng.FormattedText = rngOld.FormattedText
+
+' Code italic and bold
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Italic = True
+  .Wrap = wdFindContinue
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Replacement.Text = "[[^&]]"
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Text = ""
+  .Font.Bold = True
+  .Replacement.Text = "{{^&}}"
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Text = ""
+  .Font.Superscript = True
+  .Replacement.Text = "\\^&;;"
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Text = ""
+  .Font.Subscript = True
+  .Replacement.Text = "//^&::"
+  .Execute Replace:=wdReplaceAll
+End With
+
+' Codes all the colours
+Set rng = ActiveDocument.Content
+rng.InsertBefore Text:="Dummy" & vbCr
+rng.InsertAfter Text:="<<Dummy" & vbCr
+rng.Paragraphs(1).Style = wdStyleNormal
+numParas = rng.Paragraphs.Count
+rng.Paragraphs(numParas).Style = wdStyleNormal
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Wrap = wdFindStop
+  .Font.Color = wdColorAutomatic
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+doStop = False
+Do While rng.Find.Found = True And doStop = False
+  rng.Collapse wdCollapseEnd
+  ggo = True
+  Do While ggo = True
+    rng.InsertBefore Text:="<<0>>"
+    rng.Collapse wdCollapseEnd
+    rng.MoveEnd , 1
+    myCol = rng.Font.Color
+    If myCol = wdColorAutomatic Then Exit Do
+    rng.Collapse wdCollapseStart
+    rng.InsertBefore Text:="<<" & Trim(Str(myCol)) & ">>"
+    newCol = myCol
+    Do While newCol = myCol
+      rng.MoveEnd , 1
+      newCol = rng.Font.Color
+      If newCol <> myCol Then
+        If newCol = wdColorAutomatic Then
+          rng.Collapse wdCollapseStart
+          rng.InsertBefore Text:="<<0>>"
+          rng.Collapse wdCollapseEnd
+          rng.Select
+          ggo = False
+        End If
+        If newCol <> myCol Then
+          rng.Collapse wdCollapseStart
+          rng.InsertBefore Text:="<<" & Trim(Str(newCol)) & ">>"
+          rng.Collapse wdCollapseEnd
+          rng.Collapse wdCollapseStart
+          myCol = newCol
+        End If
+      End If
+      rng.Collapse wdCollapseEnd
+      DoEvents
+      If ActiveDocument.Content.End - rng.End < 10 Then
+        ggo = False
+        doStop = True
+        newCol = 99999
+      End If
+    Loop
+    DoEvents
+  Loop
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Beep
+Selection.HomeKey Unit:=wdStory
+
+' Reset to style Normal and no applied font attributes
+Set rng = ActiveDocument.Content
+rng.Style = ActiveDocument.Styles(wdStyleNormal)
+rng.Font.Reset
+Beep
+
+' Add back italic and bold etc
+' Italic first
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindStop
+  .Text = "\[\[*\]\]"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  If doBoldItalAsStyle = True Then
+    rng.Style = myItalStyle
+  Else
+    rng.Font.Italic = True
+  End If
+  startNow = rng.start
+  rng.start = rng.End - 2
+  endNow = rng.End
+  rng.Delete
+  rng.start = startNow
+  rng.End = rng.start + 2
+  rng.Delete
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+  DoEvents
+Loop
+
+' Now bold
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindStop
+  .Text = "\{\{*\}\}"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  If doBoldItalAsStyle = True Then
+    rng.Style = myBoldStyle
+  Else
+    rng.Font.Bold = True
+  End If
+  startNow = rng.start
+  rng.start = rng.End - 2
+  endNow = rng.End
+  rng.Delete
+  rng.start = startNow
+  rng.End = rng.start + 2
+  rng.Delete
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+  DoEvents
+Loop
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindStop
+  .Text = "\[\[*\]\]"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  If doBoldItalAsStyle = True Then
+    rng.Style = myBoldStyle
+  Else
+    rng.Font.Bold = True
+  End If
+  startNow = rng.start
+  rng.start = rng.End - 2
+  endNow = rng.End
+  rng.Delete
+  rng.start = startNow
+  rng.End = rng.start + 2
+  rng.Delete
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+  DoEvents
+Loop
+
+' Superscript
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindStop
+  .Text = "\\\\*\;\;"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.Font.Superscript = True
+  startNow = rng.start
+  rng.start = rng.End - 2
+  endNow = rng.End
+  rng.Delete
+  rng.start = startNow
+  rng.End = rng.start + 2
+  rng.Delete
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+  DoEvents
+Loop
+
+' Subscript
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindStop
+  .Text = "//*\:\:"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.Font.Subscript = True
+  startNow = rng.start
+  rng.start = rng.End - 2
+  endNow = rng.End
+  rng.Delete
+  rng.start = startNow
+  rng.End = rng.start + 2
+  rng.Delete
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+  DoEvents
+Loop
+
+
+' Replace all the codes with the correct font colour
+Set rng = ActiveDocument.Content
+Set rng2 = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\<\<*\<\<"
+  .Wrap = wdFindStop
+  .Replacement.Text = "<<"
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.Select
+  If myCount Mod 20 = 0 Then rng.Select
+  anglePos = InStr(rng.Text, ">")
+  colNumText = Mid(rng.Text, 3, anglePos - 3)
+  colNum = Val(colNumText)
+  rng.Font.Color = colNum
+  rng2.start = rng.start
+  rng2.End = rng.start + anglePos + 1
+  rng2.Select
+  rng2.Delete
+  rng.Select
+  rng.Collapse wdCollapseStart
+  rng.Find.Execute
+  DoEvents
+Loop
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<<Dummy"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  .Text = "Dummy"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Beep
+Selection.HomeKey Unit:=wdStory
+End Sub
+
+

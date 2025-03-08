@@ -1,0 +1,85 @@
+
+Sub NTFEformat()
+' Paul Beverley - Version 22.02.25
+' Formats the BibleGateway word search results page held in the clipboard
+
+Set newDoc = Documents.Add
+Selection.Paste
+Selection.HomeKey Unit:=wdStory
+Set rng = newDoc.Content
+
+For i = 1 To 3
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "New Testament for Everyone"
+    .Wrap = wdFindStop
+    .Forward = True
+    .Replacement.Text = ""
+    .MatchWildcards = False
+    .Execute
+    DoEvents
+  End With
+  rng.Select
+  If rng.Font.Size > 13 Then
+    Exit For
+  End If
+Next i
+
+If rng.Find.Found = False Then
+  Beep
+  myResponse = MsgBox("Select and copy the NTFE web page", _
+       vbOKOnly, "NTFEformat")
+  newDoc.Close SaveChanges:=False
+  Exit Sub
+End If
+
+rng.Expand wdParagraph
+rng.Delete
+rng.MoveEnd , -2
+rng.Expand wdParagraph
+rng.Collapse wdCollapseStart
+rng.start = 0
+rng.Delete
+rng.End = 0
+rng.Collapse wdCollapseEnd
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "New Testament for Everyone"
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+If rng.Find.Found Then
+  rng.Expand wdParagraph
+  rng.Collapse wdCollapseStart
+  rng.End = newDoc.Content.End
+  rng.Select
+  rng.Delete
+End If
+CR = vbCr: CR2 = CR & CR
+Set rng = newDoc.Content
+bkName = rng.Words(1)
+
+For i = 1 To 8
+  rng.Paragraphs(rng.Paragraphs.count - i).Range.Select
+  If InStr(Selection.Range, bkName) = 0 And _
+       Len(Selection) > 1 Then
+    Exit For
+  End If
+Next i
+Selection.Collapse wdCollapseEnd
+Selection.End = newDoc.Content.End
+Selection.Delete
+Selection.HomeKey Unit:=wdStory
+Set rng = ActiveDocument.Content
+rng.Shading.Texture = wdTextureNone
+rng.Shading.ForegroundPatternColor = wdColorAutomatic
+rng.Shading.BackgroundPatternColor = wdColorAutomatic
+End Sub
+
+

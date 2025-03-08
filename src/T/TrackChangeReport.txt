@@ -1,6 +1,16 @@
+
 Sub TrackChangeReport()
-' Paul Beverley - Version 27.02.18
-' Creates a file of sentences containing TCs
+' Paul Beverley - Version 21.05.24
+' Creates a file of sentences containing (at least n-number of) TCs
+
+minTracksPerSentence = 3
+' Increase this number if you only want to list
+'  the more highly tracked paragraphs
+
+beforeAndAfter = False
+ beforeAndAfter = True
+' Set to True if you want to display the original sentence
+' as well as the edited sentence
 
 mySpace = vbCr & vbCr
 ActiveDocument.TrackRevisions = False
@@ -8,25 +18,37 @@ Set sourceText = ActiveDocument
 Documents.Add
 Set myReport = ActiveDocument
 Set rptRng = ActiveDocument.Content
+rptRng.Collapse wdCollapseEnd
 sntEnd = 0
-For Each rv In sourceText.Revisions
-  If rv.Range.End > sntEnd Then
-    Set rng = rv.Range.Duplicate
-    rng.Expand wdSentence
-    rptRng.FormattedText = rng.FormattedText
+For Each snt In sourceText.Sentences
+  numTracks = snt.Revisions.Count
+  If numTracks >= minTracksPerSentence Then
+  '  Set rng = snt.Duplicate
+    If Right(snt, 2) = vbCr & vbCr Then
+      snt.MoveEnd , -1
+    End If
+    snt.Copy
+    rptRng.Paste
+    If beforeAndAfter = True Then
+      Set rng = rptRng.Duplicate
+      rng.Revisions.RejectAll
+      rptRng.Collapse wdCollapseEnd
+      rptRng.Paste
+    End If
     rptRng.Collapse wdCollapseEnd
     rptRng.InsertAfter Text:=mySpace
     rptRng.Collapse wdCollapseEnd
-    rng.Collapse wdCollapseEnd
-    sntEnd = rng.End
   End If
-Next rv
+  DoEvents
+Next snt
 myReport.Activate
 Selection.HomeKey Unit:=wdStory
-myFileName = Left(sourceText.Name, InStr(sourceText.Name, ".") - 1)
+myFileName = sourceText.Name
+If Left(myFileName, 3) <> "Doc" Then
+  myFileName = Left(myFileName, InStr(sourceText.Name, ".") - 1)
+End If
 Selection.TypeText myFileName & mySpace
 ActiveDocument.Paragraphs(1).Range.Style = wdStyleHeading2
 Selection.MoveLeft , 2
 End Sub
-
 

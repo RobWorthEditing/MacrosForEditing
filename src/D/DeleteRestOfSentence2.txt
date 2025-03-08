@@ -1,0 +1,43 @@
+
+Sub DeleteRestOfSentence2()
+' Paul Beverley - Version 22.10.24
+' Deletes to the end of the sentence, including the current word
+
+Selection.Expand wdWord
+Selection.MoveStart , -1
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+rng.MoveStart , -1
+rng.Select
+If UCase(rng) = LCase(rng) Then rng.Delete
+myEnd = rng.End
+Selection.Collapse wdCollapseStart
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[.\!\?^13]"
+  .Wrap = wdFindContinue
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchCase = False
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .MatchSoundsLike = False
+  .Execute
+  DoEvents
+End With
+Selection.Collapse wdCollapseStart
+
+Selection.start = myEnd
+qt = Selection.Characters(2)
+If qt = ChrW(8217) Or qt = ChrW(8221) Then
+  Selection.Delete
+  Selection.MoveRight , 1
+  Selection.TypeText Text:=qt
+Else
+  Selection.Delete
+End If
+End Sub
+
+

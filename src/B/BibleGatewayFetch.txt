@@ -4,7 +4,7 @@ Sub BibleGatewayFetch()
 
 mySite = "https://www.biblegateway.com/passage/?search="
 
-myVersion = "NKJV"
+myVersion = "NIV"
 
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord

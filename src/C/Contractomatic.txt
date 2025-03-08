@@ -1,0 +1,99 @@
+
+Sub Contractomatic()
+' Paul Beverley - Version 06.01.25
+' Changes the current two words into a contraction
+' (With homage to Wallace and Gromit!)
+
+canOption = "cannot"
+' canOption = "can not"
+
+Set rng = Selection.Range.Duplicate
+rng.expand wdWord
+' Deal first with the awkward cannot/can not/can't
+If rng.Text = "cannot " Or rng.Text = "can not " Then
+  rng.MoveEnd , -1
+  rng.Text = "can" & ChrW(8217) & "t"
+  GoTo theEnd
+End If
+If rng.Text = "can" & ChrW(8217) & "t " Then
+  rng.MoveEnd , -1
+  rng.Text = canOption
+  GoTo theEnd
+End If
+' Now deal with all the others
+If InStr(rng.Text, ChrW(8217)) = 0 Then
+  rng.Collapse wdCollapseEnd
+  rng.MoveStart , -1
+  rng.MoveEnd wdWord, 1
+  If Right(rng, 1) = " " Then rng.MoveEnd , -1
+  nowWord = rng.Text
+  Select Case nowWord
+    Case " are": rng.Text = ChrW(8217) & "re"
+    Case " is": rng.Text = ChrW(8217) & "s"
+    Case " us": rng.Text = ChrW(8217) & "s"
+    Case " had": rng.Text = ChrW(8217) & "d"
+    Case " would": rng.Text = ChrW(8217) & "d"
+    Case " am": rng.Text = ChrW(8217) & "m"
+    Case " have": rng.Text = ChrW(8217) & "ve"
+    Case " has": rng.Text = ChrW(8217) & "s"
+    Case " not": rng.Text = "n" & ChrW(8217) & "t"
+    Case " will": rng.Text = ChrW(8217) & "ll"
+  End Select
+  rng.MoveStart , -3
+  rng.MoveEnd , -2
+  If rng.Text = "illn" Then rng.Text = "on"
+Else
+  Select Case rng.Text
+    Case "can" & ChrW(8217) & "t"
+        rng.Text = "can not": GoTo theEnd
+    Case "won" & ChrW(8217) & "t"
+        rng.Text = "will not": GoTo theEnd
+  End Select
+  rng.start = rng.End - 4
+  
+  newText = rng.Text
+  newText = Replace(newText, "n" & ChrW(8217) & "t", " not")
+  newText = Replace(newText, ChrW(8217) & "s", " has")
+  newText = Replace(newText, ChrW(8217) & "d", " would")
+  newText = Replace(newText, ChrW(8217) & "m", " am")
+  newText = Replace(newText, ChrW(8217) & "ve", " have")
+  newText = Replace(newText, ChrW(8217) & "re", " are")
+  newText = Replace(newText, ChrW(8217) & "ll", " will")
+  rng.Text = newText
+  If InStr(newText, " has") > 0 Or InStr(newText, " would") > 0 Then
+    Set rng2 = rng.Duplicate
+    rng2.MoveStart , -2
+    rng2.MoveEnd , -1
+    If LCase(rng2.Text) = "let has" Then
+      rng2.MoveStart , 4
+      rng2.MoveEnd , -1
+      rng2.Text = "u"
+    Else
+      t = Timer
+      posWas = Selection.start
+      Do
+        DoEvents
+        posNow = Selection.start
+      Loop Until posNow <> posWas Or Timer - t > 1
+      If posNow <> posWas Then
+        rng.MoveStart , 1
+        rng.MoveEnd , -1
+        Selection.start = posWas
+        Selection.Collapse wdCollapseStart
+        Select Case rng.Text
+          Case " has"
+            rng.Text = " is"
+          Case " would": rng.Text = " had"
+        End Select
+      End If
+    End If
+  End If
+End If
+theEnd:
+rng.Collapse wdCollapseEnd
+rng.Select
+End Sub
+
+
+
+

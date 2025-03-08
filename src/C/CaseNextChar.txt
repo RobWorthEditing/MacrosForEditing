@@ -1,8 +1,9 @@
+
 Sub CaseNextChar()
-' Paul Beverley - Version 13.04.24
+' Paul Beverley - Version 13.05.24
 ' Changes case of the next character/selection
 
-trackit = True
+trackIt = True
 trackIfSelected = False
 
 myShow = ActiveWindow.View.ShowRevisionsAndComments
@@ -10,31 +11,31 @@ myView = ActiveWindow.View.RevisionsView
 myTrack = ActiveDocument.TrackRevisions
 
 ' Don't track case change if TC is OFF
-If myTrack = False Then trackit = False
+If myTrack = False Then trackIt = False
 
 ' If an area of text is NOT selected ...
+If Asc(Selection) = 32 Then
+  Selection.MoveRight , 1
+  Exit Sub
+End If
 If Selection.End = Selection.Start Then
-  If trackit = False Then _
+  If trackIt = False Then _
        ActiveDocument.TrackRevisions = False
   Set rng = Selection.Range.Duplicate
   rng.MoveEnd , 1
-  Do While LCase(rng) = UCase(rng)
-    rng.MoveEnd , 1
-    rng.MoveStart , 1
-    DoEvents
-  Loop
-  rng.Select
   If UCase(rng) = rng Then
     myNewChar = LCase(rng)
   Else
     myNewChar = UCase(rng)
   End If
-  rng.Delete
+  rng.InsertAfter Text:=myNewChar
   rng.Select
-  Selection.TypeText Text:=myNewChar
+  Selection.Collapse wdCollapseEnd
+  rng.MoveEnd , -1
+  rng.Delete
 Else
 ' If an area of text is selected ...
-  If trackIfSelected = False Then trackit = False
+  If trackIfSelected = False Then trackIt = False
   If Selection.Information(wdWithInTable) = True Then
     If Selection.Range.Case = wdLowerCase Then
       Selection.Range.Case = wdUpperCase
@@ -52,7 +53,7 @@ Else
     Next myCount
     myUpper = (voteUpper > voteLower)
     If voteLower = 0 Then myUpper = False
-    If trackit = False Then
+    If trackIt = False Then
       ActiveDocument.TrackRevisions = False
       If myUpper = True Then
         Selection.Range.Case = wdUpperCase

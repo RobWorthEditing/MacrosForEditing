@@ -1,5 +1,6 @@
+
 Sub NumberIncrement()
-' Paul Beverley - Version 18.01.23
+' Paul Beverley - Version 20.11.24
 ' Adds one to the next number after the cursor
 
 myJump = 1
@@ -7,21 +8,21 @@ myJump = 1
 goNext = False
 ' goNext = True
 
-trackIt = True
+trackit = True
 
 searchRange = 100
 
-If goNext = True And Selection.Start <> _
+If goNext = True And Selection.start <> _
      Selection.End Then _
      Selection.Collapse wdCollapseStart
-
 myTrack = ActiveDocument.TrackRevisions
-If trackIt = False Then ActiveDocument.TrackRevisions = False
+If trackit = False Then ActiveDocument.TrackRevisions = False
 
 Set rng = Selection.Range.Duplicate
-rng.End = rng.Start + searchRange
+rng.End = rng.start + searchRange
 
-Do While InStr(" .", Left(rng, 1)) > 0
+skipThese = " ." & ChrW(13)
+Do While InStr(skipThese, Left(rng, 1)) > 0
   rng.MoveStart , 1
 Loop
 
@@ -33,14 +34,13 @@ If Val(rng) = 0 Then
     i = i + 1
     If i = searchRange Then
       Beep
-      rng.Start = rng.End - 1
       rng.Select
+      MsgBox ("No number found.")
       Exit Sub
     End If
     myTest = Mid(allText, i)
     DoEvents
-  Loop Until Val(myTest) > 0 And Left(myTest, 1) <> " " _
-       And Left(myTest, 1) <> "."
+  Loop Until Val(myTest) > 0 And InStr(skipThese, Left(myTest, 1)) = 0
   Selection.MoveStart , i - 1
   rng.MoveStart , i - 1
 End If
@@ -53,9 +53,11 @@ Do
   myTest = Mid(allText, i, 1)
   DoEvents
 Loop Until Val(myTest) = 0 And myTest <> "0"
-rng.End = rng.Start + i - 1
+
+rng.End = rng.start + i - 1
 rng.Select
 rng.Text = Trim(Str(Val(rng.Text) + myJump))
+
 If goNext = True Then
   Do While Asc(Selection) > 47 And Asc(Selection) < 58
     Selection.MoveRight , 1
@@ -63,4 +65,6 @@ If goNext = True Then
   Call FindFwd
 End If
 End Sub
+
+
 

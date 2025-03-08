@@ -1,14 +1,17 @@
-Sub SortAndRemoveDups()
-' Paul Beverley - Version 19.09.18
-' Sort the selected text
 
-If Selection.End = Selection.Start Then
-  myResponse = MsgBox("Sort the WHOLE file?", _
-       vbQuestion + vbYesNo)
+Sub SortAndRemoveDups()
+' Paul Beverley - Version 11.02.25
+' Sorts the selected text and removes any duplicate lines
+
+anyCase = True
+
+If Selection.End = Selection.start Then
+  myResponse = MsgBox("Sort and remove duplicates for the WHOLE file?", _
+       vbQuestion + vbYesNo, "SortAndRemoveDups")
   If myResponse = vbNo Then Exit Sub
   Selection.WholeStory
 End If
-myStart = Selection.Start
+myStart = Selection.start
 myEnd = Selection.End
 
 ' Exchange rogue linefeed (ascii 10)
@@ -16,7 +19,7 @@ Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "^10"
+  .Text = "^11"
   .Wrap = wdFindContinue
   .Replacement.Text = "^p"
   .Forward = True
@@ -26,14 +29,14 @@ With rng.Find
 End With
 
 Selection.Sort ExcludeHeader:=False, FieldNumber:="Paragraphs", SortOrder:=wdSortOrderAscending
-Selection.Start = myStart
+Selection.start = myStart
 Selection.End = myEnd
-For j = 1 To ActiveDocument.Paragraphs.Count
-  If ActiveDocument.Paragraphs(j).Range.Start > myStart Then Exit For
+For j = 1 To ActiveDocument.Paragraphs.count
+  If ActiveDocument.Paragraphs(j).Range.start > myStart Then Exit For
 Next j
 listStart = j - 1
-For j = ActiveDocument.Paragraphs.Count To 1 Step -1
-  If ActiveDocument.Paragraphs(j).Range.Start < myEnd Then Exit For
+For j = ActiveDocument.Paragraphs.count To 1 Step -1
+  If ActiveDocument.Paragraphs(j).Range.start < myEnd Then Exit For
 Next j
 listEnd = j
 For j = listEnd To listStart + 1 Step -1
@@ -41,9 +44,15 @@ For j = listEnd To listStart + 1 Step -1
   Set rng2 = ActiveDocument.Paragraphs(j - 1).Range
   If rng1 = rng2 Then rng1.Delete
   StatusBar = "Lines to go: " & Str(j)
+  DoEvents
 Next j
 StatusBar = ""
-ActiveDocument.Paragraphs(listStart).Range.Select
-Selection.End = Selection.Start
+If myResponse = vbYes Then
+  ActiveDocument.Content.InsertAfter Text:=vbCr
+  ActiveDocument.Content.Characters(1).Delete
+Else
+  ActiveDocument.Paragraphs(listStart).Range.Select
+  Selection.End = Selection.start
+End If
 End Sub
 

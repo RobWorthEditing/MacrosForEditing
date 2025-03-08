@@ -1,22 +1,24 @@
+
 Sub PunctuationToSingleQuote()
-' Paul Beverley - Version 26.03.23
+' Paul Beverley - Version 06.05.24
 ' Changes next quote mark to single curly
 
-trackIt = True
+
+trackit = True
 
 newChar = "'"
 
-searchChars = Chr(34) & Chr(39) & ChrW(8216) & ChrW(8217) _
-       & ChrW(8220) & ChrW(8221) & ChrW(8249) & ChrW(8250) _
-       & ChrW(8222) & ChrW(8218) & ChrW(171) & ChrW(187) & ChrW(96) _
-       & ChrW(8242) & ChrW(8243)
+searchChars = Chr(34) & Chr(39) & ChrW(8216) & ChrW(8220) _
+     & ChrW(8221) & ChrW(8249) & ChrW(8250) & ChrW(8222) _
+     & ChrW(8218) & ChrW(171) & ChrW(187) & ChrW(96) _
+     & ChrW(8242) & ChrW(8243)
 
 Set rng = Selection.Range.Duplicate
 
 For i = 1 To 1000
   rng.MoveEnd , 1
   If InStr(searchChars, Right(rng, 1)) > 0 Then
-    rng.Start = rng.End - 1
+    rng.start = rng.End - 1
     gotChar = True
     Exit For
   End If
@@ -30,7 +32,7 @@ ch = Right(rng, 1)
 Selection.Collapse wdCollapseStart
 
 myTrack = ActiveDocument.TrackRevisions
-If trackIt = False Then ActiveDocument.TrackRevisions = False
+If trackit = False Then ActiveDocument.TrackRevisions = False
 optNow = Options.AutoFormatAsYouTypeReplaceQuotes
 Options.AutoFormatAsYouTypeReplaceQuotes = True
 

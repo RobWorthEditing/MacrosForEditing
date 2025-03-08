@@ -1,0 +1,27 @@
+
+Sub DocumentObscurer()
+' Paul Beverley - Version 04.10.24
+' Copies selected text into various alphabetic lists
+
+newWord = "I"
+CR = vbCr
+myText = ActiveDocument.Content.Text
+myPos = InStr(myText, CR & CR)
+myText = CR & Left(myText, myPos) & CR
+
+myNum = ActiveDocument.Words.Count
+For i = myNum - 2 To 1 Step -1
+  myWd = Trim(ActiveDocument.Words(i))
+  If Len(myWd) > 1 Then
+    myWd = Replace(myWd, ChrW(8217), "")
+    If InStr(myText, CR & myWd & CR) = 0 Then
+      ActiveDocument.Words(i) = newWord & " "
+    End If
+  End If
+  DoEvents
+  If i Mod 100 = 0 Then StatusBar = i
+Next i
+
+End Sub
+
+

@@ -1,0 +1,36 @@
+
+Sub PunctuationToParagraphSplit()
+' Paul Beverley - Version 03.12.24
+' Splits the paragraph after the next sentence end
+
+trackit = True
+
+searchChars = "!:.?"
+
+myTrack = ActiveDocument.TrackRevisions
+If trackit = False Then ActiveDocument.TrackRevisions = False
+Set rng = Selection.Range.Duplicate
+
+For i = 1 To 1000
+  rng.MoveEnd , 1
+  If InStr(searchChars, Right(rng, 1)) > 0 Then
+    rng.start = rng.End - 1
+    gotChar = True
+    Exit For
+  End If
+  DoEvents
+Next i
+If gotChar = False Then
+  Beep
+Else
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd , 1
+  rng.Select
+  Selection.TypeText Text:=vbCr
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+
+
+
+

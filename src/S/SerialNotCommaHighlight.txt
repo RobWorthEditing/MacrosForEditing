@@ -1,5 +1,6 @@
+
 Sub SerialNotCommaHighlight()
-' Paul Beverley - Version 18.05.19
+' Paul Beverley - Version 08.06.24
 ' Highlights or underlines text that appears not to have a serial comma
 
 maxWords = 7
@@ -13,24 +14,24 @@ myFontColour = wdColorBlue
 For i = 1 To 3
   Select Case i
     Case 1:
-      num = ActiveDocument.Footnotes.Count
-      If num > 0 Then Set rng0 = _
+      Num = ActiveDocument.Footnotes.Count
+      If Num > 0 Then Set rng0 = _
            ActiveDocument.StoryRanges(wdFootnotesStory)
     Case 2:
-      num = ActiveDocument.Endnotes.Count
-      If num > 0 Then Set rng0 = _
+      Num = ActiveDocument.Endnotes.Count
+      If Num > 0 Then Set rng0 = _
            ActiveDocument.StoryRanges(wdEndnotesStory)
     Case 3:
       Set rng0 = ActiveDocument.Content
-      num = 1
+      Num = 1
   End Select
   
-  If num > 0 Then
+  If Num > 0 Then
     Set rng = rng0.Duplicate
     With rng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
-      .Text = "[a-zA-Z\-]@, [a-zA-Z\- ]@ and "
+      .Text = "[0-9a-zA-Z'" & ChrW(8217) & "\-]@, [0-9a-zA-Z'" & ChrW(8217) & "\- ]@ and "
       .Wrap = wdFindStop
       .Replacement.Text = ""
       .MatchWildcards = True
@@ -56,7 +57,7 @@ For i = 1 To 3
     
     Set rng = rng0.Duplicate
     With rng.Find
-      .Text = "[a-zA-Z\-]@, [a-zA-Z\- ]@ or "
+      .Text = "[0-9a-zA-Z'" & ChrW(8217) & "\-]@, [0-9a-zA-Z'" & ChrW(8217) & "\- ]@ or "
       .MatchWildcards = True
       .Replacement.Text = ""
       .Wrap = wdFindStop

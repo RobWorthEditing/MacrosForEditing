@@ -1,6 +1,8 @@
+
 Sub SmartFinder()
-' Paul Beverley - Version 15.01.21
+' Paul Beverley - Version 03.02.25
 ' Finds this text/note/page/etc, etc immediately.
+
 
 A = ""
 A = A & "w = web address|"
@@ -23,13 +25,13 @@ If endPos > 0 Then A = Left(A, endPos - 3)
 myPrompt = Replace(A, "|", vbCr)
 
 existingFind = Selection.Find.Text
-startMyText = Selection.Start
+startMyText = Selection.start
 endMyText = Selection.End
 selText = Selection
 ' If nothing selected, pick up the current word
-noTextSelected = (Selection.End = Selection.Start)
+noTextSelected = (Selection.End = Selection.start)
 If noTextSelected Then
-  cursorPosn = Selection.Start
+  cursorPosn = Selection.start
   Selection.Expand wdWord
   Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
     Selection.MoveEnd , -1
@@ -37,11 +39,11 @@ If noTextSelected Then
   Loop
   selText = Selection
 ' Ends of the current word
-  startMyText = Selection.Start
+  startMyText = Selection.start
   endMyText = Selection.End
 ' Put the cursor back where it was
   Selection.End = cursorPosn
-  Selection.Start = cursorPosn
+  Selection.start = cursorPosn
 End If
 
 selText = Trim(selText)
@@ -61,9 +63,6 @@ inputCommand:
 myText = InputBox(myPrompt, "Smart finder", selText)
 If Len(myText) = 0 Then Exit Sub
 myText = Replace(myText, Chr(13), "")
-
-' Strip accidental typing of '#' before CR
-If Right(myText, 1) = "#" Then myText = Replace(myText, "#", "")
 
 ' Default settings for all searches
 mvStart = 0
@@ -88,7 +87,7 @@ allForms = False
 
 If Len(myText) > 1 Then GoTo moreText
 ' Single-letter commands
-wc = True
+WC = True
 myReplace = ""
 Select Case myText
   Case "a": myFind = "[A-Z]{2,}" ' acronyms (see also x and X)
@@ -119,7 +118,8 @@ Select Case myText
   Case "<": myFind = "\<[ABDCapHN]{1,3}\>"
   Case "(": myFind = "\([0-9.]@\)" ' Number in brackets: (3.16), (12.2)
   Case ")": myFind = "^13([0-9]{1,2}). ": myReplace = "^p\1^t"
-  Case "[": myFind = "[[[[[": wc = False
+  Case "[": myFind = "[[[[[": WC = False
+  Case "#": myFind = "^p^#": WC = False
   
   Case "-":
     hyphenPos = InStr(selText, "-")
@@ -167,12 +167,12 @@ Select Case myText
     End If
     myFind = Left(wd1, Len(wd1) - 1) & "[" & Right(wd1, 1) _
          & Left(wd2, 1) & "\- ^=]{2,3}" & Mid(wd2, 2)
-    wc = True
+    WC = True
   
   Case "A": myFind = Trim(Replace(selText, " ", ""))
-    allForms = True: wc = False
-  Case "S": myFind = Trim(selText): sndsLike = True: wc = False
-  Case "W": myFind = Trim(selText): wholeWds = True: wc = False
+    allForms = True: WC = False
+  Case "S": myFind = Trim(selText): sndsLike = True: WC = False
+  Case "W": myFind = Trim(selText): wholeWds = True: WC = False
       
   Case "x" ' Xpand, i.e. look for acronym expansion
     myFind = "<"
@@ -193,11 +193,11 @@ Select Case myText
     Next i
     myFind = Left(myFind, Len(myFind) - 3)
 
-  Case "h": wc = False: myFind = "" ' A heading
+  Case "h": WC = False: myFind = "" ' A heading
     myStyle = Selection.Range.Style
     If myStyle = "Normal" Then
       myStyle = ""
-      Selection.End = Selection.Start + 1
+      Selection.End = Selection.start + 1
       Selection.Font.Reset
       nmlSize = Selection.Font.Size
       nmlFont = Selection.Font.Name
@@ -219,10 +219,10 @@ Select Case myText
          And thisColour = nmlColour Then
       myFind = "^p" & Left(Selection, 1)
     End If
-    Selection.Start = Selection.End
+    Selection.start = Selection.End
   
-  Case "f": wc = False: myFind = "" ' Font attributes
-    If Selection.End = Selection.Start Then Selection.MoveEnd wdCharacter, 1
+  Case "f": WC = False: myFind = "" ' Font attributes
+    If Selection.End = Selection.start Then Selection.MoveEnd wdCharacter, 1
     Selection.Font.Reset
     nmlSize = Selection.Font.Size
     nmlFont = Selection.Font.Name
@@ -250,19 +250,24 @@ Select Case myText
 
 Case Else
 ' A number 1 to 9
-  myNumber = Val(Chr(Asc(myText)))
+  If myText = "#" Then
+    myNumber = -99
+    myText = "^#"
+  Else
+    myNumber = Val(Chr(Asc(myText)))
+  End If
   If myNumber > 0 And myNumber < 10 Then
   ' A caption/heading with the same first three characters
     Selection.HomeKey Unit:=wdLine
     Selection.MoveEnd wdCharacter, myNumber
     myFind = "[^t^11^12^13]" & Replace(Selection, "<", "\<")
     mvStart = 1
-    wc = True
+    WC = True
   Else
 
 ' Absolutely every other input gives a straight non-WC find
     myFind = myText
-    wc = False
+    WC = False
   End If
 End Select
 
@@ -272,8 +277,8 @@ GoTo goFind
 
 ' See if it's a page, fnote, enote or section number
 moreText:
-Debug.Print selText
-Debug.Print myText
+'Debug.Print selText
+'Debug.Print myText
 startChar = Left(LCase(myText), 1)
 lastChar = Asc(Right(myText, 1))
 If lastChar > 47 And lastChar < 58 And Len(myText) <= 4 Then
@@ -281,15 +286,15 @@ If lastChar > 47 And lastChar < 58 And Len(myText) <= 4 Then
   isACode = True
   Select Case startChar
     Case "p"
-      Selection.GoTo what:=wdGoToPage, Count:=Mid(myText, 2)
+      Selection.GoTo What:=wdGoToPage, count:=Mid(myText, 2)
     Case "n"
-      Selection.GoTo what:=wdGoToFootnote, Count:=Mid(myText, 2)
+      Selection.GoTo What:=wdGoToFootnote, count:=Mid(myText, 2)
     Case "f"
-      Selection.GoTo what:=wdGoToFootnote, Count:=Mid(myText, 2)
+      Selection.GoTo What:=wdGoToFootnote, count:=Mid(myText, 2)
     Case "e"
-      Selection.GoTo what:=wdGoToEndnote, Count:=Mid(myText, 2)
+      Selection.GoTo What:=wdGoToEndnote, count:=Mid(myText, 2)
     Case "c"
-      Selection.GoTo what:=wdGoToComment, Count:=Mid(myText, 2)
+      Selection.GoTo What:=wdGoToComment, count:=Mid(myText, 2)
     Case "s"
       Set rng = ActiveDocument.Content
       With rng.Find
@@ -309,15 +314,15 @@ If lastChar > 47 And lastChar < 58 And Len(myText) <= 4 Then
         Selection.MoveStart wdCharacter, 1
       Else
         Beep
-        Selection.Start = endMyText
+        Selection.start = endMyText
       End If
     Case Else
       isACode = False
   End Select
   If isACode = True Then
-    If ActiveDocument.Footnotes.Count >= 1 And InStr("fn", startChar) > 0 _
+    If ActiveDocument.Footnotes.count >= 1 And InStr("fn", startChar) > 0 _
          Then ActiveDocument.ActiveWindow.View.SeekView = wdSeekFootnotes
-    If ActiveDocument.Endnotes.Count >= 1 And startChar = "e" Then _
+    If ActiveDocument.Endnotes.count >= 1 And startChar = "e" Then _
          ActiveDocument.ActiveWindow.View.SeekView = wdSeekEndnotes
     Exit Sub
   End If
@@ -328,11 +333,11 @@ If Len(myText) = 2 Then
   myCase = True
   Select Case myText
     Case "ap": myText = "Appendix "
-    Case "re": myText = "References^p": myCase = False
+    Case "re": myText = "References": myCase = False
     Case "fi": myText = "Figure"
     Case "[": myText = "[[[[["
     Case "se": myText = "| Spelling Errors"
-    Case "mm": myText = "1.^0160Bookmarks"
+    Case "mm": myText = "^s^s^s^s^s"
     Case "ii": myText = "(Preparing your brief or style guide)"
     Case "op": myText = "When I want to change"
     Case "st": myText = "What is this document?"
@@ -340,10 +345,10 @@ If Len(myText) = 2 Then
 End If
 myFind = myText
 If myReplace > "" Then myReplace = myText
-wc = False
+WC = False
 
 goFind:
-Selection.Start = Selection.End
+Selection.start = Selection.End
 ' Go and look for the word
 With Selection.Find
   .ClearFormatting
@@ -353,7 +358,7 @@ With Selection.Find
   .Replacement.Text = myReplace
   .Forward = True
   .MatchCase = myCase
-  .MatchWildcards = wc
+  .MatchWildcards = WC
   .MatchWholeWord = wholeWds
   .MatchSoundsLike = sndsLike
   .MatchAllWordForms = allForms
@@ -373,12 +378,12 @@ With Selection.Find
   .Execute
 End With
 
-If (Selection.Start = 0 Or Selection.Start = endMyText Or _
-     Selection.End = cursorPosn) And wc = False Then
+If (Selection.start = 0 Or Selection.start = endMyText Or _
+     Selection.End = cursorPosn) And WC = False Then
 'If Selection.Start = endMyText Or Selection.End = cursorPosn Then
   Beep
   Selection.End = startMyText
-  Selection.Start = startMyText
+  Selection.start = startMyText
   With Selection.Find
     .Forward = False
     .Execute
@@ -388,7 +393,7 @@ Else
     .Forward = True
     .Execute
   End With
-  If Selection.Start > hereNow Then
+  If Selection.start > hereNow Then
     With Selection.Find
       .Forward = False
       .Execute

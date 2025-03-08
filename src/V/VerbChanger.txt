@@ -1,11 +1,12 @@
 
 Sub VerbChanger()
-' Paul Beverley - Version 07.03.24
+' Paul Beverley - Version 23.09.24
 ' Changes "(to) splodge" <-> "(of/for) splodging"
+
 
 doBeep = False
 preps = "to of for "
-useOf = (Selection.Start = Selection.End)
+useOf = (Selection.start = Selection.End)
 If UCase(Selection) = LCase(Selection) Then Selection.MoveLeft , 1
 If UCase(Selection) = LCase(Selection) Then Selection.MoveLeft , 1
 Selection.Expand wdWord
@@ -39,15 +40,19 @@ If Len(fiveChars) > 2 Then twoChars = Left(fiveChars, 2)
 
 If Right(Selection, 3) = "ing" Then
 ' Remove 'ing' and try adding an 'e'
-  Selection.Start = Selection.End - 3
+  Selection.start = Selection.End - 3
   Selection.Delete
-  spellOK = Application.CheckSpelling(Left(theWord, Len(theWord) - 3))
-  If spellOK = False Then
-    If InStr("nn,rr,ll,tt,pp", twoChars) > 0 Then
-      Selection.MoveStart , -1
-      Selection.Delete
-    Else
-      If twoChars <> "el" Then Selection.TypeText "e"
+  If theWord = "using" Then
+    Selection.TypeText "e"
+  Else
+    spellOK = Application.CheckSpelling(Left(theWord, Len(theWord) - 3))
+    If spellOK = False Then
+      If InStr("nn,rr,ll,tt,pp", twoChars) > 0 Then
+        Selection.MoveStart , -1
+        Selection.Delete
+      Else
+        If twoChars <> "el" Then Selection.TypeText "e"
+      End If
     End If
   End If
 Else
@@ -93,5 +98,4 @@ End If
 rng.Collapse wdCollapseEnd
 rng.Select
 End Sub
-
 

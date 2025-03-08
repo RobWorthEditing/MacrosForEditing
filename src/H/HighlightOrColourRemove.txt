@@ -1,5 +1,6 @@
+
 Sub HighlightOrColourRemove()
-' Paul Beverley - Version 15.04.24
+' Paul Beverley - Version 10.08.24
 ' Removes the current highlight or font colour from the whole text
 
 Selection.Collapse wdCollapseStart
@@ -8,6 +9,10 @@ Set rngWas = Selection.Range.Duplicate
 
 myHighlight = Selection.Range.HighlightColorIndex
 myFontColour = Selection.Range.Font.ColorIndex
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
 
 Set rng = ActiveDocument.Content
 If Selection.Information(wdInEndnote) Then _
@@ -23,8 +28,11 @@ If myHighlight = wdNoHighlight Then
     myResponse = MsgBox("Remove this font colour from this area?", _
          vbQuestion + vbYesNo, "HighlightOrColourRemove")
     Selection.Collapse wdCollapseStart
-    If myResponse = vbNo Then Exit Sub
-    
+    If myResponse = vbNo Then
+      ActiveDocument.TrackRevisions = myTrack
+      Exit Sub
+    End If
+
     With rng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
@@ -40,16 +48,20 @@ If myHighlight = wdNoHighlight Then
     myResponse = MsgBox("But this character has no highlight or colour!", _
              vbOK, "HighlightOrColourRemove")
   End If
+  ActiveDocument.TrackRevisions = myTrack
   Exit Sub
 Else
   myResponse = MsgBox("Remove this highlight from this area?", _
        vbQuestion + vbYesNo, "HighlightOrColourRemove")
   DoEvents
   Selection.Collapse wdCollapseStart
-  If myResponse = vbNo Then Exit Sub
+  If myResponse = vbNo Then
+    ActiveDocument.TrackRevisions = myTrack
+    Exit Sub
+  End If
 End If
 
-rng.Start = 0
+rng.start = 0
 rng.End = endDoc
 With rng.Find
   .ClearFormatting
@@ -71,7 +83,7 @@ With rng.Find
   Wend
 End With
 
-rng.Start = 0
+rng.start = 0
 rng.End = endDoc
 With rng.Find
   .ClearFormatting
@@ -94,8 +106,7 @@ With rng.Find
     DoEvents
   Wend
 End With
+ActiveDocument.TrackRevisions = myTrack
 Beep
 End Sub
-
-
 

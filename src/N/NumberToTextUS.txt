@@ -1,0 +1,41 @@
+
+Sub NumberToTextUS()
+' Paul Beverley - Version 13.07.23
+' Converts next number into text, eg "two hundred forty-two"
+
+
+oldFind = Selection.Find.Text
+oldReplace = Selection.Find.Replacement.Text
+
+' Find a number (six figures max)
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Text = "[0-9]{1,6}"
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+' Create a field containing the digits and a special format code
+Selection.Fields.Add Range:=Selection.Range, _
+   Type:=wdFieldEmpty, Text:="= " + Selection + " \* CardText", _
+   PreserveFormatting:=True
+
+' Select the field and copy it
+Selection.MoveStart , -1
+Set rng = Selection.Range.Duplicate
+Selection.Fields(1).Unlink
+DoEvents
+rng.Select
+
+With Selection.Find
+  .Text = oldFind
+  .Replacement.Text = oldReplace
+  .MatchWildcards = False
+End With
+Selection.Collapse wdCollapseEnd
+Selection.MoveRight wdWord, 1
+End Sub
+

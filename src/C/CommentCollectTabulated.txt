@@ -220,7 +220,6 @@ Selection.Collapse wdCollapseEnd
 Selection.End = ActiveDocument.Range.End
 
 Selection.ConvertToTable Separator:=wdSeparateByTabs
-Selection.Tables(1).Style = "Table Grid"
 Selection.Tables(1).AutoFitBehavior (wdAutoFitContent)
 
 ' Restore the new lines that are inside the comments

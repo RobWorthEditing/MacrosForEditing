@@ -1,6 +1,6 @@
 
 Sub IStoIZ()
-' Paul Beverley - Version 20.02.23
+' Paul Beverley - Version 01.10.24
 ' Corrects text to give -iz-, -yz- spellings
 
 promptForConfirmation = False
@@ -26,12 +26,17 @@ closeExceptionsFile = True
 
 doTextBoxes = True
 
-' Address where exceptions file is held
-' On Windows, it will need to be something like:
-mySFile = "C:\Documents and Settings\Paul\My Documents\IS_words.docx"
+' Address where the IS exceptions file is held
 
+' On Windows, it will need to be something like:
+' mySFile = "C:\Documents and Settings\Paul\My Documents\IS_words.docx"
+' ...but remove the apostrophe in front of mySFile
+ 
+ 
 ' On a Mac, it will need to be something like:
 ' mySFile = "/Users/Paul/My Documents/Macro stuff/IS_words.docx"
+' ...but remove the apostrophe in front of mySFile
+
 
 ExceptionSFile = "IS_words"
 
@@ -97,13 +102,13 @@ Selection.HomeKey Unit:=wdStory
 For hit = 1 To maxHits
   goes = 0
   If hit = 1 Then
-    If ActiveDocument.Endnotes.count > 0 Then
+    If ActiveDocument.Endnotes.Count > 0 Then
       Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
       goes = 1
     End If
   End If
   If hit = 2 Then
-    If ActiveDocument.Footnotes.count > 0 Then
+    If ActiveDocument.Footnotes.Count > 0 Then
       Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
       goes = 1
     End If
@@ -113,7 +118,7 @@ For hit = 1 To maxHits
     goes = 1
   End If
   If hit = 4 Then
-    goes = ActiveDocument.Shapes.count
+    goes = ActiveDocument.Shapes.Count
   End If
   If goes > 0 Then
     For myGo = 1 To goes
@@ -135,7 +140,7 @@ For hit = 1 To maxHits
       End If
       theEnd = rng.End
       If someText = True Then
-        rng.Start = 0
+        rng.start = 0
         rng.End = 0
         Do
           With rng.Find
@@ -161,19 +166,19 @@ For hit = 1 To maxHits
               rng1.MoveEnd , -1
               DoEvents
             Loop
-            startWord = rng1.Start
+            startWord = rng1.start
             endWord = rng1.End
   
-            changeIt = True
+            ChangeIt = True
           ' But don't make the change if...
             thisStyle = "," & rng.Style & ","
-            If InStr(nonoStyles, thisStyle) > 0 Then changeIt = False
-            If rng.Font.StrikeThrough = True Then changeIt = False
+            If InStr(nonoStyles, thisStyle) > 0 Then ChangeIt = False
+            If rng.Font.StrikeThrough = True Then ChangeIt = False
 
           ' If -is- is  near the beginning of the word...
-            If rng.Start - rng1.Start < 4 Then
+            If rng.start - rng1.start < 4 Then
               ' look for an -is- later in the word
-              rng.Start = rng1.Start + 4
+              rng.start = rng1.start + 4
               rng.End = endWord
               With rng.Find
                 .ClearFormatting
@@ -186,17 +191,17 @@ For hit = 1 To maxHits
                 .Execute
               End With
               opposite = Replace(rng, "s", "z")
-              If rng.Find.Found = False Or rng.Start > endWord _
-                   Then changeIt = False
+              If rng.Find.Found = False Or rng.start > endWord _
+                   Then ChangeIt = False
             End If
           ' Check that it's not in the list of s's
             If InStr(allWords, "!" & LCase(rng1) & "!") > 0 _
-                 Then changeIt = False
+                 Then ChangeIt = False
             If InStr(szExceptions, Left(LCase(rng1), 6)) > 0 And _
-                 rng1.LanguageID = wdEnglishUK Then changeIt = False
+                 rng1.LanguageID = wdEnglishUK Then ChangeIt = False
             If LCase(rng1.Text) = "analyses" Then _
                  rng1.HighlightColorIndex = analysesColour
-            If changeIt = True Then
+            If ChangeIt = True Then
             ' then change it to a z
               If myResponse = vbYes Then rng.Text = opposite
               If rng1.End < rng.End Then rng1.End = rng.End
@@ -239,5 +244,4 @@ If promptForConfirmation = True Then
   End If
 End If
 End Sub
-
 

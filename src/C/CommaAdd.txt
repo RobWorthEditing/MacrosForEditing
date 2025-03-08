@@ -1,9 +1,11 @@
+
 Sub CommaAdd()
-' Paul Beverley - Version 13.01.23
+' Paul Beverley - Version 13.05.24
 ' Adds a comma after the current word
 
 spanishPunct = False
 
+myTrack = ActiveDocument.TrackRevisions
 Set rng = Selection.Range.Duplicate
 rng.Expand wdWord
 Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
@@ -19,7 +21,6 @@ Set tst2 = tst.Duplicate
 tst2.Collapse wdCollapseEnd
 tst2.MoveEnd , 1
 ' That's got the next character
-ActiveDocument.TrackRevisions = False
 
 ' Check if italic is switching off word to word
 If tst2.Font.Italic = False Then
@@ -41,7 +42,6 @@ rng.Collapse wdCollapseEnd
 rng.Select
 Selection.InsertAfter Text:=","
 
-myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 If spanishPunct = False And removeBold = True Then _
   Selection.Font.Bold = False
@@ -50,8 +50,4 @@ If spanishPunct = False And removeItalic = True Then _
 ActiveDocument.TrackRevisions = myTrack
 Selection.MoveRight , 2
 End Sub
-
-
-
-
 

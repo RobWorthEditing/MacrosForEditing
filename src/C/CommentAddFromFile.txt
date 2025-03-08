@@ -1,16 +1,11 @@
+
 Sub CommentAddFromFile()
-' Paul Beverley - Version 26.02.24
+' Paul Beverley - Version 04.07.24
 ' Adds a comment from a file of ready-made comments
 
-myPartFilename = "ample"
+myPartFilename = "hapter"
 myMarker = "|"
 deleteHeader = True
-
-attachToSentence = False
-' False means attach comment to paragraph
-' But it will attach to a word instead of a paragraph if...
-attachToWord = True
-
 
 Selection.Expand wdParagraph
 Selection.MoveEnd , -1
@@ -36,17 +31,33 @@ If gottaDoc = False Then
   Exit Sub
 End If
 myDoc.Activate
-If Selection.Start = Selection.End Then
-  If attachToSentence = True Then
-    Selection.Expand wdSentence
-  Else
-    If attachToWord = True Then
-      Selection.Expand wdWord
-    Else
-      Selection.Expand wdParagraph
-    End If
-  End If
+If Selection.start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd , 1
+  If rng.Text = "-" Then Selection.MoveEnd wdWord, 2
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.start = startNow
 End If
+
 Dim cmt As Comment
 Set cmt = Selection.Comments.Add(Range:=Selection.Range)
 Selection.Paste

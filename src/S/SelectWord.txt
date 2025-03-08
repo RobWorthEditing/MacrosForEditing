@@ -1,5 +1,6 @@
+
 Sub SelectWord()
-' Paul Beverley - Version 04.01.23
+' Paul Beverley - Version 24.05.24
 ' Selects current word, and then those before it
 
 If Selection.Start = Selection.End Then
@@ -9,6 +10,9 @@ If Selection.Start = Selection.End Then
     Selection.MoveEnd , -1
     DoEvents
   Loop
+  If Right(Selection, 2) = ChrW(8217) & "s" Then
+    Selection.MoveEnd , -2
+  End If
   If Len(Selection) <> lenNow Then Exit Sub
   Set rng = Selection.Range.Duplicate
   rng.Collapse wdCollapseStart

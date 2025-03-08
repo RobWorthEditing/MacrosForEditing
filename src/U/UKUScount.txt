@@ -1,5 +1,6 @@
+
 Sub UKUScount()
-' Paul Beverley - Version 18.04.24
+' Paul Beverley - Version 29.10.24
 ' Counts relative spellings between UK and US English
 
 minLengthSpell = 5
@@ -18,20 +19,21 @@ StatusBar = "Spellchecking. To go:   100%"
 On Error GoTo ReportIt
 Application.ScreenUpdating = False
 For Each wd In ActiveDocument.Words
-  If Len(wd) >= minLengthSpell And wd.Font.StrikeThrough = False Then
-    UKok = Application.CheckSpelling(wd, _
+  myWrd = Replace(Trim(wd), ChrW(8217), "")
+  If Len(myWrd) >= minLengthSpell And wd.Font.StrikeThrough = False Then
+    UKok = Application.CheckSpelling(myWrd, _
          MainDictionary:=Languages(wdEnglishUK).NameLocal)
-    USok = Application.CheckSpelling(wd, _
+    USok = Application.CheckSpelling(myWrd, _
          MainDictionary:=Languages(wdEnglishUS).NameLocal)
     If UKok <> USok Then
       If UKok Then
         UKcount = UKcount + 1
-        If InStr(UKwords, "!" & LCase(wd) & CR) = 0 Then _
-             UKwords = UKwords & "!" & LCase(wd) & CR
+        If InStr(UKwords, "!" & LCase(myWrd) & CR) = 0 Then _
+             UKwords = UKwords & "!" & LCase(myWrd) & CR
       Else
         UScount = UScount + 1
-        If InStr(USwords, "$" & LCase(wd) & CR) = 0 Then _
-             USwords = USwords & "$" & LCase(wd) & CR
+        If InStr(USwords, "$" & LCase(myWrd) & CR) = 0 Then _
+             USwords = USwords & "$" & LCase(myWrd) & CR
       End If
       wd.Select
       StatusBar = "Spellchecking. To go:   " & Trim(Str(Int((i / iStart) _
@@ -106,4 +108,6 @@ Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub
+
+
 

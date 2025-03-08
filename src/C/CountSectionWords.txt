@@ -1,4 +1,3 @@
-
 Sub CountSectionWords()
 ' Paul Beverley - Version 03.04.21
 ' Counts words in sections of text between headings
@@ -8,8 +7,8 @@ myStyle2 = "Heading 2"
 
 doBold = True
 
-Dim myTitle(2000) As String
-Dim myStart(2000) As Long
+Dim myTitle(200) As String
+Dim myStart(200) As Long
 
 i = 0
 For Each myPar In ActiveDocument.Paragraphs
@@ -57,7 +56,6 @@ End If
 Set rng = ActiveDocument.Content
 rng.ConvertToTable Separator:=wdSeparateByTabs
 Set tb = ActiveDocument.Tables(1)
-tb.Style = "Table Grid"
 tb.AutoFitBehavior (wdAutoFitContent)
 tb.Borders(wdBorderTop).LineStyle = wdLineStyleNone
 tb.Borders(wdBorderLeft).LineStyle = wdLineStyleNone
@@ -66,5 +64,4 @@ tb.Borders(wdBorderRight).LineStyle = wdLineStyleNone
 tb.Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
 tb.Borders(wdBorderVertical).LineStyle = wdLineStyleNone
 End Sub
-
 

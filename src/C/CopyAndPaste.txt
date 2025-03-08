@@ -1,0 +1,40 @@
+
+Sub CopyAndPaste()
+' Paul Beverley - Version 29.01.25
+' Copies the current paragraph(s) and pastes it in another file
+
+
+doCut = False
+myDelay = 5
+
+If Selection.start = Selection.End Then
+  Selection.Expand wdParagraph
+Else
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.Expand wdParagraph
+  Selection.start = rng.start
+  If Right(Selection, 1) <> vbCr Then Selection.MoveEnd wdParagraph, 1
+End If
+If doCut = True Then
+  Selection.Cut
+Else
+  Selection.Copy
+End If
+Set sourceFile = ActiveDocument
+NowName = sourceFile.FullName
+t = Timer
+Do
+  newName = ActiveDocument.FullName
+  DoEvents
+Loop Until newName <> NowName Or (Timer - t) > myDelay
+If newName = NowName Then
+  Beep
+  Exit Sub
+End If
+Selection.Collapse wdCollapseEnd
+Selection.Paste
+sourceFile.Activate
+Selection.Collapse wdCollapseEnd
+End Sub
+

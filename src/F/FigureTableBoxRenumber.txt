@@ -1,0 +1,115 @@
+
+Sub FigureTableBoxRenumber()
+' Paul Beverley - Version 26.08.24
+' Renumbers figures, tables and boxes when some have been deleted
+
+totChaps = 30
+totNumbers = 100
+
+ReDim numUsed(totChaps, totNumbers) As Boolean
+ReDim numNew(totChaps, totNumbers) As Integer
+ReDim maxNum(totChaps) As Integer
+
+For myEntity = 1 To 3
+  myWord = "Fig[.ure]{1,}"
+  If myEntity = 2 Then myWord = "Table"
+  If myEntity = 3 Then myWord = "Box"
+  
+  ' Reset the arrays
+  For ch = 1 To totChaps
+    For Num = 1 To totNumbers
+      numNew(ch, Num) = Num
+      numUsed(ch, Num) = False
+    Next Num
+    DoEvents
+  Next ch
+  
+  'Check which numbers are used.
+  ' Read existing numbers
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myWord & " " & "[0-9]{1,}.[0-9]{1,}"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .Execute
+  End With
+  
+  finalChap = 1
+  myCount = 0
+  Do While rng.Find.Found = True
+    spPos = InStr(rng, " ")
+    rng.MoveStart , spPos
+    ch = Int(Val(rng))
+    dotPos = InStr(rng, ".")
+    rng.MoveStart , dotPos
+    Num = Int(Val(rng))
+    If ch > finalChap Then finalChap = ch
+    numUsed(ch, Num) = True
+    If Num > maxNum(ch) Then maxNum(ch) = Num
+    rng.Collapse wdCollapseEnd
+    rng.Find.Execute
+    DoEvents
+  Loop
+  
+  ' Check all numbers in all chapters
+  numsMissing = ""
+  For ch = 1 To finalChap
+    For Num = 1 To maxNum(ch)
+      If numUsed(ch, Num) = False Then
+        For i = Num To maxNum(ch)
+          numNew(ch, i) = numNew(ch, i) - 1
+          numMissed = Trim(Str(ch)) & "." & Trim(Str(Num))
+          If InStr(numsMissing, numMissed) = 0 Then
+            numsMissing = numsMissing & numMissed & "vbCr"
+          End If
+        Next i
+      End If
+    Next Num
+    DoEvents
+  Next ch
+  
+  ' If there are numbers missing, renumber all those above it
+  numsMissing = Replace(numsMissing, "vbCr", vbCr)
+  If numsMissing > "" Then
+    myResponse = MsgBox(myWord & vbCr & vbCr & _
+         numsMissing & vbCr & "Make changes?", _
+         vbQuestion + vbYesNo, "FigureTableBoxRenumber")
+    If myResponse <> vbYes Then Exit Sub
+    
+    myWord = Replace(myWord, ".ure", ".ure ")
+    Set rng = ActiveDocument.Content
+    For ch = 1 To finalChap
+      For Num = 1 To maxNum(ch)
+        If numNew(ch, Num) <> Num Then
+          With rng.Find
+            .ClearFormatting
+            .Replacement.ClearFormatting
+            If myEntity = 1 Then
+              .Text = "(" & myWord & Trim(Str(ch)) & ".)" & _
+                   Trim(Str(Num)) & ">"
+            Else
+              .Text = "(" & myWord & " " & Trim(Str(ch)) & _
+                   ".)" & Trim(Str(Num)) & ">"
+            End If
+            .Wrap = wdFindContinue
+            .Forward = True
+            .Replacement.Text = "\1" & Trim(Str(numNew(ch, Num)))
+            .MatchWildcards = True
+            .Execute Replace:=wdReplaceAll
+            DoEvents
+          End With
+        End If
+        DoEvents
+      Next Num
+      DoEvents
+    Next ch
+  End If
+Next myEntity
+Beep
+End Sub
+

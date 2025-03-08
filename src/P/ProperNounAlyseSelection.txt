@@ -1,0 +1,27 @@
+
+Sub ProperNounAlyseSelection()
+' Paul Beverley - Version 03.02.25
+' Analyses similar proper nouns - only in selected text
+
+If Selection.End = Selection.start Then
+  myResponse = MsgBox("Analyse the WHOLE file?", _
+       vbQuestion + vbYesNo)
+  If myResponse = vbNo Then Exit Sub
+  Set rngOld = ActiveDocument.Content
+Else
+  Set rngOld = Selection.Range.Duplicate
+End If
+Set tempDoc = Documents.Add
+Set rngNew = tempDoc.Content
+rngNew.FormattedText = rngOld.FormattedText
+
+Application.Run macroName:="ProperNounAlyse"
+tempDoc.Close SaveChanges:=False
+With ActiveDocument.ActiveWindow
+  displayNow = .WindowState
+  .WindowState = wdWindowStateNormal
+  .WindowState = wdWindowStateMaximize
+  .WindowState = displayNow
+End With
+End Sub
+

@@ -1,9 +1,11 @@
+
 Sub FindSamePlace()
-' Paul Beverley - Version 16.10.23
+' Paul Beverley - Version 14.02.25
 ' Finds the same place in another open file
 
-' selectCurrentWord = True
-selectCurrentWord = False
+
+' selectCurrentWord = False
+selectCurrentWord = True
 
 ' Select whole words
 ' wholeWordsSelect = True
@@ -28,10 +30,14 @@ minLength = 15
 myWidth = 1000
 myHeight = 500
 
+If Len(Selection) > 250 Then
+  chopOff = Int((Len(Selection) - 250) / 2)
+  Selection.MoveStart , chopOff
+  Selection.MoveEnd , -chopOff
+End If
 nowFind = Selection.Find.Text
 Selection.Find.MatchWholeWord = False
-
-If Selection.Start = Selection.End Then
+If Selection.start = Selection.End Then
   If selectCurrentWord = True Then
     Selection.Expand wdWord
     Do While InStr(ChrW(8217) & "' ", _
@@ -40,10 +46,10 @@ If Selection.Start = Selection.End Then
       DoEvents
     Loop
   Else
-    hereNow = Selection.Start
+    hereNow = Selection.start
     Selection.HomeKey Unit:=wdLine
-    cursorPos = hereNow - Selection.Start
-    Selection.MoveDown Unit:=wdLine, Count:=1, _
+    cursorPos = hereNow - Selection.start
+    Selection.MoveDown Unit:=wdLine, count:=1, _
          Extend:=wdExtend
     repeatedSearch = (Len(Selection) > 2 * myStep)
   End If
@@ -59,7 +65,7 @@ Else
     Selection.Collapse wdCollapseStart
     Selection.Expand wdWord
     Selection.Collapse wdCollapseStart
-    rng.Start = Selection.Start
+    rng.start = Selection.start
     rng.Select
   End If
 End If
@@ -77,7 +83,7 @@ End If
 dotsPos = InStr(Selection, " . . ")
 If dotsPos > 0 Then
   Selection.Collapse wdCollapseStart
-  Selection.MoveEndUntil cset:=".", Count:=wdForward
+  Selection.MoveEndUntil cset:=".", count:=wdForward
   Selection.MoveEnd , -1
 End If
 
@@ -109,7 +115,7 @@ Else
   tryThisName = ""
 End If
 
-totWnds = Application.Windows.Count
+totWnds = Application.Windows.count
 
 ' What's this for? I dunno!
 ' Something to do with having multiple windows
@@ -146,9 +152,6 @@ For i = 1 To totWnds - 1
       InStr(myDoc.Name, notThisFile) = 0 Then
     If thisName = tryThisName Then tryThisName = ""
     Set rng = Documents(myDoc).Content
-    Debug.Print myDoc.Name
-    
-    
     With rng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
@@ -177,8 +180,8 @@ For i = 1 To totWnds - 1
         GoTo myEnd
       End If
     Else
-      numFoots = myDoc.Footnotes.Count
-      numEnds = myDoc.Endnotes.Count
+      numFoots = myDoc.Footnotes.count
+      numEnds = myDoc.Endnotes.count
       If numFoots + numEnds > 0 Then
         If numFoots > 0 Then Set rng = _
              myDoc.StoryRanges(wdFootnotesStory)
@@ -242,8 +245,8 @@ If tryThisName > "" Then
       rng.Select
       GoTo myEnd
     Else
-      numFoots = myDoc.Footnotes.Count
-      numEnds = myDoc.Endnotes.Count
+      numFoots = myDoc.Footnotes.count
+      numEnds = myDoc.Endnotes.count
       If numFoots + numEnds > 0 Then
         If numFoots > 0 Then Set rng = _
              ActiveDocument.StoryRanges(wdFootnotesStory)

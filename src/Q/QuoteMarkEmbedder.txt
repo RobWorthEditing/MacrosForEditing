@@ -1,13 +1,14 @@
+
 Sub QuoteMarkEmbedder()
-' Paul Beverley - Version 04.11.17
+' Paul Beverley - Version 19.11.24
 ' Changes double quotes inside double quotes to singles
 
 For Each myPara In ActiveDocument.Paragraphs
-  If InStr(myPara.range.Text, ChrW(8220)) > 0 Or _
-       InStr(myPara.range.Text, ChrW(8216)) > 0 Then
+  If InStr(myPara.Range.Text, ChrW(8220)) > 0 Or _
+       InStr(myPara.Range.Text, ChrW(8216)) > 0 Then
     dbl = True
     sgl = True
-    For Each ch In myPara.range.Characters
+    For Each ch In myPara.Range.Characters
       Select Case ch
         Case ChrW(8220)
             dbl = Not (dbl)
@@ -26,6 +27,8 @@ For Each myPara In ActiveDocument.Paragraphs
       End Select
     Next ch
   End If
+  DoEvents
 Next myPara
 End Sub
+
 

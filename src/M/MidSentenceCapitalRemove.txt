@@ -1,0 +1,49 @@
+
+Sub MidSentenceCapitalRemove()
+' Paul Beverley - Version 05.07.24
+' Finds initial caps within sentences and offers to lowercase
+
+Set rng = Selection.Range.Duplicate
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[A-Z]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+notThese = ";I ;I’m ;I’ve "
+Do While rng.Find.Found = True
+  Set rng2 = rng.Duplicate
+  rng2.Expand wdSentence
+  If rng2.start <> rng.start Then
+    rng.Expand wdWord
+    If InStr(notThese, rng) = 0 Then
+      rng.Select
+      myResponse = MsgBox("Lowercase?", _
+          vbQuestion + vbYesNoCancel, "Mid Sentence Capital Remove")
+      If myResponse = vbCancel Then
+        Selection.Collapse wdCollapseEnd
+        Exit Sub
+      End If
+      If myResponse = vbYes Then
+        rng.End = rng.start + 1
+        rng.Text = LCase(rng.Text)
+      End If
+    End If
+    
+    rng.Collapse wdCollapseEnd
+    
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Beep
+End Sub
+
+

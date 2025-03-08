@@ -1,0 +1,218 @@
+
+Sub CopyToListAlphaMenuQuick()
+' Paul Beverley - Version 02.01.25
+' Copies current text into various alphabetic lists
+
+' Filename contains (case INsensitive)
+' keyWord = "list"
+keyWord = "sheet"
+
+beepIfAlreadyListed = True
+
+myStyle = "Heading 3"
+' Heading words are case SENSitive
+
+Dim myList(10) As String
+numLists = 3
+myList(1) = "9 = Word list"
+myList(2) = "6 = Places"
+myList(3) = "3 = People"
+
+' copyWholePara = True
+copyWholePara = False
+
+includeFormatting = False
+' includeFormatting = True
+
+wordsToAvoid = "switch"
+' wordsToAvoid = "FRedit,switch"
+
+goBackToSource = True
+
+' User inputs a character: myChar
+myPrompt = ""
+For i = 1 To numLists
+  myPrompt = myPrompt & myList(i) & "        "
+Next i
+StatusBar = myPrompt & "0 = Exit"
+
+Do
+  Application.ScreenUpdating = False
+  posWas = Selection.start
+  myCount = ActiveDocument.Characters.Count
+  Do
+    DoEvents
+    posNow = Selection.start
+  Loop Until posNow <> posWas
+  Set rng = Selection.Range.Duplicate
+  rng.MoveStart , -1
+  myChar = rng.Text
+  If myCount <> ActiveDocument.Characters.Count Then _
+       WordBasic.EditUndo
+  Application.ScreenUpdating = True
+  
+  followHeading = ""
+  For i = 1 To numLists
+    If Left(myList(i), 1) = myChar Then
+      namePos = InStr(myList(i), " = ") + 3
+      followHeading = Mid(myList(i), namePos)
+      Exit For
+      DoEvents
+    End If
+  Next i
+  DoEvents
+  If Val(myChar) = 0 Then Beep: Exit Sub
+Loop Until followHeading > ""
+StatusBar = "                     " & followHeading
+Debug.Print followHeading
+Dim sourceText As Range, tgt As Range
+Set thisDoc = ActiveDocument
+wds = Split("," & LCase(wordsToAvoid), ",")
+
+If Selection.start = Selection.End Then
+  If LCase(Selection) = UCase(Selection) Then Selection.MoveLeft , 1
+  If copyWholePara = True Then
+    Selection.expand wdParagraph
+  Else
+    Set rng = Selection.Range.Duplicate
+    rng.expand wdWord
+    rng.MoveEnd wdWord, 1
+    chkWd = rng.words.Last
+    If chkWd = "-" Then
+      rng.MoveEnd wdWord, 2
+      chkWd = rng.words.Last
+      If chkWd = "-" Then
+        rng.MoveEnd wdWord, 1
+      Else
+        rng.MoveEnd wdWord, -1
+      End If
+    Else
+      rng.MoveEnd wdWord, -1
+    End If
+    DoEvents
+    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+      rng.MoveEnd , -1
+      DoEvents
+    Loop
+  End If
+  rng.Select
+Else
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd , -1
+  rng.expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Collapse wdCollapseStart
+  Selection.expand wdWord
+  Selection.Collapse wdCollapseStart
+  rng.start = Selection.start
+  rng.Select
+End If
+
+Set sourceText = Selection.Range.Duplicate
+myText = sourceText.Text
+numTracks = Selection.Range.Revisions.Count
+sourceText.Copy
+Selection.Collapse wdCollapseEnd
+
+gottaList = False
+For Each myListDoc In Application.Documents
+  thisName = myListDoc.Name
+  nm = LCase(thisName)
+  gottaList = False
+  If InStr(nm, LCase(keyWord)) > 0 Then gottaList = True
+  For i = 1 To UBound(wds)
+    If InStr(nm, wds(i)) > 0 Then gottaList = False
+    DoEvents
+  Next i
+  If gottaList = True Then Exit For
+  DoEvents
+Next myListDoc
+
+If gottaList = False Then
+  Beep
+  MsgBox "Can't find a list."
+  Exit Sub
+End If
+
+' Decide where to put the item
+Set rng = myListDoc.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = followHeading
+  .Style = myStyle
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchCase = True
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+
+rng.expand wdParagraph
+listStart = rng.End
+If rng.Find.Found = False Then
+  Beep
+  MsgBox "Can't find heading: """ & followHeading & """"
+  rng.start = 0
+  rng.End = 0
+  listStart = 0
+  Selection.HomeKey Unit:=wdStory
+End If
+rng.Collapse wdCollapseStart
+' Check if it's already in the list
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p" & myText & "^p"
+  .Wrap = wdFindStop
+  .Execute
+  DoEvents
+End With
+
+If rng.Find.Found = True Then
+  If goBackToSource = False Then
+    rng.Select
+    rng.MoveStart , 1
+    rng.MoveEnd , -1
+  End If
+  If beepIfAlreadyListed = True Then Beep
+  Exit Sub
+End If
+
+rng.start = listStart
+rng.End = myListDoc.Content.End
+If LCase(rng) <> UCase(rng) Then
+  For i = 1 To rng.Paragraphs.Count
+    myNextItem = Replace(rng.Paragraphs(i).Range.Text, vbCr, "")
+    If LCase(myNextItem) > LCase(myText) Or _
+        LCase(myNextItem) = UCase(myNextItem) Then
+      Set rng = rng.Paragraphs(i).Range.Duplicate
+      Exit For
+      DoEvents
+    End If
+    DoEvents
+  Next i
+End If
+rng.Collapse wdCollapseStart
+
+' Paste it in
+If includeFormatting = True Then
+  rng.FormattedText = sourceText.FormattedText
+  If InStr(myText, vbCr) = 0 Then
+    rng.InsertAfter vbCr
+  End If
+Else
+  rng.InsertAfter myText
+  If InStr(myText, vbCr) = 0 Then rng.InsertAfter vbCr
+End If
+rng.Revisions.AcceptAll
+If goBackToSource = False Then myListDoc.Activate
+End Sub
+
+

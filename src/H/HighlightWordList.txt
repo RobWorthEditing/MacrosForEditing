@@ -1,20 +1,19 @@
+
 Sub HighlightWordList()
-' Paul Beverley - Version 17.02.24
-' Highlights (and/or colours) all the words/phrases given in a list
+' Paul Beverley - Version 08.02.25
+' Highlights and/or font colours all the words/phrases given in a list
 
 doWholeWordsOnly = False
-doMatchCase = True
 doMatchCase = False
+myFileWord = "list"
 
 Set rng = ActiveDocument.Content
 Set myDoc = ActiveDocument
-nowTrack = ActiveDocument.TrackRevisions
-ActiveDocument.TrackRevisions = False
 gottaList = False
-For Each myWnd In Application.Windows
-  thisName = myWnd.Document.Name
-  If InStr(LCase(thisName), "list") > 0 Then
-    myWnd.Document.Activate
+For Each myWordList In Application.Windows
+  thisName = myWordList.Document.Name
+  If InStr(LCase(thisName), LCase(myFileWord)) > 0 Then
+    myWordList.Document.Activate
     myResponse = MsgBox("Is this your list?" & vbCr & vbCr _
          & ">>> " & thisName & " <<<", _
          vbQuestion + vbYesNoCancel, "HighlightWordList")
@@ -23,13 +22,18 @@ For Each myWnd In Application.Windows
       Exit For
     End If
   End If
-Next myWnd
+Next myWordList
 If gottaList = False Then
   Beep
   MsgBox "Can't find a word list."
   Exit Sub
 End If
-Set myList = myWnd.Document.Content
+
+nowTrack = myDoc.TrackRevisions
+myDoc.TrackRevisions = False
+hiColourWas = Options.DefaultHighlightColorIndex
+
+Set myList = myWordList.Document.Content
 If rng.Text = myList.Text Then
   Beep
   MsgBox "Please place the cursor in the text to be" & vbCr & "highlighted and rerun the macro."
@@ -47,85 +51,66 @@ With myList.Find
   DoEvents
 End With
 
-If myDoc.Footnotes.Count > 0 Then
-  Set rngFoot = myDoc.StoryRanges(wdFootnotesStory)
-End If
-If myDoc.Endnotes.Count > 0 Then
-  Set rngEnd = myDoc.StoryRanges(wdEndnotesStory)
-End If
 
+' Build array of words to highlight
+numWords = myList.Paragraphs.count
+ReDim myWord(numWords) As String
+ReDim highColour(numWords) As Long
+ReDim fontColour(numWords) As Long
 
-For Each myPara In myWnd.Document.Paragraphs
+numFRs = 0
+For Each myPara In myWordList.Document.Paragraphs
   myText = Replace(myPara.Range.Text, vbCr, "")
-  If Left(myText, 1) = "#" Then
-    Beep
-    ActiveDocument.TrackRevisions = nowTrack
-    Exit Sub
-  End If
+  If Left(myText, 1) = "#" Then Exit For
   dotPos = InStr(myText, " . .")
   If dotPos > 0 Then myText = Left(myText, dotPos - 1)
   tabPos = InStr(myText, vbTab)
   If tabPos > 0 Then myText = Mid(myText, tabPos + 1)
-  Debug.Print myText
   If Len(myText) > 1 And Left(myText, 1) <> "|" Then
-    thisHighlightColour = myPara.Range.Characters(tabPos + 2).HighlightColorIndex
-    Options.DefaultHighlightColorIndex = thisHighlightColour
-    thisTextColour = myPara.Range.Characters(tabPos + 2).Font.Color
-    myFind = myText
+    numFRs = numFRs + 1
+    myWord(numFRs) = myText
+    highColour(numFRs) = myPara.Range.Characters(tabPos + 2).HighlightColorIndex
+    fontColour(numFRs) = myPara.Range.Characters(tabPos + 2).Font.Color
+  End If
+  DoEvents
+Next myPara
+
+myDoThese = "TEF"
+If myDoc.Footnotes.count = 0 Then _
+     myDoThese = Replace(myDoThese, "F", "")
+If myDoc.Endnotes.count = 0 Then _
+     myDoThese = Replace(myDoThese, "E", "")
+
+For myGo = 1 To Len(myDoThese)
+  doWhat = Mid(myDo, myGo, 1)
+  Select Case doWhat
+     Case "T": Set rng = myDoc.Content
+     Case "F": Set rng = myDoc.StoryRanges(wdFootnotesStory)
+     Case "E": Set rng = myDoc.StoryRanges(wdEndnotesStory)
+  End Select
+'Do highlighting on rng
+  For i = 1 To numFRs
+    Options.DefaultHighlightColorIndex = highColour(i)
+    myFind = myWord(i)
     With rng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
       .Wrap = wdFindContinue
       .Text = myFind
+      .Font.StrikeThrough = False
       .Replacement.Text = "^&"
-      If thisHighlightColour > 0 Then .Replacement.Highlight = True
-      If thisTextColour > 0 Then .Replacement.Font.Color = thisTextColour
+      If highColour(i) > 0 Then .Replacement.Highlight = True
+      If fontColour(i) > 0 Then .Replacement.Font.Color = fontColour(i)
       .MatchCase = doMatchCase
       .MatchWildcards = False
       .MatchWholeWord = doWholeWordsOnly
-      If (thisHighlightColour > 0) Or (thisTextColour > 0) Then
-        .Execute Replace:=wdReplaceAll
-      End If
+      .Execute Replace:=wdReplaceAll
     End With
-    If myDoc.Footnotes.Count > 0 Then
-      With rngFoot.Find
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Wrap = wdFindContinue
-        .Text = myFind
-        .Replacement.Text = "^&"
-        If thisHighlightColour > 0 Then .Replacement.Highlight = True
-        If thisTextColour > 0 Then .Replacement.Font.Color = thisTextColour
-        .MatchCase = doMatchCase
-        .MatchWildcards = False
-        .MatchWholeWord = doWholeWordsOnly
-        If (thisHighlightColour > 0) Or (thisTextColour > 0) Then
-          .Execute Replace:=wdReplaceAll
-        End If
-      End With
-    End If
-    If myDoc.Endnotes.Count > 0 Then
-      With rngEnd.Find
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Wrap = wdFindContinue
-        .Text = myFind
-        .Replacement.Text = "^&"
-        If thisHighlightColour > 0 Then .Replacement.Highlight = True
-        If thisTextColour > 0 Then .Replacement.Font.Color = thisTextColour
-        .MatchCase = doMatchCase
-        .MatchWildcards = False
-        .MatchWholeWord = doWholeWordsOnly
-        If (thisHighlightColour > 0) Or (thisTextColour > 0) Then
-          .Execute Replace:=wdReplaceAll
-        End If
-      End With
-    End If
-  End If
-  DoEvents
-Next myPara
+  Next i
+Next myGo
 Beep
 myDoc.Activate
-ActiveDocument.TrackRevisions = nowTrack
+myDoc.TrackRevisions = nowTrack
+Options.DefaultHighlightColorIndex = hiColourWas
 End Sub
 

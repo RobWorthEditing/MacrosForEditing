@@ -1,30 +1,41 @@
+
 Sub Semicolon()
-' Paul Beverley - Version 19.06.19
+' Paul Beverley - Version 09.11.24
 ' Make adjacent words into semicolon separated
-' <Ctrl-Alt-;>
 
 newBit = "; "
 myQuotes = Chr(34) & Chr(39) & ChrW(8220) & ChrW(8216)
-Selection.Collapse wdCollapseEnd
+oldBits = ";:.,!?" & ChrW(8211) & ChrW(8211)
+Set rng = Selection.Range.Duplicate
+rng.MoveEnd , 50
+For i = 1 To rng.Characters.Count
+  If InStr(oldBits, rng.Characters(i)) > 0 Then Exit For
+Next i
+If i > 50 Then
+  Beep
+  MsgBox "No relevant punctuation found."
+  Exit Sub
+End If
+rng.Characters(i - 2).Select
 While (LCase(Selection) <> UCase(Selection))
   Selection.MoveRight 1
   DoEvents
 Wend
-myStart = Selection.Start
+myStart = Selection.start
 If Selection = ChrW(8217) Then myStart = myStart + 1
 Do
   Selection.MoveRight 1
   DoEvents
 Loop Until LCase(Selection) <> UCase(Selection) Or Asc(Selection) = 1
-myEnd = Selection.Start
+myEnd = Selection.start
 Set rng = ActiveDocument.Content
 rng.End = myEnd
-rng.Start = myStart
+rng.start = myStart
 wasMiddle = rng
 lastChar = Right(rng, 1)
 If LCase(Selection) <> Selection Then
 ' It needs lowercasing
-  Selection.Start = Selection.Start - 1
+  Selection.start = Selection.start - 1
   preChar = Selection
   Selection.MoveStart 1
   Selection.MoveEnd 1
@@ -36,12 +47,12 @@ If LCase(Selection) <> Selection Then
   Else
     newBit = newBit & newLetter
   End If
-  Selection.Start = myStart
+  Selection.start = myStart
 Else
   If lastChar = " " And Len(rng) > 1 Then newBit = Trim(newBit)
   Selection.MoveLeft 1
 End If
-Selection.Start = myStart
+Selection.start = myStart
 Selection.Delete
 Selection.TypeText Text:=newBit
 Selection.MoveRight Count:=2

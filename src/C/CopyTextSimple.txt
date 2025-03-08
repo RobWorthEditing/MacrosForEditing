@@ -1,17 +1,19 @@
 
 Sub CopyTextSimple()
-' Paul Beverley - Version 23.05.22
+' Paul Beverley - Version 13.06.24
 ' Creates a text-only copy, with some features preserved
 
 doItalic = True
 doBold = True
 doSub = True
 doSuper = True
+doListNumbers = True
+
 
 myColour = wdGray25
-
 myScreenOff = True
 
+If doListNumbers = True Then ActiveDocument.ConvertNumbersToText
 myComments = ""
 Set rngOld = ActiveDocument.Content
 Documents.Add
@@ -439,5 +441,4 @@ Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub
-
 

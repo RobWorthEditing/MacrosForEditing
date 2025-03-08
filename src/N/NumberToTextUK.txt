@@ -1,8 +1,8 @@
+
 Sub NumberToTextUK()
 ' Paul Beverley - Version 13.07.23
-' Converts next number into text
+' Converts next number into text, eg "two hundred and forty-two"
 
-doUK = True
 
 oldFind = Selection.Find.Text
 oldReplace = Selection.Find.Replacement.Text
@@ -18,8 +18,6 @@ With Selection.Find
   .Execute
 End With
 
-startNum = Selection.Start
-
 ' Create a field containing the digits and a special format code
 Selection.Fields.Add Range:=Selection.Range, _
    Type:=wdFieldEmpty, Text:="= " + Selection + " \* CardText", _
@@ -32,19 +30,16 @@ Selection.Fields(1).Unlink
 DoEvents
 rng.Select
 
-If doUK = True Then
-  numWords = Selection.Text
-  If InStr(numWords, "dred") > 0 And Right(numWords, 4) <> "dred" Then numWords = _
-       Replace(numWords, "hundred", "hundred and")
-  If InStr(numWords, "hundred") > 0 And InStr(numWords, "thousand") > 0 Then
-    numWords = Replace(numWords, "thousand", "thousand,")
-  Else
-    If Right(numWords, 4) <> "sand" Then numWords = _
-         Replace(numWords, "thousand", "thousand and")
-  End If
-  
-  If numWords <> Selection.Text Then Selection.Text = numWords
+numWords = Selection.Text
+If InStr(numWords, "dred") > 0 And Right(numWords, 4) <> "dred" Then numWords = _
+     Replace(numWords, "hundred", "hundred and")
+If InStr(numWords, "hundred") > 0 And InStr(numWords, "thousand") > 0 Then
+  numWords = Replace(numWords, "thousand", "thousand,")
+Else
+  If Right(numWords, 4) <> "sand" Then numWords = _
+       Replace(numWords, "thousand", "thousand and")
 End If
+If numWords <> Selection.Text Then Selection.Text = numWords
 
 With Selection.Find
   .Text = oldFind

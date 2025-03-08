@@ -1,11 +1,16 @@
+
 Sub CopyToListAlphabetic()
-' Paul Beverley - Version 17.04.24
+' Paul Beverley - Version 08.12.24
 ' Copies selected text into an alphabetic list file
 
+
+beepIfAlreadyListed = True
+' To locate list file (not case sensitive)
 ' keyWord = "queries"
-keyWord = "list"
+' keyWord = "list"
 keyWord = "sheet"
 
+' Exact capitalisation(i.e. case sensitive)
 followHeading = "Word list"
 
 wordsToAvoid = "switch"
@@ -23,7 +28,7 @@ Dim sourceText As Range, tgt As Range
 Set thisDoc = ActiveDocument
 wds = Split("," & LCase(wordsToAvoid), ",")
 
-If Selection.Start = Selection.End Then
+If Selection.start = Selection.End Then
   If Selection = vbCr Then Selection.MoveLeft , 1
   If copyWholePara = True Then
     Selection.Expand wdParagraph
@@ -48,8 +53,8 @@ If Selection.Start = Selection.End Then
       rng.MoveEnd , -1
       DoEvents
     Loop
+    rng.Select
   End If
-  rng.Select
 Else
   Set rng = Selection.Range.Duplicate
   rng.Collapse wdCollapseEnd
@@ -62,26 +67,13 @@ Else
   Selection.Collapse wdCollapseStart
   Selection.Expand wdWord
   Selection.Collapse wdCollapseStart
-  rng.Start = Selection.Start
+  rng.start = Selection.start
   rng.Select
 End If
 
-With ActiveWindow.View.RevisionsFilter
-  mState = .Markup
-  .Markup = wdRevisionsMarkupSimple
-  vState = .View
-  .View = wdRevisionsViewFinal
-
-  Set sourceText = Selection.Range.Duplicate
-  myText = sourceText.Text
-  numTracks = Selection.Range.Revisions.Count
-  sourceText.Copy
-  Selection.Collapse wdCollapseEnd
-
-  .Markup = mState
-  .View = vState
-End With
-
+Set sourceText = Selection.Range.Duplicate
+myText = sourceText.Text
+Selection.Collapse wdCollapseEnd
 
 gottaList = False
 For Each myDoc In Application.Documents
@@ -121,7 +113,7 @@ listStart = rng.End
 If rng.Find.Found = False Then
   Beep
   MsgBox "Can't find heading: """ & followHeading & """"
-  rng.Start = 0
+  rng.start = 0
   rng.End = 0
   listStart = 0
   Selection.HomeKey Unit:=wdStory
@@ -138,12 +130,12 @@ With rng.Find
 End With
 
 If rng.Find.Found = True Then
-  Beep
+  If beepIfAlreadyListed = True Then Beep
   If goBackToSource = False Then myDoc.Activate
   Exit Sub
 End If
 
-rng.Start = listStart
+rng.start = listStart
 rng.End = myDoc.Content.End
 If LCase(rng) <> UCase(rng) Then
   For i = 1 To rng.Paragraphs.Count
@@ -169,5 +161,6 @@ Else
 End If
 rng.Revisions.AcceptAll
 If goBackToSource = False Then myDoc.Activate
+' Beep
 End Sub
 

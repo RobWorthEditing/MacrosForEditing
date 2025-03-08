@@ -1,0 +1,40 @@
+
+Sub CountReferenceDates()
+' Paul Beverley - Version 06.10.24
+' Counts numbers of references older or newer than five years
+
+myYear = Year(Now())
+myLowerLimit = 1900 ' to avoid 'funny' numbers
+myLowYear = myYear - 5 ' from 2024 dates 2019 and lower are "old"
+myUpperLimit = myYear + 1 ' to avoid 'funny' numbers
+
+If Selection.Start = Selection.End Then
+  MsgBox "Please select the region for the count."
+  Exit Sub
+End If
+
+numOld = 0
+numNew = 0
+For Each pa In Selection.Range.Paragraphs
+  For Each wd In pa.Range.Words
+    myVal = Val(wd)
+    If myVal > myLowerLimit And myVal < myUpperLimit Then
+      If myVal > myLowYear Then
+        numNew = numNew + 1
+        wd.HighlightColorIndex = wdBrightGreen
+      Else
+        numOld = numOld + 1
+        wd.HighlightColorIndex = wdYellow
+      End If
+      Exit For
+    End If
+  Next wd
+  DoEvents
+Next pa
+MsgBox "Five or more: " & numOld & vbCr _
+     & "Less than five: " & numNew
+End Sub
+
+
+
+

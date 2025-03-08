@@ -1,6 +1,8 @@
+
 Sub QuotesAddSingle()
-' Paul Beverley - Version 19.05.23
+' Paul Beverley - Version 06.07.24
 ' Adds single quotes round a word or phrase
+
 
 useUSpunctuation = False
 addHighlight = False
@@ -12,6 +14,10 @@ myClose = ChrW(8217)
 
 If Selection = "." Then Selection.MoveLeft , 1
 Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+rng.MoveStart , -1
+If LCase(rng) = UCase(rng) Then Selection.MoveRight , 1
+Set rng = Selection.Range.Duplicate
 myEnd = rng.End
 rng.Collapse wdCollapseStart
 rng.Expand wdWord
@@ -20,7 +26,7 @@ rng.InsertBefore Text:=myOpen
 If addHighlight = True Then
   rng.HighlightColorIndex = myColour
 End If
-rng.Start = myEnd
+rng.start = myEnd
 rng.Expand wdWord
 Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
   rng.MoveEnd , -1
@@ -39,5 +45,4 @@ End If
 rng.Collapse wdCollapseEnd
 rng.Select
 End Sub
-
 

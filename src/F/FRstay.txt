@@ -1,0 +1,12 @@
+
+Sub FRstay()
+' Paul Beverley - Version 04.05.24
+' Finds and replaces but don't move to next
+
+Call MacroNameShow("FRstay")
+
+Selection.Collapse wdCollapseStart
+Selection.Find.Execute Replace:=wdReplaceOne
+End Sub
+
+

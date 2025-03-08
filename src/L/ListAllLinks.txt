@@ -1,14 +1,23 @@
+
 Sub ListAllLinks()
-' Paul Beverley - Version 01.09.16
+' Paul Beverley - Version 31.01.25
 ' Creates a table of all URLs in the file
 
-Set thisDoc = ActiveDocument
-Documents.Add
-Set listDoc = ActiveDocument
-Set rng = ActiveDocument.Content
-thisDoc.Activate
+deleteTableBorders = True
 
-For Each lnk In ActiveDocument.Fields
+Set thisDoc = ActiveDocument
+If Selection.End = Selection.start Then
+  myResponse = MsgBox("List links in the WHOLE file?", _
+       vbQuestion + vbYesNo)
+  If myResponse = vbNo Then Exit Sub
+  Set rngSource = ActiveDocument.Content
+Else
+  Set rngSource = Selection.Range.Duplicate
+End If
+Set listDoc = Documents.Add
+Set rng = listDoc.Content
+
+For Each lnk In rngSource.Fields
   includeLink = True
   If lnk.Kind <> 2 Then
     lnk.Select
@@ -32,25 +41,24 @@ For Each lnk In ActiveDocument.Fields
     startLink = rng.End
     rng.InsertAfter Text:=myURL & vbCr
     rng.End = rng.End - 1
-    rng.Start = startLink - 1
+    rng.start = startLink - 1
     rng.Font.Color = wdColorBlue
     rng.Font.Italic = True
-    rng.Start = rng.End + 1
+    rng.start = rng.End + 1
   End If
 Next lnk
 
-listDoc.Activate
-Selection.WholeStory
-Selection.ConvertToTable Separator:=wdSeparateByTabs
-Selection.Tables(1).Style = "Table Grid"
-Selection.Tables(1).AutoFitBehavior (wdAutoFitContent)
+Set rng = listDoc.Content
+rng.ConvertToTable Separator:=wdSeparateByTabs
+rng.Tables(1).Style = "Table Grid"
+rng.Tables(1).AutoFitBehavior (wdAutoFitContent)
 If deleteTableBorders = True Then
-  Selection.Tables(1).Borders(wdBorderTop).LineStyle = wdLineStyleNone
-  Selection.Tables(1).Borders(wdBorderLeft).LineStyle = wdLineStyleNone
-  Selection.Tables(1).Borders(wdBorderBottom).LineStyle = wdLineStyleNone
-  Selection.Tables(1).Borders(wdBorderRight).LineStyle = wdLineStyleNone
-  Selection.Tables(1).Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
-  Selection.Tables(1).Borders(wdBorderVertical).LineStyle = wdLineStyleNone
+  rng.Tables(1).Borders(wdBorderTop).LineStyle = wdLineStyleNone
+  rng.Tables(1).Borders(wdBorderLeft).LineStyle = wdLineStyleNone
+  rng.Tables(1).Borders(wdBorderBottom).LineStyle = wdLineStyleNone
+  rng.Tables(1).Borders(wdBorderRight).LineStyle = wdLineStyleNone
+  rng.Tables(1).Borders(wdBorderHorizontal).LineStyle = wdLineStyleNone
+  rng.Tables(1).Borders(wdBorderVertical).LineStyle = wdLineStyleNone
 End If
 Selection.HomeKey Unit:=wdStory
 End Sub

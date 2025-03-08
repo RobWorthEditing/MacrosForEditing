@@ -1,6 +1,6 @@
 Sub SpellAlyseToFRedit()
 ' Paul Beverley - Version 23.04.24
-' Corrects spelling and wrong capitalisation
+' Corrects spelling and wrong capitalisation on a SpellAlyse list
 
 Set rng = Selection.Range.Duplicate
 rng.Expand wdWord

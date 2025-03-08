@@ -1,5 +1,6 @@
+
 Sub CapitAlyse()
-' Paul Beverley - Version 12.01.23
+' Paul Beverley - Version 21.06.24
 ' Analyses capitalised words
 
 ignoreHeadings = True
@@ -11,6 +12,7 @@ ignoreWords = ignoreWords & "Of,On,Our,The,This,Those,There,These,They,Up,We,"
 timeStart = Timer
 showTime = True
 
+mySpeed = 50
 myScreenOff = True
 
 Set FUT = ActiveDocument
@@ -121,12 +123,12 @@ If ignoreHeadings = True Then
    maxWdsInHeading = 20
    For Each pa In ActiveDocument.Paragraphs
      myText = pa.Range.Text
-     wdsCount = pa.Range.Words.count
+     wdsCount = pa.Range.Words.Count
      If Len(myText) > 3 And wdsCount < maxWdsInHeading Then
        ch = Mid(myText, Len(myText) - 1, 1)
        If InStr(".:", ch) = 0 Then pa.Range.Font.Underline = True
      End If
-     i = i + 1: If i Mod 100 = 0 Then DoEvents
+     i = i + 1: If i Mod mySpeed = 0 Then DoEvents
    Next pa
 End If
 
@@ -212,12 +214,9 @@ Do While rng.Find.Found = True
         myExtra = myExtra & " (+" & Trim(Str(numCapStart)) & ")"
       End If
       myResult = myResult & myExtra & ":" & vbCr
-      If doingSeveralMacros = False Then _
-           Debug.Print myExtra & "    >>> " & _
-           Int((myTot - endNow) / 1000)
       myCount = myCount + 1
     End If
-    rng.Start = endNow
+    rng.start = endNow
     rng.End = endNow
   End If
   rng.Find.Execute
@@ -247,7 +246,7 @@ With rng.Find
   .Execute Replace:=wdReplaceAll
 End With
 Selection.HomeKey Unit:=wdStory
-Selection.MoveEndWhile cset:=vbCr, count:=wdForward
+Selection.MoveEndWhile cset:=vbCr, Count:=wdForward
 Selection.Delete
 Selection.TypeText "Capitalisation" & vbCr & vbCr
 ActiveDocument.Paragraphs(1).Style = _

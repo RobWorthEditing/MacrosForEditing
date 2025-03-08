@@ -1,0 +1,195 @@
+
+Sub FRselective()
+' Paul Beverley - Version 02.10.24
+' Sets up various Finds and F&Rs
+
+
+CR2 = vbCr & vbCr
+Set para = Selection.Range.Duplicate
+' Check if cursor is at start of a para
+para.Expand wdParagraph
+If para.start = Selection.start Then
+  myText = Selection.Find.Text
+  wcPos = InStr(myText, "[!^13]@")
+  If wcPos > 0 Then
+    myLast = Left(myText, wcPos - 1)
+    myFirst = Mid(myText, wcPos + 7)
+    mySearch = myFirst & "[!^13]@" & myLast
+    doWC = True
+    GoTo doSearch
+  End If
+End If
+
+' Check if it's a two-word para
+para.MoveEnd , -1
+If para.Words.Count = 2 Then
+  myFirst = Trim(para.Words(1))
+  myInit = Left(myFirst, 1)
+  myFirst = "[" & LCase(myInit) & UCase(myInit) _
+       & "]" & Mid(myFirst, 2)
+  myLast = Trim(para.Words(2))
+  myInit = Left(myLast, 1)
+  myLast = "[" & LCase(myInit) & UCase(myInit) _
+       & "]" & Mid(myLast, 2)
+  mySearch = myFirst & "[!^13]@" & myLast
+  doWC = True
+  GoTo doSearch
+End If
+
+' If nothing is selected try to process as an F&R
+If Selection.start = Selection.End Then
+  mySearch = para.Text
+  doWC = True
+    ' If a tilde at the beginning
+  If Left(mySearch, 1) = ChrW(126) Then
+    mySearch = Mid(mySearch, 2)
+  End If
+  
+  ' A vertical bar (pipe) means it's an F&R
+  '  so split into F and R
+  myReplace = ""
+  If InStr(mySearch, ChrW(124)) > 0 Then
+    pipePos = InStr(mySearch, ChrW(124))
+    myReplace = Mid(mySearch, pipePos + 1)
+    mySearch = Left(mySearch, pipePos - 1)
+  End If
+  para.Select
+  
+  ' Warn if too long
+  If Len(mySearch) > 254 Then
+    Beep
+    myResponse = MsgBox("Search text too long!", _
+         vbOKOnly, "FRselective")
+    Exit Sub
+  End If
+  GoTo doSearch
+End If
+
+' Make up a two-word search
+Set rng = Selection.Range.Duplicate
+If rng.Words.Count > 1 Then
+  rng.Collapse wdCollapseStart
+  ' First word
+  rng.Expand wdWord
+  myStart = rng.start
+  ' Last word
+  rng.start = Selection.End
+  rng.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+  rng.start = myStart
+  ' Make up the two-word WC Find
+  myFirst = Trim(rng.Words.First)
+  myInit = Left(myFirst, 1)
+  myFirst = "[" & LCase(myInit) & UCase(myInit) _
+       & "]" & Mid(myFirst, 2)
+  myLast = Trim(rng.Words.Last)
+  If UCase(myLast) <> LCase(myLast) Or Len(myLast) > 1 Then
+    myInit = Left(myLast, 1)
+    myLast = "[" & LCase(myInit) & UCase(myInit) _
+         & "]" & Mid(myLast, 2)
+    mySearch = myFirst & "[!^13]@" & myLast
+  Else
+    mySearch = myFirst
+  End If
+Else
+  myFirst = Trim(rng.Words.First)
+  myInit = Left(myFirst, 1)
+  mySearch = "[" & LCase(myInit) & UCase(myInit) _
+       & "]" & Mid(myFirst, 2)
+End If
+doWC = True
+
+doSearch:
+On Error GoTo ReportIt
+Selection.Collapse wdCollapseEnd
+Set rng = Selection.Range.Duplicate
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindStop
+  .Text = mySearch
+  .Replacement.Text = myReplace
+  .MatchWildcards = doWC
+  .Forward = True
+  .Execute
+  If (Selection.End = 0 And Selection.start > 0) Then
+    Beep
+    MsgBox "Word is playing sillies, sorry!"
+    If ActiveDocument.TablesOfContents.Count > 0 Then
+      MsgBox "Word is falling over the content list, sorry!"
+    End If
+   Exit Sub
+  End If
+  If .Found = False Then
+    wcPos = InStr(mySearch, "[!^13]@")
+    myPrompt = mySearch
+    If wcPos > 0 Then
+      myFirst = Left(mySearch, wcPos - 1)
+      myLast = Mid(mySearch, wcPos + 7)
+      
+      myNewSearch = myLast & "[!^13]@" & myFirst
+      myFirst = Mid(myFirst, 2, 1) & Mid(myFirst, 5)
+      myLast = Mid(myLast, 2, 1) & Mid(myLast, 5)
+      myPrompt = myFirst & "   FOLLOWED BY   " & myLast
+      myPrompt = myPrompt & CR2 & "Try the reverse order?"
+      myResponse = MsgBox(myPrompt, _
+           vbQuestion + vbYesNoCancel, "FRselective")
+      If myResponse = vbYes Then
+        rng.Select
+        .Text = myNewSearch
+        .Wrap = wdFindStop
+        .Forward = True
+        .Replacement.Text = ""
+        .MatchWildcards = True
+        .Execute
+        DoEvents
+        If Selection.End < Selection.start Then
+          ' VBA's gone bonkers
+          rng.Select
+          Beep
+          Exit Sub
+        End If
+        If .Found = False Then
+          rng.Select
+          Beep
+          .Text = myNewSearch
+          .Wrap = wdFindStop
+          .Forward = False
+          .Replacement.Text = ""
+          .MatchWildcards = True
+          .Execute
+          DoEvents
+          If .Found = False Then
+            Beep
+            rng.Select
+            Exit Sub
+          End If
+        End If
+      Else
+        Beep
+      End If
+      Exit Sub
+    End If
+    Beep
+    myPrompt = "Can't find:" & CR2 & myPrompt
+    myResponse = MsgBox(myPrompt, vbOKOnly, "FRselective")
+    rng.Select
+  End If
+End With
+Exit Sub
+
+ReportIt:
+If Err.Number = 5560 Then
+  Beep
+  MsgBox ("Bad pattern match!")
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+
+
+

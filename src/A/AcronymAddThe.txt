@@ -1,0 +1,72 @@
+
+Sub AcronymAddThe()
+' Paul Beverley - Version 11.12.24
+' Adds 'the' in front of various acronyms or titles
+
+myWords = "BBC ABC SPQR CIEP"
+
+
+' Text, footnotes, endnotes?
+myDo = "TFE"
+If ActiveDocument.Footnotes.Count = 0 Then myDo = Replace(myDo, "F", "")
+If ActiveDocument.Endnotes.Count = 0 Then myDo = Replace(myDo, "E", "")
+
+myWords = " " & myWords & " "
+myWords = Replace(myWords, "  ", " ")
+acronym = Split(Trim(myWords), " ")
+
+For myStory = 1 To Len(myDo)
+  doIt = Mid(myDo, myStory, 1)
+  
+  For i = 0 To UBound(acronym)
+    Select Case doIt
+       Case "T": Set rng = ActiveDocument.Content
+       Case "F": Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+       Case "E": Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    End Select
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = "<" & acronym(i) & ">"
+      .Wrap = wdFindContinue
+      .Replacement.Text = ""
+      .Wrap = wdFindStop
+      .Replacement.Text = ""
+      .Forward = True
+      .MatchWildcards = True
+      .Execute
+    End With
+    
+    Do While rng.Find.Found = True
+      rngNow = rng.start
+      rng.MoveStart , -4
+      rngTest = rng.start
+      Debug.Print rngTest, rngNow
+      myWord = LCase(Left(rng, 3))
+      ch3 = Mid(rng, 3, 1)
+      ch4 = Mid(rng, 4, 1)
+      rng.MoveStart , 4
+      If rngTest = 0 Then rng.start = 2
+      If rngNow = 0 Then rng.start = 0
+      If myWord <> "the" Then
+        myCount = myCount + 1
+        If ch4 = vbCr Or rngTest = 0 Or _
+             InStr("!?.", ch3) > 0 Then
+          myArticle = "The "
+        Else
+          myArticle = "the "
+        End If
+        rng.InsertBefore Text:=myArticle
+        If myCount Mod 5 = 0 Then rng.Select
+      End If
+      rng.Collapse wdCollapseEnd
+      rng.Find.Execute
+      DoEvents
+    Loop
+  Next i
+Next myStory
+Beep
+MsgBox "Added 'the' to " & Trim(Str(myCount)) & " acronyms."
+End Sub
+
+

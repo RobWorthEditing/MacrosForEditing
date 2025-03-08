@@ -1,5 +1,6 @@
+
 Sub HighlightNonRomanPunctuation()
-' Paul Beverley - Version 25.03.20
+' Paul Beverley - Version 05.11.24
 ' Highlights non-roman punctuation
 
 myItalic = wdGray25
@@ -8,31 +9,37 @@ myBold = wdGray25
 mySymbols = "[,.:\!\?]"
 
 oldColour = Options.DefaultHighlightColorIndex
-Options.DefaultHighlightColorIndex = myItalic
-With Selection.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = mySymbols
-  .Font.Italic = True
-  .Wrap = wdFindContinue
-  .Replacement.Text = ""
-  .Replacement.Highlight = True
-  .MatchWildcards = True
-  .Execute Replace:=wdReplaceAll
-End With
-
-Options.DefaultHighlightColorIndex = myBold
-With Selection.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = mySymbols
-  .Font.Italic = True
-  .Wrap = wdFindContinue
-  .Replacement.Text = ""
-  .Replacement.Highlight = True
-  .MatchWildcards = True
-  .Execute Replace:=wdReplaceAll
-End With
+fNotes = ActiveDocument.Footnotes.Count
+eNotes = ActiveDocument.Endnotes.Count
+For j = 1 To 3
+  If j = 1 And fNotes = 0 Then j = 2
+  If j = 2 And eNotes = 0 Then j = 3
+  Select Case j
+    Case 1: Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+    Case 2: Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+    Case 3: Set rng = ActiveDocument.Content
+  End Select
+  Options.DefaultHighlightColorIndex = myItalic
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = mySymbols
+    .Font.Italic = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+  
+  Options.DefaultHighlightColorIndex = myBold
+    .ClearFormatting
+    .Font.Bold = True
+    .Replacement.Text = ""
+    .Execute Replace:=wdReplaceAll
+  End With
+  DoEvents
+Next
 Options.DefaultHighlightColorIndex = oldColour
 End Sub
+
 

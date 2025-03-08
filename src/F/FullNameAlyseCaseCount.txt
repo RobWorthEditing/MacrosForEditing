@@ -99,7 +99,6 @@ rng.InsertAfter Text:=vbTab & Trim(Str(myNum))
 Selection.WholeStory
 Selection.ConvertToTable Separator:=wdSeparateByTabs
 Set tb = ActiveDocument.Tables(1)
-tb.Style = "Table Grid"
 tb.AutoFitBehavior (wdAutoFitContent)
 tb.Borders(wdBorderTop).LineStyle = wdLineStyleNone
 tb.Borders(wdBorderLeft).LineStyle = wdLineStyleNone

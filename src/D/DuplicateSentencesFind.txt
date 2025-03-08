@@ -1,0 +1,95 @@
+
+Sub DuplicateSentencesFind()
+' Paul Beverley - Version 22.11.24
+' Lists any sentences that are duplicated
+
+minWords = 3
+
+Set myDoc = ActiveDocument
+
+Set tempDoc = Documents.Add
+
+Set myResults = Documents.Add
+Set res = myResults.Content
+
+totalNumSents = myDoc.Sentences.Count
+ReDim myText(totalNumSents) As String
+
+allInits = ""
+j = 0
+For sn = 1 To totalNumSents
+  thisSentence = Replace(myDoc.Sentences(sn).Text, vbCr, "")
+  numWds = myDoc.Sentences(sn).Words.Count
+  If Not (numWds < minWords) And LCase(thisSentence) <> _
+       UCase(thisSentence) Then
+    For k = 1 To 3
+      myInit = Left(thisSentence, 1)
+      If UCase(myInit) = LCase(myInit) Then
+        thisSentence = Mid(thisSentence, 2)
+      End If
+      myLast = Right(thisSentence, 1)
+      If UCase(myLast) = LCase(myLast) Then
+        thisSentence = Left(thisSentence, Len(thisSentence) - 1)
+        myInit = Left(thisSentence, 1)
+      End If
+    Next k
+    myInit = Left(thisSentence, 1)
+    If InStr(allInits, myInit) = 0 Then
+      allInits = allInits & myInit
+    End If
+    j = j + 1
+    myText(j) = thisSentence
+  End If
+  DoEvents
+Next sn
+
+numInits = Len(allInits)
+For a = 1 To numInits
+  Set rng = tempDoc.Content
+  rng.Text = ""
+  fstLttr = Mid(allInits, a, 1)
+  For sn = 1 To totalNumSents
+    pText = myText(sn)
+    If myDoc.Sentences(sn).Words.Count > minWords - 1 Then
+      init = UCase(Left(pText, 1))
+      If init = fstLttr Then rng.InsertAfter Text:=pText & vbCr
+      If init = fstLttr Then Debug.Print pText
+    End If
+    DoEvents
+  Next sn
+  Set rng = tempDoc.Content
+  rng.Sort
+  tempDoc.Paragraphs(1).Range.Delete
+  rng.InsertAfter Text:=vbCr & "Rubbish" & vbCr
+  numParas = tempDoc.Paragraphs.Count
+  prevPara = tempDoc.Paragraphs(1).Range.Text
+  wasAmatch = False
+  numDupl = 1
+  For i = 2 To numParas
+    thisPara = tempDoc.Paragraphs(i).Range.Text
+    gottaMatch = (thisPara = prevPara)
+    If Not (gottaMatch) Then
+      If wasAmatch Then
+        res.InsertAfter Text:=Replace(prevPara, vbCr, "") _
+             & " . . [" & Trim(Str(numDupl)) & "]" & vbCr
+        numDupl = 1
+      End If
+    Else
+      numDupl = numDupl + 1
+    End If
+    wasAmatch = gottaMatch
+    prevPara = thisPara
+    DoEvents
+  Next i
+  DoEvents
+Next a
+tempDoc.Close SaveChanges:=False
+myResults.Activate
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="Duplicates List" & vbCr & vbCr
+End Sub
+
+
+
+
+

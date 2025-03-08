@@ -1,12 +1,12 @@
-Sub DictionaryFetchByLanguage()
-' Paul Beverley - Version 21.03.22
-' Checks the current word in a language-relate dictionary
 
-' Based on an idea by Rob Worth
+Sub DictionaryFetchByLanguage()
+' Paul Beverley - Version 11.02.25
+' Checks the current word in a language-related dictionary
 
 Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+rng.MoveEnd , 1
 myLanguage = rng.LanguageID
-If Len(rng.Text) < 3 Then rng.Expand wdWord
 
 Select Case myLanguage
   Case wdEnglishUS
@@ -21,6 +21,7 @@ Select Case myLanguage
        mySite = "https://www.lexico.com/definition/"
 End Select
 
+rng.Expand wdWord
 mySubject = Trim(rng.Text)
 mySubject = Replace(mySubject, " ", "+")
 mySubject = Replace(mySubject, "&", "%26")
@@ -30,6 +31,4 @@ Set newLink = ActiveDocument.Hyperlinks.Add(Anchor:=Selection.Range, _
 newLink.Follow
 ActiveDocument.Undo
 End Sub
-
-
 

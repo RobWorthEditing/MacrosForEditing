@@ -1,0 +1,231 @@
+Sub HashtagCamelizer()
+' Paul Beverley - Version 07.10.24
+' Finds the next # and camel-cases the tag following
+
+' myFontColour = 0
+myFontColour = wdColorBlue
+
+myTwos = " aa ad ae ah ai am an ar as at aw ax " & _
+"ay ba be bo by ch da di do ea ee ef eh el em " & _
+"en er es ex fa fy gi go gu ha he hi ho id if " & _
+"in io is it jo ka ko ky la li lo ma me mi mo mu " & _
+"my na ne no nu ny ob od oe of oh oiom on oo op " & _
+"or os ou ow ox oy pa pi po re sh si so st ta te " & _
+"ti to ug um un up ur us ut we wo xi ye yo yu zo "
+
+myPNs = " monday tuesday wednesday thursday friday " & _
+"saturday sunday january february april june july " & _
+"august september october november december beverley"
+
+restart:
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "#"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+  If .Found = False Then
+    Beep
+    myResponse = MsgBox("No more hashtags found!", _
+       vbOKOnly, "HashtagCamelizer")
+    Selection.EndKey Unit:=wdStory
+    Exit Sub
+  End If
+End With
+
+' Two-word hashtags
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+rng.Expand wdWord
+myText = LCase(Trim(rng.Text))
+' Uppercase to avoid "july" etc being spelling errors!
+myPN = Split(myPNs)
+For i = 1 To UBound(myPN)
+  myText = Replace(myText, myPN(i), UCase(myPN(i)))
+Next i
+
+rng.Text = LCase(rng.Text)
+For i = 2 To Len(myText) - 2
+  wd1 = Left(myText, i)
+  wd2 = Mid(myText, i + 1)
+  If Len(wd1) = 2 Then
+    wd1good = InStr(myTwos, " " & wd1 & " ") > 0
+  Else
+    wd1good = Application.CheckSpelling(wd1)
+  End If
+  If Len(wd2) = 2 Then
+    wd2good = InStr(myTwos, " " & wd2 & " ") > 0
+  Else
+    wd2good = Application.CheckSpelling(wd2)
+  End If
+  If wd1good And wd2good Then
+    rng.Characters.First = UCase(rng.Characters.First)
+    rng.MoveStart , i
+    rng.End = rng.start + 1
+    rng.Text = UCase(rng.Text)
+    rng.Expand wdWord
+    If myFontColour > 0 Then
+      rng.Font.Color = myFontColour
+    End If
+    rng.Collapse wdCollapseEnd
+    rng.Select
+    GoTo restart
+  End If
+  DoEvents
+Next i
+
+' Three-word hashtags
+For i = 2 To Len(myText) - 4
+  For j = i + 2 To Len(myText) - 2
+    wd1 = Left(myText, i)
+    wd2 = Mid(myText, i + 1, j - i)
+    wd3 = Mid(myText, j + 1)
+    If Len(wd1) = 2 Then
+      wd1good = InStr(myTwos, " " & wd1 & " ") > 0
+    Else
+      wd1good = Application.CheckSpelling(wd1)
+    End If
+    If Len(wd2) = 2 Then
+      wd2good = InStr(myTwos, " " & wd2 & " ") > 0
+    Else
+      wd2good = Application.CheckSpelling(wd2)
+    End If
+    If Len(wd3) = 2 Then
+      wd3good = InStr(myTwos, " " & wd3 & " ") > 0
+    Else
+      wd3good = Application.CheckSpelling(wd3)
+    End If
+    If wd1good And wd2good And wd3good Then
+      rng.Characters.First = UCase(rng.Characters.First)
+      rng.Characters(i + 1).Text = UCase(rng.Characters(i + 1).Text)
+      rng.Characters(j + 1).Text = UCase(rng.Characters(j + 1).Text)
+      rng.Expand wdWord
+      If myFontColour > 0 Then
+        rng.Font.Color = myFontColour
+      End If
+      rng.Collapse wdCollapseEnd
+      rng.Select
+      GoTo restart
+    End If
+  Next j
+  DoEvents
+Next i
+
+' Four-word hashtags
+For i = 2 To Len(myText) - 6
+  For j = i + 2 To Len(myText) - 4
+    For k = j + 2 To Len(myText) - 2
+      wd1 = Left(myText, i)
+      wd2 = Mid(myText, i + 1, j - i)
+      wd3 = Mid(myText, j + 1, k - j)
+      wd4 = Mid(myText, k + 1)
+      If Len(wd1) = 2 Then
+        wd1good = InStr(myTwos, " " & wd1 & " ") > 0
+      Else
+        wd1good = Application.CheckSpelling(wd1)
+      End If
+      If Len(wd2) = 2 Then
+        wd2good = InStr(myTwos, " " & wd2 & " ") > 0
+      Else
+        wd2good = Application.CheckSpelling(wd2)
+      End If
+      If Len(wd3) = 2 Then
+        wd3good = InStr(myTwos, " " & wd3 & " ") > 0
+      Else
+        wd3good = Application.CheckSpelling(wd3)
+      End If
+      If Len(wd4) = 2 Then
+        wd4good = InStr(myTwos, " " & wd4 & " ") > 0
+      Else
+        wd4good = Application.CheckSpelling(wd4)
+      End If
+      If wd1good And wd2good And wd3good And wd4good Then
+        rng.Characters.First = UCase(rng.Characters.First)
+        rng.Characters(i + 1).Text = UCase(rng.Characters(i + 1).Text)
+        rng.Characters(j + 1).Text = UCase(rng.Characters(j + 1).Text)
+        rng.Characters(k + 1).Text = UCase(rng.Characters(k + 1).Text)
+        rng.Expand wdWord
+        If myFontColour > 0 Then
+          rng.Font.Color = myFontColour
+        End If
+        rng.Collapse wdCollapseEnd
+        rng.Select
+        GoTo restart
+      End If
+    Next k
+  Next j
+  DoEvents
+Next i
+
+' Five-word hashtags
+Beep
+myResponse = MsgBox("This might take a while. Continue?", _
+   vbQuestion + vbYesNoCancel, "HashtagCamelizer")
+   If myResponse <> vbYes Then Exit Sub
+
+For i = 2 To Len(myText) - 8
+  For j = i + 2 To Len(myText) - 6
+    For k = j + 2 To Len(myText) - 4
+      For m = k + 2 To Len(myText) - 2
+        wd1 = Left(myText, i)
+        wd2 = Mid(myText, i + 1, j - i)
+        wd3 = Mid(myText, j + 1, k - j)
+        wd4 = Mid(myText, k + 1, m - k)
+        wd5 = Mid(myText, m + 1)
+        If Len(wd1) = 2 Then
+          wd1good = InStr(myTwos, " " & wd1 & " ") > 0
+        Else
+          wd1good = Application.CheckSpelling(wd1)
+        End If
+        If Len(wd2) = 2 Then
+          wd2good = InStr(myTwos, " " & wd2 & " ") > 0
+        Else
+          wd2good = Application.CheckSpelling(wd2)
+        End If
+        If Len(wd3) = 2 Then
+          wd3good = InStr(myTwos, " " & wd3 & " ") > 0
+        Else
+          wd3good = Application.CheckSpelling(wd3)
+        End If
+        If Len(wd4) = 2 Then
+          wd4good = InStr(myTwos, " " & wd4 & " ") > 0
+        Else
+          wd4good = Application.CheckSpelling(wd4)
+        End If
+        If Len(wd5) = 2 Then
+          wd5good = InStr(myTwos, " " & wd5 & " ") > 0
+        Else
+          wd5good = Application.CheckSpelling(wd5)
+        End If
+        
+        If wd1good And wd2good And wd3good And wd4good And wd5good Then
+          rng.Characters.First = UCase(rng.Characters.First)
+          rng.Characters(i + 1).Text = UCase(rng.Characters(i + 1).Text)
+          rng.Characters(j + 1).Text = UCase(rng.Characters(j + 1).Text)
+          rng.Characters(k + 1).Text = UCase(rng.Characters(k + 1).Text)
+          rng.Characters(m + 1).Text = UCase(rng.Characters(m + 1).Text)
+          rng.Expand wdWord
+          If myFontColour > 0 Then
+            rng.Font.Color = myFontColour
+          End If
+          rng.Collapse wdCollapseEnd
+          rng.Select
+          GoTo restart
+        End If
+      Next m
+    Next k
+  Next j
+  DoEvents
+Next i
+
+Beep
+rng.Select
+myResponse = MsgBox("Can't work this one out, sorry!", _
+   vbOKOnly, "HashtagCamelizer")
+End Sub
+
+

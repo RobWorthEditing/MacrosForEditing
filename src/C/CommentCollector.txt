@@ -1,0 +1,155 @@
+
+Sub CommentCollector()
+' Paul Beverley - Version 30.09.24
+' Creates a table of all comments
+
+doLandscape = True
+myResponseSpace = 20
+titleSize = 16
+
+myResponse = MsgBox("Include formatting? (Takes 2-3 times as long.)", _
+     vbQuestion + vbYesNoCancel, "CommentCollector")
+If myResponse = vbCancel Then Exit Sub
+includeFormatting = (myResponse = vbYes)
+
+t = Timer
+
+Dim myCol(10) As String
+myCol(1) = "number #"
+myCol(2) = "scope Scope"
+myCol(3) = "comment Comment"
+myCol(4) = "page Pg"
+myCol(5) = "author blank"
+myCol(6) = "response Author comments"
+totCols = 6
+
+CR = vbCr
+TB = vbTab
+Set src = ActiveDocument
+Application.ScreenUpdating = False
+On Error GoTo ReportIt
+
+Documents.Add
+If doLandscape = True Then Selection.PageSetup.Orientation = wdOrientLandscape
+
+' Build up a space-reserving text
+numExtra = myResponseSpace - 8
+If numExtra < 1 Then numExtra = 1
+For i = 1 To numExtra
+  extraSpace = extraSpace & " " & ChrW(160)
+Next i
+
+For j = 1 To totCols
+  myHead = myCol(j)
+  spPos = InStr(myHead, " ")
+  addExtra = (Left(myHead, 8) = "response")
+  myHead = Mid(myHead, spPos + 1)
+  If myHead = "blank" Then myHead = ""
+  If addExtra Then myHead = myHead & extraSpace
+  Selection.TypeText myHead & TB
+Next j
+
+Selection.MoveStart , -1
+Selection.TypeText CR
+
+For i = 1 To src.Comments.Count
+  For j = 1 To totCols
+    doWhat = myCol(j)
+    spPos = InStr(doWhat, " ")
+    doWhat = Left(doWhat, spPos - 1)
+    
+    Select Case LCase(doWhat)
+      Case "number":
+        Selection.InsertAfter Text:=src.Comments(i).Index & TB
+        Selection.Style = ActiveDocument.Styles("Normal")
+        Selection.Collapse wdCollapseEnd
+      Case "comment":
+        Set rng = src.Comments(i).Range
+        If includeFormatting = True Then
+          With rng.Find
+            .ClearFormatting
+            .Replacement.ClearFormatting
+            .Text = "^p"
+            .Wrap = wdFindContinue
+            .Forward = True
+            .Replacement.Text = "zczc"
+            .MatchWildcards = False
+            .Execute Replace:=wdReplaceAll
+            DoEvents
+         rng.Copy
+            .Text = "zczc"
+            .Replacement.Text = "^p"
+            .Execute Replace:=wdReplaceAll
+          End With
+          Selection.Paste
+        Else
+          Selection.TypeText Text:=src.Comments(i).Range.Text
+        End If
+        Selection.TypeText Text:=TB
+      Case "author"
+        Selection.InsertAfter Text:=src.Comments(i).Contact & TB
+        Selection.Style = ActiveDocument.Styles("Normal")
+        Selection.Collapse wdCollapseEnd
+      Case "scope"
+        Selection.InsertAfter Text:=src.Comments(i).Scope & TB
+        Selection.Style = ActiveDocument.Styles("Normal")
+        Selection.Collapse wdCollapseEnd
+      Case "page"
+        Set scp = src.Comments(i).Scope
+        pg = Trim(Str(scp.Information(wdActiveEndAdjustedPageNumber)))
+        Selection.InsertAfter Text:=pg & TB
+        Selection.Style = ActiveDocument.Styles("Normal")
+        Selection.Collapse wdCollapseEnd
+    End Select
+  Next j
+  DoEvents
+  Selection.TypeText Text:=CR
+Next i
+
+If Asc(Right(src.Comments(src.Comments.Count).Range.Text, 1)) = 13 Then
+  src.Comments(src.Comments.Count).Range.Characters.Last = ""
+End If
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^t^p"
+  .Replacement.Text = "^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText "Comments summary" & CR
+
+Set rng = ActiveDocument.Content
+rng.start = Selection.End
+ActiveDocument.Paragraphs(1).Style = _
+     ActiveDocument.Styles(wdStyleHeading1)
+ActiveDocument.Paragraphs(2).Range.Font.Bold = True
+ActiveDocument.Paragraphs(2).Range.Font.Size = titleSize
+
+rng.ConvertToTable Separator:=wdSeparateByTabs
+rng.Tables(1).AutoFitBehavior (wdAutoFitContent)
+With rng.Find
+  .Text = "zczc"
+  .Replacement.Text = "^l"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = blankItem
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Application.ScreenUpdating = True
+MsgBox "Time: " & Str(Int(Timer - t)) & " secs"
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+

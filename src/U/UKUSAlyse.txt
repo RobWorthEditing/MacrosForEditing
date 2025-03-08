@@ -1,0 +1,154 @@
+
+Sub UKUSAlyse()
+' Paul Beverley - Version 01.11.24
+' Analyses variant spelling between UK and US English
+
+minLengthSpell = 4
+doCount = True
+showCase = True
+
+UKcount = 0
+UScount = 0
+CR = vbCr
+UKwords = CR
+USwords = CR
+Selection.HomeKey Unit:=wdStory
+i = ActiveDocument.Words.Count
+iStart = i
+StatusBar = "Spellchecking. To go:   100%"
+On Error GoTo ReportIt
+Application.ScreenUpdating = False
+For Each wd In ActiveDocument.Words
+  myWrd = Replace(Trim(wd), ChrW(8217), "")
+  If Len(myWrd) >= minLengthSpell And wd.Font.StrikeThrough = False Then
+    UKok = Application.CheckSpelling(myWrd, _
+         MainDictionary:=Languages(wdEnglishUK).NameLocal)
+    USok = Application.CheckSpelling(myWrd, _
+         MainDictionary:=Languages(wdEnglishUS).NameLocal)
+    If UKok <> USok Then
+      If UKok Then
+        UKcount = UKcount + 1
+        If showCase = True Then
+          If InStr(UKwords, "!" & myWrd & CR) = 0 Then _
+               UKwords = UKwords & "!" & myWrd & CR
+        Else
+          If InStr(UKwords, "!" & LCase(myWrd) & CR) = 0 Then _
+               UKwords = UKwords & "!" & LCase(myWrd) & CR
+        End If
+      Else
+        UScount = UScount + 1
+        If showCase = True Then
+          If InStr(USwords, "$" & myWrd & CR) = 0 Then _
+               USwords = USwords & "$" & myWrd & CR
+        Else
+          If InStr(USwords, "$" & LCase(myWrd) & CR) = 0 Then _
+               USwords = USwords & "$" & LCase(myWrd) & CR
+        End If
+      End If
+      StatusBar = "Spellchecking. To go:   " & Trim(Str(Int((i / iStart) _
+           * 100))) & "%                           UK:  " & UKcount & _
+           "      US:  " & UScount
+      Debug.Print "Spellchecking. To go:   " & Trim(Str(Int((i / iStart) _
+      * 100))) & "%                           UK:  " & UKcount & _
+      "      US:  " & UScount
+    End If
+  End If
+  i = i - 1
+  If i Mod 1000 = 0 Then
+    StatusBar = "Spellchecking. To go:   " & _
+         Trim(Str(Int((i / iStart) * 100))) & _
+         "%                           UK:  " & _
+         UKcount & "      US:  " & UScount
+    DoEvents
+  End If
+Next wd
+Application.ScreenUpdating = True
+Selection.HomeKey Unit:=wdStory
+Set myDoc = ActiveDocument
+Documents.Add
+Set myResults = ActiveDocument
+Selection.TypeText Text:=UKwords & CR & USwords
+Set rng = ActiveDocument.Content
+rng.Sort
+rng.InsertAfter Text:=CR
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[^13]{1,}\!"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceOne
+  DoEvents
+  .Text = "$"
+  .Replacement.Text = "^p^p"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceOne
+  Set rng2 = ActiveDocument.Content
+  lenOne = Len(rng2)
+  .Text = "$"
+  .Replacement.Text = ""
+  .Execute Replace:=wdReplaceAll
+  lenTwo = Len(rng2)
+  .Text = "!"
+  .Execute Replace:=wdReplaceAll
+  lenThree = Len(rng2)
+End With
+Selection.TypeText Text:=CR & "US: " & Trim(Str(lenOne - lenTwo + 1)) _
+     & "   (" & UScount & ")" & CR
+Selection.HomeKey Unit:=wdStory
+Selection.TypeText Text:="UK: " & Trim(Str(lenTwo - lenThree + 1)) _
+     & "   (" & UKcount & ")" & CR
+Set rng = myDoc.Content
+totLen = rng.Characters.Count
+Selection.HomeKey Unit:=wdStory
+For Each pr In myResults.Paragraphs
+  testWord = Trim(pr.Range.Words(1))
+  If InStr("Distinct UK US", testWord) = 0 _
+       And Len(testWord) > 2 Then
+    StatusBar = "Counting the occurences: " & testWord
+    Debug.Print "Counting the occurences: " & testWord
+    With rng.Find
+      .ClearFormatting
+      .Replacement.ClearFormatting
+      .Text = testWord
+      .Wrap = wdFindContinue
+      .Forward = True
+      .Replacement.Text = "^&!"
+      .MatchCase = showCase
+      .MatchWholeWord = True
+      .Execute Replace:=wdReplaceAll
+      DoEvents
+    End With
+    lenNow = rng.Characters.Count
+    numWords = lenNow - totLen
+    If numWords > 0 Then
+      myDoc.Activate
+      WordBasic.EditUndo
+      Set rng2 = pr.Range.Duplicate
+      rng2.MoveEnd , -1
+      rng2.InsertAfter Text:=" . . . " & Trim(Str(numWords))
+      myResults.Activate
+    End If
+  End If
+Next pr
+myDoc.Activate
+Selection.HomeKey Unit:=wdStory
+myResults.Activate
+numParas = myResults.Paragraphs.Count
+myResults.Paragraphs(1).Range.Font.Bold = True
+myResults.Paragraphs(numParas - 2).Range.Font.Bold = True
+Beep
+myTime = Timer
+Do
+Loop Until Timer > myTime + 0.2
+Beep
+Exit Sub
+
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+

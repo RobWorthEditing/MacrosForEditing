@@ -1,0 +1,39 @@
+
+
+Sub OUPFetchPremiumMac()
+' Paul Beverley - Version 25.09.24
+' Launches selected text to OUP Premium website.
+
+mySite = "https://premium.oxforddictionaries.com/definition/english/"
+
+If Selection.start = Selection.End Then
+  Selection.Expand wdWord
+  If LCase(Selection) = UCase(Selection) Then
+    Selection.Collapse wdCollapseStart
+    Selection.MoveStart wdWord, -1
+  End If
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.start = startNow
+End If
+
+Selection.Copy
+ActiveDocument.FollowHyperlink Address:=mySite
+End Sub
+
+
+
+
+

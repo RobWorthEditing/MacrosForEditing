@@ -1,0 +1,136 @@
+
+Sub DuplicateSentenceCountFast()
+' Paul Beverley - Version 17.12.24
+' Finds duplicate sentences and gives their frequency
+
+minLen = 7
+' Max number of words
+
+Dim sentenceArray() As String
+timeNow = Timer
+' Loop through sentences and add those longer than minLen to the array
+CR = vbCr
+For i = 1 To ActiveDocument.sentences.count
+  mySentence = Replace(Trim(ActiveDocument.sentences(i).Text), CR, "")
+  If Right(mySentence, 1) = ChrW(8221) Then
+     mySentence = Left(mySentence, Len(mySentence) - 1)
+  End If
+  myCount = UBound(Split(mySentence, " ")) + 1
+
+  If myCount >= minLen Then
+    For n = 1 To Len(mySentence)
+      ch = Mid(mySentence, n, 1)
+      If UCase(ch) <> LCase(ch) Then Exit For
+    Next n
+    mySentence = Mid(mySentence, n)
+    If Left(mySentence, 1) = "(" Then mySentence = Mid(mySentence, 2)
+    If Right(mySentence, 1) = ")" Then mySentence = Left(mySentence, Len(mySentence) - 1)
+    
+    sntCount = sntCount + 1
+    ReDim Preserve sentenceArray(1 To sntCount)
+    sentenceArray(sntCount) = mySentence
+    If sntCount Mod 10 = 0 Then
+      DoEvents
+      StatusBar = "Finding sentences: " & sntCount
+      Debug.Print "Finding sentences: " & sntCount
+    End If
+  End If
+Next i
+
+If sntCount = 0 Then
+  Beep
+  MsgBox "No sentences longer than min. words found.", vbInformation
+  Exit Sub
+End If
+' Sort the array alphabetically
+Call QuickSort(sentenceArray, LBound(sentenceArray), UBound(sentenceArray))
+Documents.Add
+Set rng = ActiveDocument.Content
+' Output the sorted sentences to the debug window
+n = 1
+For i = LBound(sentenceArray) To UBound(sentenceArray) - 1
+  If sentenceArray(i) <> sentenceArray(i + 1) Then
+    If n > 1 Then
+      rng.InsertAfter Text:=sentenceArray(i) & " [" _
+           & Trim(Str(n)) & "]" & CR
+      n = 1
+    End If
+  Else
+    n = n + 1
+  End If
+Next i
+If n > 1 Then rng.InsertAfter Text:=sentenceArray(i) & "  [" _
+     & Trim(Str(n)) & "]" & CR
+newTime = Timer
+totTime = newTime - timeNow
+MsgBox ((Int(10 * totTime) / 10) & "  Seconds" & vbCr & vbCr _
+ & (Int(10 * totTime / 60) / 10) & "  minutes")
+End Sub
+
+Sub QuickSort(arr As Variant, ByVal low As Long, ByVal high As Long)
+' Paul Beverley - Version 21.12.24
+' Sorts an array of text at high speed
+
+Dim i As Long
+Dim j As Long
+Dim pivot As String
+Dim temp As String
+
+i = low
+j = high
+pivot = arr((low + high) \ 2)
+
+Do While i <= j
+  Do While arr(i) < pivot
+      i = i + 1
+  Loop
+  Do While arr(j) > pivot
+      j = j - 1
+  Loop
+  If i <= j Then
+    temp = arr(i)
+    arr(i) = arr(j)
+    arr(j) = temp
+    i = i + 1
+    j = j - 1
+  End If
+Loop
+
+If low < j Then QuickSort arr, low, j
+If i < high Then QuickSort arr, i, high
+End Sub
+
+Sub QuickSort(arr As Variant, ByVal low As Long, ByVal high As Long)
+' Paul Beverley - Version 21.12.24
+' Sorts an array of text at high speed
+
+Dim i As Long
+Dim j As Long
+Dim pivot As String
+Dim temp As String
+
+i = low
+j = high
+pivot = arr((low + high) \ 2)
+
+Do While i <= j
+  Do While arr(i) < pivot
+      i = i + 1
+  Loop
+  Do While arr(j) > pivot
+      j = j - 1
+  Loop
+  If i <= j Then
+    temp = arr(i)
+    arr(i) = arr(j)
+    arr(j) = temp
+    i = i + 1
+    j = j - 1
+  End If
+Loop
+
+If low < j Then QuickSort arr, low, j
+If i < high Then QuickSort arr, i, high
+End Sub
+
+

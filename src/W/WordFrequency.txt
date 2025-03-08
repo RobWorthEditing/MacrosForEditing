@@ -1,0 +1,228 @@
+
+Sub WordFrequency()
+' Paul Beverley - Version 20.09.24
+' Counts the frequency of words in a document
+ 
+' ignoreWords = " the and "
+ignoreWords = ""
+
+' Don't bother counting words with fewer characters than this
+minChars = 3
+
+' Don't bother displaying words with fewer occurrences than this
+minCount = 2
+
+' Include apostrophe-s
+incApostrophe = False
+
+timeNow = Timer
+Dim WordDict As Object
+Dim myWords() As String
+Dim myWordsTable As Variant
+CR = vbCr
+CR2 = CR & CR
+
+Set sourceDoc = ActiveDocument
+Set rngFrom = sourceDoc.Content
+Set myDoc = Documents.Add
+myDoc.Content.Text = rngFrom.Text
+Set rng = myDoc.Content
+rng.Collapse wdCollapseEnd
+
+If sourceDoc.Endnotes.Count > 0 Then _
+       rng.Text = _
+       sourceDoc.StoryRanges(wdEndnotesStory).Text
+If sourceDoc.Footnotes.Count > 0 Then _
+       rng.Text = _
+       sourceDoc.StoryRanges(wdFootnotesStory).Text
+DoEvents
+Set rng = ActiveDocument.Content
+rng.Text = LCase(rng.Text)
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+' URLs
+  .Text = "http*[ ^13]"
+  .Replacement.Text = "^p"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  Debug.Print 1
+' URLs
+  .Text = "www*[ ^13]"
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  Debug.Print 2
+' hyphenated words
+  .Text = "--"
+  .Replacement.Text = " "
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+  Debug.Print 3
+' hyphenated words
+  .Text = "([a-z])[-^~]([a-z])"
+  .Replacement.Text = "\1hzzh\2"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+  Debug.Print 4
+' it's
+  .Text = "<it['" & ChrW(8217) & "]s"
+  .Replacement.Text = "itpzzps"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  Debug.Print 5
+' apostrophes
+  If incApostrophe = True Then
+    .Text = "([a-z])['" & ChrW(8217) & "]([a-z])"
+  Else
+    .Text = "([a-z])['" & ChrW(8217) & "]([a-rt-z])"
+  End If
+  .Replacement.Text = "\1pzzp\2"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  Debug.Print 6
+' email addresses
+  .Text = "<[a-z.]{1,}\@[a-z.]{1,}>"
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  Debug.Print 7
+' hard space, hard hyphen, slash, dashes
+  .Text = "[^s//^~^+^=,.]"
+  .Replacement.Text = " "
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+  
+End With
+totTime1 = Timer - timeNow
+
+' Initialize the dictionary
+Set WordDict = CreateObject("Scripting.Dictionary")
+WordDict.CompareMode = vbTextCompare
+
+' Loop through each paragraph in the document
+For Each myPar In myDoc.Paragraphs
+  ' Split the paragraph into words
+  myText = LCase(myPar.Range.Text)
+  myText = Replace(myText, "  ", " ")
+  myWords = Split(myText, " ")
+  ' Loop through each word in the paragraph
+  For i = LBound(myWords) To UBound(myWords)
+    myWord = Trim(myWords(i))
+    If UCase(myWord) <> myWord Then
+      newWord = ""
+      For j = 1 To Len(myWord)
+        myChar = Mid(myWord, j, 1)
+        If UCase(myChar) <> myChar _
+             Then newWord = newWord & myChar
+        If AscW(myChar) = 8217 Then Exit For
+      Next j
+      Debug.Print newWord
+      myWord = newWord
+      ' Only consider words with minChars or more characters
+      If Len(myWord) >= minChars And _
+           InStr(ignoreWords, " " & newWord & " ") = 0 Then
+        If WordDict.Exists(myWord) Then
+          WordDict(myWord) = WordDict(myWord) + 1
+        Else
+          WordDict.Add myWord, 1
+        End If
+      End If
+    End If
+  Next i
+  DoEvents
+Next myPar
+totTime2 = Timer - timeNow
+
+' Use the new document to display the results
+Set rng = myDoc.Content
+rng.Text = "Word Frequency List (descending):" & CR2
+' Sort the dictionary by frequency
+myWordsTable = WordDict.Keys
+myCount = WordDict.Count
+For i = 0 To myCount - 1
+  myWord = myWordsTable(i)
+  If WordDict(myWord) >= minCount Then _
+       myDoc.Content.InsertAfter myWord & vbTab & WordDict(myWord) & vbCr
+  If i Mod 50 = 0 Then DoEvents
+Next i
+totTime3 = Timer - timeNow
+
+' sort out and display results
+Set rng = myDoc.Content
+Set rng = ActiveDocument.Content
+With rng.Find
+  .Text = "hzzh"
+  .Replacement.Text = "-"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "pzzp"
+  .Replacement.Text = ChrW(8217)
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+DoEvents
+rng.MoveStart wdParagraph, 2
+rng.ConvertToTable Separator:=wdSeparateByTabs
+DoEvents
+Set tbl = myDoc.Content.Tables(1)
+DoEvents
+tbl.AutoFitBehavior (wdAutoFitContent)
+DoEvents
+myDoc.Content.Tables(1).Sort ExcludeHeader:=False, _
+     FieldNumber:=1, _
+     SortFieldType:=wdSortFieldAlphanumeric, _
+     SortOrder:=wdSortOrderAscending
+DoEvents
+tbl.Range.Copy
+DoEvents
+Selection.EndKey Unit:=wdStory
+Selection.InsertAfter Text:=CR2 & CR2 & "Word Frequency List (alphabetic):" & CR2
+Selection.MoveStart wdParagraph, 4
+Selection.MoveEnd wdParagraph, -1
+Selection.Paragraphs(1).Style = "Heading 1"
+Selection.EndKey Unit:=wdStory
+DoEvents
+Selection.Paste
+DoEvents
+' Sort the table by the second column (frequency) in descending order
+myDoc.Tables(1).Sort ExcludeHeader:=False, _
+     FieldNumber:=2, _
+     SortFieldType:=wdSortFieldNumeric, _
+     SortOrder:=wdSortOrderDescending
+Selection.HomeKey Unit:=wdStory
+
+Set rng = ActiveDocument.Content
+rng.Paragraphs(1).Style = "Heading 1"
+
+totTime4 = Timer - timeNow
+
+Debug.Print ((Int(10 * totTime1) / 10) & "  Seconds" & vbCr & vbCr _
+     & (Int(10 * (totTime2 - totTime1)) / 10) & "  Seconds" & vbCr & vbCr _
+     & (Int(10 * (totTime3 - totTime2)) / 10) & "  Seconds" & vbCr & vbCr _
+     & (Int(10 * (totTime4 - totTime3)) / 10) & "  Seconds" & vbCr & vbCr _
+     & (Int(10 * (Timer - timeNow)) / 10) & "  Total" & vbCr & vbCr)
+DoEvents
+Beep
+myTime = Timer
+Do
+Loop Until Timer > myTime + 0.2
+MsgBox "The macro has finished, but click OK," & CR _
+     & "then wait until Word has formatted the file;" & CR _
+     & "the cursor will start to flash when it is ready."
+' Clean up
+Set WordDict = Nothing
+End Sub
+

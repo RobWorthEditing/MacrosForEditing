@@ -1,0 +1,8 @@
+Sub GoToTop()
+' Paul Beverley - Version 31.05.24
+' Moves the cursor to the top of the document (for Mac users)
+
+Selection.HomeKey Unit:=wdStory
+End Sub
+
+

@@ -1,0 +1,28 @@
+
+Sub BoldQuickSwitch()
+' Paul Beverley - Version 01.07.24
+' Adds/removes bold to/from selected text
+
+If Selection.start = Selection.End Then
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.start = startNow
+End If
+Set firstChar = Selection.Range.Characters(1)
+Selection.Font.Bold = Not (firstChar.Font.Bold)
+Selection.Collapse wdCollapseStart
+End Sub
+

@@ -1,5 +1,6 @@
+
 Sub NTbackupDated()
-' Paul Beverley - Version 18.01.24
+' Paul Beverley - Version 20.07.24
 ' Backs up the Normal template and the VBA code with date and time
 
 backupFolder = "Backup"
@@ -39,8 +40,7 @@ ActiveDocument.Close SaveChanges:=False
 
 ' Save the Normal template
 ThisDocument.SaveAs newName
+Beep
+MsgBox ("Backup completed, including the macro text you selected.")
 End Sub
-
-
-
 

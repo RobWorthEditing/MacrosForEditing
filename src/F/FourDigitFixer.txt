@@ -1,0 +1,47 @@
+
+Sub FourDigitFixer()
+' Paul Beverley - Version 10.05.24
+' Adds a delimiter to four-digit numbers, but not dates
+
+' deLimiter = ","
+deLimiter = ChrW(8201): ' thin space = hex 2009
+
+minDate = 1900
+maxDate = 2100
+' Adjust to taste!
+
+myHighColour = wdYellow
+' myHighColour = 0 : ' no highlight, thanks
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[0-9]{4}>"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  If myCount Mod 20 = 0 Then rng.Select
+  myDate = Val(rng.Text)
+  If myDate < minDate Or myDate > maxDate Then
+    rng.Text = Left(rng.Text, 1) & deLimiter & Right(rng.Text, 3)
+    If myHighColour > 0 Then rng.HighlightColorIndex = myHighColour
+    myCount = myCount + 1
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Selection.HomeKey Unit:=wdStory
+Beep
+MsgBox "Changed: " & myCount
+End Sub
+
+
+
