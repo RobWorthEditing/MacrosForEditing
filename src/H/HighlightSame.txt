@@ -1,14 +1,17 @@
 
 Sub HighlightSame()
-' Paul Beverley - Version 07.01.25
+' Paul Beverley - Version 27.03.25
 ' Highlights all occurrences of this text in this colour
+
+textColour = wdYellow
 
 ' doMatchCase = True
 doMatchCase = False
+
 nonTextColour = wdGray25
-textColour = wdBrightGreen
 
 ' Preserve TC status and existing highlight colour
+oldColour = Options.DefaultHighlightColorIndex
 nowTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False
 
@@ -65,11 +68,13 @@ Else
     rng.start = Selection.start
     rng.End = Selection.start + 1
     nowColour = rng.HighlightColorIndex
+  Else
+    nowColour = textColour
   End If
   Options.DefaultHighlightColorIndex = nowColour
 End If
 
-findText = Selection
+findText = rng.Text
 Select Case Asc(findText)
   Case 9:  findText = "^t"
   Case 30:  findText = "^~": partWord = True ' non-breaking hyphen
@@ -79,7 +84,7 @@ Selection.Collapse wdCollapseStart
 With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = findText
+  .Text = Trim(findText)
   .MatchCase = doMatchCase
   .Forward = True
   .Replacement.Text = "^&"
@@ -92,7 +97,6 @@ With Selection.Find
 End With
 
 ' Restore to original state
-oldColour = Options.DefaultHighlightColorIndex
 Options.DefaultHighlightColorIndex = oldColour
 ActiveDocument.TrackRevisions = nowTrack
 End Sub

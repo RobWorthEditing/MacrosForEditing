@@ -1,9 +1,11 @@
 
 Sub FRedit()
-' Paul Beverley - Version 20.02.25
+' Paul Beverley - Version 21.03.25
 ' Scripted find and replace
 ' ©2009-2025 Paul Beverley
 
+
+Set nowDoc = ActiveDocument
 
 promptForSelectedText = True
 
@@ -145,8 +147,10 @@ If workFile = theList Then
   Exit Sub
 End If
 
-' Check for rogue manual line breaks in the list
 Set rng = theList.Content
+' Check final line in the list is a paragraph marker
+If Right(rng, 2) <> CR2 Then rng.InsertAfter Text:=CR
+' Check for rogue manual line breaks in the list
 mlb = InStr(rng.Text, Chr(11))
 If mlb > 0 Then
   Selection.start = mlb - 1

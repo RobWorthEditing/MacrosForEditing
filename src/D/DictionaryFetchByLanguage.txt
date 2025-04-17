@@ -1,7 +1,10 @@
 
 Sub DictionaryFetchByLanguage()
-' Paul Beverley - Version 11.02.25
+' Paul Beverley - Version 22.03.25
 ' Checks the current word in a language-related dictionary
+
+' useOUPpremium = True
+useOUPpremium = False
 
 Set rng = Selection.Range.Duplicate
 rng.Collapse wdCollapseStart
@@ -9,16 +12,62 @@ rng.MoveEnd , 1
 myLanguage = rng.LanguageID
 
 Select Case myLanguage
+  Case wdEnglishUK
+       If useOUPpremium = True Then
+         Call OUPFetchPremium: Exit Sub
+       Else
+         mySite = "https://www.lexico.com/definition/"
+       End If
   Case wdEnglishUS
        mySite = "https://www.merriam-webster.com/dictionary/"
   Case wdEnglishAUS
        mySite = "https://www.macquariedictionary.com.au/features/word/search/"
-  Case wdGerman
-       mySite = "https://www.duden.de/suchen/dudenonline/"
+  Case wdSwissFrench
+       mySite = "https://www.wordreference.com/fren/"
   Case wdFrench
-       mySite = "https://www.collinsdictionary.com/dictionary/french-english/"
+       mySite = "https://www.wordreference.com/fren/"
+  Case wdSpanish
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishArgentina
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishBolivia
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishChile
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishColombia
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishCostaRica
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishDominicanRepublic
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishEcuador
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishElSalvador
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishGuatemala
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishHonduras
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishModernSort
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishNicaragua
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishPanama
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishParaguay
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishPeru
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishPuertoRico
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishUruguay
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdSpanishVenezuela
+       mySite = "https://www.wordreference.com/esen/"
+  Case wdMexicanSpanish
+       mySite = "https://www.wordreference.com/esen/"
   Case Else
-       mySite = "https://www.lexico.com/definition/"
+       mySite = "https://www.merriam-webster.com/dictionary/"
 End Select
 
 rng.Expand wdWord
@@ -31,4 +80,7 @@ Set newLink = ActiveDocument.Hyperlinks.Add(Anchor:=Selection.Range, _
 newLink.Follow
 ActiveDocument.Undo
 End Sub
+
+
+
 

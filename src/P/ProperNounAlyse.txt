@@ -1,19 +1,17 @@
 
 Sub ProperNounAlyse()
-' Paul Beverley - Version 06.03.25
+' Paul Beverley - Version 03.04.25
 ' Analyses similar proper nouns
 
 minLengthCheck = 4
 
 includeAcronyms = True
 
-myLanguage = "English(United Kingdom)"
-' myLanguage = "English(United States)"
+' myLanguage = "English(United Kingdom)"
+myLanguage = "English(United States)"
 
-' keepWholeList = True
-keepWholeList = False
-
-ignoreWords = "The This There Those Their They Then These That"
+ignoreWords = "Also Being The This There Those Their They Then These That" & _
+     " Ever Even Four From Have When Where Will While Were Whole Well Would"
 
 similarChars = "bb,b; b,p; sch,sh; ch,sh; c,k; ph,f; ss,z; s,z;" & _
                " mp,m; ll,l; nn,n; nd,n; nt,n;"
@@ -21,8 +19,11 @@ similarChars = "bb,b; b,p; sch,sh; ch,sh; c,k; ph,f; ss,z; s,z;" & _
 ' With non-English languages, you might need to make this False
 ignorePlurals = True
 
-CR = vbCr: CR2 = CR & CR
+keepWholeList = False
+keepWholeList = True
+
 myScreenOff = True
+CR = vbCr: CR2 = CR & CR
 Set FUT = ActiveDocument
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") + _
      InStr(FUT.Name, "Document") > 0)
@@ -31,6 +32,11 @@ If doingSeveralMacros = False Then
        "Analyse this document?", vbQuestion _
        + vbYesNoCancel, "ProperNounAlyse")
   If myResponse <> vbYes Then Exit Sub
+End If
+If FUT.Content.Words.Count > 50000 Then
+  useQuickSort = True
+Else
+  useQuickSort = False
 End If
 If myScreenOff = True Then
   Application.ScreenUpdating = False
@@ -42,8 +48,8 @@ For i = 1 To 100
   spcs = " " & spcs
 Next i
 
+checkFinalLetters = False
 checkFinalLetters = True
-' checkFinalLetters = False
 ' Grey on word only
 thisHighlight = wdGray25
 
@@ -87,19 +93,19 @@ timeStart = Timer
 ' collect notes text, if any
 endText = ""
 footText = ""
-If ActiveDocument.Endnotes.Count > 0 Then
-  endText = ActiveDocument.StoryRanges(wdEndnotesStory).Text
+If FUT.Endnotes.Count > 0 Then
+  endText = FUT.StoryRanges(wdEndnotesStory).Text
 End If
-If ActiveDocument.Footnotes.Count > 0 Then
-  footText = ActiveDocument.StoryRanges(wdFootnotesStory).Text
+If FUT.Footnotes.Count > 0 Then
+  footText = FUT.StoryRanges(wdFootnotesStory).Text
 End If
 
 ' collect text in all the textboxes (if any)
-sh = ActiveDocument.Shapes.Count
-If sh > 0 Then
-  ReDim shText(sh)
+Sh = FUT.Shapes.Count
+If Sh > 0 Then
+  ReDim shText(Sh)
   i = 0
-  For Each shp In ActiveDocument.Shapes
+  For Each shp In FUT.Shapes
     If shp.Type <> 24 And shp.Type <> 3 Then
       If shp.TextFrame.HasText Then
         i = i + 1
@@ -111,10 +117,10 @@ If sh > 0 Then
 End If
 
 ' Create various documents
-Set rng = ActiveDocument.Content
+Set rng = FUT.Content
 
 Set firstDoc = Documents.Add
-Set fnl = ActiveDocument.Content
+Set fnl = firstDoc.Content
 
 Set allText = Documents.Add
 Selection.FormattedText = rng.FormattedText
@@ -231,31 +237,39 @@ Do While rng.Find.Found = True
   rng.Find.Execute
   DoEvents
 Loop
-allText.Content.Text = myPNlist
 
-StatusBar = spcs & "Sorting whole file"
-
-Set allText = ActiveDocument
-wordArray = Split(allText.Content.Text, CR)
-
-' Sort the array alphabetically
-Call QuickSort(wordArray, LBound(wordArray), UBound(wordArray))
-StatusBar = spcs & "After sorting"
-
-' Clear the content of the document
-allText.Content.Delete
-
-' Insert sorted words into the document
-For i = LBound(wordArray) To UBound(wordArray)
-  allText.Content.InsertAfter wordArray(i) & CR
-Next i
-
+If useQuickSort = True Then
+  ' allText.Content.Text = myPNlist
+  ' wordArray = Split(allText.Content.Text, CR)
+  
+  ' allText.Content.Text = myPNlist
+  wordArray = Split(myPNlist, CR)
+  StatusBar = spcs & "Sorting whole file"
+  
+  
+  ' Sort the array alphabetically
+  Call QuickSort(wordArray, LBound(wordArray), UBound(wordArray))
+  StatusBar = spcs & "After sorting"
+  
+  ' Clear the content of the document
+  allText.Content.Delete
+  
+  ' Insert sorted words into the document
+  For i = LBound(wordArray) To UBound(wordArray)
+    allText.Content.InsertAfter wordArray(i) & CR
+  Next i
+Else
+  allText.Content.Text = myPNlist
+  Set rng = allText.Content
+  rng.Sort SortOrder:=wdSortOrderAscending, CaseSensitive:=True
+End If
 ' delete initial blank line
 If Len(allText.Paragraphs(1)) < 3 Then _
      allText.Paragraphs(1).Range.Delete
 If Len(allText.Paragraphs(1)) < 3 Then _
      allText.Paragraphs(1).Range.Delete
 
+allText.Content.InsertAfter Text:=CR
 ' Create a frequency for each highlighted word
 thisWord = ""
 myCount = 0
@@ -276,10 +290,10 @@ For Each myPara In allText.Paragraphs
 Next myPara
 
 allText.Close SaveChanges:=False
-firstDoc.Activate
+' firstDoc.Activate
 
 ' Remove blank lines
-Set rng = ActiveDocument.Content
+Set rng = firstDoc.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -292,13 +306,13 @@ With rng.Find
 End With
 
 ' Resort case insensitively
-Set rng = ActiveDocument.Content
+Set rng = firstDoc.Content
 rng.Sort SortOrder:=wdSortOrderAscending, _
      CaseSensitive:=False
 
 ' Delete rubbish from top and bottom of list
 Do
-  Set rng = ActiveDocument.Paragraphs(1).Range
+  Set rng = firstDoc.Paragraphs(1).Range
   myLen = Len(rng.Text)
   If myLen < 10 Then
     rng.Select
@@ -306,8 +320,8 @@ Do
   End If
 Loop Until myLen > 9
 Do
-  lastLine = ActiveDocument.Paragraphs.Count
-  Set rng = ActiveDocument.Paragraphs(lastLine).Range
+  lastLine = firstDoc.Paragraphs.Count
+  Set rng = firstDoc.Paragraphs(lastLine).Range
   myLen = Len(rng.Text)
   If myLen < 10 Then
     rng.Select
@@ -317,8 +331,8 @@ Loop Until Len(rng.Text) >= 2
 
 ' Word list now has freq. count.
 Do
-  lastLine = ActiveDocument.Paragraphs.Count
-  Set rng = ActiveDocument.Paragraphs(lastLine).Range
+  lastLine = firstDoc.Paragraphs.Count
+  Set rng = firstDoc.Paragraphs(lastLine).Range
   myLen = Len(rng.Text)
   If myLen < 10 Then
     rng.Select
@@ -327,16 +341,15 @@ Do
 Loop Until Len(rng.Text) >= 2
 
 ' Create another copy for doing extra tests
-Set rng = ActiveDocument.Content
+Set rng = firstDoc.Content
 
 Set finalList = Documents.Add
 finalList.Range.Text = rng.Text
-Selection.HomeKey Unit:=wdStory
 
 ' Prepare data for other tests
-numWords = ActiveDocument.Paragraphs.Count
+numWords = finalList.Paragraphs.Count
 For i = 1 To numWords
-  aWord = ActiveDocument.Paragraphs(i).Range.Words(1)
+  aWord = finalList.Paragraphs(i).Range.Words(1)
   n = AscW(aWord)
   thisChar = ChrW(n)
   If n > 129 Then
@@ -349,10 +362,10 @@ For i = 1 To numWords
   allWords = allWords & aWord
   jmp = 100
   If i Mod jmp = 1 Then
-    pq = pq + 1
+    PQ = PQ + 1
     DoEvents
     StatusBar = spcs & _
-         "Preparing data for other tests - 1 - " & pq
+         "Preparing data for other tests - 1 - " & PQ
     DoEvents
   End If
 Next i
@@ -434,7 +447,7 @@ similarAllWords = sWd
 ' Catch words with only the final two letters the same
 i = 0
 If checkFinalLetters = True Then
-  For Each myPara In ActiveDocument.Paragraphs
+  For Each myPara In finalList.Paragraphs
     gotOne = False
     myWord = Trim(myPara.Range.Words(1))
     myLen = Len(myWord)
@@ -445,7 +458,7 @@ If checkFinalLetters = True Then
       myTarget = "^p" & Left(myWord, myLen - 1) & "^$ "
       myCut = 1
     End If
-    Set rng = ActiveDocument.Content
+    Set rng = finalList.Content
     rng.Start = myPara.Range.End - 3
     rng.Collapse wdCollapseStart
     With rng.Find
@@ -488,8 +501,8 @@ If doMissingLetter = True Then
   doneSimilarWords = ""
   McList = ""
 
-  For i = 1 To ActiveDocument.Paragraphs.Count - 1
-    myWord = ActiveDocument.Paragraphs(i).Range.Words(1)
+  For i = 1 To finalList.Paragraphs.Count - 1
+    myWord = finalList.Paragraphs(i).Range.Words(1)
     n = AscW(myWord)
     thisChar = ChrW(n)
     myNewChar = "."
@@ -529,11 +542,11 @@ If doMissingLetter = True Then
           leftBit = Left(allWords, InStr(allWords, testWord) _
                + Len(testWord) - 1)
           j = Len(leftBit) - Len(Replace(leftBit, " ", ""))
-          Set rng = ActiveDocument.Paragraphs(i).Range
+          Set rng = finalList.Paragraphs(i).Range
           rng.HighlightColorIndex = thisCol
           rng.Font.Bold = True
           rng.Font.Color = wdColorBlue
-          Set rng = ActiveDocument.Paragraphs(j).Range
+          Set rng = finalList.Paragraphs(j).Range
           rng.HighlightColorIndex = thisCol
           rng.Font.Bold = True
           rng.Font.Color = wdColorBlue
@@ -552,8 +565,8 @@ If doSimilarLetters = True Then
   doneWords = ""
   doneSimilarWords = ""
 
-  For i = 1 To ActiveDocument.Paragraphs.Count - 1
-    myWord = ActiveDocument.Paragraphs(i).Range.Words(1)
+  For i = 1 To finalList.Paragraphs.Count - 1
+    myWord = finalList.Paragraphs(i).Range.Words(1)
     n = AscW(myWord)
     thisChar = ChrW(n)
     myNewChar = "."
@@ -599,7 +612,7 @@ If doSimilarLetters = True Then
           InStr(theseWords, similarWord) > 0 Then
       colcode = (colcode + 1) Mod maxCol
       thisCol = myCol(colcode + 1)
-      Set rng = ActiveDocument.Paragraphs(i).Range
+      Set rng = finalList.Paragraphs(i).Range
       rng.HighlightColorIndex = thisCol
       rng.Font.Underline = True
       doneSimilarWords = doneSimilarWords & similarWord
@@ -608,7 +621,7 @@ If doSimilarLetters = True Then
       For j = 1 To numWords - i
         spPos = InStr(Trim(theseWords) & " ", " ")
         If Left(theseWords, spPos + 1) = similarWord Then
-          Set rng = ActiveDocument.Paragraphs(i + j).Range
+          Set rng = finalList.Paragraphs(i + j).Range
           rng.HighlightColorIndex = thisCol
           rng.Font.Underline = True
         End If
@@ -624,8 +637,8 @@ If switchTest = True Then
   doneWords = ""
   doneSimilarWords = ""
   McList = ""
-  For i = 1 To ActiveDocument.Paragraphs.Count - 1
-    myWord = ActiveDocument.Paragraphs(i).Range.Words(1)
+  For i = 1 To finalList.Paragraphs.Count - 1
+    myWord = finalList.Paragraphs(i).Range.Words(1)
     n = AscW(myWord)
     thisChar = ChrW(n)
     myNewChar = "."
@@ -654,13 +667,13 @@ If switchTest = True Then
         matchWord = Mid(testWords, wordPos, Len(myWord))
         leftBit = Left(allWords, InStr(allWords, matchWord) + 1)
         j = Len(leftBit) - Len(Replace(leftBit, " ", "")) + 1
-        ActiveDocument.Paragraphs(i).Range.Font.DoubleStrikeThrough _
+        finalList.Paragraphs(i).Range.Font.DoubleStrikeThrough _
              = True
-        ActiveDocument.Paragraphs(i).Range.HighlightColorIndex _
+        finalList.Paragraphs(i).Range.HighlightColorIndex _
              = thisCol
-        ActiveDocument.Paragraphs(j).Range.Font.DoubleStrikeThrough _
+        finalList.Paragraphs(j).Range.Font.DoubleStrikeThrough _
              = True
-        ActiveDocument.Paragraphs(j).Range.HighlightColorIndex _
+        finalList.Paragraphs(j).Range.HighlightColorIndex _
              = thisCol
       End If
     Next k
@@ -671,8 +684,8 @@ If doVowelTest = True Then
   doneWords = ""
   doneSimilarWords = ""
   McList = ""
-  For i = 1 To ActiveDocument.Paragraphs.Count - 1
-    myWord = ActiveDocument.Paragraphs(i).Range.Words(1)
+  For i = 1 To finalList.Paragraphs.Count - 1
+    myWord = finalList.Paragraphs(i).Range.Words(1)
     n = AscW(myWord)
     thisChar = ChrW(n)
     myNewChar = "."
@@ -726,7 +739,7 @@ If doVowelTest = True Then
     If InStr(doneWords, otherWord) = 0 And wordPos > 0 Then
       colcode = (colcode + 1) Mod maxCol
       thisCol = myCol(colcode + 1)
-      Set rng = ActiveDocument.Paragraphs(i).Range
+      Set rng = finalList.Paragraphs(i).Range
       rng.HighlightColorIndex = thisCol
       rng.Font.Italic = True
       doneWords = doneWords & otherWord
@@ -735,7 +748,7 @@ If doVowelTest = True Then
         firstWord = Left(theseWords, spPos + 1)
         theseWords = Mid(theseWords, spPos + 1)
         If firstWord = otherWord Then
-          Set rng = ActiveDocument.Paragraphs(i + j).Range
+          Set rng = finalList.Paragraphs(i + j).Range
           rng.HighlightColorIndex = thisCol
           rng.Font.Italic = True
         End If
@@ -748,18 +761,24 @@ If doVowelTest = True Then
 End If
 
 finishOff:
-Selection.EndKey Unit:=wdStory
-Selection.TypeText CR2 & McList
+finalList.Activate
+If Len(McList) > 0 Then
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText CR2 & McList
+End If
 
 Selection.HomeKey Unit:=wdStory
-Selection.TypeText title1 & CR
+If finalList.Content.Words(1) = "Aaaaa " Then _
+     finalList.Content.Paragraphs(1).Range.Delete
+Selection.TypeText title1 & CR2
+Selection.Collapse wdCollapseStart
 Do
   Selection.Expand wdParagraph
   If Len(Selection) < 3 Or LCase(Selection) = _
        UCase(Selection) Then Selection.Delete
 Loop Until LCase(Selection) <> UCase(Selection)
 Selection.HomeKey Unit:=wdStory, Extend:=wdExtend
-Selection.Style = ActiveDocument.Styles(wdStyleHeading1)
+Selection.Style = finalList.Styles(wdStyleHeading1)
 
 ' Restore apostrophes
 Set rng = finalList.Range
@@ -775,114 +794,28 @@ End With
 Set rng = finalList.Content
 With rng.Find
   .Text = "Zzzzz"
-  .Wrap = wdFindStop
+  .Wrap = wdFindContinue
   .Replacement.Text = ""
   .Forward = True
   .MatchWildcards = False
   .Execute Replace:=wdReplaceOne
 End With
-Set rng = finalList.Content
-With rng.Find
-  .Text = ""
-  .Highlight = True
-  .Wrap = wdFindStop
-  .Replacement.Text = ""
-  .Forward = True
-  .MatchWildcards = False
-  .Execute
-End With
 
-rng.Select
-Selection.Collapse wdCollapseStart
-Set finalList = ActiveDocument
-
-firstDoc.Activate
-
-' Find sets of sounds-like words
-StatusBar = spcs & "Sounds-like tests"
-k = 0
-For Each myPara In ActiveDocument.Paragraphs
-  myWord = Trim(myPara.Range.Words(1))
-  k = k + 1
-  If k Mod 40 = 1 Then
-    DoEvents
-    StatusBar = spcs & "Sounds-like test: " & myWord
-    DoEvents
-  End If
-  hasAccent = False
-  For i = 1 To Len(myWord)
-    ascChar = AscW(Mid(myWord, i))
-    If ascChar > 128 Or ascChar = Asc("?") Then hasAccent = True
-  Next i
-
-' Go and find the first sounds-like word
-  initLetter = Left(myWord, 1)
-  If Len(myWord) > 2 And myPara.Range.HighlightColorIndex > 0 And _
-       hasAccent = False And InStr(allSets, myWord & leadDots) _
-       = 0 Then
-    Set rng = ActiveDocument.Content
-    Do
-      With rng.Find
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Text = myWord
-        .Wrap = wdFindStop
-        .Replacement.Text = ""
-        .MatchWildcards = False
-        .MatchSoundsLike = True
-        .Execute
-      End With
-      Set myPara = rng.Paragraphs(1).Range
-      rng.Collapse wdCollapseEnd
-    Loop Until Left(myPara, 1) = initLetter
-    setOfWords = myPara
-    gottaSet = False
-    rng.Collapse wdCollapseEnd
-    rng.Find.Execute
-    Do While rng.Find.Found = True
-      Set myPara = rng.Paragraphs(1).Range
-      If Left(myPara, 1) = initLetter Then
-        gottaSet = True
-        setOfWords = setOfWords & myPara
-      End If
-      rng.Collapse wdCollapseEnd
-      rng.Find.Execute
-    Loop
-    If gottaSet = True Then allSets = allSets & setOfWords & CR
-  End If
-Next myPara
-
-Selection.WholeStory
-If Len(allSets) < 2 Then
-  Selection.TypeText "None found with this test"
-Else
-  Selection.TypeText allSets
-End If
-Selection.HomeKey Unit:=wdStory
-Selection.TypeText "Proper nouns by sound" & CR
-Selection.HomeKey Unit:=wdStory, Extend:=wdExtend
-Selection.Style = ActiveDocument.Styles(wdStyleHeading1)
-Selection.HomeKey Unit:=wdStory
-
-Set rng = ActiveDocument.Content
-rng.HighlightColorIndex = 0
-rng.Copy
-
-ActiveDocument.Close SaveChanges:=False
+firstDoc.Close SaveChanges:=False
 finalList.Activate
 ' Remove highlighting from second half of words
 ' that are only case changes of one another
-totParas = ActiveDocument.Paragraphs.Count
+totParas = finalList.Paragraphs.Count
 For i = 1 To totParas - 1
-  A = Trim(ActiveDocument.Paragraphs(i).Range.Words(1))
-  b = Trim(ActiveDocument.Paragraphs(i + 1).Range.Words(1))
-  A = Mid(A, 2)
+  a = Trim(finalList.Paragraphs(i).Range.Words(1))
+  b = Trim(finalList.Paragraphs(i + 1).Range.Words(1))
+  a = Mid(a, 2)
   b = Mid(b, 2)
-  If LCase(A) = LCase(b) And Len(A) > 2 Then
-    If (UCase(A) = A And LCase(b) = b) Or (UCase(b) = b And _
-         LCase(A) = A) Then
-      ActiveDocument.Paragraphs(i).Range.Words(1).HighlightColorIndex = 0
-      ActiveDocument.Paragraphs(i + 1).Range.Words(1).HighlightColorIndex _
+  If LCase(a) = LCase(b) And Len(a) > 2 Then
+    If (UCase(a) = a And LCase(b) = b) Or (UCase(b) = b And _
+         LCase(a) = a) Then
+      finalList.Paragraphs(i).Range.Words(1).HighlightColorIndex = 0
+      finalList.Paragraphs(i + 1).Range.Words(1).HighlightColorIndex _
            = 0
     End If
   End If
@@ -894,7 +827,7 @@ For i = 1 To totParas - 1
 Next i
 
 myOnames = ""
-Set rng = ActiveDocument.Content
+Set rng = finalList.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -913,7 +846,7 @@ Do While rng.Find.Found = True
   wd = Mid(rng.Text, 3)
   rng.Expand wdParagraph
   pa = rng.Text
-  Set rng2 = ActiveDocument.Content
+  Set rng2 = finalList.Content
   With rng2.Find
     .ClearFormatting
     .Replacement.ClearFormatting
@@ -938,20 +871,13 @@ If myOnames > "" Then
   Selection.EndKey Unit:=wdStory
   Selection.TypeText "Possible O'<something> errors" & vbCr
   Selection.MoveUp , 1
-  Selection.Style = ActiveDocument.Styles(wdStyleHeading1)
+  Selection.Style = finalList.Styles(wdStyleHeading1)
   Selection.EndKey Unit:=wdStory
   Selection.TypeText myOnames
   Selection.HomeKey Unit:=wdStory
 End If
 
-Set rng = ActiveDocument.Content
-finalList.Activate
-Selection.EndKey Unit:=wdStory
-Selection.TypeText vbCr & vbCr & vbCr
-Selection.Paste
-Selection.HomeKey Unit:=wdStory
-
-Set rng = ActiveDocument.Content
+Set rng = finalList.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -977,21 +903,25 @@ With rng.Find
 End With
 
 ' Clear clipboard
-Set rng = ActiveDocument.Content
+Set rng = finalList.Content
 rng.End = 2
 rng.Copy
-Set finalList = ActiveDocument
 
 StatusBar = "Creating queries list"
-Set rng = ActiveDocument.Content
-Documents.Add
-Selection.FormattedText = rng.FormattedText
-Set queriesDoc = ActiveDocument
+Set rng = finalList.Content
 
-ActiveDocument.Paragraphs(1).Range.Delete
-Set rng = ActiveDocument.Content
+For Each pa In finalList.Paragraphs
+  pa.Range.Words(1).HighlightColorIndex = wdNoHighlight
+Next pa
+finalList.Paragraphs(1).Range.HighlightColorIndex = wdNoHighlight
+Selection.HomeKey Unit:=wdStory
+Set queriesDoc = Documents.Add
+Selection.FormattedText = rng.FormattedText
+
+queriesDoc.Paragraphs(1).Range.Delete
+Set rng = queriesDoc.Content
 rng.Font.StrikeThrough = True
-For Each myPara In ActiveDocument.Paragraphs
+For Each myPara In queriesDoc.Paragraphs
   Set ch = myPara.Range.Characters(1)
   chCol = ch.HighlightColorIndex
   If chCol > 0 Then
@@ -1004,6 +934,9 @@ For Each myPara In ActiveDocument.Paragraphs
     End If
     Set che = myPara.Range.Characters(myLen - 2)
     If che.HighlightColorIndex > 0 Then
+      myPara.Range.Font.StrikeThrough = False
+    End If
+    If myPara.Range.Characters(1).Bold = True Then
       myPara.Range.Font.StrikeThrough = False
     End If
   End If
@@ -1020,7 +953,7 @@ With rng.Find
   .Execute Replace:=wdReplaceAll
   DoEvents
 End With
-Set rng = ActiveDocument.Content
+Set rng = queriesDoc.Content
 rng.Font.StrikeThrough = False
 With rng.Find
   .ClearFormatting
@@ -1034,116 +967,53 @@ With rng.Find
   DoEvents
 End With
 
-For Each myPara In ActiveDocument.Paragraphs
-  myText = myPara.Range.Text
-  If Len(myText) > 4 Then
-    Set ch = myPara.Range.Characters(1)
-    numChars = myPara.Range.Characters.Count
-    Set myEnd = myPara.Range.Characters(numChars)
-    colNum = ch.HighlightColorIndex Mod 8
-
-    If ch.Font.Bold = True Then
-      myTxt = "qcqc  " & Str(colNum + 1) & "  =  zczc"
-    Else
-      myTxt = "qcqc zczc"
-    End If
-
-    If ch.Font.Underline > 0 And colNum > 0 Then
-      myBit = "* "
-      myTxt = Replace(myTxt, " =  ", "")
-    Else
-      myBit = ""
-    End If
-    myPara.Range.InsertBefore myBit & myTxt
-
-    If ch.Font.Italic = True Then
-      myEnd.InsertBefore "qpqp= " & Chr(65 + colNum)
-    End If
-  End If
-  i = i + 1
-  If i Mod 20 = 0 And Len(myText) > 4 Then
-  myText = Replace(myText, vbCr, "")
-  StatusBar = spcs & "Creating queries list:  " & myText
-  End If
-  DoEvents
-Next myPara
-
-Set rng = ActiveDocument.Content
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "\* qcqc(*)zczc"
-  .Wrap = wdFindContinue
-  .Replacement.Text = "* \1^t"
-  .Replacement.Highlight = False
-  .MatchWildcards = True
-  .Execute Replace:=wdReplaceAll
-  DoEvents
-End With
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "qcqc(*)zczc"
-  .Wrap = wdFindContinue
-  .Replacement.Text = "\1^t"
-  .Replacement.Highlight = False
-  .MatchWildcards = True
-  .Execute Replace:=wdReplaceAll
-  DoEvents
-End With
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "qpqp(*)^13"
-  .Replacement.Text = "^t\1^p"
-  .Replacement.Highlight = False
-  .MatchWildcards = True
-  .Execute Replace:=wdReplaceAll
-  DoEvents
-End With
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "= ^$"
-  .Replacement.Text = ""
-  .Replacement.Font.Bold = False
-  .MatchWildcards = False
-  .Execute Replace:=wdReplaceAll
-  DoEvents
-End With
-Set rng = ActiveDocument.Content
+Set rng = queriesDoc.Content
 rng.Font.Bold = False
-rng.Font.Italic = False
+' rng.Font.Italic = False
 rng.Font.DoubleStrikeThrough = False
 rng.Font.Underline = False
-rng.Font.Color = wdColorBlack
+' rng.Font.Color = wdColorBlack
 Selection.HomeKey Unit:=wdStory
-Selection.TypeText title2 & CR
-Set rng = ActiveDocument.Content.Paragraphs(2).Range
+Selection.TypeText title2 & CR2
+Set rng = queriesDoc.Content.Paragraphs(2).Range
 If rng.Text = vbCr Then rng.Delete
-Set rng = ActiveDocument.Content.Paragraphs(1).Range
-rng.Style = ActiveDocument.Styles(wdStyleHeading1)
 
 StatusBar = " "
 Options.DefaultHighlightColorIndex = oldColour
 
-lighterColour = wdGray25
-Set rng = ActiveDocument.Content
+lighterColour = wdGray50
+Set rng = queriesDoc.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "= ^$"
+  .Text = " [0-9]{1,}"
+  .Replacement.Font.Italic = False
   .Replacement.Text = ""
-  .Replacement.Font.ColorIndex = lighterColour
+  .Replacement.Highlight = False
+  .Replacement.Font.Color = wdColorAutomatic
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[a-zA-Z]{1,} "
+  .Replacement.Text = ""
+  .Replacement.Font.Italic = False
+  .Replacement.Font.Color = wdColorAutomatic
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Color = wdColorBlue
+  .Replacement.Text = ""
+  .Replacement.Font.Underline = True
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
-  DoEvents
-  .Text = "^#  ="
-  .Replacement.Text = ""
-  .Execute Replace:=wdReplaceAll
-  DoEvents
 End With
-
+Set rng = queriesDoc.Content.Paragraphs(1).Range
+rng.Style = queriesDoc.Styles(wdStyleHeading1)
 Beep
 If keepWholeList = False Then _
      finalList.Close SaveChanges:=False
@@ -1154,7 +1024,11 @@ If doingSeveralMacros = False Then
   Beep
   If myTime > 0 Then MsgBox myTime & "  minutes"
 End If
-If InStr(FUT.Name, "zzTestFile") > 0 Then FUT.Activate
+If InStr(FUT.Name, "zzTestFile") > 0 Then
+  FUT.Activate
+Else
+  queriesDoc.Activate
+End If
 Exit Sub
 
 ReportIt:

@@ -1,6 +1,6 @@
 
 Sub ListOfFound()
-' Paul Beverley - Version 25.02.25
+' Paul Beverley - Version 03.04.25
 ' Creates a list of paragraphs containing specific word(s)
 
 ' Sets zoom size for new list (use 0 if you don't want it)
@@ -45,6 +45,11 @@ If InStr(myDoc.Name, "ttttttt") > 0 Then
   chapterStyle = "Heading 1"
 End If
 
+' For searching TheMacrosAll
+If InStr(myDoc.Name, "TheMacrosAll") > 0 Then
+  inMacros = True
+End If
+
 If InStr(rng, "[[[[[") > 0 Then inMultiFile = True
 docName = Replace(myDoc.Name, ".docx", "")
 docName = Replace(docName, ".doc", "")
@@ -55,9 +60,9 @@ Set rng = Selection.Range.Duplicate
 If rng.start = rng.End Then
   rng.Expand wdParagraph
   rng.MoveEnd , -1
-  temp = Right(rng, 2)
-  gotCodes = InStr(temp, ">") + InStr(temp, "!") + _
-       InStr(temp, "#") + InStr(temp, """") + InStr(rng, ChrW(8221))
+  myTemp = Right(rng, 2)
+  gotCodes = InStr(myTemp, ">") + InStr(myTemp, "!") + _
+       InStr(myTemp, "#") + InStr(myTemp, """") + InStr(rng, ChrW(8221))
   If rng.Words.count > 2 And gotCodes = 0 Then
     Set rng = Selection.Range.Duplicate
     rng.Expand wdWord
@@ -166,9 +171,9 @@ If myText2 > "" Then
   numFinds2 = Len(tst) - Len(Replace(tst, myText2, Mid(myText2, 2)))
   If numFinds1 / numFinds2 > 1.5 Then
     ' Switch 1 and 2 around
-    temp = myText2
+    myTemp = myText2
     myText2 = myText1
-    myText1 = temp
+    myText1 = myTemp
     numTemp = numFinds1
     numFinds1 = numFinds2
     numFinds2 = numTemp
@@ -239,7 +244,7 @@ For myRun = 1 To Len(myDo)
   End With
   
   chpHeadingNow = ""
-  Do While rng.Find.Found = True
+  Do While rng.Find.found = True
     rng.Expand wdParagraph
     foundText = rng.Text
     foundText = Replace(foundText, ">", "")
@@ -284,7 +289,26 @@ For myRun = 1 To Len(myDo)
         End With
         chpHeading = qt
       End If
-      
+       If inMacros Then
+        Set qt = rng.Duplicate
+        qt.start = 0
+        With qt.Find
+          .ClearFormatting
+          .Replacement.ClearFormatting
+          .Text = "^pSub"
+          .Wrap = wdFindStop
+          .Forward = False
+          .Replacement.Text = ""
+          .MatchWildcards = False
+          .Execute
+          DoEvents
+        End With
+        qt.MoveStart , 1
+        qt.Expand wdParagraph
+        qt.MoveEnd , -1
+        chpHeading = qt
+      End If
+     
       If inMultiFile Then
         Set qt = rng.Duplicate
         qt.start = 0
@@ -377,6 +401,22 @@ End If
 resultsText = rng.Text
 If doCase = False Then resultsText = LCase(resultsText)
 numFinds = Len(resultsText) - Len(Replace(resultsText, myText1, Mid(myText1, 2)))
+
+Set rng = ActiveDocument.Content
+enPos = InStr(rng, "Endnotes" & CR2 & "Foot")
+If enPos > 0 Then
+  rng.start = enPos - 1
+  rng.End = rng.start + 10
+  rng.Delete
+End If
+
+' If no finds in any notes
+Set rng = ActiveDocument.Content
+fnPos = InStrRev(rng, CR & "Footnotes" & CR2)
+If fnPos > 0 And rng.End - fnPos < 12 Then
+  rng.start = fnPos
+  rng.Delete
+End If
 
 ' If no finds in any notes
 fnPos = InStr(rng, "Footnotes" & CR2 & CR)

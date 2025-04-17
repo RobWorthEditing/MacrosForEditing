@@ -1,0 +1,34 @@
+
+Sub DocalyseToColumns()
+' Paul Beverley - Version 01.04.25
+' Formats the DocAlyse output into three columns
+
+' tab at cm
+myTabStop = 3.8
+
+On Error GoTo ReportIt
+
+Set rng = ActiveDocument.Content
+rng.ParagraphFormat.TabStops(CentimetersToPoints(myTabStop)).Position = _
+  CentimetersToPoints(4)
+
+With rng.PageSetup.TextColumns
+  .SetCount NumColumns:=3
+  .EvenlySpaced = True
+  .LineBetween = False
+  .Width = CentimetersToPoints(18)
+End With
+Exit Sub
+
+ReportIt:
+If Err.Number = 5138 Then
+  DoEvents
+  ' Do nothing
+  Resume Next
+Else
+  On Error GoTo 0
+  DoEvents
+  Resume
+End If
+End Sub
+

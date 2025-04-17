@@ -1,8 +1,7 @@
 
 Sub TitlesReveal()
-' Paul Beverley - Version 25.09.24
+' Paul Beverley - Version 09.04.25
 ' Switches the next light grey font colour to full colour
-
 
 ' PB blue
 myColorBlue = &HFF0000
@@ -29,7 +28,8 @@ Do While stopNow = False And doneSome = False
     rng.Expand wdParagraph
     ln = Len(rng)
     DoEvents
-    If rng.start = ActiveDocument.Content.End Then
+    Debug.Print rng.Start, ActiveDocument.Content.End
+    If ActiveDocument.Content.End - rng.Start < 3 Then
       Beep
       Exit Sub
     End If

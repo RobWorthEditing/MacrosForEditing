@@ -1,0 +1,33 @@
+Sub PunctuationToNonBreakingSpace()
+' Paul Beverley - Version 28.03.25
+' Changes next space etc to a non-breaking space
+
+newChar = ChrW(160)
+
+trackIt = True
+
+searchChars = " -" & ChrW(160) & ChrW(8201) & Chr(30)
+
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+Set rng = Selection.Range.Duplicate
+
+For i = 1 To 1000
+  rng.MoveEnd , 1
+  If InStr(searchChars, Right(rng, 1)) > 0 Then
+    rng.Start = rng.End - 1
+    gotChar = True
+    Exit For
+  End If
+  DoEvents
+Next i
+If gotChar = False Then
+  Beep
+Else
+  rng.Delete
+  rng.Select
+  Selection.TypeText Text:=newChar
+End If
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

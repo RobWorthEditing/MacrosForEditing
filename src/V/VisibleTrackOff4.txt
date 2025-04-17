@@ -1,11 +1,16 @@
+
 Sub VisibleTrackOff4()
-' Paul Beverley - Version 27.10.17
+' Paul Beverley - Version 19.03.25
 ' Visible trackchange reminder - yellow background
+
+ActiveDocument.TrackFormatting = False
+' Or if you DO want formatting tracked, use:
+' ActiveDocument.TrackFormatting = True
 
 ActiveDocument.TrackRevisions = Not ActiveDocument.TrackRevisions
 If ActiveDocument.TrackRevisions = False Then _
      myColour = 200 Else myColour = 255
-  ActiveDocument.ActiveWindow.View.DisplayBackgrounds = True
+ActiveDocument.ActiveWindow.View.DisplayBackgrounds = True
 With ActiveDocument.Background.Fill
   .ForeColor.RGB = RGB(255, 255, myColour)
   .Visible = msoTrue

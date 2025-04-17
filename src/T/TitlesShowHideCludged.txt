@@ -1,0 +1,165 @@
+
+Sub TitlesShowHideCludged()
+' Paul Beverley - Version 09.04.25
+' Toggles between light grey font colour text and full colour
+
+' PB blue
+myColorBlue = &HFF0000
+' JY blue
+myColorBlue = &HF0B000
+
+preBlue = &HF6F6F6
+preRed = &HF4F4F4
+preBlack = &HF5F5F5
+
+Set pbTitlesFile = ActiveDocument
+
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = wdYellow
+
+For i = 0 To ActiveDocument.Shapes.Count
+  doIt = False
+  If i = 0 Then
+    doIt = True
+    Set rng = ActiveDocument.Content
+  Else
+    ' Trying to catch type 1 or 9 - hence Mod 8 = 1
+    If ActiveDocument.Shapes(i).Type Mod 8 = 1 Then
+      If ActiveDocument.Shapes(i).TextFrame.HasText Then
+        doIt = True
+        Set rng = ActiveDocument.Shapes(i).TextFrame.TextRange
+      End If
+    End If
+  End If
+  If doIt = True Then
+    If pbShowHide = True Then
+      With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Wrap = wdFindContinue
+        .Text = ""
+        .Highlight = True
+        .MatchWildcards = False
+        .Replacement.Text = ""
+        .Replacement.Font.DoubleStrikeThrough = True
+  '      .Execute Replace:=wdReplaceAll
+      
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Wrap = wdFindContinue
+        .Text = ""
+        .Font.Color = preBlue
+        .MatchWildcards = False
+        .Replacement.Text = ""
+        .Replacement.Font.Color = myColorBlue
+        .Execute Replace:=wdReplaceAll
+      
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Wrap = wdFindContinue
+        .Font.Color = preRed
+        .Replacement.Font.Color = wdColorRed
+        .Execute Replace:=wdReplaceAll
+        
+        .ClearFormatting
+        .Wrap = wdFindContinue
+        .Replacement.ClearFormatting
+        .Font.Color = preBlack
+        .Replacement.Font.Color = wdColorBlack
+        .Execute Replace:=wdReplaceAll
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .ClearFormatting
+
+        .Replacement.ClearFormatting
+        .Wrap = wdFindContinue
+        .Text = ""
+        .Font.DoubleStrikeThrough = True
+        .MatchWildcards = False
+        .Replacement.Text = ""
+        .Replacement.Highlight = True
+  '      .Replacement.Font.DoubleStrikeThrough = False
+        .Execute Replace:=wdReplaceAll
+      
+      End With
+    Else
+      With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Wrap = wdFindContinue
+        .Text = ""
+        .Highlight = True
+        .MatchWildcards = False
+        .Replacement.Text = ""
+        .Replacement.Font.DoubleStrikeThrough = True
+  '      .Execute Replace:=wdReplaceAll
+      
+       .ClearFormatting
+        .Replacement.ClearFormatting
+        .Wrap = wdFindContinue
+        .Text = ""
+        .Font.Color = myColorBlue
+        .Wrap = wdFindContinue
+        .Replacement.Text = ""
+        .Replacement.Font.Color = preBlue
+        .Forward = True
+        .MatchWildcards = False
+        .Execute Replace:=wdReplaceAll
+      
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Wrap = wdFindContinue
+        .Font.Color = wdColorRed
+        .Replacement.Text = ""
+        .Replacement.Font.Color = preRed
+        .Execute Replace:=wdReplaceAll
+      
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Wrap = wdFindContinue
+        .Font.Color = wdColorBlack
+        .Replacement.Text = ""
+        .Replacement.Font.Color = preBlack
+        .Execute Replace:=wdReplaceAll
+      
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Font.Color = wdColorBlack
+        .Replacement.Text = ""
+        .Replacement.Font.Color = preBlack
+        .Execute Replace:=wdReplaceAll
+      
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = ChrW(160)
+        .Replacement.Text = ""
+        .Replacement.Font.Underline = False
+        .Execute Replace:=wdReplaceAll
+      
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = "^p"
+        .Wrap = wdFindContinue
+        .Replacement.Text = ""
+        .Replacement.Font.Color = wdColorBlack
+        .Execute Replace:=wdReplaceAll
+        .ClearFormatting
+        .Replacement.ClearFormatting
+
+        .Replacement.ClearFormatting
+        .Wrap = wdFindContinue
+        .Text = ""
+        .Font.DoubleStrikeThrough = True
+        .MatchWildcards = False
+        .Replacement.Text = ""
+        .Replacement.Highlight = True
+        .Replacement.Font.DoubleStrikeThrough = False
+ '       .Execute Replace:=wdReplaceAll
+      End With
+    End If
+  End If
+Next i
+pbShowHide = Not (pbShowHide)
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

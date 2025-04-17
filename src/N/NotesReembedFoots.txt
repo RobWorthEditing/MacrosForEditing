@@ -1,0 +1,71 @@
+
+Sub NotesReembedFoots()
+' Paul Beverley - Version 04.04.25
+' Reembeds the listed footnotes
+
+myFootColour = wdColorBlue
+CR = vbCr
+CR2 = CR & CR
+ 
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{1,}"
+  .Font.Superscript = True
+  .Font.Color = myFootColour
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+ntNum = 0
+Do While rng.Find.found = True
+  newNum = Val(rng)
+  If newNum < ntNum Then Exit Do
+  ntNum = newNum
+  Set ntRng = ActiveDocument.Content
+  With ntRng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "f" & rng.Text
+    Debug.Print "f" & rng.Text & "!"
+    .Font.Superscript = True
+    .Font.Color = myFootColour
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .Execute
+    ntRng.MoveEnd , 1
+    ntRng.Collapse wdCollapseEnd
+    ntStart = ntRng.start
+    .Text = "f" & Trim(Str(ntNum + 1))
+    .Execute
+    If .found = False Then
+      Set ntRng = ActiveDocument.Content
+      ntRng.End = InStr(ntRng, "f9999") - 1
+      ntRng.Collapse wdCollapseEnd
+    End If
+  End With
+  ntRng.Collapse wdCollapseStart
+  ntRng.start = ntStart
+  ntEnd = ntRng.start
+  ntRng.MoveEnd , -1
+  ntRng.Copy
+  rng.Delete
+  rng.Select
+  Selection.Footnotes.Add Range:=Selection.Range
+  Selection.Paste
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+

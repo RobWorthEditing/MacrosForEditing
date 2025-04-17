@@ -1,13 +1,15 @@
 
-Sub MerriamFetch()
-' Paul Beverley - Version 26.03.25
-' Launches selected text to Merriam
+Sub GoogleFetchAT()
+' Paul Beverley - Version 29.05.24
+' Launches selected text on Google
 
-mySite = "https://www.merriam-webster.com/dictionary/"
+alsoCopySubject = False
+
+mySite = "http://www.google.at/search?q="
 
 If Selection.start = Selection.End Then
   Selection.Expand wdWord
-  If Len(Selection) < 2 Then
+  If Len(Selection) < 3 Then
     Selection.Collapse wdCollapseStart
     Selection.MoveLeft , 1
     Selection.Expand wdWord
@@ -16,15 +18,6 @@ If Selection.start = Selection.End Then
     Selection.MoveEnd , -1
     DoEvents
   Loop
-  Set rng = Selection.Range.Duplicate
-  rng.MoveStart , -1
-  If Left(rng, 1) = "-" Then
-    Selection.MoveStart wdWord, -2
-  End If
-  rng.MoveEnd , 1
-  If Right(rng, 1) = "-" Then
-    Selection.MoveEnd wdWord, 2
-  End If
 Else
   endNow = Selection.End
   Selection.MoveLeft wdWord, 1
@@ -37,11 +30,18 @@ Else
   Loop
   Selection.start = startNow
 End If
+
+If alsoCopySubject = True Then Selection.Copy
+
 mySubject = Trim(Selection)
 mySubject = Replace(mySubject, " ", "+")
 mySubject = Replace(mySubject, "&", "%26")
 mySubject = Replace(mySubject, ChrW(8217), "'")
+Debug.Print mySite & mySubject
 ActiveDocument.FollowHyperlink Address:=mySite & mySubject
 Selection.Collapse wdCollapseEnd
 End Sub
+
+
+
 

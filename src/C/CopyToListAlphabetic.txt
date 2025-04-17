@@ -1,59 +1,41 @@
 
 Sub CopyToListAlphabetic()
-' Paul Beverley - Version 08.12.24
+' Paul Beverley - Version 15.04.24
 ' Copies selected text into an alphabetic list file
 
-
-beepIfAlreadyListed = True
-' To locate list file (not case sensitive)
 ' keyWord = "queries"
-' keyWord = "list"
+keyWord = "list"
 keyWord = "sheet"
 
-' Exact capitalisation(i.e. case sensitive)
 followHeading = "Word list"
 
 wordsToAvoid = "switch"
 ' wordsToAvoid = "FRedit,switch"
 
-' copyWholePara = True
+copyWholePara = True
 copyWholePara = False
 
-includeFormatting = False
-' includeFormatting = True
+includeFormatting = True
+' includeFormatting = False
 
 goBackToSource = True
 
+CR = vbCr
+CR2 = CR & CR
 Dim sourceText As Range, tgt As Range
 Set thisDoc = ActiveDocument
 wds = Split("," & LCase(wordsToAvoid), ",")
 
-If Selection.start = Selection.End Then
+If Selection.Start = Selection.End Then
   If Selection = vbCr Then Selection.MoveLeft , 1
   If copyWholePara = True Then
     Selection.Expand wdParagraph
   Else
-    Set rng = Selection.Range.Duplicate
-    rng.Expand wdWord
-    rng.MoveEnd wdWord, 1
-    chkWd = rng.Words.Last
-    If chkWd = "-" Then
-      rng.MoveEnd wdWord, 2
-      chkWd = rng.Words.Last
-      If chkWd = "-" Then
-        rng.MoveEnd wdWord, 1
-      Else
-        rng.MoveEnd wdWord, -1
-      End If
-    Else
-      rng.MoveEnd wdWord, -1
-    End If
-    DoEvents
-    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
-      rng.MoveEnd , -1
+    Selection.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
       DoEvents
     Loop
-    rng.Select
   End If
 Else
   Set rng = Selection.Range.Duplicate
@@ -67,12 +49,13 @@ Else
   Selection.Collapse wdCollapseStart
   Selection.Expand wdWord
   Selection.Collapse wdCollapseStart
-  rng.start = Selection.start
+  rng.Start = Selection.Start
   rng.Select
 End If
 
 Set sourceText = Selection.Range.Duplicate
 myText = sourceText.Text
+Selection.Copy
 Selection.Collapse wdCollapseEnd
 
 gottaList = False
@@ -84,12 +67,17 @@ For Each myDoc In Application.Documents
   For i = 1 To UBound(wds)
     If InStr(nm, wds(i)) > 0 Then gottaList = False
   Next i
-  If gottaList = True Then Exit For
+  If gottaList = True Then
+    myDoc.Activate
+    Exit For
+  End If
 Next myDoc
 
 If gottaList = False Then
   Beep
-  MsgBox "Can't find a list."
+  myResponse = MsgBox("Can't find a list/stylesheet." & CR2 & _
+       "Filename must include:  >" & keyWord & "<", vbExclamation _
+       + vbOKOnly, "CopyToListAlphabetic")
   Exit Sub
 End If
 
@@ -98,26 +86,23 @@ Set rng = myDoc.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = followHeading
+  .Text = "[^12^13]" & followHeading
   .Wrap = wdFindStop
   .Forward = True
   .Replacement.Text = ""
   .MatchCase = True
-  .MatchWildcards = False
+  .MatchWildcards = True
   .Execute
   DoEvents
 End With
 
+If rng.Find.Found = False Then
+  myResponse = MsgBox("Can't find the heading:" & CR2 & _
+       followHeading, vbExclamation + vbOKOnly, "CopyToListAlphabetic")
+
+End If
 rng.Expand wdParagraph
 listStart = rng.End
-If rng.Find.Found = False Then
-  Beep
-  MsgBox "Can't find heading: """ & followHeading & """"
-  rng.start = 0
-  rng.End = 0
-  listStart = 0
-  Selection.HomeKey Unit:=wdStory
-End If
 rng.Collapse wdCollapseStart
 ' Check if it's already in the list
 With rng.Find
@@ -125,21 +110,23 @@ With rng.Find
   .Replacement.ClearFormatting
   .Text = "^p" & myText & "^p"
   .Wrap = wdFindStop
+  .MatchWildcards = False
   .Execute
   DoEvents
 End With
 
 If rng.Find.Found = True Then
-  If beepIfAlreadyListed = True Then Beep
+  Beep
   If goBackToSource = False Then myDoc.Activate
   Exit Sub
 End If
 
-rng.start = listStart
+rng.Start = listStart
 rng.End = myDoc.Content.End
 If LCase(rng) <> UCase(rng) Then
   For i = 1 To rng.Paragraphs.Count
     myNextItem = Replace(rng.Paragraphs(i).Range.Text, vbCr, "")
+'    Debug.Print myText & ":", "|" & myNextItem & "|"
     If LCase(myNextItem) > LCase(myText) Or _
         LCase(myNextItem) = UCase(myNextItem) Then
       Set rng = rng.Paragraphs(i).Range.Duplicate
@@ -159,8 +146,7 @@ Else
   rng.InsertAfter myText
   If InStr(myText, vbCr) = 0 Then rng.InsertAfter vbCr
 End If
-rng.Revisions.AcceptAll
 If goBackToSource = False Then myDoc.Activate
-' Beep
 End Sub
+
 

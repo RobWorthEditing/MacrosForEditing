@@ -1,12 +1,16 @@
+
 Sub NotesUnembed()
-' Paul Beverley - Version 19.02.16
+' Paul Beverley - Version 24.03.25
 ' Unembeds footnotes or endnotes
 
-doHighlight = False
+doHighlight = True
 
 ActiveDocument.Footnotes.Convert
 Selection.EndKey Unit:=wdStory
 Selection.TypeParagraph
+Selection.Expand wdParagraph
+Selection.Style = ActiveDocument.Styles("Normal")
+Selection.Collapse wdCollapseEnd
 
 For Each myNote In ActiveDocument.Endnotes
   If Len(myNote.Range.Text) > 1 Then myNote.Range.Copy

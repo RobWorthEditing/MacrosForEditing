@@ -1,6 +1,7 @@
 
+
 Sub TrackOnOffVisible()
-' Paul Beverley - Version 25.11.24
+' Paul Beverley - Version 28.03.25
 ' Switches tracking on/off with visible background
 
 myColourNumber = 200
@@ -35,7 +36,7 @@ With ActiveDocument.Styles(wdStyleNormal).ParagraphFormat
 End With
 
 With ActiveDocument.Background.Fill
-  .ForeColor.RGB = RGB(255, 255, myColNumber)
+  .ForeColor.RGB = RGB(255, 255, 255)
   .Visible = msoTrue
   .Solid
 End With

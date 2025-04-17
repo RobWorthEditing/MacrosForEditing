@@ -1,16 +1,21 @@
 
 Sub AccentAlyse()
-' Paul Beverley - Version 03.03.25
+' Paul Beverley - Version 29.03.25
 ' Analyses all the words that contain accents
 
 ' Minimum word length
 minLength = 3
 
 myLead = " . . . "
+
 ' For including 'Central European' characters
 addExtraCharacters = True
 fromUnicode = 256
-toUnicode = 385
+toUnicode = 383
+
+' For including all sorts of characters!
+fromUnicode2 = &H1E00
+toUnicode2 = &H1FFF
 
 ' These are the accents to watch out for
 allAccents = ""
@@ -23,15 +28,18 @@ Next i
 For i = 248 To 255
   allAccents = allAccents & ChrW(i)
 Next i
+
 CR = vbCr: CR2 = CR & CR
 Set FUT = ActiveDocument
-doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0)
+doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") > 0) _
+     Or (InStr(FUT.Name, "ocument") > 0)
 If doingSeveralMacros = False Then
-  myResponse = MsgBox("    AccentAlyse" & vbCr & vbCr & _
+  myResponse = MsgBox("    AccentAlyse" & CR2 & _
        "Analyse this document?", vbQuestion _
        + vbYesNoCancel, "AccentAlyse")
   If myResponse <> vbYes Then Exit Sub
 End If
+
 If addExtraCharacters = True Then
   For i = fromUnicode To toUnicode
     allAccents = allAccents & ChrW(i)
@@ -41,23 +49,26 @@ End If
 myLead = " . . . "
 Set rngOld = FUT.Content
 Set testDoc = Documents.Add
+' This is used to store all the text and then
+' cut down to just the accented characters
 Set rng = testDoc.Content
 rng.Text = rngOld.Text
 For i = 1 To 10
   DoEvents
 Next i
 rng.Collapse wdCollapseEnd
-numFoots = FUT.Footnotes.Count
+numFoots = FUT.Footnotes.count
 If numFoots > 0 Then
   rng.Text = FUT.StoryRanges(wdFootnotesStory)
   rng.Collapse wdCollapseEnd
 End If
-numEnds = FUT.Endnotes.Count
+numEnds = FUT.Endnotes.count
 If numEnds > 0 Then
   rng.Text = FUT.StoryRanges(wdEndnotesStory)
   rng.Collapse wdCollapseEnd
 End If
 
+' Avoid apostrophes
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -71,44 +82,59 @@ End With
 Set rsltDoc = Documents.Add
 Set rsltRng = rsltDoc.Content
 rsltRng.Text = testDoc.Content.Text
+' Copy to results document, just to hold it ready
+' Then it will be copied back into testDoc
+' to do the frequencies
 For i = 1 To 10
   DoEvents
 Next i
 Set rng = testDoc.Content
-
-rng.Font.color = wdColorAutomatic
+rng.Font.Color = wdColorAutomatic
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "[" & allAccents & "]"
+  .Text = "[" & allAccents & ChrW(fromUnicode) & "-" & ChrW(toUnicode) & "]"
   .Replacement.Text = "^&"
-  .Replacement.Font.color = wdColorRed
+  .Wrap = wdFindContinue
+  .Replacement.Font.Color = wdColorRed
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
 
+If addExtraCharacters = True Then
+    .Text = "[" & ChrW(fromUnicode2) & "-" & ChrW(toUnicode2) & "]"
+    .Execute Replace:=wdReplaceAll
+End If
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "<[a-zA-Z0-9]@>"
-  .Font.color = wdColorAutomatic
+  .Text = "<[a-zA-Z]{1,}>"
+  .Font.Color = wdColorAutomatic
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+    
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9 ,.\!\?"" '\(\)\[\]]{1,}"
   .Replacement.Text = "^p"
   .Execute Replace:=wdReplaceAll
 
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "[!a-zA-Z0-9]@"
+  .Text = "[^13^11]{1,}"
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+
+  For Each wd In rng.Words
+    If Len(wd) < 3 And wd <> CR Then wd.Delete
+  Next wd
+  
+  .Text = "[^13^11]{1,}"
   .Replacement.Text = "^p"
   .Execute Replace:=wdReplaceAll
 
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "[^13]{1,}"
-  .Replacement.Text = "^p"
-  .Execute Replace:=wdReplaceAll
-
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = ""
-  .Font.color = wdColorRed
+  .Text = "?"
+  .Font.Color = wdColorRed
   .Replacement.Text = "[^&]"
   .Execute Replace:=wdReplaceAll
 End With
@@ -116,56 +142,48 @@ If rng.Paragraphs(1).Range = CR Then _
      rng.Paragraphs(1).Range.Delete
 
 allWords = CR
-Dim wrd(5) As String
-Dim num(5) As Integer
+Dim wrd(6) As String
+Dim num(6) As Integer
 Dim schWd(2) As String
-
 For Each pa In rng.Paragraphs
-  wd = pa
-  If InStr(allWords, CR & wd & CR) = 0 And Len(wd) > minLength + 2 Then
+  wd = Replace(pa, CR, "")
+  If InStr(allWords, CR & wd & CR) = 0 And _
+         Len(wd) > 1 Then
+    If Left(wd, 1) = "[" Then
+      wd = Mid(wd, 2, 1) & Mid(wd, 4) & "["
+    End If
     allWords = allWords & wd & CR
   End If
 Next pa
+allWords = Replace(allWords, CR2, CR)
 rng.Text = Replace(allWords, CR2, CR)
 rng.Sort
 rng.InsertAfter Text:=CR
 If rng.Paragraphs(1) = CR Then rng.Paragraphs(1) = ""
 If rng.Paragraphs(1) = CR Then rng.Paragraphs(1) = ""
-
 For Each pa In rng.Paragraphs
-  wd = Replace(pa, vbCr, "")
-  If Len(wd) - Len(Replace(wd, "[", "")) = 2 Then
-    sqPos1 = InStr(wd, "[")
-    sqPos2 = InStrRev(wd, "[")
-    schWd(1) = Left(wd, sqPos1 - 1) & "[^?]" & Mid(wd, sqPos1 + 3, sqPos2 - sqPos1 - 3) & "^?" & Mid(wd, sqPos2 + 3)
-    schWd(2) = Left(wd, sqPos1 - 1) & "^?" & Mid(wd, sqPos1 + 3, sqPos2 - sqPos1 - 3) & "[^?]" & Mid(wd, sqPos2 + 3)
-    Set rng2 = testDoc.Content
-    For i = 1 To 2
-      With rng2.Find
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Text = schWd(i) & "^p"
-        .Wrap = wdFindContinue
-        .Replacement.Text = "^p"
-        .Forward = True
-        .MatchWildcards = False
-        .MatchWholeWord = False
-        .Execute Replace:=wdReplaceAll
-      End With
-    Next i
+  wd = Replace(pa, CR, "")
+  If Right(wd, 1) = "[" Then
+    wd = "[" & Left(wd, 1) & "]" & _
+         Left(Mid(wd, 2), Len(wd) - 2)
+    Debug.Print "|" & wd & "|"
+    pa.Range.Text = wd & CR
   End If
 Next pa
-
 DoEvents
+Debug.Print allWords
 allWords = Replace(CR & rng.Text & CR, CR2, CR)
+Debug.Print allWords
 allWords = Replace(allWords, CR2, CR)
+Debug.Print allWords
 allWords = Left(allWords, Len(allWords) - 1)
+Debug.Print allWords
 sqPos = InStr(allWords, "[")
 Do While sqPos > 0
   allWords = Left(allWords, sqPos - 1) & "?" & Mid(allWords, sqPos + 3)
   sqPos = InStr(allWords, "[")
 Loop
-allWords = allWords
+Debug.Print allWords
 DoEvents
 
 myWord = Split(allWords, CR)
@@ -180,7 +198,7 @@ For i = 1 To UBound(myWord)
     wdsDone = wdsDone & myWord(i) & "!"
     Set rng = testDoc.Content
     StatusBar = "Counting words...  " & myWord(i)
-    For n = 1 To 5
+    For n = 1 To 6
       wrd(n) = ""
       num(n) = 0
     Next n
@@ -199,14 +217,14 @@ For i = 1 To UBound(myWord)
     Do While rng.Find.Found = True
       fndWd = rng.Text
       gotThis = False
-      For n = 1 To 5
+      For n = 1 To 6
         If wrd(n) = fndWd Then
           num(n) = num(n) + 1
           gotThis = True
         End If
       Next n
       If gotThis = False Then
-        For n = 1 To 5
+        For n = 1 To 6
           If wrd(n) = "" Then
             wrd(n) = fndWd
             num(n) = 1
@@ -220,7 +238,7 @@ For i = 1 To UBound(myWord)
       rng.Find.Execute
       DoEvents
     Loop
-    For n = 1 To 5
+    For n = 1 To 6
       If wrd(n) = "" Then
         Exit For
       Else
@@ -239,8 +257,4 @@ testDoc.Close SaveChanges:=False
 rsltDoc.Activate
 Beep
 End Sub
-
-
-
-
 

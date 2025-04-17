@@ -1,0 +1,42 @@
+
+Sub HighLightOff()
+' Paul Beverley - Version 27.03.25
+' Removes ALL highlights (+ optionally text colour) from whole text
+
+' doTextColourToo = True
+doTextColourToo = False
+
+If doTextColourToo = True Then
+  myPrompt = "Remove highlight AND font colour from the whole document?!"
+Else
+  myPrompt = "Remove highlight from the whole document?!"
+End If
+
+myDo = "S"
+If Selection.start = Selection.End Then
+  Beep
+  myResponse = MsgBox(myPrompt, _
+       vbQuestion + vbYesNoCancel, "DoWhatever")
+  If myResponse <> vbYes Then Exit Sub
+  myDo = "TEF"
+End If
+If ActiveDocument.Footnotes.count = 0 Then myDo = Replace(myDo, "F", "")
+If ActiveDocument.Endnotes.count = 0 Then myDo = Replace(myDo, "E", "")
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+For myRun = 1 To Len(myDo)
+  doThis = Mid(myDo, myRun, 1)
+  Select Case doThis
+     Case "S": Set rng = Selection.Range.Duplicate
+     Case "T": Set rng = ActiveDocument.Content
+     Case "F": Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+     Case "E": Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  End Select
+  rng.HighlightColorIndex = wdNoHighlight
+  If doTextColourToo = True Then rng.Font.Color = wdColorAutomatic
+Next myRun
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

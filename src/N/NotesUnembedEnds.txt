@@ -1,0 +1,120 @@
+
+Sub NotesUnembedEnds()
+' Paul Beverley - Version 04.04.25
+' Unembeds all endnotes
+
+myEndColour = wdColorRed
+CR = vbCr
+CR2 = CR & CR
+ActiveDocument.TrackRevisions = False
+Set rng = ActiveDocument.Content
+rng.InsertAfter Text:=CR2
+myEndCount = rng.Endnotes.count
+If myEndCount = 0 Then
+  myResponse = MsgBox("Can't find any endnotes!", _
+      vbInformation, "NotesUnembedEnds")
+  Exit Sub
+Else
+  myResponse = MsgBox(Str(myEndCount) & " endnotes found. Continue?", _
+       vbQuestion + vbYesNoCancel, "NotesUnembedEnds")
+  If myResponse <> vbYes Then Exit Sub
+End If
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^2"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.found = True
+  If rng.Endnotes.count > 0 Then
+    myCount = myCount + 1
+    rng.InsertAfter Text:=Trim(Str(myCount))
+    rng.MoveStart , 1
+    rng.Font.Color = myEndColour
+    rng.Font.Superscript = True
+    If myCount Mod 20 = 0 Then rng.Select
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+If myCount <> myEndCount Then
+  Beep
+  MsgBox "Number mismatch!" & CR2 & "File has " & _
+       myEndCount & " Endnotes, but I found: " & myCount _
+       & CR2 & "Sounds like the file might be corrupted?"
+  Exit Sub
+End If
+
+' Copy the endnote text to the end of the document
+ActiveDocument.StoryRanges(wdEndnotesStory).Copy
+' Delete all the endnotes
+For i = ActiveDocument.Endnotes.count To 1 Step -1
+  ActiveDocument.Endnotes(i).Delete
+  StatusBar = "                                   " & i
+Next i
+Set rng = ActiveDocument.Content
+rng.Collapse wdCollapseEnd
+ntsStart = rng.start
+rng.Paste
+rng.MoveEnd , -1
+rng.InsertAfter Text:=CR & "e9999"
+rng.Collapse wdCollapseEnd
+rng.Expand wdParagraph
+rng.Font.Superscript = True
+
+Set rng = ActiveDocument.Content
+rng.start = ntsStart
+
+'Number the Endnotes
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^2"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.found = True
+  rng.MoveEnd , 1
+  If Right(rng, 1) <> " " Then
+    rng.MoveEnd , -1
+    rng.InsertAfter Text:=" "
+  End If
+  myCount = myCount + 1
+  numText = Trim(Str(myCount))
+  n = Len(numText)
+  rng.InsertAfter Text:="e" & numText & " "
+  rng.MoveEnd , -(n + 2)
+  rng.Delete
+  rng.MoveEnd , n + 1
+  rng.Font.Color = myEndColour
+  rng.Font.Superscript = True
+  If myCount Mod 20 = 0 Then rng.Select
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Selection.EndKey Unit:=wdStory
+If myCount <> myEndCount Then
+  Beep
+  MsgBox "Number mismatch!" & CR2 & "File has " & _
+       myFootCount & " endnotes, but I found: " & myCount _
+       & CR2 & "Feel free to ask Paul for help."
+  Exit Sub
+End If
+Beep
+End Sub
+

@@ -1,0 +1,122 @@
+
+Sub NotesUnembedFoots()
+' Paul Beverley - Version 04.04.25
+' Unembeds all footnotes
+
+myFootColour = wdColorBlue
+CR = vbCr
+CR2 = CR & CR
+ActiveDocument.TrackRevisions = False
+Set rng = ActiveDocument.Content
+rng.InsertAfter Text:=CR2
+
+myFootCount = rng.Footnotes.count
+If myFootCount = 0 Then
+  myResponse = MsgBox("Can't find any footnotes!", _
+      vbInformation, "NotesUnembedFoots")
+  Exit Sub
+Else
+  myResponse = MsgBox(Str(myFootCount) & " footnotes found. Continue?", _
+       vbQuestion + vbYesNoCancel, "NotesUnembedFoots")
+  If myResponse <> vbYes Then Exit Sub
+End If
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^2"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.found = True
+  If rng.Footnotes.count > 0 Then
+    myCount = myCount + 1
+    rng.InsertAfter Text:=Trim(Str(myCount))
+    rng.MoveStart , 1
+    rng.Font.Color = myFootColour
+    rng.Font.Superscript = True
+    If myCount Mod 20 = 0 Then rng.Select
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+If myCount <> myFootCount Then
+  Beep
+  MsgBox "Number mismatch!" & CR2 & "File has " & _
+       myFootCount & " footnotes, but I found: " & myCount _
+       & CR2 & "Sounds like the file might be corrupted?"
+  Exit Sub
+End If
+
+' Copy the footnote text to the end of the document
+ActiveDocument.StoryRanges(wdFootnotesStory).Copy
+For i = ActiveDocument.Footnotes.count To 1 Step -1
+  ActiveDocument.Footnotes(i).Delete
+  StatusBar = "                                   " & i
+Next i
+Set rng = ActiveDocument.Content
+rng.Collapse wdCollapseEnd
+ntsStart = rng.start
+
+rng.Paste
+rng.MoveEnd , -1
+rng.InsertAfter Text:=CR & "f9999"
+rng.Collapse wdCollapseEnd
+rng.Expand wdParagraph
+rng.Font.Superscript = True
+
+Set rng = ActiveDocument.Content
+rng.start = ntsStart
+
+'Number the footnotes
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^2"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.found = True
+  rng.MoveEnd , 1
+  If Right(rng, 1) <> " " Then
+    rng.MoveEnd , -1
+    rng.InsertAfter Text:=" "
+  End If
+  myCount = myCount + 1
+  numText = Trim(Str(myCount))
+  n = Len(numText)
+  Debug.Print numText
+  rng.InsertAfter Text:="f" & numText & " "
+  rng.MoveEnd , -(n + 2)
+  rng.Select
+  rng.Delete
+  rng.MoveEnd , n + 1
+  rng.Font.Color = myFootColour
+  rng.Font.Superscript = True
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Selection.EndKey Unit:=wdStory
+If myCount <> myFootCount Then
+  Beep
+  MsgBox "Number mismatch!" & CR2 & "File has " & _
+       myFootCount & " footnotes, but I found: " & myCount _
+       & CR2 & "Feel free to ask Paul for help."
+  Exit Sub
+End If
+Beep
+End Sub
+

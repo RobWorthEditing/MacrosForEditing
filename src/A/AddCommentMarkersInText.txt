@@ -1,12 +1,35 @@
+
 Sub AddCommentMarkersInText()
-' Paul Beverley - Version 30.12.11
-' Add comment initials and numbers to text
+' Paul Beverley - Version 15.03.25
+' Adds comment initials and numbers to text
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+' Delete existing comment markers
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "(\[[A-Z]{2,3}[0-9]@\])"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
 For k = 1 To ActiveDocument.Comments.Count
   myInits = "[" & ActiveDocument.Comments(k).Initial & Trim(Str(k)) & "]"
-  ActiveDocument.Comments(k).Reference.InsertAfter myInits
   Set rng = ActiveDocument.Comments(k).Reference
-  rng.End = rng.End + Len(myInits)
+  rng.Collapse wdCollapseEnd
+  rng.MoveStart , 1
+  rng.InsertBefore myInits
   rng.HighlightColorIndex = wdBrightGreen
 Next k
+ActiveDocument.TrackRevisions = myTrack
+Beep
+rng.Select
 End Sub
 

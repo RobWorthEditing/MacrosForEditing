@@ -1,6 +1,6 @@
 
 Sub MultiSwitch()
-' Paul Beverley - Version 28.01.25
+' Paul Beverley - Version 21.03.25
 ' Scripted word/phrase switching
 
 
@@ -297,19 +297,24 @@ With ActiveWindow.View.RevisionsFilter
   myView = .View
 End With
 myTrack = ActiveDocument.TrackRevisions
+If removeHighlight = True Then
+  ActiveDocument.TrackRevisions = False
+  Selection.MoveEnd , 1
+  Selection.Range.HighlightColorIndex = wdNoHighlight
+  Selection.MoveEnd , -1
+  ActiveDocument.TrackRevisions = myTrack
+End If
+
+myTrack = ActiveDocument.TrackRevisions
 If noTrack Then ActiveDocument.TrackRevisions = False
 If useFormat = True Then
   Selection.Delete
   Selection.Paste
 Else
-  If removeHighlight = True Then
-    myTrack = ActiveDocument.TrackRevisions
-    ActiveDocument.TrackRevisions = False
-    Selection.Range.HighlightColorIndex = wdNoHighlight
-    ActiveDocument.TrackRevisions = myTrack
-  End If
   Selection.Text = myNewItem
 End If
+ActiveDocument.TrackRevisions = myTrack
+
 Selection.start = startNow
 textEnd = Selection.End
 If InStr(Selection, "^p") > 0 Then
@@ -392,13 +397,11 @@ If addOriginal = True Then
   Selection.TypeText Text:=" (" & myStr(1) & ")"
 End If
 
-If noTrack Then
-  ActiveDocument.TrackRevisions = myTrack
-  With ActiveWindow.View.RevisionsFilter
-    .Markup = myMarkup
-    .View = myView
-  End With
-End If
+ActiveDocument.TrackRevisions = myTrack
+With ActiveWindow.View.RevisionsFilter
+  .Markup = myMarkup
+  .View = myView
+End With
 Options.SmartCutPaste = mySmartOpt
 Selection.Find.Text = "^p^p" & myStr(1)
 Exit Sub

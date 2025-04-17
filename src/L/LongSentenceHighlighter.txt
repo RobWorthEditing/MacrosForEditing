@@ -1,19 +1,40 @@
+
 Sub LongSentenceHighlighter()
-' Paul Beverley - Version 19.05.12
-' Highlight all sentences more than a certain length
+' Paul Beverley - Version 19.03.25
+' Highlights all sentences more than a certain length
 
-mediumLength = 80
-megaLength = 120
+mediumLength = 50
+mediumColour = wdYellow
+megaLength = 70
+megaColour = warred
 
-For Each mySent In ActiveDocument.Sentences
-  If mySent.Words.Count > megaLength Then
-    mySent.HighlightColorIndex = wdRed
-    mySent.Select
-  Else
-    If mySent.Words.Count > mediumLength Then _
-         mySent.HighlightColorIndex = wdYellow
-    mySent.Select
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+Set rng = ActiveDocument.Content
+rng.Collapse wdCollapseStart
+For Each sn In ActiveDocument.sentences
+  rng.End = sn.End
+  rng.Select
+  isASentence = True
+  If Left(Right(sn, 2), 1) = "," Then isASentence = False
+  If Right(sn, 4) Like " [A-Z]. " Then isASentence = False
+  If Right(sn, 4) Like ".[a-z]. " Then isASentence = False
+  If Right(sn, 4) = "vs. " Then isASentence = False
+  If Right(sn, 5) = "etc. " Then isASentence = False
+
+  If isASentence = True Then
+    If rng.Words.count > megaLength Then
+      rng.HighlightColorIndex = megaColour
+      rng.Select
+    Else
+      If rng.Words.count > mediumLength Then
+        rng.HighlightColorIndex = mediumColour
+        rng.Select
+      End If
+    End If
+    rng.Collapse wdCollapseEnd
   End If
-Next
+Next sn
+ActiveDocument.TrackRevisions = myTrack
 End Sub
 
