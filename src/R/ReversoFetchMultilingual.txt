@@ -1,0 +1,103 @@
+
+Sub ReversoFetchMultilingual()
+' Paul Beverley - Version 19.06.25
+' Checks the current word/phrase in its current language
+
+' Find the current language
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+rng.MoveEnd , 1
+myLanguage = rng.LanguageID
+
+' Round off the selection
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  If Len(Selection) < 3 Then
+    Selection.Collapse wdCollapseStart
+    Selection.MoveLeft , 1
+    Selection.Expand wdWord
+  End If
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.Start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Start = startNow
+End If
+
+Select Case myLanguage
+  Case wdEnglishUK
+       mySite = "https://context.reverso.net/traduction/anglais-francais/"
+  Case wdEnglishUS
+       mySite = "https://context.reverso.net/traduction/anglais-francais/"
+  Case wdEnglishAUS
+       mySite = "https://context.reverso.net/traduction/anglais-francais/"
+  Case wdSwissFrench
+       mySite = "https://context.reverso.net/traduction/francais-anglais/"
+  Case wdFrench
+       mySite = "https://context.reverso.net/traduction/francais-anglais/"
+  Case wdSpanish
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishArgentina
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishBolivia
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishChile
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishColombia
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishCostaRica
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishDominicanRepublic
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishEcuador
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishElSalvador
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishGuatemala
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishHonduras
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishModernSort
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishNicaragua
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishPanama
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishParaguay
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishPeru
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishPuertoRico
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishUruguay
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdSpanishVenezuela
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+  Case wdMexicanSpanish
+       mySite = "https://context.reverso.net/traduction/espagnol-francais/"
+End Select
+
+mySubject = Trim(Selection.Text)
+Debug.Print mySubject
+mySubject = Replace(mySubject, " ", "+")
+mySubject = Replace(mySubject, "&", "%26")
+mySubject = Replace(mySubject, ChrW(8217), "'")
+Debug.Print mySubject
+Set newLink = ActiveDocument.Hyperlinks.Add(Anchor:=Selection.Range, _
+   Address:=mySite & mySubject)
+newLink.Follow
+ActiveDocument.Undo
+End Sub
+
+
+

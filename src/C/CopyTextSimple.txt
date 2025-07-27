@@ -1,6 +1,6 @@
 
 Sub CopyTextSimple()
-' Paul Beverley - Version 13.06.24
+' Paul Beverley - Version 19.07.25
 ' Creates a text-only copy, with some features preserved
 
 doItalic = True
@@ -9,18 +9,26 @@ doSub = True
 doSuper = True
 doListNumbers = True
 
-
 myColour = wdGray25
-myScreenOff = True
 
-If doListNumbers = True Then ActiveDocument.ConvertNumbersToText
+myDelay = 5
+myDelay2 = 1
+
 myComments = ""
+
 Set rngOld = ActiveDocument.Content
-Documents.Add
-Set rng = ActiveDocument.Content
-rng.FormattedText = rngOld.FormattedText
+myLanguage = rngOld.Characters(1).LanguageID
+Set newDoc = Documents.Add
+newDoc.Content.FormattedText = rngOld.FormattedText
+For i = 1 To 200 * myDelay: DoEvents: Next i
+
+If doListNumbers = True Then newDoc.ConvertNumbersToText
+Set rng = newDoc.Content
 rng.Revisions.AcceptAll
-If numberCmnts > 0 Then ActiveDocument.DeleteAllComments
+rng.Fields.Unlink
+rng.LanguageID = myLanguage
+If numberCmnts > 0 Then newDoc.DeleteAllComments
+For i = 1 To 200 * myDelay: DoEvents: Next i
 
 wds1 = rng.Words.Count
 rng.Font.Hidden = False
@@ -32,10 +40,10 @@ If wds2 <> wds1 Then
        vbQuestion + vbYesNoCancel, "CopyText")
   If myResponse = vbCancel Then Exit Sub
   If myResponse = vbYes Then
-    ActiveDocument.ActiveWindow.View.ShowHiddenText = True
+    newDoc.ActiveWindow.View.ShowHiddenText = True
     oldColour = Options.DefaultHighlightColorIndex
     Options.DefaultHighlightColorIndex = myColour
-    Set rng = ActiveDocument.Content
+    Set rng = newDoc.Content
     With rng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
@@ -46,59 +54,54 @@ If wds2 <> wds1 Then
       .Replacement.Highlight = True
       .Replacement.Text = ""
       .Execute Replace:=wdReplaceAll
-      DoEvents
+      For kk = 1 To myDelay2: DoEvents: Next kk
     End With
-    ActiveDocument.ActiveWindow.View.ShowHiddenText = False
+    newDoc.ActiveWindow.View.ShowHiddenText = False
   End If
 End If
 
-If myScreenOff = True Then
-  Application.ScreenUpdating = False
-  On Error GoTo ReportIt
-End If
-
-numNotes = ActiveDocument.Endnotes.Count
+numNotes = newDoc.Endnotes.Count
 If numNotes > 0 Then
   myComments = myComments & "| endnotes = yes (" _
        & Trim(Str(numNotes)) & ")" & vbCr
-  Set rng = ActiveDocument.Content
+  Set rng = newDoc.Content
   rng.Collapse wdCollapseEnd
   rng.InsertAfter Text:=vbCr & "Endnotes:" & vbCr & vbCr
   rng.Collapse wdCollapseEnd
   rng.FormattedText = _
-       ActiveDocument.StoryRanges(wdEndnotesStory).FormattedText
+       newDoc.StoryRanges(wdEndnotesStory).FormattedText
   ' Delete all notes
   For j = numNotes To 1 Step -1
-    ActiveDocument.Endnotes(j).Delete
+    newDoc.Endnotes(j).Delete
     DoEvents
   Next j
 End If
 
-numNotes = ActiveDocument.Footnotes.Count
+numNotes = newDoc.Footnotes.Count
 If numNotes > 0 Then
   myComments = myComments & "| footnotes = yes (" _
        & Trim(Str(numNotes)) & ")" & vbCr
-  Set rng = ActiveDocument.Content
+  Set rng = newDoc.Content
   rng.Collapse wdCollapseEnd
   rng.InsertAfter Text:=vbCr & "Footnotes:" & vbCr & vbCr
   rng.Collapse wdCollapseEnd
   rng.FormattedText = _
-       ActiveDocument.StoryRanges(wdFootnotesStory).FormattedText
+       newDoc.StoryRanges(wdFootnotesStory).FormattedText
   ' Delete all notes
   For j = numNotes To 1 Step -1
-    ActiveDocument.Footnotes(j).Delete
+    newDoc.Footnotes(j).Delete
     DoEvents
   Next j
 End If
 
 ' copy all the textboxes to the end of the text
-shCount = ActiveDocument.Shapes.Count
+shCount = newDoc.Shapes.Count
 tbCount = 0
 If shCount > 0 Then
   Selection.EndKey Unit:=wdStory
   Selection.TypeText vbCr & "Textboxes:" & vbCr & vbCr
   For j = 1 To shCount
-    Set shp = ActiveDocument.Shapes(j)
+    Set shp = newDoc.Shapes(j)
     If shp.Type <> 24 And shp.Type <> 3 Then
       If shp.TextFrame.HasText Then
         Set rng = shp.TextFrame.TextRange
@@ -109,7 +112,7 @@ If shCount > 0 Then
         End If
       End If
     End If
-    DoEvents
+    For kk = 1 To myDelay2: DoEvents: Next kk
   Next
   If tbCount > 0 Then myComments = myComments & _
        "| textboxes = yes (" & Trim(Str(tbCount)) _
@@ -122,7 +125,7 @@ Selection.HomeKey Unit:=wdStory
 If myComments > "" Then Selection.TypeText myComments & vbCr
 
 ' Watch out for hard spaces and spaced dots for ellipses
-Set rng = ActiveDocument.Content
+Set rng = newDoc.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -131,10 +134,9 @@ With rng.Find
   .Replacement.Text = " "
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
-  DoEvents
+  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
 
-Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -142,10 +144,9 @@ With rng.Find
   .Wrap = wdFindContinue
   .Replacement.Text = "…"
   .Execute Replace:=wdReplaceAll
-  DoEvents
+  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
 
-Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -156,11 +157,10 @@ With rng.Find
   .MatchCase = True
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
-  DoEvents
+  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
 
 If doItalic = True Then
-  Set rng = ActiveDocument.Content
   With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
@@ -171,12 +171,11 @@ If doItalic = True Then
     .MatchCase = True
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
-    DoEvents
+    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
 End If
 
 If doBold = True Then
-  Set rng = ActiveDocument.Content
   With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
@@ -187,12 +186,11 @@ If doBold = True Then
     .MatchCase = True
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
-    DoEvents
+    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
 End If
 
 If doSub = True Then
-  Set rng = ActiveDocument.Content
   With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
@@ -203,12 +201,11 @@ If doSub = True Then
     .MatchCase = True
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
-    DoEvents
+    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
 End If
 
 If doSuper = True Then
-  Set rng = ActiveDocument.Content
   With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
@@ -219,24 +216,17 @@ If doSuper = True Then
     .Replacement.Text = "xsxs^&sxsx"
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
-    DoEvents
+    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
 End If
 
 ' Copy pure text after the end of the formatted text
-endNow = ActiveDocument.Range.End
-Set rngNew = ActiveDocument.Content
-rngNew.Collapse wdCollapseEnd
-rngNew.Text = rng.Text
+allText = newDoc.Content.Text
+newDoc.Content.Text = vbCr
+newDoc.Content.Style = newDoc.Styles(wdStyleNormal)
+newDoc.Content.Text = allText
 
-' Delete the formatted text
-Set rng = ActiveDocument.Content
-rng.Collapse wdCollapseStart
-' One character less, to avoid the safety newline
-rng.End = endNow - 1
-rng.Delete
-
-Set rng = ActiveDocument.Content
+Set rng = newDoc.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -245,12 +235,11 @@ With rng.Find
   .Replacement.Text = "^p"
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
-  DoEvents
+  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
 
 If doSuper = True Then
-  Set rngNew = ActiveDocument.Content
-  With rngNew.Find
+  With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "xsxs(*)sxsx"
@@ -259,9 +248,9 @@ If doSuper = True Then
     .Replacement.Font.Superscript = True
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
-    DoEvents
+    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
-  With rngNew.Find
+  With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "XSXS(*)SXSX"
@@ -271,12 +260,11 @@ If doSuper = True Then
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
   End With
-  DoEvents
+  For kk = 1 To myDelay2: DoEvents: Next kk
 End If
 
 If doSub = True Then
-  Set rngNew = ActiveDocument.Content
-  With rngNew.Find
+  With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "xbxb(*)bxbx"
@@ -286,8 +274,8 @@ If doSub = True Then
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
   End With
-  DoEvents
-  With rngNew.Find
+  For kk = 1 To myDelay2: DoEvents: Next kk
+  With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "XBXB(*)BXBX"
@@ -296,13 +284,12 @@ If doSub = True Then
     .Replacement.Font.Subscript = True
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
-    DoEvents
+    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
 End If
 
 If doBold = True Then
-  Set rngNew = ActiveDocument.Content
-  With rngNew.Find
+  With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "jqjq(*)qjqj"
@@ -312,9 +299,9 @@ If doBold = True Then
     .MatchCase = True
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
-    DoEvents
+    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
-  With rngNew.Find
+  With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "JQJQ(*)QJQJ"
@@ -324,13 +311,12 @@ If doBold = True Then
     .MatchCase = True
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
-    DoEvents
+    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
 End If
 
 If doItalic = True Then
-  Set rngNew = ActiveDocument.Content
-  With rngNew.Find
+  With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "zczc(*)czcz"
@@ -340,9 +326,9 @@ If doItalic = True Then
     .MatchCase = True
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
-    DoEvents
+    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
-  With rngNew.Find
+  With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "ZCZC(*)CZCZ"
@@ -353,12 +339,11 @@ If doItalic = True Then
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
   End With
-  DoEvents
+  For kk = 1 To myDelay2: DoEvents: Next kk
 End If
 
 ' Restore Highlight
-Set rngNew = ActiveDocument.Content
-With rngNew.Find
+With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "vkvk(*)kvkv"
@@ -368,9 +353,9 @@ With rngNew.Find
   .MatchCase = True
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
-  DoEvents
+  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
-With rngNew.Find
+With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "VKVK(*)KVKV"
@@ -380,13 +365,12 @@ With rngNew.Find
   .MatchCase = True
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
-  DoEvents
+  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
 Options.DefaultHighlightColorIndex = oldColour
 
 ' Tidy up picture markers
-Set rngNew = ActiveDocument.Content
-With rngNew.Find
+With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "^1"
@@ -394,10 +378,10 @@ With rngNew.Find
   .Replacement.Text = ""
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
-  DoEvents
+  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
 
-With rngNew.Find
+With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "[^13]{3,}"
@@ -405,10 +389,10 @@ With rngNew.Find
   .Replacement.Text = "^p^p"
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
-  DoEvents
+  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
 
-With rngNew.Find
+With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "[vkjzcqxbsVKJZCQXBS]{4,}"
@@ -416,11 +400,11 @@ With rngNew.Find
   .Replacement.Text = ""
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
-  DoEvents
+  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
 
 If tbCount = 0 Then
-  With rngNew.Find
+  With rng.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "Textboxes:"
@@ -429,16 +413,9 @@ If tbCount = 0 Then
     .MatchCase = True
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
-    DoEvents
+    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
 End If
 Beep
-Application.ScreenUpdating = True
-Exit Sub
-
-ReportIt:
-Application.ScreenUpdating = True
-On Error GoTo 0
-Resume
 End Sub
 

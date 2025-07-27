@@ -1,6 +1,6 @@
 
 Sub NotesReembedEnds()
-' Paul Beverley - Version 04.04.25
+' Paul Beverley - Version 12.07.25
 ' Reembeds the listed endnotes
 
 myEndColour = wdColorRed
@@ -23,7 +23,7 @@ With rng.Find
 End With
 
 ntNum = 0
-Do While rng.Find.found = True
+Do While rng.Find.Found = True
   newNum = Val(rng)
   If newNum < ntNum Then Exit Do
   ntNum = newNum
@@ -41,21 +41,29 @@ Do While rng.Find.found = True
     .MatchWildcards = True
     .MatchWholeWord = False
     .Execute
+    ntRng.Select
+    prevStart = ntRng.Start
     ntRng.MoveEnd , 1
     ntRng.Collapse wdCollapseEnd
-    ntStart = ntRng.start
+    ntStart = ntRng.Start
+    If ntNum = 82 Then
+    jkhgkjh = 0
+    End If
     .Text = "e" & Trim(Str(ntNum + 1))
     .Execute
-    If .found = False Then
+    If .Found = False Then
       Set ntRng = ActiveDocument.Content
-      ntRng.End = InStr(ntRng, "e9999") - 1
-      ntRng.Collapse wdCollapseEnd
+      ntRng.Start = ntStart
+      moveForward = InStrRev(ntRng, "e9999") - 1
+      ntRng.Start = ntRng.Start + moveForward
+      ntRng.Collapse wdCollapseStart
     End If
   End With
   ntRng.Collapse wdCollapseStart
-  ntRng.start = ntStart
-  ntEnd = ntRng.start
+  ntRng.Start = ntStart
+  ntEnd = ntRng.Start
   ntRng.MoveEnd , -1
+  ntRng.Select
   ntRng.Copy
   rng.Delete
   rng.Select
@@ -68,6 +76,4 @@ Loop
 Selection.HomeKey Unit:=wdStory
 Beep
 End Sub
-
-
 

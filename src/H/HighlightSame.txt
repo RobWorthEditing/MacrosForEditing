@@ -1,14 +1,13 @@
 
 Sub HighlightSame()
-' Paul Beverley - Version 27.03.25
+' Paul Beverley - Version 19.07.25
 ' Highlights all occurrences of this text in this colour
 
-textColour = wdYellow
+' defaultTextColour = wdBrightGreen
+defaultTextColour = wdYellow
 
 ' doMatchCase = True
 doMatchCase = False
-
-nonTextColour = wdGray25
 
 ' Preserve TC status and existing highlight colour
 oldColour = Options.DefaultHighlightColorIndex
@@ -24,77 +23,62 @@ Next v
 If varsExist Then
   wasStart = ActiveDocument.Variables("selStart")
   wasEnd = ActiveDocument.Variables("selEnd")
-  If Selection.start > wasStart - 1 And Selection.End < _
+  If Selection.Start > wasStart - 1 And Selection.End < _
        wasEnd + 1 And wasEnd - wasStart < 200 Then
-    Selection.start = wasStart
+    Selection.Start = wasStart
     Selection.End = wasEnd
   End If
 End If
 
 Set rng = Selection.Range.Duplicate
-nonText = (rng.Text = " ")
-wasSelected = (rng.End > rng.start + 1)
-If Not (wasSelected) Then
-  If nonText = True Then
-    nowColour = Selection.Range.HighlightColorIndex
-    If nowColour = wdNoHighlight Then
-      Options.DefaultHighlightColorIndex = nonTextColour
-    Else
-      Options.DefaultHighlightColorIndex = wdNoHighlight
-    End If
-  Else
-    If UCase(rng) <> LCase(rng) And rng.HighlightColorIndex > 0 Then
-      Options.DefaultHighlightColorIndex = wdNoHighlight
-    Else
-      nowColour = Selection.Range.HighlightColorIndex
-      If nowColour = wdNoHighlight Then
-        Options.DefaultHighlightColorIndex = textColour
-      Else
-        Options.DefaultHighlightColorIndex = nowColour
-      End If
-    End If
-    rng.Expand wdWord
-    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
-      rng.MoveEnd , -1
-      DoEvents
-    Loop
-  End If
-Else
-  partWord = True
-  nowColour = Selection.Range.HighlightColorIndex
-'  If nowColour = 0 Then nowColour = nontextColour
-  If nowColour > 1000 Then
-    Set rng = ActiveDocument.Content
-    rng.start = Selection.start
-    rng.End = Selection.start + 1
-    nowColour = rng.HighlightColorIndex
-  Else
-    nowColour = textColour
-  End If
+nowColour = rng.Characters(1).HighlightColorIndex
+wasSelected = (rng.Start >= wasStart) And (rng.End <= wasEnd)
+Debug.Print "wasSelected = "; wasSelected
+If wasSelected Then
   Options.DefaultHighlightColorIndex = nowColour
+Else
+  If nowColour = 0 Then
+    Options.DefaultHighlightColorIndex = defaultTextColour
+  Else
+    Options.DefaultHighlightColorIndex = nowColour
+  End If
 End If
-
+If rng.Start = rng.End Then
+  rng.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+    rng.MoveEnd , -1
+    DoEvents
+  Loop
+End If
 findText = rng.Text
-Select Case Asc(findText)
-  Case 9:  findText = "^t"
-  Case 30:  findText = "^~": partWord = True ' non-breaking hyphen
-End Select
 
-Selection.Collapse wdCollapseStart
-With Selection.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = Trim(findText)
-  .MatchCase = doMatchCase
-  .Forward = True
-  .Replacement.Text = "^&"
-  .Replacement.Highlight = True
-  .Wrap = wdFindContinue
-  Debug.Print partWord, nonText
-  If textSelected = True And nonText = False Then .MatchWholeWord = True
-  .MatchWildcards = False
-  .Execute Replace:=wdReplaceAll
-End With
+myDo = "TEF"
+If ActiveDocument.Footnotes.Count = 0 Then myDo = Replace(myDo, "F", "")
+If ActiveDocument.Endnotes.Count = 0 Then myDo = Replace(myDo, "E", "")
+
+For myRun = 1 To Len(myDo)
+  doIt = Mid(myDo, myRun, 1)
+  Select Case doIt
+     Case "T": Set rng = ActiveDocument.Content
+     Case "F": Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+     Case "E": Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  End Select
+
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = Trim(findText)
+    .MatchCase = doMatchCase
+    .Forward = True
+    .Replacement.Text = "^&"
+    .Replacement.Highlight = True
+    .Wrap = wdFindContinue
+    Debug.Print partWord, nonText
+    If textSelected = True And nonText = False Then .MatchWholeWord = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Next myRun
 
 ' Restore to original state
 Options.DefaultHighlightColorIndex = oldColour

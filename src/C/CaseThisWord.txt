@@ -1,7 +1,8 @@
 
 Sub CaseThisWord()
-' Paul Beverley Version 23.05.24
+' Paul Beverley - Version 13.06.24
 ' Changes initial case of current word and jumps to next word
+
 
 showSingleTrack = False
 trackIt = True
@@ -64,6 +65,10 @@ If Selection.End > Selection.Start Then
 Else
 ' If no text is selected
   Selection.Expand wdWord
+  Do While InStr(lclist, " " & Trim(Selection) & " ") > 0
+    Selection.MoveStart wdWord, 1
+    Selection.Expand wdWord
+  Loop
   Selection.Collapse wdCollapseStart
   Selection.MoveEnd , 1
   If LCase(Selection) = UCase(Selection) Then

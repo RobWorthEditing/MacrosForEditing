@@ -1,9 +1,13 @@
 
 Sub QuoteSingleDoubleSwitchGlobal()
-' Paul Beverley - Version 15.05.24
+' Paul Beverley - Version 23.05.25
 ' Changes double quotes to single and vice versa, avoiding apostrophes
 
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
 myColour = wdBrightGreen
+' myColour = wdTurquoise
 
 myFind = """,',!t,!ve,!m,!n,!s,!d,!r,!l,s!,',zczc"
 myFind = Replace(myFind, "!", ChrW(8217))
@@ -19,7 +23,7 @@ Set rngT = ActiveDocument.Content
 If ActiveDocument.Footnotes.Count > 0 Then _
   Set rngF = ActiveDocument.StoryRanges(wdFootnotesStory)
 If ActiveDocument.Endnotes.Count > 0 Then _
-  Set rngE = ActiveDocument.StoryRanges(wdEndnotesStory)
+  Set rnge = ActiveDocument.StoryRanges(wdEndnotesStory)
 
 For i = 0 To UBound(fnd)
   Debug.Print fnd(i), rpl(i)
@@ -54,7 +58,7 @@ For i = 0 To UBound(fnd)
     DoEvents
   End If
   If ActiveDocument.Endnotes.Count > 0 Then
-    With rngE.Find
+    With rnge.Find
       .ClearFormatting
       .Replacement.ClearFormatting
       .Text = fnd(i)
@@ -70,11 +74,64 @@ For i = 0 To UBound(fnd)
     DoEvents
   End If
 Next i
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Wrap = wdFindContinue
+  .Text = "^0145^0148"
+  .Replacement.Text = "^0145^0147"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "^0148^0145"
+  .Replacement.Text = "^0148^0145"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "^0145^0146"
+  .Replacement.Text = "^0145^0147"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "^0148^0145"
+  .Replacement.Text = "^0148^0146"
+  .Execute Replace:=wdReplaceAll
+
+
+'Delete this when finished!
+
+  .Text = """"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceAll
+
+
+Options.DefaultHighlightColorIndex = wdYellow
+  
+  .Text = "'"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceAll
+
+Options.DefaultHighlightColorIndex = wdTurquoise
+  
+  .Text = "^0146t"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "^0146s"
+  .Replacement.Text = "^&"
+  .Replacement.Highlight = True
+  .Execute Replace:=wdReplaceAll
+End With
+
 rngT.Font.StrikeThrough = False
 If ActiveDocument.Footnotes.Count > 0 Then _
   rngF.Font.StrikeThrough = False
 If ActiveDocument.Endnotes.Count > 0 Then _
-  rngE.Font.StrikeThrough = False
+  rnge.Font.StrikeThrough = False
 Options.DefaultHighlightColorIndex = oldColour
+ActiveDocument.TrackRevisions = myTrack
 End Sub
 

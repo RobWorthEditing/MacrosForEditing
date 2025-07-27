@@ -1,14 +1,14 @@
 
-
-
 Sub CitationAlyse()
-' Paul Beverley - Version 24.02.25
+' Paul Beverley - Version 18.07.25
 ' Checks citations against references
 
 myFontColour = wdColorBlue
 myDateColour = wdColorRed
 
 includeNotes = True
+
+myDelay = 1
 
 notNames = "In From For Act Jan January Feb February "
 notNames = notNames & " Mar March Apr April NotMay June "
@@ -30,15 +30,15 @@ myCol(3) = wdTurquoise
 myCol(4) = wdGray25
 
 ' If text is selected, sort it
-If Selection.start <> Selection.End Then
+If Selection.Start <> Selection.End Then
   Set rng = Selection.Range.Duplicate
   rng.Collapse wdCollapseStart
-  rng.expand wdParagraph
-  Selection.start = rng.start
+  rng.Expand wdParagraph
+  Selection.Start = rng.Start
   Set rng = Selection.Range.Duplicate
   If Right(rng.Text, 1) <> vbCr Then
     rng.Collapse wdCollapseEnd
-    rng.expand wdParagraph
+    rng.Expand wdParagraph
     Selection.End = rng.End
   End If
   
@@ -84,6 +84,7 @@ If Selection.start <> Selection.End Then
 End If
 
 ' Main citation listing section
+
 Beep
 myResponse = MsgBox("Is the cursor placed in the first item" _
      & CR2 & "of the references list?", vbQuestion _
@@ -91,43 +92,39 @@ myResponse = MsgBox("Is the cursor placed in the first item" _
 If myResponse <> vbYes Then Exit Sub
 On Error GoTo ReportIt
 Application.ScreenUpdating = False
+Set mainDoc = ActiveDocument
 
 ' copy references right to the end
-Selection.expand wdParagraph
+Selection.Expand wdParagraph
 Selection.Collapse wdCollapseStart
-startRefs = Selection.start
-Set rngOld = ActiveDocument.Content
-rngOld.start = startRefs
+startRefs = Selection.Start
+Set rngOld = mainDoc.Content
+rngOld.Start = startRefs
 rngOld.Copy
 rngOld.Collapse wdCollapseStart
-rngOld.start = 0
+rngOld.Start = 0
 
 ' create new file of the text (not refs) + notes
-Set mainDoc = ActiveDocument
-Documents.Add
-Selection.Text = rngOld.Text
+Set newDoc = Documents.Add
+For i = 1 To myDelay * 100: DoEvents: Next i
+newDoc.Content.Text = rngOld.Text
+For i = 1 To myDelay * 100: DoEvents: Next i
 
 ' Copy footnotes and endnotes, text only
 gotFoots = (mainDoc.Footnotes.Count > 0)
 gotEnds = (mainDoc.Endnotes.Count > 0)
-DoEvents
 
-If gotFoots = True And includeNotes = True Then
-  Selection.EndKey Unit:=wdStory
-  Selection.TypeText Text:=vbCr
-  Selection.Text = mainDoc.StoryRanges(wdFootnotesStory).Text
-End If
-If gotEnds = True And includeNotes = True Then
-  Selection.EndKey Unit:=wdStory
-  Selection.TypeText Text:=vbCr
-  Selection.Text = mainDoc.StoryRanges(wdEndnotesStory).Text
-End If
+If gotFoots = True And includeNotes = True Then _
+  newDoc.Content.InsertAfter Text:=vbCr & _
+       mainDoc.StoryRanges(wdFootnotesStory).Text
+If gotEnds = True And includeNotes = True Then _
+  newDoc.Content.InsertAfter Text:=vbCr & _
+       mainDoc.StoryRanges(wdEndnotesStory).Text
 DoEvents
-
 Debug.Print "Searching the text for possible citations"
 Debug.Print "This will take quite a while..." & CR
 
-Set rng = ActiveDocument.Content
+Set rng = newDoc.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -166,7 +163,7 @@ Do While rng.Find.Found = True
     rng.Text = LCase(rng.Text)
   End If
   rng.Select
-  rng.start = endNow + 2
+  rng.Start = endNow + 2
   rng.End = endNow + 2
   rng.Find.Execute
   DoEvents
@@ -190,7 +187,7 @@ myList = "#ü|uu#û|qcq#~<([A-Z]{2}).|\1# in press| 2999#/| #" & _
      "~([0-9])ü|\1 #~ü([0-9])| \1#  | #"
 
 FandR = Split(myList, "#")
-Set rng = ActiveDocument.Content
+Set rng = newDoc.Content
 For i = 1 To UBound(FandR)
   myFR = FandR(i)
   If Left(myFR, 1) <> ChrW(124) And _
@@ -201,9 +198,9 @@ For i = 1 To UBound(FandR)
     Else
       myWild = False
     End If
-    barpos = InStr(myFR, ChrW(124))
-    myFind = Left(myFR, barpos - 1)
-    myRep = Mid(myFR, barpos + 1)
+    barPos = InStr(myFR, ChrW(124))
+    myFind = Left(myFR, barPos - 1)
+    myRep = Mid(myFR, barPos + 1)
     With rng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
@@ -221,7 +218,7 @@ For i = 1 To UBound(FandR)
   If myNmbr Mod 5 = 0 Then Debug.Print "Preping " & Str(myNmbr)
 Next i
 
-Set rng = ActiveDocument.Content
+Set rng = newDoc.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -259,7 +256,7 @@ Do While rng.Find.Found = True
   If gotTwo Then citeList2 = citeList2 & wd2 & _
        " " & wd1 & " " & myYear & CR
 ' Check if another date follows
-  rng.start = myEnd
+  rng.Start = myEnd
   rng.End = myEnd
   Do
     rng.MoveEnd wdWord, 1
@@ -275,41 +272,38 @@ Do While rng.Find.Found = True
            " " & wd1 & " " & myYear & CR
     End If
     rng.MoveStart wdWord, 1
-    myEnd = rng.start
+    myEnd = rng.Start
     DoEvents
   Loop Until myYearNumber < 1000
 getNext:
-  rng.start = myEnd
+  rng.Start = myEnd
   rng.End = myEnd
   rng.Find.Execute
-  myLeft = Int((ActiveDocument.Content.End - rng.start) / 100) * 10
+  myLeft = Int((ActiveDocument.Content.End - rng.Start) / 100) * 10
   myDelay = myDelay + 1
   If myDelay Mod 10 = 0 Then Debug.Print Str(myLeft)
 Loop
 
-Set rng = ActiveDocument.Content
-rng.Delete
-Selection.TypeText Text:=citeList1
-myEnd = ActiveDocument.Content.End
-Selection.TypeText Text:=citeList2
-Set rng = ActiveDocument.Content
-rng.start = myEnd
+newDoc.Content.Delete
+For i = 1 To myDelay * 100: DoEvents: Next i
+newDoc.Content.Text = citeList1 & citeList2
+For i = 1 To myDelay * 100: DoEvents: Next i
+Set rng = newDoc.Content
+' rng.Start = myEnd
 ' rng.Font.Italic = True
-Set rng = ActiveDocument.Content
-rng.Font.color = myFontColour
+rng.Font.Color = myFontColour
 
 ' Change by F&R û to -, ü to space, uu to ü, qcq to û
 myList = "#ü| #uu|ü#û|-#qcq|û# 2999| in press#"
 
 FandR = Split(myList, "#")
-Set rng = ActiveDocument.Content
 For i = 1 To UBound(FandR)
   myFR = FandR(i)
   If Left(myFR, 1) <> ChrW(124) And _
        InStr(myFR, ChrW(124)) > 0 Then
-    barpos = InStr(myFR, ChrW(124))
-    myFind = Left(myFR, barpos - 1)
-    myRep = Mid(myFR, barpos + 1)
+    barPos = InStr(myFR, ChrW(124))
+    myFind = Left(myFR, barPos - 1)
+    myRep = Mid(myFR, barPos + 1)
     With rng.Find
       .ClearFormatting
       .Replacement.ClearFormatting
@@ -325,9 +319,9 @@ For i = 1 To UBound(FandR)
 Next i
 
 Debug.Print CR & "Started sorting"
-Set rng = ActiveDocument.Content
 rng.Sort SortOrder:=wdSortOrderAscending, _
      SortFieldType:=wdSortFieldAlphanumeric
+For i = 1 To myDelay * 100: DoEvents: Next i
 
 ' Remove duplicates
 numPars = ActiveDocument.Paragraphs.Count
@@ -335,13 +329,13 @@ For j = numPars To 2 Step -1
   Set rng1 = ActiveDocument.Paragraphs(j).Range
   Set rng2 = ActiveDocument.Paragraphs(j - 1).Range
   If rng1 = rng2 Then rng1.Delete
-  DoEvents
+  If j Mod 10 = 1 Then DoEvents
 Next j
 Debug.Print "Finished sorting" & CR
 
 ' Highlight multiple part citations
-numPars = ActiveDocument.Paragraphs.Count
-Set rng = ActiveDocument.Content
+numPars = newDoc.Paragraphs.Count
+Set rng = newDoc.Content
 allText = rng
 myStrike = False
 
@@ -381,12 +375,13 @@ For i = 1 To numPars
 Next i
 Options.DefaultHighlightColorIndex = oldColour
 
+newDoc.Content.Select
+wasEnd = Selection.End
 Selection.EndKey Unit:=wdStory
 Selection.TypeText Text:=vbCr
-wasEnd = Selection.End
 Selection.Paste
-Set rng = ActiveDocument.Content
-rng.start = wasEnd
+Set rng = newDoc.Content
+rng.Start = wasEnd
 rng.Fields.Unlink
 
 With rng.Find
@@ -405,16 +400,16 @@ End With
 myPrevAuthor = ""
 For i = 1 To rng.Paragraphs.Count
   Set myRef = rng.Paragraphs(i).Range
-  myWord = Trim(myRef.words(1))
+  myWord = Trim(myRef.Words(1))
   
   If Len(myRef.Text) > 1 And Len(myWord) = 1 Then
     myRef.Select
-    myWord = myRef.words(2)
+    myWord = myRef.Words(2)
   End If
   mySample = Left(myRef.Text, 2)
   If Len(myRef.Text) > 1 And LCase(mySample) = _
        UCase(mySample) Then
-    myRef.words(1) = myPrevAuthor & " "
+    myRef.Words(1) = myPrevAuthor & " "
   Else
     myPrevAuthor = myWord
   End If
@@ -422,15 +417,13 @@ For i = 1 To rng.Paragraphs.Count
 Next i
 
 Debug.Print "More sorting"
-Set rng = ActiveDocument.Content
+Set rng = newDoc.Content
 rng.Sort SortOrder:=wdSortOrderAscending, _
      SortFieldType:=wdSortFieldAlphanumeric
-DoEvents
+For i = 1 To myDelay * 100: DoEvents: Next i
 Debug.Print "Finished sorting" & CR
 
-Set rng = ActiveDocument.Content
 rng.InsertAfter Text:=CR2
-Set rng = ActiveDocument.Content
 rng.ParagraphFormat.LineSpacingRule = wdLineSpaceSingle
 rng.ParagraphFormat.SpaceBefore = 12
 With rng.Find
@@ -440,29 +433,28 @@ With rng.Find
   .Wrap = wdFindContinue
   .Forward = True
   .Replacement.Text = "^&"
-  .Replacement.Font.color = myDateColour
+  .Replacement.Font.Color = myDateColour
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
   DoEvents
 End With
-Selection.HomeKey Unit:=wdStory
-Selection.TypeText Text:="Citation Query List"
-ActiveDocument.Paragraphs(1).Range.Style = wdStyleHeading2
+newDoc.Content.InsertBefore Text:="Citation Query List"
+newDoc.Content.Paragraphs(1).Range.Style = wdStyleHeading2
 ' Remove blank lines at the top
-Set para2 = ActiveDocument.Paragraphs(2)
+Set para2 = newDoc.Paragraphs(2)
 Do While Len(para2.Range.Text) < 3
   para2.Range.Delete
 Loop
 
 notNames = notNames & " "
-For i = ActiveDocument.Paragraphs.Count To 2 Step -1
-  Set rng = ActiveDocument.Paragraphs(i).Range
-  If InStr(notNames, rng.words(1).Text) > 0 Then _
-       rng.words(1).Delete
+For i = newDoc.Paragraphs.Count To 2 Step -1
+  Set rng = newDoc.Paragraphs(i).Range
+  If InStr(notNames, rng.Words(1).Text) > 0 Then _
+       rng.Words(1).Delete
 Next i
 
 ' Add year at beginning of line
-Set rng = ActiveDocument.Content
+Set rng = newDoc.Content
 For Each myPara In rng.Paragraphs
   myText = myPara.Range.Text
   For i = 2 To Len(myText) - 3
@@ -481,13 +473,13 @@ Next myPara
 
 ' Sort
 Debug.Print "Sorting again ... lots to do, eh?!"
-If rng.words(1) = "Citation " Then
-  rng.start = rng.Paragraphs(1).Range.End
+If rng.Words(1) = "Citation " Then
+  rng.Start = rng.Paragraphs(1).Range.End
 End If
 rng.Sort SortOrder:=wdSortOrderAscending, _
      SortFieldType:=wdSortFieldAlphanumeric
 DoEvents
-If rng.End = ActiveDocument.Content.End Then _
+If rng.End = newDoc.Content.End Then _
      rng.InsertAfter Text:=vbCr
 numPars = rng.Paragraphs.Count
 myStart = 5
@@ -496,10 +488,13 @@ For i = myStart To 1 Step -1
   Set rng2 = rng.Paragraphs(i).Range
   If Len(rng2.Text) < 2 Then rng2.Delete
 Next i
+For i = 1 To myDelay * 100: DoEvents: Next i
 Debug.Print "Nearly there, honest!"
 
 ' Add blank line at year change
-Set rng = ActiveDocument.Content
+Set rng = newDoc.Content
+rng.HighlightColorIndex = wdNoHighlight
+
 wasYear = ""
 For i = rng.Paragraphs.Count To 1 Step -1
   myYear = Left(rng.Paragraphs(i).Range.Text, 5)
@@ -512,7 +507,7 @@ Next i
 ' Remove the year markers
 myBar = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 myBar = "^p" & myBar & myBar & "^p"
-Set rng = ActiveDocument.Content
+Set rng = newDoc.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -521,7 +516,7 @@ With rng.Find
   .Forward = True
   .Replacement.Text = myBar
   .Replacement.Highlight = False
-  .Replacement.Font.color = wdColorAutomatic
+  .Replacement.Font.Color = wdColorAutomatic
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
   DoEvents
@@ -536,7 +531,7 @@ With rng.Find
   .Execute Replace:=wdReplaceAll
   DoEvents
 End With
-ActiveDocument.Paragraphs(2).Range.Text = ""
+newDoc.Paragraphs(2).Range.Text = ""
 Beep
 Application.ScreenUpdating = True
 Exit Sub
@@ -546,6 +541,4 @@ Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub
-
-
 

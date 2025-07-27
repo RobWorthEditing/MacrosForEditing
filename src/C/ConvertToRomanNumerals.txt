@@ -1,0 +1,26 @@
+
+Sub ConvertToRomanNumerals()
+' Paul Beverley - Version 29.04.25
+' Converts number at the cursor to Roman numerals
+' (Ex AI!)
+
+romanNumerals = Array("M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I")
+Values = Array(1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1)
+Selection.Expand wdWord
+
+' Validate that the selected text is numeric
+num = CInt(Selection.Text)
+ArabicToRoman = ""
+If num > 0 Then
+  For i = LBound(Values) To UBound(Values)
+    While num >= Values(i)
+      ArabicToRoman = ArabicToRoman & romanNumerals(i)
+      num = num - Values(i)
+    Wend
+  Next i
+  Selection.TypeText Text:=ArabicToRoman
+Else
+  Beep
+End If
+End Sub
+

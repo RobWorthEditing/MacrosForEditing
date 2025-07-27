@@ -6,7 +6,7 @@ Sub LongSentenceHighlighter()
 mediumLength = 50
 mediumColour = wdYellow
 megaLength = 70
-megaColour = warred
+megaColour = wdRed
 
 myTrack = ActiveDocument.TrackRevisions
 ActiveDocument.TrackRevisions = False

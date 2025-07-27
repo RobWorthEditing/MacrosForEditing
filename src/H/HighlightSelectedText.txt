@@ -1,0 +1,86 @@
+
+Sub HighlightSelectedText()
+' Paul Beverley - Version 19.05.25
+' Highlights all occurrences of the selected text
+
+myColour = wdYellow
+
+' doMatchCase = True
+doMatchCase = False
+
+doRoundOff = True
+' doRoundOff = False
+
+If doRoundOff = True Then
+  If Selection.Start = Selection.End Then
+    Selection.Expand wdWord
+    If Len(Selection) < 3 Then
+      Selection.Collapse wdCollapseStart
+      Selection.MoveLeft , 1
+      Selection.Expand wdWord
+    End If
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+  Else
+    endNow = Selection.End
+    Selection.MoveLeft wdWord, 1
+    startNow = Selection.Start
+    Selection.End = endNow
+    Selection.Expand wdWord
+    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+      Selection.MoveEnd , -1
+      DoEvents
+    Loop
+    Selection.Start = startNow
+  End If
+End If
+Set hereNow = Selection.Range.Duplicate
+myText = Selection.Text
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+nowTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+myDo = "TEF"
+If ActiveDocument.Footnotes.Count = 0 Then myDo = Replace(myDo, "F", "")
+If ActiveDocument.Endnotes.Count = 0 Then myDo = Replace(myDo, "E", "")
+
+For myRun = 1 To Len(myDo)
+  doIt = Mid(myDo, myRun, 1)
+  Select Case doIt
+     Case "T": Set rng = ActiveDocument.Content
+     Case "F": Set rng = ActiveDocument.StoryRanges(wdFootnotesStory)
+     Case "E": Set rng = ActiveDocument.StoryRanges(wdEndnotesStory)
+  End Select
+  rng.Select
+' Have to use Selection, not rng - bit strange, eh?!
+' This is to get round the weird way Word handles track changed text.
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = myText
+    .Forward = True
+    .Replacement.Text = "^&"
+    .Replacement.Highlight = True
+    .Wrap = wdFindStop
+    .MatchCase = doMatchCase
+    .MatchWildcards = False
+    .Execute
+  End With
+  Do While Selection.Find.Found = True
+    Selection.Range.HighlightColorIndex = myColour
+    Selection.Collapse wdCollapseEnd
+    Selection.Find.Execute
+    DoEvents
+  Loop
+Next myRun
+
+' Restore to original state
+Options.DefaultHighlightColorIndex = oldColour
+ActiveDocument.TrackRevisions = nowTrack
+hereNow.Select
+Selection.Collapse wdCollapseEnd
+End Sub
+

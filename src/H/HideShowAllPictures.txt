@@ -1,0 +1,53 @@
+
+Sub HideShowAllPictures()
+' Paul Beverley - Version 04.07.25
+' Obscures or reveals all images in a document
+' Based on code created by Philip Ridgers
+
+displayBlackRectangle = True
+' Use False, if you prefer a white rectangles
+
+inlineCount = ActiveDocument.InlineShapes.Count
+shapeCount = ActiveDocument.Shapes.Count
+
+If inlineCount + shapeCount = 0 Then
+  Beep
+  MsgBox "No shapes found"
+  Exit Sub
+End If
+
+Do
+  myPrompt = "Hide or reveal pictures?" & vbCr & vbCr _
+    & "1: Hide" & vbCr & "2: Show"
+  myTitle = "Hide/Show All Pictures"
+  myDefault = "1"
+  myResult = Trim(InputBox(myPrompt, myTitle, myDefault, myResult))
+  If StrPtr(myResult) = 0 Then Beep: Exit Sub
+  
+  If myResult <> "1" And myResult <> "2" Then
+    Beep
+    MsgBox "Please type either 1 or 2."
+  End If
+Loop Until myResult = "1" Or myResult = "2"
+
+If myResult = "1" Then
+  If displayBlackRectangle = True Then
+    myColour = 0
+  Else
+    myColour = 1
+  End If
+Else
+  myColour = 0.5
+End If
+
+For i = 1 To inlineCount
+  If ActiveDocument.InlineShapes(i).Type = wdInlineShapePicture Then _
+       ActiveDocument.InlineShapes(i).PictureFormat.Brightness = myColour
+Next
+
+For i = 1 To shapeCount
+  If ActiveDocument.Shapes(i).Type = msoPicture Then _
+       ActiveDocument.Shapes(i).PictureFormat.Brightness = myColour
+Next
+End Sub
+

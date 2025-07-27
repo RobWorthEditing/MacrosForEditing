@@ -1,14 +1,25 @@
 
 Sub CMOSFetchAlt()
-' Paul Beverley - Version 28.08.22
-' Launches selected text to CMS website.
+' Paul Beverley - Version 12.07.24
+' Launches selected text to CMS website
 
 mySite = "https://www.chicagomanualofstyle.org/home.html"
-numTabs = 12
+' mySite = "https://doi-org.proxy.uchicago.edu/10.7208/cmos18"
+
+' To set up, paste in the URL and then count how many times you have
+' to click the Tab key before the cursor appears in the search box.
+' That's the number to put here below:
+
+numTabs = 17
 myWait = 0.9
 
 testMode = False
-' testMode = True
+#If Mac Then
+    onMac = True
+#Else
+    onMac = False
+#End If
+
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord
   Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
@@ -38,14 +49,19 @@ If testMode = True Then
   Beep
   Exit Sub
 End If
-myTime = Timer
-Do
-Loop Until Timer > myTime + myWait
-For i = 1 To numTabs
-  SendKeys "{TAB}"
-Next i
-SendKeys "^v"
-SendKeys "{ENTER}"
+If onMac = False Then
+  myTime = Timer
+  Do
+  Loop Until Timer > myTime + myWait
+  For i = 1 To numTabs
+    SendKeys "{TAB}"
+  Next i
+  SendKeys "^v"
+  SendKeys "{ENTER}"
+  SendKeys "{NUMLOCK}"
+End If
 End Sub
+
+
 
 

@@ -1,0 +1,45 @@
+
+Sub PunctuationBoldOn()
+' Paul Beverley - Version 14.07.25
+' Makes any punctuation after bold text also bold
+
+myPuncts = ",.;:\?\!"
+
+myDelay = 1
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Bold = True
+  .Wrap = wdFindStop
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.Found = True
+  myCount = myCount + 1
+  rng.Collapse wdCollapseEnd
+  rng.MoveEnd , 1
+  If InStr(myPuncts, rng) > 0 Then
+    If myCount Mod 20 = 0 Then rng.Select
+    rng.Font.Bold = True
+    rng.Collapse wdCollapseEnd
+    rng.MoveEnd , 1
+    If InStr(myPuncts, rng) > 0 Then
+      rng.Font.Bold = True
+    End If
+    For i = 1 To myDelay * 100: DoEvents: Next i
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+Selection.HomeKey Unit:=wdStory
+Beep
+MsgBox "Changed: " & myCount
+End Sub
+
+
+

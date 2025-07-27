@@ -1,0 +1,18 @@
+
+Sub FindBold()
+' Paul Beverley - Version 04.07.25
+' Finds the next piece of text in bold
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Font.Bold = True
+  .Forward = True
+  .Wrap = wdFindStop
+  .Text = ""
+  .Replacement.Text = ""
+  .Execute
+  If .Found = False Then Beep
+End With
+End Sub
+

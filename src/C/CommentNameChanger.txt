@@ -1,30 +1,24 @@
+
 Sub CommentNameChanger()
-' Paul Beverley - Version 26.02.24
+' Paul Beverley - Version 28.06.25
 ' Changes the name attached to comments
 
+newInitials = "RF"
 newName = "Referee"
 
+initialsToChange = "PB"
 nameToChange = "Paul Beverley"
+' nameToChange = ""
 ' To change ALL names, use nameToChange = ""
-nameToChange = ""
 
-nameNow = Application.UserName
-Application.UserName = newName
-
-Dim newCmt As Comment
 For i = 1 To ActiveDocument.Comments.Count
   Set cmt = ActiveDocument.Comments(i)
-  If cmt.Contact = nameToChange Or nameToChange = "" Then
-    Set rng = cmt.Scope
-    cmt.Range.Copy
-    cmt.Delete
-    Set newCmt = rng.Comments.Add(Range:=rng)
-    ActiveDocument.Comments(i).Edit
-    Selection.Paste
+  If cmt.Author = nameToChange Or nameToChange = "" Then
+    cmt.Author = newName
+    cmt.Initial = newInitials
     DoEvents
   End If
 Next i
-Application.UserName = nameNow
 ActiveDocument.ActiveWindow.View.SplitSpecial = wdPaneNone
 Beep
 End Sub

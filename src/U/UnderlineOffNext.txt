@@ -1,0 +1,34 @@
+
+Sub UnderlineOffNext()
+' Paul Beverley - Version 05.05.25
+' Removes the underline from the next area of underlining
+
+doTrack = False
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+myTrack = ActiveDocument.TrackRevisions
+If doTrack = False Then ActiveDocument.TrackRevisions = False
+Selection.Collapse wdCollapseEnd
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Wrap = wdFindStop
+  .Forward = True
+  .Font.Underline = True
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+If .Found = True Then
+  Selection.Range.Font.Underline = False
+  Selection.Collapse wdCollapseEnd
+Else
+  Beep
+End If
+End With
+If doTrack = False Then ActiveDocument.TrackRevisions = myTrack
+End Sub
+
+
+

@@ -1,12 +1,13 @@
+
 Sub FindAndDoRng()
-' Paul Beverley - Version 08.08.22
+' Paul Beverley - Version 26.03.25
 ' Finds something specific and does things to each one
 
 Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "o"
+  .Text = "Ateniesi"
   .Wrap = wdFindStop
   .Replacement.Text = ""
   .Forward = True
@@ -40,5 +41,4 @@ Do While rng.Find.Found = True
 Loop
 MsgBox "Changed: " & myCount
 End Sub
-
 

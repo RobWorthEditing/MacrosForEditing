@@ -1,0 +1,17 @@
+
+Sub ParaIndentsSet()
+' Paul Beverley - Version 28.04.25
+' Sets parameters of the current paragraph
+
+With Selection.ParagraphFormat
+  .LeftIndent = CentimetersToPoints(2.54)
+  .FirstLineIndent = CentimetersToPoints(1.27)
+  .LineSpacingRule = wdLineSpaceSingle
+  .RightIndent = CentimetersToPoints(2.54)
+  .SpaceBefore = 12
+  .SpaceAfter = 12
+End With
+End Sub
+
+
+

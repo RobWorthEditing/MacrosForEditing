@@ -1,7 +1,9 @@
 
+
 Sub ProperNounAlyse()
-' Paul Beverley - Version 03.04.25
+' Paul Beverley - Version 17.07.25
 ' Analyses similar proper nouns
+
 
 minLengthCheck = 4
 
@@ -9,6 +11,11 @@ includeAcronyms = True
 
 ' myLanguage = "English(United Kingdom)"
 myLanguage = "English(United States)"
+
+doUseQuickSort = True
+
+' Delay to allow Word to catch up with VBA (seconds)
+myDelay = 1
 
 ignoreWords = "Also Being The This There Those Their They Then These That" & _
      " Ever Even Four From Have When Where Will While Were Whole Well Would"
@@ -19,7 +26,7 @@ similarChars = "bb,b; b,p; sch,sh; ch,sh; c,k; ph,f; ss,z; s,z;" & _
 ' With non-English languages, you might need to make this False
 ignorePlurals = True
 
-keepWholeList = False
+' keepWholeList = False
 keepWholeList = True
 
 myScreenOff = True
@@ -33,7 +40,7 @@ If doingSeveralMacros = False Then
        + vbYesNoCancel, "ProperNounAlyse")
   If myResponse <> vbYes Then Exit Sub
 End If
-If FUT.Content.Words.Count > 50000 Then
+If FUT.Content.Words.Count > 50000 And doUseQuickSort = True Then
   useQuickSort = True
 Else
   useQuickSort = False
@@ -120,26 +127,30 @@ End If
 Set rng = FUT.Content
 
 Set firstDoc = Documents.Add
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
 Set fnl = firstDoc.Content
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
 
 Set allText = Documents.Add
-Selection.FormattedText = rng.FormattedText
-Selection.Collapse wdCollapseEnd
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+allText.Content.FormattedText = rng.FormattedText
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+allText.Content.Collapse wdCollapseEnd
 
 ' Add notes + shape text
-Selection.TypeText endText & CR & footText & CR
+allText.Content.InsertAfter Text:=endText & CR & footText & CR
 If shCount > 0 Then
   For i = 1 To shCount
-    Selection.TypeText shText(i) & CR
+    allText.Content.InsertAfter Text:=shText(i) & CR
   Next i
 End If
+
 'Add dummy name
-Selection.TypeText Text:="Aaaaa" & CR
-Selection.HomeKey Unit:=wdStory
+allText.Content.InsertAfter Text:="Aaaaa" & CR
 
 Set rng = allText.Content
 rng.Revisions.AcceptAll
-DoEvents
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
 StatusBar = spcs & "Preparing copied file - 1"
 
 ' Delete struck-through text
@@ -171,16 +182,14 @@ With rng.Find
   .Replacement.Text = " "
   .Execute Replace:=wdReplaceAll
 End With
-DoEvents
 StatusBar = spcs & "Preparing copied file - 2"
-DoEvents
 
-' Cut all and replace as pure text
-Set rng = allText.Content
 allJustText = allText.Content.Text
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
 allText.Content.Delete
-rng.Text = allJustText
-DoEvents
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+allText.Content.Text = allJustText
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
 StatusBar = spcs & "Preparing copied file - 3"
 
 ' Use qqq for apostrophe
@@ -204,65 +213,58 @@ With rng.Find
 End With
 
 ' Find initial cap words
-DoEvents
 StatusBar = spcs & "Preparing copied file - 4"
-myChopNum = minLengthCheck - 2
-If myChop < 1 Then myChop = 1
-myChop = Trim(Str(myChopNum))
-myFind = "<[A-Z][a-z][a-zA-Z]{" & myChop & ",}"
-If includeAcronyms = True Then myFind = _
-     "<[A-Z][a-zA-Z][a-zA-Z]{" & myChop & ",}"
-Set rng = allText.Range
+myFind = "[A-Z][a-z]*"
+If includeAcronyms = True Then myFind = "[A-Z]*"
 
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = myFind
-  .Wrap = wdFindStop
-  .Replacement.Text = ""
-  .Forward = True
-  .MatchWildcards = True
-  .MatchWholeWord = False
-  .Execute
-End With
+myPNlist = CR
+ignoreWords = " " & ignoreWords & " "
+quoteClose = ChrW(8217)
+For Each wd In allText.Words
+  wdText = Trim(wd)
+  If Len(wd) > 2 Then
+    wdText = Replace(wdText, quoteClose, "")
+    doIgnore = (InStr(ignoreWords, " " & wdText & " ") > 0)
+    If Len(wdText) >= minLengthCheck And doIgnore = False Then
+      If wdText Like myFind Then
+        If InStr(myPNlist, CR & wdText & CR) = 0 Then
+          myPNlist = myPNlist & wdText & CR
+        End If
+      End If
+    End If
+    i = i + 1: If i Mod 100 = 1 Then DoEvents
+  End If
+Next wd
+myPNlist = Replace(myPNlist, CR2, CR)
+myPNlist = Replace(myPNlist, CR2, CR)
 
-myPNlist = ""
-ignoreWords = ignoreWords & " "
-Do While rng.Find.Found = True
-  myWd = rng.Text
-  If InStr(ignoreWords, myWd & " ") = 0 Then _
-       myPNlist = myPNlist & myWd & CR
-  rng.Collapse wdCollapseEnd
-  i = i + 1: If i Mod 100 = 0 Then DoEvents
-  rng.Find.Execute
-  DoEvents
-Loop
-
+sortT = Timer
 If useQuickSort = True Then
-  ' allText.Content.Text = myPNlist
-  ' wordArray = Split(allText.Content.Text, CR)
-  
-  ' allText.Content.Text = myPNlist
   wordArray = Split(myPNlist, CR)
-  StatusBar = spcs & "Sorting whole file"
-  
-  
+  StatusBar = spcs & "Sorting whole file (QuickSort)"
+  Debug.Print "Sorting whole file (QuickSort)"
   ' Sort the array alphabetically
   Call QuickSort(wordArray, LBound(wordArray), UBound(wordArray))
-  StatusBar = spcs & "After sorting"
   
   ' Clear the content of the document
   allText.Content.Delete
-  
+  t = Timer + delay: Do: DoEvents: Loop Until Timer > t
   ' Insert sorted words into the document
   For i = LBound(wordArray) To UBound(wordArray)
     allText.Content.InsertAfter wordArray(i) & CR
   Next i
 Else
+  StatusBar = spcs & "Sorting whole file (simple sort)"
+  Debug.Print "Sorting whole file (simple sort)"
   allText.Content.Text = myPNlist
-  Set rng = allText.Content
-  rng.Sort SortOrder:=wdSortOrderAscending, CaseSensitive:=True
+  t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+  allText.Content.Sort SortOrder:=wdSortOrderAscending, CaseSensitive:=True
 End If
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+StatusBar = spcs & "Finished sorting"
+Debug.Print "Finished sorting"
+Debug.Print Timer - sortT
+
 ' delete initial blank line
 If Len(allText.Paragraphs(1)) < 3 Then _
      allText.Paragraphs(1).Range.Delete
@@ -286,7 +288,7 @@ For Each myPara In allText.Paragraphs
   Else
     myCount = myCount + 1
   End If
-  i = i + 1:  If i Mod 400 = 4 Then DoEvents
+  i = i + 1:  If i Mod 100 = 1 Then DoEvents
 Next myPara
 
 allText.Close SaveChanges:=False
@@ -315,8 +317,7 @@ Do
   Set rng = firstDoc.Paragraphs(1).Range
   myLen = Len(rng.Text)
   If myLen < 10 Then
-    rng.Select
-    Selection.Delete
+    rng.Delete
   End If
 Loop Until myLen > 9
 Do
@@ -324,8 +325,7 @@ Do
   Set rng = firstDoc.Paragraphs(lastLine).Range
   myLen = Len(rng.Text)
   If myLen < 10 Then
-    rng.Select
-    Selection.Delete
+    rng.Delete
   End If
 Loop Until Len(rng.Text) >= 2
 
@@ -335,8 +335,7 @@ Do
   Set rng = firstDoc.Paragraphs(lastLine).Range
   myLen = Len(rng.Text)
   If myLen < 10 Then
-    rng.Select
-    Selection.Delete
+    rng.Delete
   End If
 Loop Until Len(rng.Text) >= 2
 
@@ -366,12 +365,10 @@ For i = 1 To numWords
     DoEvents
     StatusBar = spcs & _
          "Preparing data for other tests - 1 - " & PQ
-    DoEvents
   End If
 Next i
 
 ' ...for the vowel test below
-DoEvents
 StatusBar = spcs & "Preparing data for other tests - 2"
 DoEvents
 noVowelWords = " " & allWords
@@ -412,7 +409,6 @@ noVowelWords = Replace(noVowelWords, "_6", " Y")
 ' ...for the similar words test
 DoEvents
 StatusBar = spcs & "Preparing data for other tests - 3"
-DoEvents
 similarAllWords = " " & LCase(allWords)
 similarChars = Replace(similarChars, " ", "")
 sChars = Replace(similarChars, " ", "")
@@ -428,9 +424,7 @@ Do
 Loop Until Len(sChars) < 2
 
 ' Changes all the accented characters to non-accented
-DoEvents
 StatusBar = spcs & "Preparing data for other tests - 4"
-DoEvents
 sWd = similarAllWords
 For k = 1 To Len(sWd) - 1
   thisChar = Mid(sWd, k, 1)
@@ -490,7 +484,6 @@ If checkFinalLetters = True Then
     If i Mod 100 = 1 Then
       DoEvents
       StatusBar = spcs & "Doing test (5) on " & myWord
-      DoEvents
     End If
   Next myPara
 End If
@@ -513,10 +506,9 @@ If doMissingLetter = True Then
            thisChar, myNewChar)
     End If
 
-    If i Mod 50 = 1 Then
+    If i Mod 100 = 1 Then
       DoEvents
       StatusBar = spcs & "Other tests (4) on " & myWord
-      DoEvents
     End If
     testWords = Replace(allWords, myWord, "")
     captestLetters = Left(myWord, 1)
@@ -576,10 +568,9 @@ If doSimilarLetters = True Then
       If myNewChar <> "." Then myWord = Replace(myWord, _
            thisChar, myNewChar)
     End If
-    If i Mod 50 = 1 Then
+    If i Mod 100 = 1 Then
       DoEvents
       StatusBar = spcs & "Other tests (3) on " & myWord
-      DoEvents
     End If
     testWords = Replace(allWords, myWord, "")
     captestLetters = Left(myWord, 1)
@@ -648,10 +639,9 @@ If switchTest = True Then
       If myNewChar <> "." Then myWord = Replace(myWord, _
            thisChar, myNewChar)
     End If
-    If i Mod 50 = 1 Then
+    If i Mod 100 = 1 Then
       DoEvents
       StatusBar = spcs & "Other tests (2) on " & myWord
-      DoEvents
     End If
     testWords = Replace(allWords, myWord, "")
     captestLetters = Left(myWord, 1)
@@ -695,10 +685,9 @@ If doVowelTest = True Then
       If myNewChar <> "." Then myWord = Replace(myWord, _
            thisChar, myNewChar)
     End If
-    If i Mod 50 = 1 Then
+    If i Mod 100 = 1 Then
       DoEvents
       StatusBar = spcs & "Other tests (1) on " & myWord
-      DoEvents
     End If
     testWords = Replace(allWords, myWord, "")
     captestLetters = Left(myWord, 1)
@@ -763,15 +752,13 @@ End If
 finishOff:
 finalList.Activate
 If Len(McList) > 0 Then
-  Selection.EndKey Unit:=wdStory
-  Selection.TypeText CR2 & McList
+  finalList.Content.InsertAfter Text:=CR2 & McList
 End If
 
 Selection.HomeKey Unit:=wdStory
 If finalList.Content.Words(1) = "Aaaaa " Then _
      finalList.Content.Paragraphs(1).Range.Delete
-Selection.TypeText title1 & CR2
-Selection.Collapse wdCollapseStart
+     finalList.Content.InsertBefore Text:=title1 & CR
 Do
   Selection.Expand wdParagraph
   If Len(Selection) < 3 Or LCase(Selection) = _
@@ -819,10 +806,9 @@ For i = 1 To totParas - 1
            = 0
     End If
   End If
-  If i Mod 50 = 0 Then
+  If i Mod 100 = 1 Then
     DoEvents
     StatusBar = spcs & "Final checks: " & totParas - i
-    DoEvents
   End If
 Next i
 
@@ -867,15 +853,6 @@ Do While rng.Find.Found = True
   rng.End = rng.End - 2
   rng.Find.Execute
 Loop
-If myOnames > "" Then
-  Selection.EndKey Unit:=wdStory
-  Selection.TypeText "Possible O'<something> errors" & vbCr
-  Selection.MoveUp , 1
-  Selection.Style = finalList.Styles(wdStyleHeading1)
-  Selection.EndKey Unit:=wdStory
-  Selection.TypeText myOnames
-  Selection.HomeKey Unit:=wdStory
-End If
 
 Set rng = finalList.Content
 With rng.Find
@@ -969,12 +946,12 @@ End With
 
 Set rng = queriesDoc.Content
 rng.Font.Bold = False
-' rng.Font.Italic = False
+rng.Font.Italic = False
 rng.Font.DoubleStrikeThrough = False
 rng.Font.Underline = False
-' rng.Font.Color = wdColorBlack
+rng.Font.Color = wdColorBlack
 Selection.HomeKey Unit:=wdStory
-Selection.TypeText title2 & CR2
+Selection.TypeText title2 & CR
 Set rng = queriesDoc.Content.Paragraphs(2).Range
 If rng.Text = vbCr Then rng.Delete
 
@@ -1024,6 +1001,7 @@ If doingSeveralMacros = False Then
   Beep
   If myTime > 0 Then MsgBox myTime & "  minutes"
 End If
+Debug.Print
 If InStr(FUT.Name, "zzTestFile") > 0 Then
   FUT.Activate
 Else
@@ -1037,10 +1015,9 @@ On Error GoTo 0
 Resume
 End Sub
 
-
 Sub QuickSort(arr As Variant, ByVal low As Long, ByVal high As Long)
-' Paul Beverley - Version 21.12.24
-' Sorts an array of text at high speed
+' Paul Beverley - Version 14.12.24
+' High speed sorting algorithm pinched from an AI!
 
 Dim i As Long
 Dim j As Long
@@ -1053,10 +1030,10 @@ pivot = arr((low + high) \ 2)
 
 Do While i <= j
   Do While arr(i) < pivot
-      i = i + 1
+    i = i + 1
   Loop
   Do While arr(j) > pivot
-      j = j - 1
+    j = j - 1
   Loop
   If i <= j Then
     temp = arr(i)
@@ -1066,6 +1043,7 @@ Do While i <= j
     j = j - 1
   End If
 Loop
+DoEvents
 
 If low < j Then QuickSort arr, low, j
 If i < high Then QuickSort arr, i, high

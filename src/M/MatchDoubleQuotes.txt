@@ -1,4 +1,5 @@
 
+
 Sub MatchDoubleQuotes()
 ' Paul Beverley - Version 21.02.24
 ' Check whether double quotes match up
@@ -88,7 +89,6 @@ With Selection.Find
   .MatchSoundsLike = False
   .Execute
 End With
-
 End Sub
 
 

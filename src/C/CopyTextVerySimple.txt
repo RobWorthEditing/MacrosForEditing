@@ -1,22 +1,28 @@
+
 Sub CopyTextVerySimple()
-' Paul Beverley - Version 28.10.20
+' Paul Beverley - Version 19.07.25
 ' Creates a text-only copy, with no features preserved
 
-Set rngOld = ActiveDocument.Content
-myLanguage = rngOld.LanguageID
-Set oldDoc = ActiveDocument
-Documents.Add
-Set rng = ActiveDocument.Content
-rng.LanguageID = myLanguage
-rng.Text = rngOld.Text
+myDelay = 1
 
+Set rngOld = ActiveDocument.Content
+myLanguage = rngOld.Characters(1).LanguageID
+
+Set oldDoc = ActiveDocument
+Set newDoc = Documents.Add
+Set rng = newDoc.Content
+rng.Text = rngOld.Text
+myCount = myDelay * 100
+For i = 1 To myCount: DoEvents: Next i
+
+rng.LanguageID = myLanguage
 numNotes = oldDoc.Endnotes.Count
 If numNotes > 0 Then
   Set rng = ActiveDocument.Content
   rng.Collapse wdCollapseEnd
   rng.InsertAfter Text:=vbCr & "Endnotes:" & vbCr & vbCr
   rng.Collapse wdCollapseEnd
-  rng.Text = _
+  rng.InsertAfter Text:= _
        oldDoc.StoryRanges(wdEndnotesStory).FormattedText
 End If
 
@@ -26,7 +32,7 @@ If numNotes > 0 Then
   rng.Collapse wdCollapseEnd
   rng.InsertAfter Text:=vbCr & "Footnotes:" & vbCr & vbCr
   rng.Collapse wdCollapseEnd
-  rng.Text = _
+  rng.InsertAfter Text:= _
        oldDoc.StoryRanges(wdFootnotesStory).FormattedText
 End If
 
@@ -46,6 +52,7 @@ If shCount > 0 Then
         End If
       End If
     End If
+    DoEvents
   Next
 End If
 
@@ -58,10 +65,12 @@ With rng.Find
   .Replacement.Text = ""
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
+  DoEvents
 End With
 
 ' Add a newline for safety
-Selection.TypeText vbCr
+newDoc.Content.InsertAfter Text:=vbCr
+
 Selection.HomeKey Unit:=wdStory
 Beep
 End Sub

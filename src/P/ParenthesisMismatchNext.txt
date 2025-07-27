@@ -1,0 +1,18 @@
+
+Sub ParenthesisMismatchNext()
+' Paul Beverley - Version 08.07.27
+' Finds the next mismatched parenthesis
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "\([!\)]@\("
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .MatchWildcards = True
+  .Execute
+  If .Found = False Then Beep
+End With
+End Sub
+
+

@@ -1,0 +1,40 @@
+
+Sub ApostropheDirectionChange()
+' Paul Beverley - Version 29.04.25
+' Changes open single quote to closed single quote mark (apostrophe)
+
+trackIt = False
+
+searchChars = ChrW(8216)
+
+newChar = ChrW(8217)
+searchChars = "0"
+
+newChar = "0" & ChrW(8217)
+
+
+myTrack = ActiveDocument.TrackRevisions
+If trackIt = False Then ActiveDocument.TrackRevisions = False
+
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+If Len(rng) > 1000 Then rng.End = rng.Start + 1000
+
+For Each ch In rng.Characters
+Debug.Print ch.Text
+  If InStr(searchChars, ch.Text) > 0 Then
+    ch.Select
+    gotChar = True
+    Exit For
+  Else
+  End If
+Next ch
+If gotChar = False Then
+  Beep
+  ActiveDocument.TrackRevisions = myTrack
+  Exit Sub
+End If
+Selection.TypeText Text:=newChar
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+

@@ -1,12 +1,12 @@
 
 Sub ListOfFound()
-' Paul Beverley - Version 03.04.25
+' Paul Beverley - Version 21.07.25
 ' Creates a list of paragraphs containing specific word(s)
 
-' Sets zoom size for new list (use 0 if you don't want it)
+
+' Sets zoom size for new list (use 0 if you don't want to set it)
 myZoom = 200
 ' myZoom = 0
-
 wordsForSearchByChapter = ",Genesis 1,Matthew 1,Chapter"
 chapterStyle = "Heading 2"
 
@@ -26,7 +26,7 @@ myFontColour2 = wdColorRed
 
 Set myDoc = ActiveDocument
 Set rng = ActiveDocument.Content
-rng.End = rng.start + 200
+rng.End = rng.Start + 200
 
 CR = vbCr: CR2 = CR & CR
 inChapters = False: inMultiFile = False: inMacroMenu = False
@@ -57,13 +57,13 @@ If docName = "Macro_Menu" Then inMacroMenu = True
 inList = InStr(listFiles, "," & docName) > 0
 
 Set rng = Selection.Range.Duplicate
-If rng.start = rng.End Then
+If rng.Start = rng.End Then
   rng.Expand wdParagraph
   rng.MoveEnd , -1
   myTemp = Right(rng, 2)
   gotCodes = InStr(myTemp, ">") + InStr(myTemp, "!") + _
        InStr(myTemp, "#") + InStr(myTemp, """") + InStr(rng, ChrW(8221))
-  If rng.Words.count > 2 And gotCodes = 0 Then
+  If rng.Words.Count > 2 And gotCodes = 0 Then
     Set rng = Selection.Range.Duplicate
     rng.Expand wdWord
     Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
@@ -74,118 +74,142 @@ If rng.start = rng.End Then
 Else
   endNow = rng.End
   rng.Expand wdWord
-  startNow = rng.start
+  startNow = rng.Start
   rng.End = endNow
   rng.Expand wdWord
   Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
     rng.MoveEnd , -1
     DoEvents
   Loop
-  rng.start = startNow
+  rng.Start = startNow
 End If
-myText = rng.Text
 
-numSpaces = Len(myText) - Len(Replace(myText, " ", ""))
-If numSpaces > 1 Then
-  myText = InputBox("Search first + last word? ", "ListOfFound", _
-       Trim(myText))
+' rng has been rounded to the nearest word start/end
+myRoundedText = rng.Text
+If Len(Selection) > 1 Then
+  mySelectedText = Selection.Text
 Else
-  myText = InputBox("Search for: ", "ListOfFound", _
-       Trim(myText))
+  mySelectedText = ""
 End If
-If myText = "" Then Beep: Exit Sub
+'                Debug.Print myRoundedText, mySelectedText
 
-' Search for whole text string
-numSpaces = Len(myText) - Len(Replace(myText, " ", ""))
+numSpaces = Len(myRoundedText) - Len(Replace(myRoundedText, " ", ""))
+Select Case numSpaces
+   Case 0: myPrompt = "Single word"
+   Case 1: myPrompt = "Two words"
+   Case Is > 1: myPrompt = "First and last words"
+End Select
+myPrompt = "Enter = " & myPrompt & CR2
+If numSpaces > 1 Then myPrompt = myPrompt & """ or ' = Whole phrase" & CR2
+myPrompt = myPrompt & "s/S = Just selected text" & CR2
+myPrompt = myPrompt & "< or > = Whole word" & CR2
+myPrompt = myPrompt & "# = Case sensitive" & CR2
+myPrompt = myPrompt & "! = Just initial capital (e.g. Smith)" & CR2
+myPrompt = myPrompt & "l/L = Display as a list" & CR2
+myPrompt = myPrompt & "z/Z = STOP"
 
-If InStr(Right(myText, 3), """") + InStr(Right(myText, 3), _
-     ChrW(8221)) > 0 Then
-  ' numSpaces = 0 forces a single-string search
-  numSpaces = 0
-  myText = Replace(myText, """", "")
-  myText = Replace(myText, ChrW(8221), "")
-  quotedText = True
-Else
-  quotedText = False
-End If
+myInput = InputBox(myPrompt, "ListOfFound", Trim(myRoundedText))
 
-' Case sensitivity required?
+If StrPtr(myInput) = 0 Then Beep: Exit Sub
+
+doFirstLast = True
 doCase = False
 doWholeWord = False
-If InStr(Right(myText, 3), "#") > 0 Then
-  doCase = True
-  myText = Replace(myText, "#", "")
+doInitCap = False
+inList = False
+
+
+mySearchText = myRoundedText
+If Len(myInput) < 4 Then
+  If InStr(myInput, """") + InStr(myInput, "'") > 0 Then
+    doFirstLast = False
+  End If
+  
+  If InStr(UCase(myInput), "S") > 0 Then mySearchText = mySelectedText
+  
+  If InStr(myInput, "<") + InStr(myInput, ">") > 0 Then
+    doWholeWord = True
+  End If
+  
+  ' Case sensitivity required?
+  If InStr(myInput, "#") > 0 Then doCase = True
+  
+  ' Initial cap required?
+  If InStr(myInput, "!") > 0 Then doInitCap = True
+  
+  ' Is this a list?
+  If InStr(UCase(myInput), "L") > 0 Then inList = True
+Else
+  If myInput <> mySearchText Then mySearchText = myInput
 End If
 
-' Search whole words only?
-If InStr(Right(myText, 3), ">") > 0 Then
-  doWholeWord = True
-  myText = Replace(myText, ">", "")
-End If
-
-' Is this a list?
-If InStr(Right(myText, 3), "!") > 0 Then
-  inList = True
-  myText = Replace(myText, "!", "")
-End If
-
+numSpaces = Len(mySearchText) - Len(Replace(mySearchText, " ", ""))
 Select Case numSpaces
   Case 0
-    myText1 = myText
+    myText1 = mySearchText
     myText2 = ""
   Case 1
-    spPos = InStr(myText, " ")
-    myText1 = Left(myText, spPos - 1)
-    spPos = InStrRev(myText, " ")
-    myText2 = Trim(Mid(myText, spPos))
+    spPos = InStr(mySearchText, " ")
+    myText1 = Left(mySearchText, spPos - 1)
+    spPos = InStrRev(mySearchText, " ")
+    myText2 = Trim(Mid(mySearchText, spPos))
   Case Else
+' if there are three words or more...
     numbs = "0123456789"
-    For i = 1 To Len(myText)
-      ch = Mid(myText, i, 1)
+    For i = 1 To Len(mySearchText)
+      ch = Mid(mySearchText, i, 1)
       If LCase(ch) = UCase(ch) Then Exit For
     Next i
-    myText1 = Left(myText, i - 1)
-    For i = 1 To Len(myText)
-      ch = Left(Right(myText, i), 1)
+' So myText1 is the very first word, i.e. set of alpha characters
+    myText1 = Left(mySearchText, i - 1)
+    For i = 1 To Len(mySearchText)
+      ch = Left(Right(mySearchText, i), 1)
       If LCase(ch) = UCase(ch) And InStr(numbs, ch) = 0 Then Exit For
     Next i
-    myText2 = Right(myText, i - 1)
+    myText2 = Right(mySearchText, i - 1)
+' myText2 is the final "word", even if it's a number
 End Select
 
-If Right(myText, 1) = """" Or Right(myText, 1) = ChrW(8221) Then
-  myText1 = Replace(myText, """", "")
-  myText1 = Replace(myText, ChrW(8221), "")
-  myText2 = ""
-End If
-
+'                         Debug.Print myText1, myText2
+' Grab all the main text (ignore notes for now!)
 Set rng = myDoc.Content
-tst = rng.Text
 If doCase = False Then
-  tst = LCase(tst)
-  myText1 = LCase(myText1)
-  myText2 = LCase(myText2)
+  tst = UCase(tst)
+  myTextUC1 = UCase(myText1)
+  myTextUC2 = UCase(myText2)
 End If
-numFinds1 = Len(tst) - Len(Replace(tst, myText1, Mid(myText1, 2)))
+numFinds1 = Len(tst) - Len(Replace(tst, myTextUC1, Mid(myTextUC1, 2)))
+
+'                         Debug.Print myText1, myText2
 
 If myText2 > "" Then
-  numFinds2 = Len(tst) - Len(Replace(tst, myText2, Mid(myText2, 2)))
-  If numFinds1 / numFinds2 > 1.5 Then
-    ' Switch 1 and 2 around
-    myTemp = myText2
-    myText2 = myText1
-    myText1 = myTemp
-    numTemp = numFinds1
-    numFinds1 = numFinds2
-    numFinds2 = numTemp
+  numFinds2 = Len(tst) - Len(Replace(tst, myTextUC2, Mid(myTextUC2, 2)))
+  If numFinds2 > 0 Then
+    If numFinds1 / numFinds2 > 1.5 Then
+      ' Switch 1 and 2 around
+      myTemp = myText2
+      myText2 = myText1
+      myText1 = myTemp
+      numTemp = numFinds1
+      numFinds1 = numFinds2
+      numFinds2 = numTemp
+    End If
   End If
 Else
   numFinds2 = 0
 End If
+Debug.Print myText1, myText2
+If doInitCap = True Then
+  doCase = True
+  myText1 = UCase(Left(myText1, 1)) & LCase(Mid(myText1, 2))
+  myText2 = UCase(Left(myText2, 1)) & LCase(Mid(myText2, 2))
+End If
+
 myTarget = myText1
 myLimits = ""
 If myText2 > "" Then myTarget = myTarget & " and " & _
      myText2
-If quotedText = True Then myTarget = ChrW(8220) & _
+If doFirstLast = False Then myTarget = ChrW(8220) & _
      myTarget & ChrW(8221)
 If doWholeWord Then myLimits = myLimits & " + whole word"
 If doCase Then myLimits = myLimits & " + case sensitive"
@@ -209,8 +233,8 @@ If myZoom > 0 Then Application.ActiveWindow.View.Zoom.Percentage _
      = myZoom
 
 myDo = "TEF"
-If myDoc.Footnotes.count = 0 Then myDo = Replace(myDo, "F", "")
-If myDoc.Endnotes.count = 0 Then myDo = Replace(myDo, "E", "")
+If myDoc.Footnotes.Count = 0 Then myDo = Replace(myDo, "F", "")
+If myDoc.Endnotes.Count = 0 Then myDo = Replace(myDo, "E", "")
 
 myCount = 0
 okBooks = "1K,2K,1C,2C,1S,2S,1T,2T,1J,2J,3J,1P,2P"
@@ -220,7 +244,7 @@ For myRun = 1 To Len(myDo)
     Case "T": Set rng = myDoc.Content
       If inMacroMenu Then
         startPos = InStr(rng, "Bookmarks") + 85
-        rng.start = startPos
+        rng.Start = startPos
       End If
     Case "E": Set rng = myDoc.StoryRanges(wdEndnotesStory)
       Selection.InsertAfter Text:=CR & "Endnotes" & CR
@@ -242,9 +266,8 @@ For myRun = 1 To Len(myDo)
     .MatchWholeWord = doWholeWord
     .Execute
   End With
-  
   chpHeadingNow = ""
-  Do While rng.Find.found = True
+  Do While rng.Find.Found = True
     rng.Expand wdParagraph
     foundText = rng.Text
     foundText = Replace(foundText, ">", "")
@@ -267,14 +290,14 @@ For myRun = 1 To Len(myDo)
     Else
       gotOne = True
     End If
-    If doIt = "T" And rng.start = 0 Then gotOne = False
+    If doIt = "T" And rng.Start = 0 Then gotOne = False
     If gotOne = True Then
       myCount = myCount + 1
       If myRun > 1 Then rng.MoveStart , 2
       
       If inChapters Then
         Set qt = rng.Duplicate
-        qt.start = 0
+        qt.Start = 0
         With qt.Find
           .ClearFormatting
           .Replacement.ClearFormatting
@@ -291,7 +314,7 @@ For myRun = 1 To Len(myDo)
       End If
        If inMacros Then
         Set qt = rng.Duplicate
-        qt.start = 0
+        qt.Start = 0
         With qt.Find
           .ClearFormatting
           .Replacement.ClearFormatting
@@ -311,7 +334,7 @@ For myRun = 1 To Len(myDo)
      
       If inMultiFile Then
         Set qt = rng.Duplicate
-        qt.start = 0
+        qt.Start = 0
         With qt.Find
           .ClearFormatting
           .Replacement.ClearFormatting
@@ -398,15 +421,25 @@ If Not inMacroMenu Then
   Options.DefaultHighlightColorIndex = oldColour
 End If
 
-resultsText = rng.Text
-If doCase = False Then resultsText = LCase(resultsText)
-numFinds = Len(resultsText) - Len(Replace(resultsText, myText1, Mid(myText1, 2)))
+Set rng = ActiveDocument.Content
+myTot = rng.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myText1
+  .Replacement.Text = "^&!"
+  .MatchWildcards = False
+  .MatchWholeWord = doWholeWord
+  .Execute Replace:=wdReplaceAll
+End With
+numFinds = ActiveDocument.Range.End - myTot
+If numFinds > 0 Then WordBasic.EditUndo
 
 Set rng = ActiveDocument.Content
 enPos = InStr(rng, "Endnotes" & CR2 & "Foot")
 If enPos > 0 Then
-  rng.start = enPos - 1
-  rng.End = rng.start + 10
+  rng.Start = enPos - 1
+  rng.End = rng.Start + 10
   rng.Delete
 End If
 
@@ -414,15 +447,15 @@ End If
 Set rng = ActiveDocument.Content
 fnPos = InStrRev(rng, CR & "Footnotes" & CR2)
 If fnPos > 0 And rng.End - fnPos < 12 Then
-  rng.start = fnPos
+  rng.Start = fnPos
   rng.Delete
 End If
 
 ' If no finds in any notes
 fnPos = InStr(rng, "Footnotes" & CR2 & CR)
 If fnPos > 0 Then
-  rng.start = fnPos - 1
-  rng.End = rng.start + 11
+  rng.Start = fnPos - 1
+  rng.End = rng.Start + 11
   rng.Select
   rng.Delete
 End If
@@ -430,12 +463,11 @@ End If
 Set rng = ActiveDocument.Content
 enPos = InStr(rng, "Endnotes" & CR2 & CR)
 If enPos > 0 Then
-  rng.start = enPos - 1
-  rng.End = rng.start + 10
+  rng.Start = enPos - 1
+  rng.End = rng.Start + 10
   rng.Select
   rng.Delete
 End If
-
 
 If numFinds = 0 Then
   Beep
@@ -452,9 +484,9 @@ End If
 
 Selection.HomeKey Unit:=wdStory
 Selection.TypeText Text:=myTarget & CR2
-Selection.TypeText Text:="Occurs: " & Str(numFinds) & CR
+Selection.TypeText Text:="""" & myText1 & """ occurs: " & Str(numFinds) & CR
 Selection.TypeText Text:="(In: " & Str(myCount) & " paragraphs)" & CR2
-Selection.start = 0
+Selection.Start = 0
 Selection.Range.HighlightColorIndex = wdNoHighlight
 Selection.Range.Font.Color = wdColorAutomatic
 Selection.Range.Font.Underline = False

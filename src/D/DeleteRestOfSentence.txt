@@ -1,14 +1,34 @@
-Sub DeleteRestOfSentence()
-' Paul Beverley - Version 14.01.21
-' Deletes from end of current word to the end of the sentence
 
-Selection.Expand wdWord
-Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
-  Selection.MoveEnd , -1
-  DoEvents
-Loop
-myEnd = Selection.End
-Selection.Collapse wdCollapseEnd
+Sub DeleteRestOfSentence()
+' Paul Beverley - Version 24.06.25
+' Deletes to the end of the sentence
+
+doDeleteCurrentWord = True
+' i.e. delete the current word, as well as the rest
+' of the sentence, or...
+
+' doDeleteCurrentWord = False
+' i.e. place the cursor in the final word to be kept.
+
+If doDeleteCurrentWord = True Then
+  Selection.Expand wdWord
+  Selection.MoveStart , -1
+  Set rng = Selection.Range.Duplicate
+  rng.Collapse wdCollapseStart
+  rng.MoveStart , -1
+  rng.Select
+  If UCase(rng) = LCase(rng) Then rng.Delete
+  myEnd = rng.End
+  Selection.Collapse wdCollapseStart
+Else
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  myEnd = Selection.End
+  Selection.Collapse wdCollapseEnd
+End If
 
 With Selection.Find
   .ClearFormatting

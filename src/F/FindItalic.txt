@@ -1,0 +1,18 @@
+
+Sub FindItalic()
+' Paul Beverley - Version 04.07.25
+' Finds the next piece of text in italic
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Font.Italic = True
+  .Forward = True
+  .Wrap = wdFindStop
+  .Text = ""
+  .Replacement.Text = ""
+  .Execute
+  If .Found = False Then Beep
+End With
+End Sub
+

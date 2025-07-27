@@ -1,0 +1,28 @@
+
+Sub MoveToWordCount()
+' Paul Beverley - Version 23.06.25
+' Moves the cursor to the paragraph at, e.g., 5000 words or 10% from the start
+
+Do
+  myText = InputBox("Words? (e.g. 10(%) or 5000)", "MoveToWordCount")
+  myCount = Val(myText)
+  If myCount = 0 Then Beep: Exit Sub
+Loop Until myCount > 2
+totWords = ActiveDocument.Content.Words.Count
+If myCount < 90 Then myCount = myCount * totWords / 100
+
+Set rng = ActiveDocument.Content
+For i = 1 To ActiveDocument.Paragraphs.Count
+  rng.End = ActiveDocument.Paragraphs(i).Range.End
+  myWords = rng.Words.Count
+  If myWords > myCount Then
+    ActiveDocument.Paragraphs(i).Range.Select
+    x = MsgBox("Start: " & Trim(Str(wdWas)) & " words" & vbCr _
+         & "End: " & Trim(Str(myWords)) & " words", vbOKOnly, "MoveToCount")
+    Exit Sub
+  End If
+  wdWas = myWords
+  If i Mod 20 = 0 Then DoEvents
+Next i
+End Sub
+

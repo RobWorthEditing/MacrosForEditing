@@ -1,6 +1,8 @@
+
 Sub UnifyFormatForwards()
-' Paul Beverley - Version 27.11.20
-' Make end of para (or selection) same format as the start
+' Paul Beverley - Version 19.07.25
+' Makes end of para (or selection) same format as the start
+
 
 doTrack = False
 
@@ -11,17 +13,14 @@ If Selection.Start = Selection.End Then
   Selection.Expand wdParagraph
   Selection.Start = startHere
 End If
-endHere = Selection.End
-Selection.Collapse wdCollapseStart
-Selection.MoveStart , 1
-If Selection = " " Or Selection = vbCr Then
+myEnd = Selection.End
+Do While Left(Selection, 1) = " " Or Left(Selection, 1) = vbCr
   Selection.MoveStart , 1
-  Selection.MoveEnd , 1
-End If
-Selection.MoveEnd , -1
+Loop
+Selection.Collapse wdCollapseStart
+Selection.MoveEnd , 1
 Selection.CopyFormat
-Selection.Start = startHere
-Selection.End = endHere
+Selection.End = myEnd
 Selection.PasteFormat
 Selection.Collapse wdCollapseEnd
 ActiveDocument.TrackRevisions = myTrack

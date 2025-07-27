@@ -1,0 +1,68 @@
+
+Sub ActionBeatConvertor()
+' Paul Beverley - Version 14.05.25
+' Swaps the positions of the action beat marker and the quote mark
+
+useEmDash = True
+' to use ellipsis instead, it's useEmDash = False
+
+If useEmDash = True Then
+  myBeatMark = ChrW(8212)
+Else
+  myBeatMark = ChrW(8230)
+End If
+
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+
+dashPos = InStr(rng, ChrW(8212))
+ellipsisPos = InStr(rng, ChrW(8230))
+
+If dashPos + ellipsisPos = 0 Then
+  Beep
+  myResponse = MsgBox("Can't find a beat marker!", _
+     vbQuestion + vbYesNo, "ActionBeatConvertor")
+  Exit Sub
+End If
+myMarkupMode = ActiveWindow.View.MarkupMode
+For i = 1 To 10
+DoEvents
+Next i
+ActiveWindow.View.MarkupMode = wdBalloonRevisions
+If ellipsisPos < dashPos And ellipsPos > 0 Then
+  myPos = ellipsisPos
+Else
+  myPos = dashPos
+End If
+rng.MoveStart , myPos - 1
+rng.End = rng.Start + 3
+rng.Text = ChrW(8221) & myBeatMark
+
+' Now the end of the beat
+rng.Collapse wdCollapseEnd
+rng.End = ActiveDocument.Content.End
+
+dashPos = InStr(rng, ChrW(8212))
+ellipsisPos = InStr(rng, ChrW(8230))
+
+If dashPos + ellipsisPos = 0 Then
+  Beep
+  myResponse = MsgBox("Can't find the second beat marker!", _
+     vbQuestion + vbYesNo, "ActionBeatConvertor")
+  Exit Sub
+End If
+If ellipsisPos < dashPos And ellipsPos > 0 Then
+  myPos = ellipsisPos
+Else
+  myPos = dashPos
+End If
+rng.MoveStart , myPos - 3
+rng.End = rng.Start + 3
+rng.Text = myBeatMark & ChrW(8220)
+ActiveWindow.View.MarkupMode = myMarkupMode
+
+rng.Collapse wdCollapseEnd
+rng.Select
+End Sub
+
+

@@ -1,20 +1,21 @@
+
 Sub HyphenAlyse()
-' Paul Beverley - Version 07.12.24
+' Paul Beverley - Version 17.07.25
 ' Creates a frequency list of all possible hyphenations
 
 myList = "anti,cross,eigen,hyper,inter,meta,mid,multi," _
      & "non,over,post,pre,pseudo,quasi,semi,sub,super,un"
 
-myList = "anti,cross,eigen,hyper,inter,meta,mid,multi," _
-     & "non,over,post,pre,pseudo,quasi,semi,sub,super,un"
-    
-    
 includeNumbers = True
 
 tableBorders = True
 
 lighterColour = wdGray25
 ' lighterColour = wdColor50
+
+doStopScreenUpdate = False
+
+myDelay = 1
 
 Dim myResult As String
 myList = "," & myList
@@ -37,18 +38,22 @@ End If
 Dim pr(8000) As String
 strttime = Timer
 Set rng = ActiveDocument.Content
-Documents.Add
-Set myDoc = ActiveDocument
-Selection.FormattedText = rng.FormattedText
-Selection.EndKey Unit:=wdStory
-Application.ScreenUpdating = False
-On Error GoTo ReportIt
 
-If myDoc.Endnotes.Count > 0 Then Selection.FormattedText = _
-       myDoc.StoryRanges(wdEndnotesStory).FormattedText
-If myDoc.Footnotes.Count > 0 Then Selection.FormattedText = _
-       myDoc.StoryRanges(wdFootnotesStory).FormattedText
+Set myDoc = Documents.Add
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+myDoc.Content.FormattedText = rng.FormattedText
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+If doStopScreenUpdate = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
 
+If myDoc.Endnotes.Count > 0 Then myDoc.Content.InsertAfter Text:= _
+       myDoc.StoryRanges(wdEndnotesStory).Text
+If myDoc.Footnotes.Count > 0 Then myDoc.Content.InsertAfter Text:= _
+       myDoc.StoryRanges(wdFootnotesStory).Text
+
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
 Set rng = ActiveDocument.Content
 With rng.Find
   .ClearFormatting
@@ -57,12 +62,21 @@ With rng.Find
   .Font.StrikeThrough = True
   .Wrap = wdFindContinue
   .Replacement.Text = ""
-  .MatchWildcards = True
+  .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
-  DoEvents
+  
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^m"
+  .Replacement.Text = ""
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  
 End With
-allTheText = myDoc.Content.Text
-myDoc.Content.Text = LCase(allTheText)
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+myDoc.Content.Text = LCase(myDoc.Content.Text)
+t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+
 
 Set rng = ActiveDocument.Content
 With rng.Find
@@ -107,7 +121,12 @@ Do While rng.Find.Found = True
       If doingSeveralMacros = False Then _
            Debug.Print rng.Text & "     " & myPairs
       StatusBar = sp & rng.Text & "     " & myPairs
+        t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
+        asdf = 0
+      
+      ' Here is where the problem appears...............
     End If
+    DoEvents
   End If
   If Right(wdPair, 1) <> "s" Then
     wdPairs = wdPair & "s"
@@ -119,11 +138,13 @@ Do While rng.Find.Found = True
         If doingSeveralMacros = False Then _
              Debug.Print rng.Text, myPairs
         StatusBar = sp & rng.Text & "     " & myPairs
-        DoEvents
+        t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
       End If
+      DoEvents
     End If
   End If
   rng.Find.Execute
+  DoEvents
 Loop
 
 ' Collect words with each prefix
@@ -149,6 +170,7 @@ For i = 1 To UBound(pref)
     .Execute
   End With
   
+  
   Do While rng.Find.Found = True
     wd = rng.Text
     If InStr(wd, "-") = 0 Then wd = Left(wd, hPos) _
@@ -163,11 +185,12 @@ For i = 1 To UBound(pref)
         If doingSeveralMacros = False Then _
              Debug.Print wd & "     " & myPairs
         StatusBar = sp & wd & "     " & myPairs
-        DoEvents
       End If
+      For iz = 1 To myDelay * myDelay2: DoEvents: Next iz
     End If
     rng.Collapse wdCollapseEnd
     rng.Find.Execute
+    DoEvents
   Loop
 Next i
 
@@ -205,21 +228,15 @@ For i = 1 To UBound(pref)
         If doingSeveralMacros = False Then _
              Debug.Print wd & "     " & myPairs
         StatusBar = sp & wd & "     " & myPairs
-        DoEvents
       End If
+      For iz = 1 To myDelay * myDelay2: DoEvents: Next iz
     End If
     rng.Collapse wdCollapseEnd
     rng.Find.Execute
+    DoEvents
   Loop
 Next i
-halfTime = Timer
-
 ' Count the frequencies
-Selection.HomeKey Unit:=wdStory
-Selection.TypeText vbCr & vbCr
-Selection.HomeKey Unit:=wdStory
-ActiveDocument.Paragraphs(1).Style = _
-     ActiveDocument.Styles(wdStyleHeading1)
 
 allText = " " & ActiveDocument.Range.Text & " "
      
@@ -270,7 +287,6 @@ For i = 1 To myPairs
     myCount = Len(Replace(allText, sc, sc & "!")) - cnt
     If myCount > 0 Then
       totFinds = totFinds + 1
-      Selection.HomeKey Unit:=wdStory
       thisFind = thisFind & schWd & " . ." & _
            Str(myCount) & ":"
     Else
@@ -282,19 +298,17 @@ For i = 1 To myPairs
     If doingSeveralMacros = False Then _
          Debug.Print "To go:  ", myPairs - i
     StatusBar = sp & "To go:  " & myPairs - i
+    For iz = 1 To myDelay * myDelay2: DoEvents: Next iz
   End If
   If Len(thisFind) > 8 Then myResult = myResult & "%" & _
        wd & "%" & thisFind & "!"
 Next i
+
 myResult = Replace(myResult, ":!", vbCr)
 myResult = Replace(myResult, ":", vbTab)
-Selection.WholeStory
-Selection.Delete
-Set rng = ActiveDocument.Content
-rng.InsertAfter myResult
+myDoc.Content = myResult
 Set rng = ActiveDocument.Content
 rng.Sort SortOrder:=wdSortOrderAscending
-Selection.HomeKey Unit:=wdStory
 
 With rng.Find
   .ClearFormatting
@@ -308,16 +322,14 @@ With rng.Find
   .Execute Replace:=wdReplaceAll
 End With
 
-Selection.HomeKey Unit:=wdStory
-Selection.TypeText "Hyphenation use"
-startTable = Selection.End + 1
-ActiveDocument.Paragraphs(1).Style = _
-     ActiveDocument.Styles(wdStyleHeading1)
-Selection.start = startTable
-Selection.End = ActiveDocument.Range.End
-Selection.ConvertToTable Separator:=wdSeparateByTabs
+myDoc.Content.InsertBefore Text:="Hyphenation use"
+myDoc.Paragraphs(1).Style = _
+     myDoc.Styles(wdStyleHeading1)
+Set rng = myDoc.Content
+rng.Start = myDoc.Paragraphs(1).Range.End
+rng.ConvertToTable Separator:=wdSeparateByTabs
 
-Set TB = ActiveDocument.Tables(1)
+Set TB = myDoc.Tables(1)
 If tableBorders = True Then TB.Style = "Table Grid"
 ' TB.AutoFitBehavior (wdAutoFitContent)
 For i = 1 To TB.Rows.Count
@@ -337,6 +349,7 @@ For i = 1 To TB.Rows.Count
       TB.Cell(i, j).Range.Font.ColorIndex = lighterColour
     Next j
   End If
+  For iz = 1 To myDelay * myDelay2: DoEvents: Next iz
 Next i
 
 Set TB = ActiveDocument.Tables(1)
@@ -368,6 +381,7 @@ For i = 1 To TB.Rows.Count
       Next k
     End If
   Next j
+  For iz = 1 To myDelay * myDelay2: DoEvents: Next iz
 Next i
 
 For i = 1 To TB.Rows.Count
@@ -395,6 +409,7 @@ For i = 1 To TB.Rows.Count
       TB.Cell(i, j).Range.Font.ColorIndex = wdRed
     Next j
   End If
+  For iz = 1 To myDelay * myDelay2: DoEvents: Next iz
 Next i
 
 StatusBar = sp & "Formatting results"
@@ -409,7 +424,7 @@ For Each myCell In TB.Range.Cells
   End If
   myText = myCell.Range.Text
   Set rng = myCell.Range.Duplicate
-  rng.End = rng.start + 1
+  rng.End = rng.Start + 1
   myColour = rng.Font.ColorIndex
   i = InStr(myText, " . .")
   If myColour = lighterColour And i > 2 Then
@@ -417,26 +432,25 @@ For Each myCell In TB.Range.Cells
     If Right(myWord, 1) = "s" Then
       mySingular = Left(myText, i - 2)
       If InStr(allText, mySingular & " . .") > 0 Then _
-        myCell.Range.Font.color = wdColorAutomatic
+        myCell.Range.Font.Color = wdColorAutomatic
       myTest = Replace(mySingular, "-", "")
       If InStr(allText, mySingular & " . .") > 0 Then _
-        myCell.Range.Font.color = wdColorAutomatic
+        myCell.Range.Font.Color = wdColorAutomatic
       myTest = Replace(mySingular, "-", " ")
       If InStr(allText, myTest & " . .") > 0 Then _
-        myCell.Range.Font.color = wdColorAutomatic
+        myCell.Range.Font.Color = wdColorAutomatic
     End If
     If InStr(allText, myWord & "s . .") > 0 Then _
-      myCell.Range.Font.color = wdColorAutomatic
+      myCell.Range.Font.Color = wdColorAutomatic
     myTest = Replace(myWord, "-", "")
     If InStr(allText, myTest & "s . .") > 0 Then _
-      myCell.Range.Font.color = wdColorAutomatic
+      myCell.Range.Font.Color = wdColorAutomatic
     myTest = Replace(myText, "-", " ")
     If InStr(allText, myWord & "s . .") > 0 Then _
-      myCell.Range.Font.color = wdColorAutomatic
+      myCell.Range.Font.Color = wdColorAutomatic
   End If
+  For iz = 1 To myDelay * myDelay2: DoEvents: Next iz
 Next myCell
-
-Selection.HomeKey Unit:=wdStory
 
 timNow = Timer
 Application.ScreenUpdating = True
@@ -452,13 +466,13 @@ If doingSeveralMacros = False Then
   s = Int(timGone) - m * 60
   timeAll = "Time:  " & Trim(Str(m)) & " m " & _
        Trim(Str(s)) & " s"
-  Selection.HomeKey Unit:=wdStory
-  numPairs = ActiveDocument.Tables(1).Rows.Count
+  numPairs = myDoc.Tables(1).Rows.Count
   MsgBox "Items:  " & Trim(Str(numPairs)) & vbCr & vbCr _
        & timeAll
 Else
   FUT.Activate
 End If
+StatusBar = ""
 Exit Sub
 
 ReportIt:
@@ -466,5 +480,6 @@ Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub
+
 
 

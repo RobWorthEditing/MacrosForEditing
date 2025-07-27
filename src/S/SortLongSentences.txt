@@ -1,0 +1,44 @@
+
+Sub SortLongSentences()
+' Paul Beverley - Version 28.04.25
+' Sorts all sentences longer the x words
+' (Ex AI!)
+
+minWords = 6
+
+Dim sentences As Variant
+Dim sentenceArray() As String
+
+' Reference to the current document
+Set doc = ActiveDocument
+' Get all sentences in the current document
+Set sentences = doc.sentences
+
+' Loop through each sentence and add those longer than five words to the array
+CR = vbCr
+For i = 1 To sentences.Count
+  mySentence = Replace(Trim(sentences(i).Text), CR, "")
+  myCount = UBound(Split(mySentence, " ")) + 1
+
+  If myCount > minWords - 1 Then
+    sntCount = sntCount + 1
+    ReDim Preserve sentenceArray(1 To sntCount)
+    sentenceArray(sntCount) = mySentence
+  End If
+Next i
+
+' Sort the array alphabetically
+If myCount = 0 Then
+  Beep
+  MsgBox "No sentences longer than five words found.", vbInformation
+  Exit Sub
+End If
+Call QuickSort(sentenceArray, LBound(sentenceArray), UBound(sentenceArray))
+Documents.Add
+Set rng = ActiveDocument.Content
+' Output the sorted sentences to the debug window
+For i = LBound(sentenceArray) To UBound(sentenceArray)
+  rng.InsertAfter Text:=sentenceArray(i) & CR
+Next i
+End Sub
+

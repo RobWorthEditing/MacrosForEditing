@@ -1,29 +1,33 @@
 
 Sub MacroFetchPlus()
-' Paul Beverley - Version 17.06.24
-' Fetches the macro named in the clipboard or at the cursor and it loads the URL into the clipboard. If on a blank line, it uses the clipboard text as the name
+' Paul Beverley - Version 22.05.25
+' Fetches the macro named in the clipboard or at the cursor
 
-Selection.Collapse wdCollapseEnd
+' Does this look like a macro?
 Set rng = Selection.Range.Duplicate
-rng.Expand wdParagraph
-If rng.Text = vbCr Then
-  rng.Collapse wdCollapseStart
-  rng.Select
+rng.Collapse wdCollapseEnd
+rng.MoveEnd , 1
+ch = rng.Text
+If LCase(ch) = UCase(ch) Then
+  Selection.Collapse wdCollapseStart
+  myStart = Selection.Start
   Selection.Paste
-  Selection.start = rng.start
+  Selection.Start = myStart
   myMacroName = Trim(Selection)
+  WordBasic.EditUndo
+
   If InStr(myMacroName, " ") > 0 Or Len(myMacroName) > 20 Then
-    myResponse = MsgBox("Fetch this macro?", vbQuestion _
-         + vbYesNoCancel, "MacroFetchPlus")
-    If myResponse <> vbYes Then Exit Sub
+    Selection.MoveLeft , 1
+    Selection.Expand wdWord
+    myMacroName = Trim(Selection)
   End If
 Else
-  Selection.MoveLeft , 2
+  Selection.MoveLeft , 1
   Selection.Expand wdWord
   myMacroName = Trim(Selection)
 End If
 Selection.Collapse wdCollapseEnd
-
+Debug.Print myMacroName
 myFolder = Left(myMacroName, 1)
 myName = ""
 For i = 1 To Len(myMacroName)
@@ -39,16 +43,6 @@ myFullName = "https://www.wordmacrotools.com/macros/" & myFolder & "/" & myName
 Selection.InsertAfter Text:=myFullName
 Selection.Range.Copy
 WordBasic.EditUndo
-
-If Len(Selection) < 3 Then
-  Selection.MoveLeft , 3
-  Selection.Expand wdWord
-End If
-Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
-  Selection.MoveEnd , -1
-  DoEvents
-Loop
-myMacroName = Selection
 
 thisIsMacro = True
 ch1 = Left(myMacroName, 1)
@@ -74,19 +68,12 @@ For i = 1 To Len(myMacroName) - 3
   DoEvents
 Next i
 
-If Len(myMacroName) > 3 And GotMacro = True Then
+If Len(myMacroName) > 3 And thisIsMacro = True Then
   myFolder = Left(myMacroName, 1)
   myFullName = "https://www.wordmacrotools.com/macros/" & _
        myFolder & "/" & myMacroName
   ActiveDocument.FollowHyperlink Address:=myFullName
 End If
-If GotMacro = True Then
-  ' ShowVisualBasicEditor = True
-Else
-  Beep
-  MsgBox myMacroName & "??  -  Are you sure this is a macro name?"
-End If
 Selection.Collapse wdCollapseStart
 End Sub
-
 

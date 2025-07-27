@@ -1,10 +1,11 @@
 
 Sub NTbackupDatedSimple()
-' Paul Beverley - Version 20.07.24
+' Paul Beverley - Version 30.04.25
 ' Backs up the Normal template with date and time
 
 backupFolder = "Backup"
 nmlName = ThisDocument.Name
+
 If nmlName <> "Normal.dotm" Then
   Beep
   CR2 = vbCr & vbCr
@@ -28,11 +29,9 @@ Else
 End If
 
 ' Add date & time
-mySuffix = " " & Format(Now, "_YY-MM-DD-hh-mm")
-mySuffix = Replace(mySuffix, " _", " 20")
-
+mySuffix = " " & Format(Now, "_YYYY-MM-DD_hh_mm")
 newName = Replace(NTname, "Normal", backupFolder & "Normal" & mySuffix)
-Debug.Print newName
+
 ThisDocument.SaveAs newName
 Beep
 MsgBox ("Backup completed.")

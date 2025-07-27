@@ -1,0 +1,53 @@
+
+Sub TypeAListAlpha()
+' Paul Beverley - Version 06.06.25
+' Adds words to a list and sorts the list
+
+hashCharacter = "#"
+myColour = wdColorRed
+
+Set rng = ActiveDocument.Content
+hashPos = InStr(rng, hashCharacter)
+If hashPos > 0 Then hashPos = hashPos + 1
+rng.Start = hashPos
+dispLeft = ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  "
+dispRight = "  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+myDisplay = ""
+Do
+  p = rng.Paragraphs.Count
+  Selection.EndKey Unit:=wdStory
+  Do
+    StatusBar = dispLeft & myDisplay & dispRight
+    For i = 1 To 100
+      DoEvents
+    Next i
+  Loop Until rng.Paragraphs.Count > p
+  Selection.MoveStart wdParagraph, -1
+  myText = Selection.Words(1)
+  myDisplay = myText
+  If Len(myText) < 3 Then Exit Do
+  dupPos = InStr(rng, CR & myText & CR)
+  thisWordPos = dupPos + hashPos
+  If thisWordPos = Selection.Start + 1 Then
+    Selection.Font.Color = myColour
+    rng.Sort ExcludeHeader:=False, FieldNumber:="Paragraphs", _
+       CaseSensitive:=Not (anyCase), SortOrder:=wdSortOrderAscending, _
+      SortFieldType:=wdSortFieldAlphanumeric
+    Selection.InsertAfter Text:=vbCr
+    rng.Characters(1).Delete
+    Set rng = ActiveDocument.Content
+    rng.Start = hashPos
+  Else
+    Beep
+    myResponse = MsgBox(myText & "  is already listed", _
+         vbOKOnly, "TypeAListAlpha")
+    Selection.Delete
+  End If
+Loop Until Len(myText) < 3
+rng.Font.Color = wdColorBlack
+Selection.EndKey Unit:=wdStory
+Selection.MoveStart wdParagraph, -1
+Selection.Delete
+StatusBar = ""
+End Sub
+

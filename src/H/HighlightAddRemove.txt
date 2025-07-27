@@ -1,0 +1,115 @@
+
+Sub HighlightAddRemove()
+' Paul Beverley - Version 26.06.25
+' Adds highlight in your choice of colours
+
+Dim myCol(20)
+' Use -1 to indicate "no highlight"
+myCol(1) = wdYellow
+myCol(2) = wdTurquoise
+myCol(3) = -1
+myCol(4) = wdPink
+myCol(5) = wdBrightGreen
+
+' Make one or other True:
+doParagraph = False
+doWord = True
+
+myTrack = ActiveDocument.TrackRevisions
+ActiveDocument.TrackRevisions = False
+
+Dim v As Variable: Dim nowColour As Long
+Dim wasStart As Long: Dim wasEnd As Long
+numVars = 0
+For Each v In ActiveDocument.Variables
+  If v.Name = "colNum" Then numVars = numVars + 1
+  If v.Name = "selEnd" Then numVars = numVars + 1
+  If v.Name = "selStart" Then numVars = numVars + 1
+Next v
+
+If numVars = 1 Or numVars = 2 Then
+  numVars = 0
+  For i = ActiveDocument.Variables.Count To 1 Step -1
+    ActiveDocument.Variables(i).Delete
+  Next i
+End If
+
+If numVars = 0 Then
+  ActiveDocument.Variables.Add "selStart", 0
+  ActiveDocument.Variables.Add "selEnd", 0
+  ActiveDocument.Variables.Add "colNum", 0
+Else
+  wasStart = ActiveDocument.Variables("selStart")
+  wasEnd = ActiveDocument.Variables("selEnd")
+  wasCol = ActiveDocument.Variables("colNum")
+End If
+
+For i = 20 To 1 Step -1
+  If myCol(i) <> 0 Then
+    myColTotal = i
+    Exit For
+  End If
+Next i
+
+For i = 1 To myColTotal
+  If myCol(i) = -1 Then myCol(i) = 0
+Next i
+
+' If no text is selected ...
+Set rng = Selection.Range.Duplicate
+If rng.Start = rng.End Then
+  rng.MoveEnd , 1
+  If rng.Text = vbCr Then
+    rng.MoveStart , -1
+    rng.Collapse wdCollapseStart
+  Else
+    rng.MoveEnd , -1
+  End If
+  
+' Cursor outside the previous range? So start from scratch
+  If rng.Start < wasStart Or rng.End > wasEnd Then
+  ' If the cursor is outside the previous range
+    If doParagraph = True Then
+      rng.Expand wdParagraph
+    Else
+      rng.Expand wdWord
+      Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+        rng.MoveEnd , -1
+        DoEvents
+      Loop
+    End If
+    ActiveDocument.Variables("selStart") = rng.Start
+    ActiveDocument.Variables("selEnd") = rng.End
+    nowCol = 1
+  Else
+    ' Otherwise check the highlight colour
+    rng.Start = wasStart
+    rng.End = wasStart + 1
+    nowColour = rng.HighlightColorIndex
+    If nowColour <> myCol(wasCol) Then
+      ' colour has changed, so go back to colour 1
+      nowCol = 1
+    Else
+      ' go to next colour
+      nowCol = wasCol + 1
+      If nowCol > myColTotal Then nowCol = 1
+    End If
+    rng.End = wasEnd
+  End If
+Else:  ' if some text is selected ...
+  ' Record current selection range
+  ActiveDocument.Variables("selStart") = rng.Start
+  ActiveDocument.Variables("selEnd") = rng.End
+  nowCol = 1
+End If
+ActiveDocument.Variables("colNum") = nowCol
+rng.HighlightColorIndex = myCol(nowCol)
+rng.Collapse wdCollapseStart
+rng.Select
+theEnd:
+ActiveDocument.TrackRevisions = myTrack
+End Sub
+
+
+
+

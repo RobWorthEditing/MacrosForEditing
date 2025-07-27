@@ -1,28 +1,32 @@
 
 Sub CopyToListAlphabetic()
-' Paul Beverley - Version 15.04.24
+' Paul Beverley - Version 26.04.25
 ' Copies selected text into an alphabetic list file
 
+
+' Exact capitalisation(i.e. case sensitive)
+' Must be in style "Heading 3"
+followHeading = "Word list"
+
+' To locate list file (not case sensitive)
 ' keyWord = "queries"
 keyWord = "list"
 keyWord = "sheet"
 
-followHeading = "Word list"
-
 wordsToAvoid = "switch"
 ' wordsToAvoid = "FRedit,switch"
 
-copyWholePara = True
+beepIfAlreadyListed = True
+
+' copyWholePara = True
 copyWholePara = False
 
-includeFormatting = True
-' includeFormatting = False
+includeFormatting = False
+' includeFormatting = True
 
 goBackToSource = True
 
-CR = vbCr
-CR2 = CR & CR
-Dim sourceText As Range, tgt As Range
+Dim sourceText As Range
 Set thisDoc = ActiveDocument
 wds = Split("," & LCase(wordsToAvoid), ",")
 
@@ -31,11 +35,27 @@ If Selection.Start = Selection.End Then
   If copyWholePara = True Then
     Selection.Expand wdParagraph
   Else
-    Selection.Expand wdWord
-    Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
-      Selection.MoveEnd , -1
+    Set rng = Selection.Range.Duplicate
+    rng.Expand wdWord
+    rng.MoveEnd wdWord, 1
+    chkWd = rng.Words.Last
+    If chkWd = "-" Then
+      rng.MoveEnd wdWord, 2
+      chkWd = rng.Words.Last
+      If chkWd = "-" Then
+        rng.MoveEnd wdWord, 1
+      Else
+        rng.MoveEnd wdWord, -1
+      End If
+    Else
+      rng.MoveEnd wdWord, -1
+    End If
+    DoEvents
+    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+      rng.MoveEnd , -1
       DoEvents
     Loop
+    rng.Select
   End If
 Else
   Set rng = Selection.Range.Duplicate
@@ -55,7 +75,6 @@ End If
 
 Set sourceText = Selection.Range.Duplicate
 myText = sourceText.Text
-Selection.Copy
 Selection.Collapse wdCollapseEnd
 
 gottaList = False
@@ -67,12 +86,10 @@ For Each myDoc In Application.Documents
   For i = 1 To UBound(wds)
     If InStr(nm, wds(i)) > 0 Then gottaList = False
   Next i
-  If gottaList = True Then
-    myDoc.Activate
-    Exit For
-  End If
+  If gottaList = True Then Exit For
 Next myDoc
 
+CR = vbCr: CR2 = CR & CR
 If gottaList = False Then
   Beep
   myResponse = MsgBox("Can't find a list/stylesheet." & CR2 & _
@@ -99,12 +116,15 @@ End With
 If rng.Find.Found = False Then
   myResponse = MsgBox("Can't find the heading:" & CR2 & _
        followHeading, vbExclamation + vbOKOnly, "CopyToListAlphabetic")
-
+  If goBackToSource = False Then myDoc.Activate
+  Exit Sub
 End If
+
 rng.Expand wdParagraph
 listStart = rng.End
 rng.Collapse wdCollapseStart
 ' Check if it's already in the list
+Debug.Print rng
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -116,7 +136,7 @@ With rng.Find
 End With
 
 If rng.Find.Found = True Then
-  Beep
+  If beepIfAlreadyListed = True Then Beep
   If goBackToSource = False Then myDoc.Activate
   Exit Sub
 End If
@@ -126,7 +146,6 @@ rng.End = myDoc.Content.End
 If LCase(rng) <> UCase(rng) Then
   For i = 1 To rng.Paragraphs.Count
     myNextItem = Replace(rng.Paragraphs(i).Range.Text, vbCr, "")
-'    Debug.Print myText & ":", "|" & myNextItem & "|"
     If LCase(myNextItem) > LCase(myText) Or _
         LCase(myNextItem) = UCase(myNextItem) Then
       Set rng = rng.Paragraphs(i).Range.Duplicate
@@ -146,7 +165,13 @@ Else
   rng.InsertAfter myText
   If InStr(myText, vbCr) = 0 Then rng.InsertAfter vbCr
 End If
-If goBackToSource = False Then myDoc.Activate
+
+rng.Collapse Direction:=wdCollapseEnd
+rng.Select
+rng.Revisions.AcceptAll
+If goBackToSource = False Then thisDoc.Activate
 End Sub
+
+
 
 

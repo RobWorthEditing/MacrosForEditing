@@ -1,0 +1,17 @@
+
+Sub ComboBoxAcceptMac()
+' Paul Beverley - Version 11.06.25
+' Finds combo boxes and replaces them with the current text item
+' Based on an idea by Mary Davis
+  
+For Each ff In ActiveDocument.FormFields
+  ' Check if it's a dropdown form field (legacy combo box)
+  If ff.Type = wdFieldFormDropDown Then
+    ff.Range.Select
+    Selection.Copy
+    ff.Delete
+    Selection.PasteSpecial DataType:=wdPasteText
+  End If
+Next ff
+End Sub
+

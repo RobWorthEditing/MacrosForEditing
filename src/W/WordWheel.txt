@@ -1,0 +1,192 @@
+
+Sub WordWheel()
+' Paul Beverley - Version 06.06.25
+' For a word wheel it checks, counts and adds words to a (sorted) list
+
+myLetters = "dincients"
+
+doJuggleLetters = True
+' doJuggleLetters = false
+minLength = 3
+hashCharacter = "#"
+myColour = wdColorRed
+myFlashTime = 5
+leadLetter = Left(myLetters, 1)
+allLetters = Mid(myLetters, 2)
+
+If doJuggleLetters = True Then
+' Split the input word into an array of single letters
+  ReDim letters(1 To Len(allLetters))
+  For i = 1 To Len(allLetters)
+    letters(i) = Mid$(allLetters, i, 1)
+  Next i
+
+' Initialize the random number generator
+  Randomize
+' Implement the Fisher-Yates shuffle to rearrange the letters randomly
+  For i = UBound(letters) To 2 Step -1
+    j = Int(Rnd() * i) + 1  ' Generate a random index between 1 and i
+    ' Swap letters at positions i and j
+    temp = letters(i)
+    letters(i) = letters(j)
+    letters(j) = temp
+  Next i
+  allLetters = leadLetter
+  ' Rebuild the randomized word from the shuffled letters
+  For i = 1 To UBound(letters)
+    allLetters = allLetters & letters(i)
+  Next i
+End If
+CR = vbCr
+Set rng = ActiveDocument.Content
+If Right(rng, 3) = CR & CR & CR Then rng.Characters.Last.Delete
+leadLetter = Left(allLetters, 1)
+rng.Paragraphs(1) = UCase(Mid(allLetters, 2, 1) & "   " & _
+Mid(allLetters, 3, 1) & "   " & Mid(allLetters, 4, 1)) & CR
+rng.Paragraphs(2) = UCase(Mid(allLetters, 5, 1)) & "   " & _
+UCase(leadLetter) & "   " & UCase(Mid(allLetters, 6, 1)) & CR
+rng.Paragraphs(3) = UCase(Mid(allLetters, 7, 1) & "   " & _
+Mid(allLetters, 8, 1) & "   " & Right(allLetters, 1)) & CR
+
+rng.Start = 14
+rng.End = 15
+rng.HighlightColorIndex = wdGray25
+For i = 1 To 100
+  DoEvents
+Next i
+
+Set rng = ActiveDocument.Content
+hashPos = InStr(rng, hashCharacter)
+Set numRng = ActiveDocument.Range(Start:=hashPos - 3, End:=hashPos - 1)
+
+If hashPos > 0 Then hashPos = hashPos + 1
+rng.Start = hashPos
+
+dispLeft = ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  "
+dispRight = "  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+Do
+  ' Wait for a new line (paragraph) to be typed
+  
+  numWds = Len(rng) - Len(Replace(rng, CR, "")) - 1
+  numText = Trim(Str(numWds))
+  If numWds < 10 Then numText = " " & numText
+  numRng.Text = numText
+  
+  p = rng.Paragraphs.Count
+  Selection.EndKey Unit:=wdStory
+  If ActiveDocument.ComputeStatistics(wdStatisticPages) = 2 Then
+    df = rng.Characters.Last.Font.Size
+    rng.Font.Size = rng.Characters.Last.Font.Size - 1
+  End If
+  Do
+    StatusBar = dispLeft & myDisplay & dispRight
+    For i = 1 To 100
+      DoEvents
+    Next i
+  Loop Until rng.Paragraphs.Count > p
+
+  Selection.MoveStart wdParagraph, -1
+  rng.Font.Color = wdColorBlack
+  myText = LCase(Selection.Words(1))
+  myDisplay = myText
+' If it's a short para, jump to the end of the macro
+  myLength = Len(myText)
+  If myLength < 3 Then Exit Do
+  addIt = False
+  If myLength < minLength Then
+    Beep
+    myResponse = MsgBox(myText & " is too short!", vbOKOnly, "WordWheel")
+  Else
+  ' Check spelling
+    spellingGood = Application.CheckSpelling(myText, _
+       MainDictionary:=Languages(wdEnglishUK).NameLocal) _
+   
+    If spellingGood = True Then
+      addIt = True
+    Else
+      Beep
+      myResponse = MsgBox(UCase(myText) & _
+           "  is not a valid word", vbOKOnly, "WordWheel")
+      Selection.Delete
+      spellError = True
+    End If
+  End If
+  
+  ' Does it include the lead letter?
+  If addIt = True Then
+    If InStr(myText, leadLetter) = 0 Then
+      Beep
+      myPrompt = "  doesn't contain a  "
+      anLetters = "aefhilmnorsx"
+      If InStr(anLetters, leadLetter) > 0 Then _
+           myPrompt = Replace(myPrompt, " a ", " an ")
+      myResponse = MsgBox(UCase(myText) & myPrompt & _
+           UCase(leadLetter), vbOKOnly, "WordWheel")
+      addIt = False
+      Selection.Delete
+    Else
+      tst = allLetters
+      For i = 1 To Len(myText)
+        ch = Mid(myText, i, 1)
+        ltrPos = InStr(tst, ch)
+        If ltrPos = 0 Then
+          Beep
+          myPrompt = "has a "
+          anLetters = "aefhilmnorsx"
+          If InStr(anLetters, ch) > 0 Then _
+           myPrompt = "has an "
+          myResponse = MsgBox(UCase(myText) & CR & CR & myPrompt _
+               & UCase(ch) & " too many", vbOKOnly, "WordWheel")
+          addIt = False
+          Selection.Delete
+          Exit For
+        Else
+          If ltrPos = 1 Then
+            tst = Mid(tst, 2)
+          Else
+            tst = Left(tst, ltrPos - 1) & Mid(tst, ltrPos + 1)
+          End If
+        End If
+      Next i
+    End If
+  End If
+
+  If addIt = True Then
+    dupPos = InStr(rng, CR & myText & CR)
+    thisWordPos = dupPos + hashPos
+    If thisWordPos = Selection.Start Then
+    ' Deal with this new (unique) word
+      Selection.Font.Color = myColour
+      If Len(Selection) = 10 Then
+        Selection.Text = UCase(Selection.Text)
+        Beep
+        myTime = Timer
+        Do
+        Loop Until Timer > myTime + 0.2
+        Beep
+      End If
+      rng.Sort ExcludeHeader:=False, FieldNumber:="Paragraphs", _
+         CaseSensitive:=Not (anyCase), SortOrder:=wdSortOrderAscending, _
+        SortFieldType:=wdSortFieldAlphanumeric
+      Selection.InsertAfter Text:=vbCr
+      rng.Characters(1).Delete
+      Set rng = ActiveDocument.Content
+      rng.Start = hashPos
+    Else
+      If spellingGood = True Then
+        Beep
+        myResponse = MsgBox(UCase(myText) & "  is already listed", _
+             vbOKOnly, "WordWheel")
+        Selection.Delete
+      End If
+    End If
+  End If
+Loop Until Len(myText) < 3
+If UCase(myText) = "X" Then rng.Font.Color = wdColorBlack
+Selection.EndKey Unit:=wdStory
+Selection.MoveStart wdParagraph, -1
+Selection.Delete
+StatusBar = ""
+End Sub
+
+

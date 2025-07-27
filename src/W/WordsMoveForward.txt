@@ -1,0 +1,32 @@
+
+Sub WordsMoveForward()
+' Paul Beverley - Version 15.05.25
+' Moves the cursor forward by a number of ACTUAL words
+
+defaultJump = 1000
+
+doSelectAll = False
+
+Selection.Collapse wdCollapseEnd
+Set rng = Selection.Range.Duplicate
+rng.Expand wdWord
+rng.Collapse wdCollapseStart
+selStart = rng.Start
+defText = Trim(Str(defaultJump))
+myText = InputBox("How many words? (" & defText & ")")
+myNumber = Val(myText)
+If myNumber = 0 Then myNumber = defaultJump
+
+myCount = myNumber
+Do
+  rng.Move wdWord, 1
+  rng.Expand wdWord
+  If LCase(rng) <> UCase(rng) Or Val(rng) > 0 Then
+    myCount = myCount - 1
+  End If
+  If myCount Mod 100 = 0 Then DoEvents
+Loop Until myCount < 1
+If doSelectAll = True Then rng.Start = selStart
+rng.Select
+End Sub
+

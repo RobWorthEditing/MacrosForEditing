@@ -38,7 +38,7 @@ Do
 Loop Until newName <> nameA Or (Timer - t) > 5
 If newName = nameA Then
   Beep
-  MsgBox "Too slow! Run it again.", vbInformation
+  MsgBox "Too slow. Run it again, please.", vbInformation
   Exit Sub
 End If
 Set afterDoc = ActiveDocument

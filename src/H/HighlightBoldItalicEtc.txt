@@ -1,0 +1,56 @@
+
+Sub HighlightBoldItalicEtc()
+' Paul Beverley - Version 28.04.25
+' Highlights bold, italic, etc in different colours
+
+Set rng = ActiveDocument.Content
+
+' Bold
+With rng.Find
+  .ClearFormatting
+  .Font.Bold = True
+  .Text = ""
+  While .Execute
+    rng.HighlightColorIndex = wdBrightGreen
+    rng.Collapse wdCollapseEnd
+  Wend
+
+' Italic
+ rng.End = 0
+  .ClearFormatting
+  .Font.Italic = True
+  While .Execute
+    rng.HighlightColorIndex = wdGray25
+    rng.Collapse wdCollapseEnd
+  Wend
+
+' Bold-italic
+  rng.End = 0
+  .ClearFormatting
+  .Font.Bold = True
+  .Font.Italic = True
+  While .Execute
+    rng.HighlightColorIndex = wdTurquoise
+    rng.Collapse wdCollapseEnd
+  Wend
+
+' Superscript
+  rng.End = 0
+  .ClearFormatting
+  .Font.Superscript = True
+  While .Execute
+    rng.HighlightColorIndex = wdPink
+    rng.Collapse wdCollapseEnd
+  Wend
+
+' Number ranges
+  rng.End = 0
+  .ClearFormatting
+  .Text = "^#-^#"
+  While .Execute
+    rng.HighlightColorIndex = wdYellow
+    rng.Collapse wdCollapseEnd
+  Wend
+End With
+End Sub
+

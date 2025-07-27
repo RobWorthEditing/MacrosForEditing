@@ -1,6 +1,6 @@
 
 Sub SpellingCorrect()
-' Paul Beverley - Version 07.04.25
+' Paul Beverley - Version 19.04.25
 ' Corrects spelling and wrong capitalisation
 
 elistNameContains = "elist"
@@ -45,7 +45,7 @@ If LCase(rng) = UCase(rng) Then
 End If
 
 ' No non-alpha characters at the end of the word
-Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+Do While InStr(ChrW(8217) & "!?.,;' ", Right(rng.Text, 1)) > 0
   rng.MoveEnd , -1
   DoEvents
 Loop

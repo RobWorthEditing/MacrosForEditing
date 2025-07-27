@@ -1,0 +1,57 @@
+
+Sub RomanNumeralToArabic()
+' Paul Beverley - Version 28.04.25
+' Changes the Roman numeral at the cursor to Arabic numerals
+' Philip Ridgers wrote this - thanks, Philip
+
+With Selection
+  .Collapse wdCollapseStart
+  .Expand wdWord
+ 
+  If .Characters.Last Like "[ ^s]" Then .MoveEnd , -1
+ 
+  myWord = UCase(Selection)
+ 
+  Roman = "I|V|X|L|C|D|M": Roman = Split(Roman, "|")
+  Arabic = "1|5|10|50|100|500|1000": Arabic = Split(Arabic, "|")
+ 
+  n = Len(Selection)
+ 
+  ReDim myDigits(n - 1) As Integer
+  md = 0
+ 
+  For i = n To 1 Step -1
+    For j = 0 To UBound(Roman)
+      If Mid(myWord, i, 1) = Roman(j) Then
+        myDigits(md) = Arabic(j)
+        Exit For
+      End If
+    Next
+   
+    If md <> 0 Then
+      If myDigits(md) < myDigits(md - 1) Then
+        myNum = myNum - myDigits(md)
+      Else
+        myNum = myNum + myDigits(md)
+      End If
+    Else
+      myNum = myDigits(md)
+    End If
+   
+    md = md + 1
+  Next
+ 
+  If myNum = 0 Then
+    Beep
+    MsgBox "Please place the cursor within/at " & _
+         "the start of the roman numeral you'd like changed."
+    Exit Sub
+  End If
+ 
+  If Len(myNum) = 4 Then myNum = Left(myNum, 1) & "," & Right(myNum, 3)
+ 
+  .Text = myNum
+  .Collapse wdCollapseEnd
+End With
+End Sub
+

@@ -1,0 +1,114 @@
+
+Sub TextInserter2()
+' Paul Beverley - Version 05.07.25
+' Inserts text items from a menu list (for another separate set of texts)
+
+' Line to place at top of VBA window:
+' Private pbInsertText2 As String
+
+Set rng = ActiveDocument.Content
+CR = vbCr
+CR2 = CR & CR
+' Is the current text a text insert set-up file?
+If InStr(LCase(rng.Paragraphs(1)), "insert") > 0 Then
+  If Selection.Start <> Selection.End Then
+    myText = Selection
+  Else
+    Do While rng.Characters(1) = "|" Or _
+         rng.Characters(1) = CR
+      rng.MoveStart wdParagraph, 1
+    Loop
+    endPos = InStr(rng, CR2)
+    rng.End = rng.Start + endPos
+    myText = rng.Text
+  End If
+  myText = Replace(myText, CR2, CR)
+  Beep
+  myResponse = MsgBox("Reset text?!" & CR2 & myText, _
+       vbQuestion + vbYesNoCancel, "TextInserter2")
+  If myResponse <> vbYes Then Exit Sub
+  pbInsertText2 = myText
+  Exit Sub
+End If
+
+' Read current text items and create on-screen menu
+myText = pbInsertText2
+If myText = "" Then
+  Beep
+  myResponse = MsgBox("Text list has been lost, sorry." _
+  & CR2 & "Please reload text.", vbOKOnly, "TextInserter2")
+  Exit Sub
+End If
+myLine = Split(myText, CR)
+numItems = UBound(myLine)
+ReDim myItem(numItems) As String
+ReDim myCode(numItems) As String
+ReDim myItemText(numItems) As String
+ReDim myPromptText(numItems) As String
+' myLine() will contain the code line text
+' myCode() will contain the code for a given line
+' myItemText() will contain the text to be inserted
+' myPromptText() will contain the text to be inserted
+
+For i = 0 To numItems - 1
+  myText = myLine(i)
+  barPos = InStr(myText, "|")
+  myCode(i) = Left(myText, barPos - 1)
+  myText = Mid(myText, barPos + 1)
+  barPos = InStr(myText, "|")
+  myItemText(i) = Left(myText, barPos - 1)
+  myPromptText(i) = Right(myText, Len(myText) - barPos)
+Next i
+
+' Read user input and select text ready to insert
+Set rng = Selection.Range.Duplicate
+rng.Expand wdWord
+currentWord = Trim(rng.Text)
+myPrompt = ""
+For i = 0 To numItems - 1
+  myPrompt = myPrompt & myCode(i) & " " _
+       & myPromptText(i) & CR
+Next i
+Do
+  myInput = InputBox(myPrompt, "TextInserter2")
+  foundCode = False
+  For i = 0 To numItems - 1
+    If LCase(myInput) = LCase(myCode(i)) Then
+      myTypeText = myItemText(i)
+      myTypeText = Replace(myTypeText, "^p", CR)
+      myTypeText = Replace(myTypeText, "^32", " ")
+      myTypeText = Replace(myTypeText, "^t", vbTab)
+      myTypeText = Replace(myTypeText, "^w", currentWord)
+      foundCode = True
+      Exit For
+    End If
+  Next i
+  If myInput = "" Then Beep: Exit Sub
+  If foundCode = False Then
+    Beep
+    myResponse = MsgBox("Unknown code", vbOKOnly, "TextInserter2")
+  End If
+Loop Until foundCode = True
+
+' Where should the text be placed?
+myMode = 1
+If Left(myTypeText, 1) = "!" Then myMode = 1
+If Right(myTypeText, 1) = "!" Then myMode = 2
+If Left(myTypeText, 1) = "$" Then myMode = 3
+If Right(myTypeText, 1) = "$" Then myMode = 4
+myTypeText = Replace(myTypeText, "$", "")
+myTypeText = Replace(myTypeText, "!", "")
+' Insert text
+Select Case myMode
+  Case 1: Selection.Expand wdParagraph
+          Selection.Collapse wdCollapseStart
+  Case 2: Selection.Expand wdParagraph
+          Selection.Collapse wdCollapseEnd
+  Case 3: Selection.Expand wdWord
+          Selection.Collapse wdCollapseStart
+  Case 4: Selection.Expand wdWord
+          Selection.Collapse wdCollapseEnd
+End Select
+Selection.TypeText Text:=myTypeText
+End Sub
+

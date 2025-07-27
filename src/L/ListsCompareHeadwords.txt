@@ -1,0 +1,52 @@
+
+Sub ListsCompareHeadwords()
+' Paul Beverley - Version 22.07.25
+' Compares the headwords of two lists
+
+Set firstDoc = ActiveDocument
+nameA = Replace(firstDoc.Name, ".docx", "")
+If doShowPrompt = True Then
+  myResponse = MsgBox("Click in file to compare with > " & nameA & " <", _
+       vbQuestion + vbInformation, "CompareTwoDocs")
+End If
+t = Timer
+Do
+  newName = Replace(ActiveDocument.Name, ".docx", "")
+  DoEvents
+Loop Until newName <> nameA Or (Timer - t) > 5
+If newName = nameA Then
+  Beep
+  MsgBox "Too slow. Run it again, please.", vbInformation
+  Exit Sub
+End If
+
+CR = vbCr
+CR2 = CR & CR
+Set secondDoc = ActiveDocument
+myList = CR
+For Each pa In secondDoc.Paragraphs
+  myList = myList & Trim(pa.Range.Words(1)) & CR
+  DoEvents
+Next pa
+
+Debug.Print Left(myList, 100)
+Set newDoc = Documents.Add
+nameA = Replace(nameA, " ", "")
+newName = Replace(newName, " ", "")
+Selection.TypeText Text:="In " & nameA & " but not in " & newName & CR2
+
+For Each pa In firstDoc.Paragraphs
+  myWord = Trim(pa.Range.Words(1))
+  Debug.Print myWord & "|"
+  If InStr(myList, CR & myWord & CR) = 0 Then _
+       Selection.TypeText Text:=myWord & CR
+  DoEvents
+Next pa
+Selection.HomeKey Unit:=wdStory
+Set rng = ActiveDocument.Paragraphs(1).Range
+rng.Words(2).Font.Bold = True
+rng.Words(6).Font.Bold = True
+End Sub
+
+
+

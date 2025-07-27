@@ -1,0 +1,12 @@
+
+Sub TrackingBubbleInlineSwitch()
+' Paul Beverley - Version 14.05.25
+' Switches between in-line revisions and deletions in bubbles
+
+If ActiveWindow.View.MarkupMode = wdBalloonRevisions Then
+  ActiveWindow.View.MarkupMode = wdMixedRevisions
+Else
+  ActiveWindow.View.MarkupMode = wdBalloonRevisions
+End If
+End Sub
+
