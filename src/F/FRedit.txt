@@ -1,6 +1,6 @@
 
 Sub FRedit()
-' Paul Beverley - Version 21.03.25
+' Paul Beverley - Version 18.08.25
 ' Scripted find and replace
 ' ©2009-2025 Paul Beverley
 
@@ -53,8 +53,9 @@ If useReverseStrikeFeature = True And _
   End If
 End If
 
-ReDim findText(maxLines) As String, ReplaceText(maxLines) As String
+ReDim findText(maxLines) As String, repText(maxLines) As String
 ReDim fHlight(maxLines) As Integer, rHlight(maxLines) As Integer
+ReDim lineNumber(maxLines) As Integer, usedFR(maxLines) As Boolean
 ReDim fTxtCol(maxLines) As Long, rTxtCol(maxLines) As Long
 ReDim fFontSize(maxLines) As Integer, rFontSize(maxLines) As Integer
 ReDim styleArray(maxLines, 4) As String, funct(maxLines, 18) As Boolean
@@ -72,7 +73,7 @@ Set thisRng = Selection.Range.Duplicate
 Set rng = workFile.Content
 If Len(Selection) = Len(rng) Then Selection.HomeKey Unit:=wdStory
 Set rngSel = Selection.Range.Duplicate
-If Selection.End <> Selection.start Then
+If Selection.End <> Selection.Start Then
   If promptForSelectedText = True Then
     myResponse = MsgBox("Work on selected text only?", _
          vbQuestion + vbYesNoCancel, "FRedit")
@@ -96,11 +97,11 @@ myTrack = workFile.TrackRevisions
 gottaList = 0
 For Each myDoc In Application.Documents
   DoEvents
-  pNum = myDoc.Paragraphs.count
+  pNum = myDoc.Paragraphs.Count
   myNum = 5
   If pNum < 5 Then myNum = pNum
   Set rng = myDoc.Paragraphs(myNum).Range
-  rng.start = 0
+  rng.Start = 0
   myTest = Replace(LCase(rng), " ", "")
   If InStr(myTest, ChrW(124) & "fredit") Then
     gottaList = gottaList + 1
@@ -108,6 +109,8 @@ For Each myDoc In Application.Documents
       myDoc.Activate
       Set theList = myDoc
     End If
+    testMode = (InStr(myTest, "test") > 0)
+    If testMode = True Then stepThrough = True
   End If
 '  Debug.Print myDoc.Name
 Next myDoc
@@ -153,7 +156,7 @@ If Right(rng, 2) <> CR2 Then rng.InsertAfter Text:=CR
 ' Check for rogue manual line breaks in the list
 mlb = InStr(rng.Text, Chr(11))
 If mlb > 0 Then
-  Selection.start = mlb - 1
+  Selection.Start = mlb - 1
   Selection.MoveLeft , 1
   Selection.End = mlb + 1
   Beep
@@ -170,7 +173,7 @@ FRitem = 0
 fNotes = False: eNotes = False: Etext = True: BoxText = False
 
 ' FRitem is used to count the actual lines that are F&R commands
-lastLine = theList.Paragraphs.count
+lastLine = theList.Paragraphs.Count
 For i = 1 To lastLine
   ' Look through the list for things that aren't actual F&Rs
   Do
@@ -247,11 +250,11 @@ For i = 1 To lastLine
   i = i - 1
   
   ' If you find hashes, stop looking for F&R lines
-  If Left(allLine, 1) = "#" Then Exit For
-' Debug.Print allLine
+  If Left(allLine, 1) = "#" Then allLine = "#|#"
+  Debug.Print allLine
   ' It's an F&R line, so check for highlighting
   If Len(allLine) > 1 Then
-    lineStart = rng.start
+    lineStart = rng.Start
     lineEnd = rng.End
 
     ' Has it got a vertical bar in it?
@@ -266,12 +269,12 @@ For i = 1 To lastLine
       If Left(fText, 1) = caseCode Then
         fText = Right(fText, Len(fText) - 1)
         mchCase = False
-        rng.start = rng.start + 1
+        rng.Start = rng.Start + 1
       End If
       If Left(fText, 1) = "~" Then
         fText = Right(fText, Len(fText) - 1)
         mchWild = True
-        rng.start = rng.start + 1
+        rng.Start = rng.Start + 1
       End If
       
       ' What style is the Find in?
@@ -303,7 +306,7 @@ For i = 1 To lastLine
       ' What style is the Replace in?
       rstyle = rng.Style
       If rstyle = myBaseStyle Then rstyle = ""
-      rng.End = rng.start + 1
+      rng.End = rng.Start + 1
 
       ' Check format & type colour of first char of Replace
       rItalic = rng.Italic
@@ -335,18 +338,18 @@ For i = 1 To lastLine
       If Left(fText, 1) = caseCode Then
         fText = Right(fText, Len(fText) - 1)
         mchCase = False
-        rng.start = rng.start + 1
+        rng.Start = rng.Start + 1
       End If
       If Left(fText, 1) = "~" Then
         fText = Right(fText, Len(fText) - 1)
         mchWild = True
-        rng.start = rng.start + 1
+        rng.Start = rng.Start + 1
       End If
       
       rng.End = lineStart + 1
       ' Check format & type colour of first char of Find
       If rng.Text = " " Then
-        rng.start = rng.End
+        rng.Start = rng.End
         rng.End = rng.End + 1
       End If
       fItalic = rng.Italic
@@ -363,7 +366,7 @@ For i = 1 To lastLine
       fTxtColour = rng.Font.Color
 
       rng.End = lineStart + padPosition + 1
-      rng.start = lineStart + padPosition
+      rng.Start = lineStart + padPosition
 
       ' Check format & type colour of first char of Replace
       rItalic = rng.Italic
@@ -383,8 +386,9 @@ For i = 1 To lastLine
     
     FRitem = FRitem + 1
     ' Save all the F&R info in arrays
+    lineNumber(FRitem) = i
     findText(FRitem) = fText
-    ReplaceText(FRitem) = rText
+    repText(FRitem) = rText
     styleArray(FRitem, 1) = fStyle
     styleArray(FRitem, 2) = rstyle
     styleArray(FRitem, 3) = fFont
@@ -441,13 +445,12 @@ trackNow = workFile.TrackRevisions
 Set thisRng = Selection.Range.Duplicate
 Selection.HomeKey Unit:=wdStory
 
-' Define the ranges
-
 
 ' Get the data out of the arrays
 For FRitem = 1 To lastItem
+  usedFR(FRitem) = False
   fText = findText(FRitem)
-  rText = ReplaceText(FRitem)
+  rText = repText(FRitem)
   fStyle = styleArray(FRitem, 1)
   rstyle = styleArray(FRitem, 2)
   fFont = styleArray(FRitem, 3)
@@ -509,14 +512,14 @@ For FRitem = 1 To lastItem
       rText = Replace(rText, uText & ">", uChar)
       codePos = InStr(rText, "<&H")
     Loop
-
+zdfcvxdcf = 0
     For hit = 1 To 4
       If hit = 1 Then
-        If Not (fNotes = True And workFile.Footnotes.count _
+        If Not (fNotes = True And workFile.Footnotes.Count _
              > 0) Then hit = 2
       End If
       If hit = 2 Then
-        If Not (eNotes = True And workFile.Endnotes.count _
+        If Not (eNotes = True And workFile.Endnotes.Count _
              > 0) Then hit = 3
       End If
       If hit = 3 Then
@@ -525,7 +528,7 @@ For FRitem = 1 To lastItem
       goes = 1
       If hit = 4 Then
         If BoxText = True Then
-          goes = workFile.Shapes.count
+          goes = workFile.Shapes.Count
         Else
           hit = 5
         End If
@@ -709,7 +712,15 @@ For FRitem = 1 To lastItem
               End If
               .Font.DoubleStrikeThrough = False
               .Font.Hidden = False
-              .Execute Replace:=wdReplaceAll
+              .Execute
+              If fText & rText = "##" Then
+                stepThrough = True
+              Else
+                If .Found = True Then
+                  usedFR(FRitem) = True
+                  .Execute Replace:=wdReplaceAll
+                End If
+              End If
             End With
             DoEvents
             If rHiColour <> fHiColour Then rng.Font.Emboss = False
@@ -718,6 +729,23 @@ For FRitem = 1 To lastItem
       End If
     Next hit
   End If
+  
+  If testMode = True And stepThrough = True Then
+    Application.ScreenUpdating = True
+    myTime = Timer
+    Do
+      DoEvents
+    Loop Until Timer > myTime + 0.5
+    Do
+      myText = InputBox("0: Single step (= Enter)" & CR & _
+           "1: Run to the end (or next #)" & CR & _
+           "2: Stop!", "FRedit")
+      myNumber = Val(myText)
+      If myNumber = 2 Then Beep: Exit Sub
+    Loop Until myNumber = 0 Or myNumber = 1
+    If myNumber = 1 Then stepThrough = False
+  End If
+  If testMode = False And fText & rText = "##" Then Exit For
 Next FRitem
 
 StatusBar = ""
@@ -742,6 +770,32 @@ Else
 End If
 workFile.TrackRevisions = myTrack
 Application.ScreenUpdating = True
+If testMode = True Then
+  Set usedSilent = Documents.Add
+
+  Set resultDoc = Documents.Add
+  Set rngList = theList.Content
+  Set rng = resultDoc.Content
+  rng.FormattedText = rngList.FormattedText
+  For FRitem = 1 To lastItem
+    myLine = lineNumber(FRitem)
+    Set par = resultDoc.Paragraphs(myLine).Range
+    par.MoveEnd , -1
+    If usedFR(FRitem) = False Then
+      nowColour = par.Font.Color
+      par.Font.Color = wdColorWhite
+      par.HighlightColorIndex = wdBlue
+    Else
+      If par.Characters(1).Font.StrikeThrough = True Then
+        usedSilent.Content.InsertAfter Text:=par.Text & CR
+      End If
+    End If
+  Next FRitem
+  resultDoc.Content.InsertBefore Text:="Blue highlight = unused items" & CR2
+  resultDoc.Content.Paragraphs(1).Range.Font.Bold = True
+  usedSilent.Content.InsertBefore Text:="Untracked FRs used:" & CR2
+  usedSilent.Content.Paragraphs(1).Range.Font.Bold = True
+End If
 Exit Sub
 
 ' Warn the user about problems that the macro has detected
@@ -753,7 +807,7 @@ If myError <= 6 Or (myError > 11 And myError < 17) _
 End If
 Select Case myError
   Case 2: myPrompt = "No matching replace text"
-          Selection.MoveStart Unit:=wdParagraph, count:=-1
+          Selection.MoveStart Unit:=wdParagraph, Count:=-1
      '     Selection.Expand wdParagraph
   Case 4: myPrompt = "A 'Count =' line should say 'yes' or 'no'."
   Case 5: myPrompt = "Sorry, Word can't use ^p in a wildcard search." _
@@ -808,19 +862,19 @@ Set rng = theList.Content
 ' ... and look for the current line in the list
 ' which is probably where the problem lies.
 gottit = False
-Dim myLine As Single
-myLine = 1
-For j = 1 To theList.Paragraphs.count
+Dim thisLine As Single
+thisLine = 1
+For j = 1 To theList.Paragraphs.Count
   myTxt = theList.Paragraphs(j)
   
   If Asc(myTxt) <> Asc("|") And Len(myTxt) > 2 Then
     If InStr(myTxt, "|") > 0 Then
-      myLine = myLine + 1
+      thisLine = thisLine + 1
     Else
-      myLine = myLine + 0.5
+      thisLine = thisLine + 0.5
     End If
   End If
-  If myLine > FRitem Then Exit For
+  If thisLine > FRitem Then Exit For
 Next j
 theList.Paragraphs(j).Range.Select
 If Err.Number = 5625 Or Err.Number = 5692 Then
@@ -845,4 +899,8 @@ Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub
+
+
+
+
 

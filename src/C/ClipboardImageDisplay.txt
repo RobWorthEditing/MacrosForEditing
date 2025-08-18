@@ -1,0 +1,25 @@
+
+Sub ClipboardImageDisplay()
+' Paul Beverley - Version 30.07.25
+' Displays the image stored in the clipboard
+
+myZoom = 250
+
+nowZoom = Application.ActiveWindow.View.Zoom.Percentage
+Selection.Collapse wdCollapseStart
+Set nowRange = Selection.Range.Duplicate
+Selection.Paste
+Selection.MoveUp , 1
+hereNow = Selection.Start
+Application.ActiveWindow.View.Zoom.Percentage = myZoom
+Do
+  DoEvents
+Loop Until Selection.Start <> hereNow
+WordBasic.EditUndo
+DoEvents
+WordBasic.EditUndo
+nowRange.Select
+Application.ActiveWindow.View.Zoom.Percentage = nowZoom
+End Sub
+
+

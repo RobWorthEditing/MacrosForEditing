@@ -1,6 +1,8 @@
+
 Sub HighlightFindDown()
-' Paul Beverley - Version 27.01.22
+' Paul Beverley - Version 18.08.25
 ' Selects the next piece of highlighted text
+
 
 nowColour = Selection.Range.HighlightColorIndex
 mixCol = 9999999
@@ -68,6 +70,7 @@ Else
   Set rng = Selection.Range.Duplicate
   Selection.MoveEnd , 1
   nowColour = Selection.Range.HighlightColorIndex
+  rng.MoveStart , 1
   If nowColour > 0 Then
     With rng.Find
       .ClearFormatting

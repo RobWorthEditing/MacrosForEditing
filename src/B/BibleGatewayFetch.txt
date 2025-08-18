@@ -1,10 +1,11 @@
+
 Sub BibleGatewayFetch()
-' Paul Beverley - Version 12.04.23
+' Paul Beverley - Version 12.08.25
 ' Launches Bible references on BibleGateway
 
 mySite = "https://www.biblegateway.com/passage/?search="
 
-myVersion = "NIV"
+myVersion = "NKJV"
 
 If Selection.Start = Selection.End Then
   Selection.Expand wdWord
@@ -17,12 +18,16 @@ If Selection.Start = Selection.End Then
     Selection.MoveStart , 2
     Selection.MoveEnd , 1
   myChar = Right(Selection.Text, 1)
-  Do While InStr("0123456789,.:- ", myChar) > 0
+  Do While InStr("0123456789,.:)- " & ChrW(8211) & vbCr, myChar) > 0
     Selection.MoveEnd , 1
     myChar = Right(Selection.Text, 1)
     Debug.Print myChar
     If LCase(myChar) <> UCase(myChar) Then Selection.MoveEnd , -1
     DoEvents
+  Loop
+  Do While InStr(".,): """ & ChrW(8220) & ChrW(8221) & ChrW(8216) & ChrW(8217), _
+       Selection.Characters.Last) > 0
+    Selection.MoveEnd , -1
   Loop
 Else
   endNow = Selection.End

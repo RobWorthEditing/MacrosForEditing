@@ -1,0 +1,28 @@
+
+Sub TypeEAccents()
+' Paul Beverley - Version 09.08.25
+' Types the various accented-e characters
+
+Selection.Collapse wdCollapseStart
+hereNow = Selection.Start
+Do
+  DoEvents
+Loop Until Selection.Start <> hereNow
+Selection.MoveStart , -1
+Select Case Selection
+  ' lowercase e's
+  Case "1": Selection.TypeText ChrW(232)
+  Case "2": Selection.TypeText ChrW(233)
+  Case "3": Selection.TypeText ChrW(234)
+  Case vbCr: Selection.TypeText ChrW(235)
+  ' uppercase e's
+  Case "4": Selection.TypeText ChrW(200)
+  Case "5": Selection.TypeText ChrW(201)
+  Case "6": Selection.TypeText ChrW(202)
+  Case "+": Selection.TypeText ChrW(203)
+  Case Else: Selection.Collapse wdCollapseEnd
+End Select
+End Sub
+
+
+

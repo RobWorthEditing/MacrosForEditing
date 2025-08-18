@@ -1,12 +1,13 @@
 
 Sub HighlightNonRomanPunctuation()
-' Paul Beverley - Version 05.11.24
+' Paul Beverley - Version 31.07.25
 ' Highlights non-roman punctuation
 
 myItalic = wdGray25
 myBold = wdGray25
 
-mySymbols = "[,.:\!\?]"
+mySymbols = "[""',.:\!\?" & ChrW(8216) & ChrW(8217) _
+     & ChrW(8220) & ChrW(8221) & "]"
 
 oldColour = Options.DefaultHighlightColorIndex
 fNotes = ActiveDocument.Footnotes.Count
@@ -41,5 +42,4 @@ For j = 1 To 3
 Next
 Options.DefaultHighlightColorIndex = oldColour
 End Sub
-
 

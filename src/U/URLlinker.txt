@@ -1,40 +1,59 @@
 
 Sub URLlinker()
-' Paul Beverley - Version 30.07.24
+' Paul Beverley - Version 11.08.25
 ' Finds all URLs and emails in the text and links them
 
-Set rng = Selection.Range.Duplicate
+keepProtocol = True
+' or, to remove any http and www, use...
+' keepProtocol = False
+
+allowNumbers = True
+' e.g. include number-based URLs, e.g.
+' http://142.156.241.123:8060/abcd
+' (Might this cause some false positives?)
+
+showSteps = False
+Set rng = ActiveDocument.Content
 With rng.Find
-  .Text = "^$.^$"
+  If allowNumbers = True Then
+    .Text = "[a-zA-Z0-9]{2}.[a-zA-Z0-9]"
+  Else
+    .Text = "^$^$.^$"
+  End If
   .Font.Underline = False
   .Replacement.Text = ""
   .Wrap = wdFindStop
   .Forward = True
-  .MatchWildcards = False
+  .MatchWildcards = allowNumbers
   .Execute
 End With
 
 Do While rng.Find.Found = True
-  Do While InStr(vbCr & " ", Right(rng.Text, 1)) = 0
+  Do While InStr(vbCr & " ", rng.Characters.Last) = 0
     rng.MoveEnd , 1
     DoEvents
+    If showSteps = True Then rng.Select
   Loop
-  rng.MoveEnd , -1
-  If rng.Characters.Last = "." Then rng.MoveEnd , -1
-  If rng.Characters.Last = "," Then rng.MoveEnd , -1
+  Do While InStr("0123456789=#)", rng.Characters.Last) = 0 _
+         And (UCase(rng.Characters.Last) = LCase(rng.Characters.Last))
+    rng.MoveEnd , -1
+    If showSteps = True Then rng.Select
+    DoEvents
+  Loop
   Do While InStr(vbCr & " ", Left(rng.Text, 1)) = 0
     rng.MoveStart , -1
+    If showSteps = True Then rng.Select
     If rng = rngWas Then Exit Do
     rngWas = rng.Text
     DoEvents
   Loop
-  Debug.Print rng.start
   rng.MoveStart , 1
   myAddress = rng.Text
-  Debug.Print myAddress
+  ' Debug.Print myAddress
+  i = 0
   If InStr(rng, "@") Or InStr(rng, "/") Or InStr(rng, "www") _
        Or InStr(rng, "http") Then
-    If InStr(rng, "http") > 0 Then
+    If InStr(rng, "http") > 0 And keepProtocol = False Then
       rng.Text = Replace(rng.Text, "https://", "")
       rng.Text = Replace(rng.Text, "http://", "")
     End If
@@ -46,8 +65,9 @@ Do While rng.Find.Found = True
       Set myLink = ActiveDocument.Hyperlinks.Add(Anchor:=rng, _
             Address:=myAddress, TextToDisplay:=rng.Text)
     End If
-    rng.start = myLink.Range.End
-    rng.Select
+    rng.Start = myLink.Range.End
+    If i Mod 20 = 0 Then rng.Select
+    i = i + 1
     rng.Collapse wdCollapseStart
   End If
   rng.MoveStart , 10

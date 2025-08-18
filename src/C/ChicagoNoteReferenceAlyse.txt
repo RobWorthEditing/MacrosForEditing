@@ -1,6 +1,6 @@
 Sub ChicagoNoteReferenceAlyse()
 ' Paul Beverley - Version 31.12.21
-' Helps to check note-based reference citations
+' Helps to check note-based reference citations (not 100% - ask Paul)
 
 myColour = wdGray25
 myColour = wdYellow
@@ -102,7 +102,7 @@ Set rng = Selection.Range.Duplicate
 rng.Expand wdParagraph
 Set rng = Selection.Range.Duplicate
 For i = 1 To rng.Words.count
-  ' ????????????????????
+  
 Next i
 
 ReportIt:

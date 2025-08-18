@@ -1,11 +1,9 @@
 
 Sub CopyToListAlphabetic()
-' Paul Beverley - Version 26.04.25
+' Paul Beverley - Version 18.08.25
 ' Copies selected text into an alphabetic list file
 
-
 ' Exact capitalisation(i.e. case sensitive)
-' Must be in style "Heading 3"
 followHeading = "Word list"
 
 ' To locate list file (not case sensitive)
@@ -27,7 +25,7 @@ includeFormatting = False
 goBackToSource = True
 
 Dim sourceText As Range
-Set thisDoc = ActiveDocument
+Set sourceDoc = ActiveDocument
 wds = Split("," & LCase(wordsToAvoid), ",")
 
 If Selection.Start = Selection.End Then
@@ -78,8 +76,8 @@ myText = sourceText.Text
 Selection.Collapse wdCollapseEnd
 
 gottaList = False
-For Each myDoc In Application.Documents
-  thisName = myDoc.Name
+For Each sSheetDoc In Application.Documents
+  thisName = sSheetDoc.Name
   nm = LCase(thisName)
   gottaList = False
   If InStr(nm, LCase(keyWord)) > 0 Then gottaList = True
@@ -87,7 +85,7 @@ For Each myDoc In Application.Documents
     If InStr(nm, wds(i)) > 0 Then gottaList = False
   Next i
   If gottaList = True Then Exit For
-Next myDoc
+Next sSheetDoc
 
 CR = vbCr: CR2 = CR & CR
 If gottaList = False Then
@@ -99,7 +97,9 @@ If gottaList = False Then
 End If
 
 ' Decide where to put the item
-Set rng = myDoc.Content
+Set rng = sSheetDoc.Content
+numCRs = Len(rng) - Len(Replace(rng, CR, ""))
+If numCRs < 3 Then rng.InsertAfter Text:=CR2
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -110,13 +110,17 @@ With rng.Find
   .MatchCase = True
   .MatchWildcards = True
   .Execute
+  If .Found = False Then
+    .Text = followHeading
+    .Execute
+  End If
   DoEvents
 End With
 
 If rng.Find.Found = False Then
   myResponse = MsgBox("Can't find the heading:" & CR2 & _
        followHeading, vbExclamation + vbOKOnly, "CopyToListAlphabetic")
-  If goBackToSource = False Then myDoc.Activate
+  If goBackToSource = False Then sSheetDoc.Activate
   Exit Sub
 End If
 
@@ -137,12 +141,12 @@ End With
 
 If rng.Find.Found = True Then
   If beepIfAlreadyListed = True Then Beep
-  If goBackToSource = False Then myDoc.Activate
+  If goBackToSource = False Then sSheetDoc.Activate
   Exit Sub
 End If
 
 rng.Start = listStart
-rng.End = myDoc.Content.End
+rng.End = sSheetDoc.Content.End
 If LCase(rng) <> UCase(rng) Then
   For i = 1 To rng.Paragraphs.Count
     myNextItem = Replace(rng.Paragraphs(i).Range.Text, vbCr, "")
@@ -169,9 +173,10 @@ End If
 rng.Collapse Direction:=wdCollapseEnd
 rng.Select
 rng.Revisions.AcceptAll
-If goBackToSource = False Then thisDoc.Activate
+If goBackToSource = True Then
+  sourceDoc.Activate
+Else
+  sSheetDoc.Activate
+End If
 End Sub
-
-
-
 

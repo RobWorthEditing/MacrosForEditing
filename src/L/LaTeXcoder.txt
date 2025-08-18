@@ -1,0 +1,40 @@
+
+Sub LaTeXcoder()
+' Paul Beverley - Version 01.08.25
+' Adds text above and below paragraphs, for LaTeX coding
+
+Dim myStyle(10) As String
+Dim myBefore(10) As String
+Dim myAfter(10) As String
+
+myStyle(1) = "Heading 1"
+myBefore(1) = "\section{"
+myAfter(1) = "}^p"
+
+myStyle(2) = "Equation"
+myBefore(2) = "\begin{equation}^p\label{eq[equation number]}^p"
+myAfter(2) = "^p\end{equation}"
+
+For i = 1 To 10
+  myBefore(i) = Replace(myBefore(i), "^p", vbCr)
+  myAfter(i) = Replace(myAfter(i), "^p", vbCr)
+Next i
+
+For Each myPar In ActiveDocument.Paragraphs
+  myCode = 0
+  For i = 1 To 10
+    If myPar.Range.Style = myStyle(i) Then
+      myCode = i
+    End If
+  Next i
+  If myCode > 0 And Len(myPar.Range.Text) > 2 Then
+    Set rng = myPar.Range.Duplicate
+    rng.InsertBefore Text:=myBefore(myCode)
+    rng.MoveEnd , -1
+    rng.InsertAfter Text:=myAfter(myCode)
+  End If
+  DoEvents
+Next myPar
+Beep
+End Sub
+

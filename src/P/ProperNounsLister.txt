@@ -1,0 +1,69 @@
+
+Sub ProperNounsLister()
+' Paul Beverley - Version 07.08.25
+' Creates a list of all proper nouns, excluding sentence starts
+
+Dim myWd As Range
+Dim dict As Object
+Set dict = CreateObject("Scripting.Dictionary")
+ 
+For Each myPara In ActiveDocument.Paragraphs
+  For Each mySentence In myPara.Range.sentences
+    Dim sentText As String
+    sentText = Trim(mySentence.Text)
+    Dim myWds() As String
+    myWds = Split(sentText)
+     
+    Dim i As Integer
+    For i = 0 To UBound(myWds)
+    Dim cleanWord As String
+    cleanWord = myWds(i)
+     
+    ' Remove punctuation
+    cleanWord = Replace(cleanWord, ".", "")
+    cleanWord = Replace(cleanWord, ",", "")
+    cleanWord = Replace(cleanWord, "!", "")
+    cleanWord = Replace(cleanWord, "?", "")
+    cleanWord = Replace(cleanWord, ";", "")
+    cleanWord = Replace(cleanWord, ":", "")
+    cleanWord = Replace(cleanWord, """", "")
+    cleanWord = Replace(cleanWord, Chr(34), "") ' quotation marks
+    cleanWord = Trim(cleanWord)
+     
+    ' Skip empty strings
+    If Len(cleanWord) > 1 Then
+      ' Only consider capitalized myWds
+      If Asc(Left(cleanWord, 1)) >= 65 And Asc(Left(cleanWord, 1)) <= 90 Then
+      ' Exclude first myWd of the mySentence
+        If i <> 0 Then
+          If Not dict.Exists(cleanWord) Then
+            dict.Add cleanWord, 1
+          End If
+        End If
+      End If
+    End If
+    Next i
+  Next mySentence
+Next myPara
+
+Documents.Add
+Dim key As Variant
+For Each key In dict.keys
+  Selection.TypeText key & vbCr
+Next key
+Set rng = ActiveDocument.Content
+rng.Sort
+Selection.InsertAfter Text:=vbCr
+rng.Collapse wdCollapseStart
+Do
+ rng.MoveEnd , 1
+Loop Until rng.Characters.Last <> vbCr
+rng.MoveEnd , -1
+rng.Delete
+rng.InsertBefore Text:="Proper nouns (excluding sentence starts):" & vbCr & vbCr
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+
+
+

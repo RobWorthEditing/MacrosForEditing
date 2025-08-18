@@ -1,0 +1,10 @@
+
+Sub PicturesHideShow()
+' Paul Beverley - Version 09.08.25
+' Switches pictures on and off (Was called PictureShow)
+
+ActiveWindow.View.ShowPicturePlaceHolders = _
+     Not (ActiveWindow.View.ShowPicturePlaceHolders)
+End Sub
+
+
