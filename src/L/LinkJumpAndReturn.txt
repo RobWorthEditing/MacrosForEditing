@@ -1,0 +1,27 @@
+
+Sub LinkJumpAndReturn()
+' Paul Beverley - Version 28.08.25
+' Follows a link and then returns
+
+linkMark = "myLinkMarker"
+doSelectPara = True
+
+If Selection.Range.Hyperlinks.Count > 0 Then
+  myTrack = ActiveDocument.TrackRevisions
+  ActiveDocument.TrackRevisions = False
+  ActiveDocument.Bookmarks.Add Name:=linkMark
+  ActiveDocument.TrackRevisions = myTrack
+  Selection.Range.Hyperlinks(1).Follow NewWindow:=False, AddHistory:=True
+Else
+  If ActiveDocument.Bookmarks.Exists(linkMark) Then
+    ActiveDocument.Bookmarks(linkMark).Select
+    Selection.Collapse wdCollapseEnd
+    Selection.MoveRight , 1
+  Else
+    Selection.Collapse wdCollapseEnd
+    MsgBox "Can't find your link, sorry!"
+  End If
+  If doSelectPara = True Then Selection.Expand wdParagraph
+End If
+End Sub
+

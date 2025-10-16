@@ -1,0 +1,59 @@
+
+Sub LaTeXListFormatter()
+' Paul Beverley - Version 10.10.25
+' Converts bulletted lists and numbered lists to LaTeX lists
+
+' Convert auto-bulletted lists to bullets
+ActiveDocument.ConvertNumbersToText
+
+' Convert itemised lists
+nmlFont = ActiveDocument.Styles(wdStyleNormal).Font.Name
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ChrW(&HF0B7) & "^t(*)^13"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "^92pqpqitem \1zczc^p"
+  .Replacement.Font.Name = nmlFont
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .MatchWildcards = False
+  .Text = "zczc^p^92pqpq"
+  .Replacement.Text = "^p^92"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "zczc^p"
+  .Replacement.Text = "^p\end{itemize}^p"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "pqpq"
+  .Replacement.Text = "begin{itemize}^p"
+  .Execute Replace:=wdReplaceAll
+
+' now do enumerated lists
+  .MatchWildcards = True
+  .Text = "<i.^t"
+  .Replacement.Text = "^92begin{enumerate}^p^92item^32"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "<[ivx]{1,}.^t([!^13]{1,})^13"
+  .Replacement.Text = "^92item^32\1zczc^p"
+  .Execute Replace:=wdReplaceAll
+  
+  .MatchWildcards = False
+  .Text = "zczc^13^92"
+  .Replacement.Text = "^p^92"
+  .Execute Replace:=wdReplaceAll
+  
+  .Text = "zczc^p"
+  .Replacement.Text = "^p\end{enumerate}^p"
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+
+
+

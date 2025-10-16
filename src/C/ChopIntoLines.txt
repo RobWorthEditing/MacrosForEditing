@@ -1,0 +1,75 @@
+
+Sub ChopIntoLines()
+' Paul Beverley - Version 24.09.24
+' Chops the text into individual lines
+
+Set rng = ActiveDocument.Content
+leftPos = rng.Information(wdHorizontalPositionRelativeToPage)
+If Selection.Start = Selection.End Then
+  myResponse = MsgBox("Chop up the whole document?!", _
+       vbQuestion + vbYesNoCancel, "ChopIntoLines")
+  If myResponse <> vbYes Then Exit Sub
+  Set rng = ActiveDocument.Content
+  myEnd = 0
+Else
+  Set rng = Selection.Range.Duplicate
+'    posNow = rng.Information(wdHorizontalPositionRelativeToPage)
+
+  myEnd = rng.End
+End If
+myResponse = MsgBox("I do hope you are working on a COPY!" _
+     & vbCr & vbCr & "Chop up this file into lines?!", _
+     vbQuestion + vbYesNoCancel, "ChopIntoLines")
+If myResponse <> vbYes Then Exit Sub
+
+Application.ScreenUpdating = False
+On Error GoTo ReportIt
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = " [a-zA-Z0-9]"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+Do While rng.Find.Found = True
+  rng.MoveStart , 1
+  posNow = rng.Information(wdHorizontalPositionRelativeToPage)
+  If Abs(posNow - leftPos) < 2 Then
+    rng.Collapse wdCollapseStart
+    rng.MoveStart , -1
+    rng.Text = vbCr
+    myCount = myCount + 1
+    If myCount Mod 20 = 0 Then
+      Application.ScreenUpdating = True
+      rng.Select
+      For i = 1 To 10
+        DoEvents
+      Next i
+      Selection.MoveRight , 1
+      Application.ScreenUpdating = False
+    End If
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  If rng.Start > myEnd And myEnd > 0 Then
+    Beep
+    MsgBox "Finished!"
+    Exit Sub
+  End If
+Loop
+Beep
+MsgBox "Finished!"
+Exit Sub
+
+' Switch the screen back on if there's an error
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
+End Sub
+

@@ -1,7 +1,7 @@
 Sub Spellcheck()
 ' Paul Beverley - Version 06.12.10
-' Run a spellcheck
-' F7
+' Runs a spellcheck but checks the language first
+
 If Selection.LanguageID = wdEnglishUS Then beep
 ActiveDocument.CheckSpelling
 End Sub

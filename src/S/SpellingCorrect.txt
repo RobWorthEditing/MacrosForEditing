@@ -1,6 +1,5 @@
-
 Sub SpellingCorrect()
-' Paul Beverley - Version 19.04.25
+' Paul Beverley - Version 27.09.25
 ' Corrects spelling and wrong capitalisation
 
 elistNameContains = "elist"
@@ -19,7 +18,8 @@ If rng.Start > 1 Then
     rng.MoveStart , -1
     ch = Left(rng, 1)
     DoEvents
-  Loop Until UCase(ch) = LCase(ch) And InStr(okChars, ch) = 0
+    Loop Until (UCase(ch) = LCase(ch) And InStr(okChars, ch) = 0) _
+         Or rng.start = 0
   rng.MoveStart , 1
 End If
 equalPos = InStr(rng, "=")
@@ -126,4 +126,5 @@ If apoPos > 0 Then rng.Characters(apoPos) = ChrW(8217)
 rng.Collapse wdCollapseEnd
 rng.Select
 End Sub
+
 

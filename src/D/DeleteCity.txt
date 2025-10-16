@@ -1,0 +1,42 @@
+
+Sub DeleteCity()
+' Paul Beverley - Version 17.06.25
+' Deletes the current word plus punctuation and space
+
+Selection.Expand wdWord
+Selection.Collapse wdCollapseStart
+
+With Selection.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[-A-Za-z]{4,}>[:;,]^32"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+Do
+  endNow = Selection.End
+  startNow = Selection.Start
+  textWas = Selection
+  Set rng = Selection.Range.Duplicate
+  Do While Selection.Start <> Selection.End
+'  Do While Selection.Start <> Selection.End And _
+       endNow <> ActiveDocument.Content.End = True
+    DoEvents
+  Loop
+  For i = 1 To 10
+    DoEvents
+  Next i
+'  Debug.Print startNow, endNow, Selection.Start, Selection.End
+  rng.End = endNow
+  Debug.Print rng.Text
+  If Selection.Start < startNow Then Beep: Exit Sub
+  Selection.Find.Execute
+  If Selection.Find.Found = False Then Beep: End
+Loop Until Selection.Find.Found = False
+End Sub
+

@@ -1,0 +1,12 @@
+
+Sub ComboBoxAcceptNotes()
+' Paul Beverley - Version 27.07.22
+' Finds combo boxes and replaces with the currently selected text
+' Based on code provided by Howard Silcock of New Zealand
+
+For Each cc In ActiveDocument.StoryRanges(wdFootnotesStory).ContentControls
+  cc.LockContentControl = False
+  cc.Delete
+Next
+End Sub
+

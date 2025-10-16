@@ -8,7 +8,7 @@ newBit = ChrW(8212)
 newBit = " " & ChrW(8211) & " "
 
 myQuotes = Chr(34) & Chr(39) & ChrW(8220) & ChrW(8216)
-oldBits = ";:.,!?" & ChrW(8211) & ChrW(8212)
+oldBits = ");:.,!?" & ChrW(8211) & ChrW(8212)
 Set rng = Selection.Range.Duplicate
 rng.MoveEnd , 50
 For i = 1 To rng.Characters.count

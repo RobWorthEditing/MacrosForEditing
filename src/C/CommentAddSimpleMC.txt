@@ -1,0 +1,17 @@
+
+Sub CommentAddSimpleMC()
+' Paul Beverley - Version 08.10.25
+' Adds new comment with standard text added (modern comments version)
+
+paneZoom = 200
+
+myText = "AQ: "
+' myText = ""
+
+Set myComment = Selection.Comments.Add(Range:=Selection.Range)
+myComment.Range.Text = myText
+'Selection.MoveLeft , 1
+Selection.MoveRight , Len(myText)
+Application.ActiveWindow.View.Zoom.Percentage = paneZoom
+End Sub
+

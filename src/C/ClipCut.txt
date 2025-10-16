@@ -1,0 +1,170 @@
+
+Sub ClipCut()
+' Paul Beverley - Version 06.02.21
+' Cuts the selected text into the ClipStore file
+
+myHighlight = 0
+myHighlight = wdYellow
+
+myClipFile = "zClipStore.docx"
+
+
+' On Windows, it will need to be something like:
+myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff\"
+
+' On a Mac, it will need to be something like:
+myFolder = "/Users/Paul/My Documents/Macro stuff/"
+
+maxClips = 12
+
+CR = vbCr: CR2 = CR & CR
+
+' Backstore items
+Dim bStart(99) As Integer
+Dim bEnd(99) As Integer
+Dim bName(99) As String
+
+' Main clip items
+Dim cTitle(99) As Integer
+Dim cStart(99) As Integer
+Dim cEnd(99) As Integer
+Dim cName(99) As String
+
+' Remember start selection
+Set rngWas = Selection.Range.Duplicate
+Set startDoc = ActiveDocument
+myFileName = startDoc.Name
+dotPos = InStr(myFileName, ".")
+If dotPos > 0 Then myFileName = Left(myFileName, dotPos - 1)
+
+' Look for an open ClipStore file
+On Error GoTo ReportIt
+gottaStoreFile = False
+For i = 1 To Application.Windows.Count
+  Set thisFile = Application.Windows(i).Document
+  If InStr(thisFile.Name, myClipFile) > 0 Then
+    Set clipDoc = Application.Windows(i).Document
+    gottaStoreFile = True
+    Exit For
+  End If
+Next i
+
+' If it's not open, load it
+If gottaStoreFile = False Then
+  Documents.Open myFolder & myClipFile
+  Set clipDoc = ActiveDocument
+End If
+On Error GoTo 0
+
+cursorInClipFile = (startDoc = clipDoc)
+
+' Interpret the contents of the ClipStore
+inBackStore = True
+bNum = 0
+cNum = 0
+For i = 1 To clipDoc.Paragraphs.Count
+  Set pa = clipDoc.Paragraphs(i).Range
+  tx = Replace(pa.Text, CR, "")
+  If Left(tx, 3) = "max" Then maxClips = Val(Right(tx, 2))
+  If Left(tx, 3) = "for" Then textOnly = (Right(tx, 1) = "-")
+  If Left(tx, 4) = "999" Then
+    inBackStore = False
+    bEnd(bNum) = pa.Start - 1
+    endBackupClips = pa.Start - 1
+  End If
+  If Left(tx, 3) = "000" Then
+    bEnd(bNum) = pa.Start - 1
+    startBackupClips = pa.End
+  End If
+  If Left(tx, 1) = "_" Then
+    If inBackStore = True Then
+      ' store parameters for backstore items
+      bNum = bNum + 1
+      bStart(bNum) = pa.End
+      If bNum > 1 Then bEnd(bNum - 1) = pa.Start - 1
+      bNumMax = bNum
+    Else
+      ' store parameters for clipstore items
+      cNum = Val(Right(pa.Text, 3))
+      cTitle(cNum) = pa.Start
+      cStart(cNum) = pa.End
+    End If
+  End If
+  cEnd(cNum) = pa.End
+Next i
+bEnd(0) = startBackupClips - 1
+cEnd(cNum) = clipDoc.Content.End
+newClipNum = (cNum Mod maxClips) + 1
+newClipNumText = Right(Trim(Str(100 + newClipNum)), 2)
+
+If cursorInClipFile = True And rngWas.End > endBackupClips Then
+  Beep
+  Exit Sub
+End If
+
+' To add text from target file to ClipStore, ask...
+' Has this new clip number already been used?
+Set rng = clipDoc.Content
+oldClipPos = InStr(rng.Text, "_" & newClipNumText & CR)
+If oldClipPos > 0 Then
+  Set rng = clipDoc.Range(cTitle(newClipNum), cEnd(newClipNum))
+  rng.Delete
+End If
+Set rng = clipDoc.Content
+rng.Collapse wdCollapseEnd
+' Add this clip to numbered clip area ...
+If cursorInClipFile = False Then
+  ' ... either from the target file
+  rng.InsertAfter Text:="_" & myFileName & "_" & newClipNumText & vbCr
+  rng.HighlightColorIndex = myHighlight
+  rng.Collapse wdCollapseEnd
+  If Len(rngWas) > 1 Then
+    rngWas.Cut
+    rng.Paste
+    rng.InsertAfter Text:=CR
+  End If
+Else
+  ' ... or from ClipStore's own backstore
+  csrPos = rngWas.Start
+  For i = 1 To bNumMax
+    If bEnd(i - 1) > csrPos Then Exit For
+  Next i
+  bNum = i - 1
+  Set rngClip = ActiveDocument.Range(bEnd(bNum - 1) + 1, bEnd(bNum) + 1)
+  If thisIsCopyMacro = True Then
+    rngClip.Copy
+  Else
+    rngClip.Cut
+  End If
+  rng.Paste
+  numPos = InStr(rng, "_xx")
+
+  If numPos > 0 Then
+    numPos = rng.Start + numPos - 1
+    Set rng = clipDoc.Range(numPos, numPos + 3)
+    rng.Text = "_" & newClipNumText
+  End If
+End If
+rng.Select
+Selection.EndKey Unit:=wdStory
+If Len(rngWas) > 1 Then
+startDoc.Activate
+Else
+  Selection.TypeText Text:=CR
+  Selection.MoveLeft , 1
+End If
+Exit Sub
+
+ReportIt:
+If Err.Number = 5174 Then
+  Err.Clear
+  Beep
+  myClipFile = Replace(myClipFile, ".docx", "")
+  myResponse = MsgBox("Can't find your clipboard file: """ _
+       & myClipFile & """", vbOKOnly, "ClipStore")
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+

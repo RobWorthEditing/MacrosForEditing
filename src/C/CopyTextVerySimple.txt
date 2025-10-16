@@ -1,9 +1,8 @@
 
 Sub CopyTextVerySimple()
-' Paul Beverley - Version 19.07.25
+' Paul Beverley - Version 08.09.25
 ' Creates a text-only copy, with no features preserved
 
-myDelay = 1
 
 Set rngOld = ActiveDocument.Content
 myLanguage = rngOld.Characters(1).LanguageID
@@ -12,8 +11,6 @@ Set oldDoc = ActiveDocument
 Set newDoc = Documents.Add
 Set rng = newDoc.Content
 rng.Text = rngOld.Text
-myCount = myDelay * 100
-For i = 1 To myCount: DoEvents: Next i
 
 rng.LanguageID = myLanguage
 numNotes = oldDoc.Endnotes.Count
@@ -56,21 +53,8 @@ If shCount > 0 Then
   Next
 End If
 
-Set rng = ActiveDocument.Content
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "^2"
-  .Wrap = wdFindContinue
-  .Replacement.Text = ""
-  .MatchWildcards = False
-  .Execute Replace:=wdReplaceAll
-  DoEvents
-End With
-
 ' Add a newline for safety
 newDoc.Content.InsertAfter Text:=vbCr
-
 Selection.HomeKey Unit:=wdStory
 Beep
 End Sub

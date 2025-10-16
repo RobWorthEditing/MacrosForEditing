@@ -1,0 +1,157 @@
+
+Sub CitationFinder()
+' Paul Beverley - Version 13.10.25
+' Finds this Harvard citation in any open file (for use with CitationAlyse)
+
+
+notTheseDocs = "|zzSwitchList|Whatever open file|"
+
+' startFrom = 23634
+' Tells the macro to start searching AFTER the table of contents
+startFrom = 15488
+startFrom = 10
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdWord
+  If Len(Selection) < 3 Then
+    Selection.Collapse wdCollapseStart
+    Selection.MoveLeft , 1
+    Selection.Expand wdWord
+  End If
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.Start
+  Selection.End = endNow
+  Selection.Expand wdWord
+  Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+    Selection.MoveEnd , -1
+    DoEvents
+  Loop
+  Selection.Start = startNow
+End If
+myName = Trim(Selection.Range.Words.First)
+myName2 = Trim(Selection.Range.Words.Last)
+
+If myName2 = myName Then myName2 = ""
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseEnd
+Do
+  rng.MoveStart wdWord, 1
+  rng.MoveEnd , 1
+  DoEvents
+Loop Until Val(rng) > 0
+rng.MoveEnd , 3
+myDate = rng
+Selection.End = rng.End
+
+If myName2 = "" Then
+  mySearch = "<" & myName & ">"
+Else
+  mySearch = "<" & myName & ">[!^13]@" _
+       & myName2
+End If
+mySearch = mySearch & "[!^13]@" _
+       & myDate
+
+' Check Word's existing F&R Find value
+nowSearch = Selection.Find.Text
+nameEnd = InStr(nowSearch, ">")
+If nameEnd > 0 Then
+  nowName = Mid(nowSearch, 2, nameEnd - 2)
+Else
+  nowName = ""
+End If
+nameEnd = InStr(mySearch, ">")
+myName = Mid(mySearch, 2, nameEnd - 2)
+
+startDocName = Replace(ActiveDocument.Name, ".docx", "")
+
+If myName = nowName And InStr(startDocName, "Query") = 0 Then
+' Search for this author(s) with any date
+  sqBktPos = InStr(mySearch, "]")
+  mySearch = Left(mySearch, sqBktPos + 1)
+  mySearch = mySearch & "[0-9]{4}>"
+  Selection.HomeKey Unit:=wdStory
+  With Selection.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = mySearch
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchCase = False
+    .MatchWildcards = True
+    .Execute
+  End With
+  Set rng = Selection.Range.Duplicate
+  Selection.MoveLeft , 1
+  rng.Select
+  Exit Sub
+End If
+
+' Find target document
+For Each myDoc In Documents
+  myFileName = Replace(myDoc.Name, ".docx", "")
+  If myFileName <> startDocName And _
+       InStr(notTheseDocs, myFileName) = 0 Then
+    If InStr(myDoc.Content.Text, myName) > 0 Then
+      myDoc.Activate
+      If startFrom = 0 Then
+        If ActiveDocument.TablesOfContents.Count > 0 Then
+          ActiveDocument.TablesOfContents(1).Range.Select
+          Selection.Collapse wdCollapseEnd
+          Selection.MoveRight , 2
+          myNumberText = Trim(Str(Selection.Start))
+          myPrompt = "To speed up, set startFrom value to:  " _
+               & myNumberText & vbCr & vbCr & _
+               "Set this at the start of the macro."
+          myResponse = MsgBox(myPrompt, vbOK, "CitationFinder")
+          Exit Sub
+        End If
+      End If
+      Set rng = ActiveDocument.Content
+      rng.Start = startFrom
+      rng.Collapse wdCollapseStart
+      With rng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = mySearch
+        .Wrap = wdFindStop
+        .MatchWildcards = True
+        .Execute
+      End With
+      If rng.Find.Found Then
+        Do
+          rng.MoveEnd wdParagraph, 1
+          datePos = InStr(rng, myDate)
+          If datePos > 0 Then
+            rng.End = rng.Start + datePos + 3
+            rng.Collapse wdCollapseEnd
+            Do
+              rng.MoveStart wdWord, -1
+            Loop Until InStr(rng, myName) > 0
+            rng.Select
+            Selection.Find.Text = mySearch
+            Exit Sub
+          End If
+          rng.Collapse wdCollapseEnd
+          rng.Find.Execute
+        Loop Until rng.Find.Found = False
+      End If
+    End If
+  End If
+  DoEvents
+Next myDoc
+Beep
+myTime = Timer
+Do
+Loop Until Timer > myTime + 0.2
+Beep
+End Sub
+

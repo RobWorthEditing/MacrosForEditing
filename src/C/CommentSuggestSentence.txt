@@ -1,0 +1,21 @@
+
+Sub CommentSuggestSentence()
+' Paul Beverley - Version 08.10.25
+' Adds a comment with current sentence text added
+' Based on a macro by Jennifer Yankopolus
+
+paneZoom = 200
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdSentence
+End If
+Selection.Copy
+Set myComment = Selection.Comments.Add(Range:=Selection.Range)
+    
+Selection.Font.Bold = True
+Selection.TypeText Text:="Suggestion: "
+Selection.Font.Bold = False
+Selection.Paste
+End Sub
+
+

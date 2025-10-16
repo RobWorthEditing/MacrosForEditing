@@ -1,7 +1,9 @@
 
 Sub CopyTextSimple()
-' Paul Beverley - Version 19.07.25
+' Paul Beverley - Version 08.09.25
 ' Creates a text-only copy, with some features preserved
+
+ActiveDocument.TrackRevisions = False
 
 doItalic = True
 doBold = True
@@ -9,18 +11,14 @@ doSub = True
 doSuper = True
 doListNumbers = True
 
-myColour = wdGray25
+myColour = wdYellow
 
-myDelay = 5
-myDelay2 = 1
-
-myComments = ""
-
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
 Set rngOld = ActiveDocument.Content
 myLanguage = rngOld.Characters(1).LanguageID
 Set newDoc = Documents.Add
 newDoc.Content.FormattedText = rngOld.FormattedText
-For i = 1 To 200 * myDelay: DoEvents: Next i
 
 If doListNumbers = True Then newDoc.ConvertNumbersToText
 Set rng = newDoc.Content
@@ -28,7 +26,6 @@ rng.Revisions.AcceptAll
 rng.Fields.Unlink
 rng.LanguageID = myLanguage
 If numberCmnts > 0 Then newDoc.DeleteAllComments
-For i = 1 To 200 * myDelay: DoEvents: Next i
 
 wds1 = rng.Words.Count
 rng.Font.Hidden = False
@@ -41,10 +38,7 @@ If wds2 <> wds1 Then
   If myResponse = vbCancel Then Exit Sub
   If myResponse = vbYes Then
     newDoc.ActiveWindow.View.ShowHiddenText = True
-    oldColour = Options.DefaultHighlightColorIndex
-    Options.DefaultHighlightColorIndex = myColour
-    Set rng = newDoc.Content
-    With rng.Find
+    With Selection.Find
       .ClearFormatting
       .Replacement.ClearFormatting
       .Text = ""
@@ -54,12 +48,14 @@ If wds2 <> wds1 Then
       .Replacement.Highlight = True
       .Replacement.Text = ""
       .Execute Replace:=wdReplaceAll
-      For kk = 1 To myDelay2: DoEvents: Next kk
+      DoEvents
     End With
     newDoc.ActiveWindow.View.ShowHiddenText = False
   End If
 End If
 
+Selection.HomeKey Unit:=wdStory
+myComments = ""
 numNotes = newDoc.Endnotes.Count
 If numNotes > 0 Then
   myComments = myComments & "| endnotes = yes (" _
@@ -112,7 +108,7 @@ If shCount > 0 Then
         End If
       End If
     End If
-    For kk = 1 To myDelay2: DoEvents: Next kk
+    DoEvents
   Next
   If tbCount > 0 Then myComments = myComments & _
        "| textboxes = yes (" & Trim(Str(tbCount)) _
@@ -125,8 +121,7 @@ Selection.HomeKey Unit:=wdStory
 If myComments > "" Then Selection.TypeText myComments & vbCr
 
 ' Watch out for hard spaces and spaced dots for ellipses
-Set rng = newDoc.Content
-With rng.Find
+With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "^s"
@@ -134,20 +129,20 @@ With rng.Find
   .Replacement.Text = " "
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
-  For kk = 1 To myDelay2: DoEvents: Next kk
+  DoEvents
 End With
 
-With rng.Find
+With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = ". . ."
   .Wrap = wdFindContinue
   .Replacement.Text = "…"
   .Execute Replace:=wdReplaceAll
-  For kk = 1 To myDelay2: DoEvents: Next kk
+  DoEvents
 End With
 
-With rng.Find
+With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = ""
@@ -157,11 +152,11 @@ With rng.Find
   .MatchCase = True
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
-  For kk = 1 To myDelay2: DoEvents: Next kk
+  DoEvents
 End With
 
 If doItalic = True Then
-  With rng.Find
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = ""
@@ -171,12 +166,12 @@ If doItalic = True Then
     .MatchCase = True
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
-    For kk = 1 To myDelay2: DoEvents: Next kk
+    DoEvents
   End With
 End If
 
 If doBold = True Then
-  With rng.Find
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = ""
@@ -186,12 +181,12 @@ If doBold = True Then
     .MatchCase = True
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
-    For kk = 1 To myDelay2: DoEvents: Next kk
+    DoEvents
   End With
 End If
 
 If doSub = True Then
-  With rng.Find
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = ""
@@ -201,12 +196,12 @@ If doSub = True Then
     .MatchCase = True
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
-    For kk = 1 To myDelay2: DoEvents: Next kk
+    DoEvents
   End With
 End If
 
 If doSuper = True Then
-  With rng.Find
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = ""
@@ -216,7 +211,6 @@ If doSuper = True Then
     .Replacement.Text = "xsxs^&sxsx"
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
-    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
 End If
 
@@ -225,9 +219,9 @@ allText = newDoc.Content.Text
 newDoc.Content.Text = vbCr
 newDoc.Content.Style = newDoc.Styles(wdStyleNormal)
 newDoc.Content.Text = allText
-
-Set rng = newDoc.Content
-With rng.Find
+newDoc.Content.HighlightColorIndex = wdNoHighlight
+Selection.HomeKey Unit:=wdStory
+With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "[^12^14]"
@@ -235,11 +229,10 @@ With rng.Find
   .Replacement.Text = "^p"
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
-  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
 
 If doSuper = True Then
-  With rng.Find
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "xsxs(*)sxsx"
@@ -248,9 +241,8 @@ If doSuper = True Then
     .Replacement.Font.Superscript = True
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
-    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
-  With rng.Find
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "XSXS(*)SXSX"
@@ -260,11 +252,10 @@ If doSuper = True Then
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
   End With
-  For kk = 1 To myDelay2: DoEvents: Next kk
 End If
 
 If doSub = True Then
-  With rng.Find
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "xbxb(*)bxbx"
@@ -274,8 +265,8 @@ If doSub = True Then
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
   End With
-  For kk = 1 To myDelay2: DoEvents: Next kk
-  With rng.Find
+  
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "XBXB(*)BXBX"
@@ -284,12 +275,11 @@ If doSub = True Then
     .Replacement.Font.Subscript = True
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
-    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
 End If
 
 If doBold = True Then
-  With rng.Find
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "jqjq(*)qjqj"
@@ -299,9 +289,9 @@ If doBold = True Then
     .MatchCase = True
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
-    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
-  With rng.Find
+  
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "JQJQ(*)QJQJ"
@@ -311,12 +301,11 @@ If doBold = True Then
     .MatchCase = True
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
-    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
 End If
 
 If doItalic = True Then
-  With rng.Find
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "zczc(*)czcz"
@@ -326,9 +315,9 @@ If doItalic = True Then
     .MatchCase = True
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
-    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
-  With rng.Find
+
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "ZCZC(*)CZCZ"
@@ -339,38 +328,27 @@ If doItalic = True Then
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
   End With
-  For kk = 1 To myDelay2: DoEvents: Next kk
 End If
 
+Selection.HomeKey Unit:=wdStory
 ' Restore Highlight
-With rng.Find
+With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "vkvk(*)kvkv"
+  .Format = True
   .Wrap = wdFindContinue
   .Replacement.Text = "\1"
   .Replacement.Highlight = True
-  .MatchCase = True
+  .MatchCase = False
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
-  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "VKVK(*)KVKV"
-  .Wrap = wdFindContinue
-  .Replacement.Text = "\1"
-  .Replacement.Highlight = True
-  .MatchCase = True
-  .MatchWildcards = True
-  .Execute Replace:=wdReplaceAll
-  For kk = 1 To myDelay2: DoEvents: Next kk
-End With
+
 Options.DefaultHighlightColorIndex = oldColour
 
 ' Tidy up picture markers
-With rng.Find
+With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "^1"
@@ -378,10 +356,9 @@ With rng.Find
   .Replacement.Text = ""
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
-  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
 
-With rng.Find
+With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "[^13]{3,}"
@@ -389,22 +366,20 @@ With rng.Find
   .Replacement.Text = "^p^p"
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
-  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
 
-With rng.Find
+With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "[vkjzcqxbsVKJZCQXBS]{4,}"
+  .Text = "[vkjzcqxbsVKJZCQXBS]{4}"
   .Wrap = wdFindContinue
   .Replacement.Text = ""
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
-  For kk = 1 To myDelay2: DoEvents: Next kk
 End With
 
 If tbCount = 0 Then
-  With rng.Find
+  With Selection.Find
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "Textboxes:"
@@ -413,7 +388,6 @@ If tbCount = 0 Then
     .MatchCase = True
     .MatchWildcards = True
     .Execute Replace:=wdReplaceAll
-    For kk = 1 To myDelay2: DoEvents: Next kk
   End With
 End If
 Beep

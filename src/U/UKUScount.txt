@@ -1,23 +1,28 @@
 
 Sub UKUScount()
-' Paul Beverley - Version 29.10.24
+' Paul Beverley - Version 18.09.25
 ' Counts relative spellings between UK and US English
 
 minLengthSpell = 5
 doCount = True
 
-timeStart = Timer
+myWarn = "        Press # to stop"
 UKcount = 0
 UScount = 0
 CR = vbCr
+CR2 = CR & CR
 UKwords = CR
 USwords = CR
 Selection.HomeKey Unit:=wdStory
-i = ActiveDocument.Words.Count
-iStart = i
+myWds = ActiveDocument.Words.Count
+myTot = ActiveDocument.Characters.Count
+iStart = myWds
 StatusBar = "Spellchecking. To go:   100%"
-On Error GoTo ReportIt
-Application.ScreenUpdating = False
+myTime = Timer
+Do
+  DoEvents
+Loop Until Timer > myTime + 0.5
+timeStart = Timer
 For Each wd In ActiveDocument.Words
   myWrd = Replace(Trim(wd), ChrW(8217), "")
   If Len(myWrd) >= minLengthSpell And wd.Font.StrikeThrough = False Then
@@ -36,31 +41,36 @@ For Each wd In ActiveDocument.Words
              USwords = USwords & "$" & LCase(myWrd) & CR
       End If
       wd.Select
-      StatusBar = "Spellchecking. To go:   " & Trim(Str(Int((i / iStart) _
+      myEnd = Selection.End
+      StatusBar = "Spellchecking. To go:   " & Trim(Str(Int((myWds / iStart) _
            * 100))) & "%                           UK:  " & UKcount & _
            "      US:  " & UScount
-      Debug.Print "Spellchecking. To go:   " & Trim(Str(Int((i / iStart) _
+      Debug.Print "Spellchecking. To go:   " & Trim(Str(Int((myWds / iStart) _
       * 100))) & "%                           UK:  " & UKcount & _
       "      US:  " & UScount
     End If
   End If
-  i = i - 1
-  If i Mod 1000 = 0 Then
+  myWds = myWds - 1
+  If Selection.End <> myEnd Then
+    WordBasic.EditUndo
+    Exit For
+  End If
+  If myWds Mod 400 = 0 Then
     StatusBar = "Spellchecking. To go:   " & _
-         Trim(Str(Int((i / iStart) * 100))) & _
+         Trim(Str(Int((myWds / iStart) * 100))) & _
          "%                           UK:  " & _
-         UKcount & "      US:  " & UScount
+         UKcount & "      US:  " & UScount & myWarn
     DoEvents
   End If
 Next wd
-Application.ScreenUpdating = True
 endTime = Timer
-MsgBox "Total words" & CR & CR & "UK: " & UKcount _
+MsgBox "Total words counted" & CR & CR & "UK: " & UKcount _
      & CR & CR & "US: " & UScount
 totTime = endTime - timeStart
 If doCount = True Then
    If totTime > 60 Then MsgBox ((Int(10 * totTime / 60) / 10) & _
      "  minutes")
+'   If totTime > 1 Then MsgBox (totTime & "  seconds")
 End If
 Selection.HomeKey Unit:=wdStory
 Beep
@@ -97,17 +107,15 @@ With rng.Find
   .Execute Replace:=wdReplaceAll
   lenThree = Len(rng2)
 End With
-Selection.TypeText Text:=CR & "US: " & Trim(Str(lenOne - lenTwo)) & CR
+
+ActiveDocument.Content.Text = Replace(ActiveDocument.Content.Text, 
+     CR2 & CR, CR2 & CR & "US: " & Trim(Str(lenOne - lenTwo + 1)) & CR)
 Selection.HomeKey Unit:=wdStory
 Selection.TypeText Text:="Distinct words" & CR & CR & "UK: " & _
-     Trim(Str(lenTwo - lenThree)) & CR
-Exit Sub
-
-ReportIt:
-Application.ScreenUpdating = True
-On Error GoTo 0
-Resume
+     Trim(Str(lenTwo - lenThree + 1)) & CR
 End Sub
+
+
 
 
 

@@ -1,6 +1,6 @@
 
 Sub NumberToTextUK()
-' Paul Beverley - Version 13.07.23
+' Paul Beverley - Version 22.08.25
 ' Converts next number into text, eg "two hundred and forty-two"
 
 
@@ -15,6 +15,8 @@ With Selection.Find
   .Replacement.Text = ""
   .Forward = True
   .MatchWildcards = True
+  .MatchSuffix = False
+  .MatchPrefix = False
   .Execute
 End With
 

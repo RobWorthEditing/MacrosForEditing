@@ -1,0 +1,387 @@
+
+Sub Clipper()
+' Paul Beverley - Version 06.02.21
+' Collects, manipulates and pastes items from the ClipStore
+
+myHighlight = 0
+myHighlight = wdYellow
+
+myClipFile = "zClipStore.docx"
+
+
+' On Windows, it will need to be something like:
+myFolder = "C:\Documents and Settings\Paul\My Documents\Macro stuff"
+
+' On a Mac, it will need to be something like:
+myFolder = "/Users/Paul/My Documents/Macro stuff"
+
+
+maxClips = 12
+CR = vbCr: CR2 = CR & CR
+macroCopy = True
+
+cs = ""
+cs = cs & "+/- = switch formatting on/off|"
+cs = cs & "s = store a copy of all clips into the BS|"
+cs = cs & "r = restore all back clips to numbered|"
+cs = cs & "n = create new blank clip|"
+cs = cs & "|"
+cs = cs & "n = create new blank clip|"
+cs = cs & "|"
+cs = cs & "p = paste this clip to target file|"
+cs = cs & "c = copy this clip into the clipboard|"
+cs = cs & "b = blank the working clip|"
+cs = cs & "u = undo DictaFRedit changes|"
+cs = cs & "x = delete all numbered clips!|"
+cs = cs & " = |"
+
+tf = ""
+tf = tf & "+/- = switch formatting on/off|"
+tf = tf & "s = store a copy of all clips in BS|"
+tf = tf & "r = restore all back clips to numbered|"
+tf = tf & "n = create new blank clip|"
+tf = tf & "x = delete all numbered clips!|"
+tf = tf & "|"
+tf = tf & "<N°> = paste clip n into text|"
+tf = tf & "<N°>+ = clip n with formatting|"
+tf = tf & "<N°>- = clip n withOUT formatting|"
+tf = tf & "|"
+tf = tf & "<Enter> = paste same clip as last time|"
+tf = tf & " = |"
+tf = tf & " = |"
+
+endPos = InStr(cs, "= |")
+If endPos > 0 Then cs = Left(cs, endPos - 3)
+cs = Replace(cs, "|", vbCr)
+
+endPos = InStr(tf, "= |")
+If endPos > 0 Then tf = Left(tf, endPos - 3)
+tf = Replace(tf, "|", vbCr)
+
+' Backstore items
+Dim bStart(99) As Integer
+Dim bEnd(99) As Integer
+Dim bName(99) As String
+
+' Main clip items
+Dim cTitle(99) As Integer
+Dim cStart(99) As Integer
+Dim cEnd(99) As Integer
+Dim cName(99) As String
+
+' Remember start selection
+Set rngWas = Selection.Range.Duplicate
+Set startDoc = ActiveDocument
+myFileName = startDoc.Name
+dotPos = InStr(myFileName, ".")
+If dotPos > 0 Then myFileName = Left(myFileName, dotPos - 1)
+
+' Look for an open ClipStore file
+On Error GoTo ReportIt
+gottaStoreFile = False
+For i = 1 To Application.Windows.Count
+  Set thisFile = Application.Windows(i).Document
+  If InStr(thisFile.Name, myClipFile) > 0 Then
+    Set clipDoc = Application.Windows(i).Document
+    gottaStoreFile = True
+    Exit For
+  End If
+Next i
+
+' If it's not open, load it
+If gottaStoreFile = False Then
+  Documents.Open myFolder & myClipFile
+  Set clipDoc = ActiveDocument
+End If
+On Error GoTo 0
+
+cursorInClipFile = (startDoc = clipDoc)
+If cursorInClipFile Then
+  myPrompt = cs
+Else
+  myPrompt = tf
+End If
+
+' Interpret the contents of the ClipStore
+inBackStore = True
+bNum = 0
+For i = 1 To clipDoc.Paragraphs.Count
+  Set pa = clipDoc.Paragraphs(i).Range
+  tx = Replace(pa.Text, CR, "")
+  If Left(tx, 4) = "last" Then lastUsedText = Right(tx, 2)
+  If Left(tx, 3) = "max" Then maxClips = Val(Right(tx, 2))
+  If Left(tx, 3) = "for" Then textOnly = (Right(tx, 1) = "-")
+  If Left(tx, 4) = "999" Then
+    inBackStore = False
+    bEnd(bNum) = pa.Start - 1
+    endBackClips = pa.Start
+    startClips = pa.Start + 3
+  End If
+  If Left(tx, 3) = "000" Then
+    bEnd(bNum) = pa.Start - 1
+    startBackClips = pa.End
+  End If
+  If Left(tx, 1) = "_" Then
+    If inBackStore = True Then
+      ' store parameters for backstore items
+      bNum = bNum + 1
+      bStart(bNum) = pa.End
+      If bNum > 1 Then bEnd(bNum - 1) = pa.Start - 1
+      bNumMax = bNum
+    Else
+      ' store parameters for clipstore items
+      cNum = Val(Right(pa.Text, 3))
+      cTitle(cNum) = pa.Start
+      cStart(cNum) = pa.End
+      If cNum > cNumMax Then cNumMax = cNum
+    End If
+  End If
+  cEnd(cNum) = pa.End
+Next i
+bEnd(0) = startBackClips
+startClips = endBackClips + 4
+endClips = clipDoc.Content.End
+cEnd(cNum) = endClips
+newClipNum = (cNum Mod maxClips) + 1
+newClipNumText = Right(Trim(Str(100 + newClipNum)), 2)
+
+
+' "What do you want to do today?!"
+myInput = InputBox(myPrompt, "ClipPaste")
+
+' Changes format/text-only status
+If InStr("+-", myInput) > 0 And Len(myInput) > 0 Then
+  Set rng = clipDoc.Content
+  mySignPos = InStr(rng, "mat =")
+  rng.Start = mySignPos
+  rng.End = rng.Start + 7
+  mySignPos = InStr(rng, CR)
+  rng.Start = rng.Start + mySignPos - 2
+  rng.End = rng.Start + 1
+  rng.Text = myInput
+  Exit Sub
+End If
+
+' If the user is specifying formatting/text-only
+If InStr(myInput, "+") > 0 Then
+  myInput = Replace(myInput, "+", "")
+  textOnly = False
+End If
+
+If InStr(myInput, "-") > 0 Then
+  myInput = Replace(myInput, "-", "")
+  textOnly = True
+End If
+
+If myInput = "s" Then
+  Set rng = clipDoc.Range(startClips, endClips)
+  rng.Copy
+  rng.MoveStart , -4
+  rng.Collapse wdCollapseStart
+  rs = rng.Start
+  rng.Paste
+  rng.Start = rng.End - 1
+  rng.Delete
+  rng.Start = rs
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "_^#^#"
+    .Wrap = wdFindStop
+    .Replacement.Text = "_xx"
+    .Forward = True
+    .MatchCase = False
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+  Exit Sub
+End If
+
+If myInput = "x" Then
+  Beep
+  Set rng = clipDoc.Range(startClips, endClips)
+  rng.Select
+  myResponse = MsgBox("Delete ALL your numbered clips?!", _
+       vbYesNoCancel, "ClipPaste")
+  If myResponse = vbYes Then Selection.Delete
+  Selection.InsertAfter Text:=CR
+  Selection.Collapse wdCollapseEnd
+  Exit Sub
+End If
+
+If myInput = "r" Then
+  Beep
+  Set rng = clipDoc.Range(startBackClips, endBackClips)
+  rng.Select
+  rng.Copy
+  Selection.EndKey Unit:=wdStory
+  Selection.Paste
+  
+  Set rng = clipDoc.Range(endClips, Selection.End)
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "_xx"
+    .Wrap = wdFindStop
+    .Replacement.Text = ""
+    .Forward = True
+    .MatchWildcards = True
+    .MatchWholeWord = False
+    .MatchSoundsLike = False
+    .Execute
+  End With
+  
+  cNum = cNumMax
+  Do While rng.Find.Found = True
+    endNow = rng.End
+    cNum = cNum + 1
+    newNumText = Right(Trim(Str(100 + cNum)), 2)
+    rng.Text = "_" & newNumText
+    rng.Start = endNow
+    rng.Find.Execute
+    rng.Select
+  Loop
+  Exit Sub
+End If
+
+If InStr("ne", myInput) > 0 Then
+  ' Has this new clip number already been used?
+  Set rng = clipDoc.Content
+  oldClipPos = InStr(rng.Text, "_" & newClipNumText & CR)
+  If oldClipPos > 0 Then
+    Set rng = clipDoc.Range(cTitle(newClipNum), cEnd(newClipNum))
+    rng.Delete
+  End If
+  Set rng = clipDoc.Content
+  rng.Collapse wdCollapseEnd
+  
+  ' Add a new clip to numbered clip area ...
+  rng.InsertAfter Text:="__" & newClipNumText & vbCr
+  rng.HighlightColorIndex = myHighlight
+  rng.Collapse wdCollapseEnd
+  rng.InsertAfter Text:=CR
+  rng.Select
+  Selection.EndKey Unit:=wdStory
+  Selection.MoveLeft , 1
+  If myInput = "n" Then Exit Sub
+
+' Edit an email text
+  rng.Paste
+End If
+
+' Where is the cursor?
+If cursorInClipFile = False Then GoTo cursorInTarget
+
+' Doing things from the ClipStore file
+If InStr("bpc", myInput) > 0 Then
+  myPos = rngWas.Start
+  For i = 1 To cNumMax
+    If myPos > cStart(i) - 5 And myPos < cEnd(i) + 1 Then Exit For
+  Next i
+  Set rngClip = clipDoc.Range(cStart(i), cEnd(i))
+  ' Blank the working clip
+  If myInput = "b" Then
+    rngClip.MoveStart , 1
+    rngClip.Select
+    Selection.Delete
+    Selection.TypeText Text:=CR
+    Selection.MoveLeft , 1
+    Selection.TypeBackspace
+    Exit Sub
+  End If
+  rngClip.HighlightColorIndex = wdNoHighlight
+  rngClip.Copy
+  
+  If myInput = "p" Then
+    st = rngClip.Start - 1
+    Set rng = clipDoc.Range(st, st)
+    rng.Expand wdParagraph
+    rng.MoveStart , 1
+    rng.MoveEnd , -4
+    myFileName = rng.Text
+    ' Look for this file
+    gottaStoreFile = False
+    For i = 1 To Application.Windows.Count
+      Set thisFile = Application.Windows(i).Document
+      If InStr(thisFile.Name, myFileName) > 0 Then
+        Application.Windows(i).Document.Activate
+        Selection.Paste
+        gottaStoreFile = True
+      End If
+    Next i
+    If gottaStoreFile = False Then
+      Beep
+      myResponse = MsgBox("File " & myFileName & _
+           " not open.", vbOKOnly, "ClipPaste")
+    End If
+  End If
+  
+  If myInput = "c" Then
+    rngClip.Copy
+    Exit Sub
+  End If
+  Exit Sub
+End If
+
+' Doing things from the target file
+cursorInTarget:
+
+' Paste in numbered clip
+If myInput = "" Then
+  myInputText = lastUsedText
+Else
+  myInputText = Right(Trim(Str(100 + Val(myInput))), 2)
+  Set rngTest = clipDoc.Content
+  lastPos = InStr(rngTest, "lastClip")
+  If lastPos = 0 Then
+    rngTest.InsertBefore Text:="lastClip = " & myInputText & CR
+     Beep
+     rngTest.Select
+     Exit Sub
+  Else
+    rngTest.Start = lastPos
+    rngTest.Collapse wdCollapseStart
+    rngTest.Expand wdParagraph
+    rngTest.End = rngTest.End - 1
+    rngTest.Start = rngTest.End - 2
+    rngTest.Text = myInputText
+  End If
+End If
+myPos = InStr(clipDoc.Content, "_" & myInputText & CR)
+If myPos = 0 Then
+  Beep
+  myResponse = MsgBox("Can't find clip number: " & _
+       myInputText, vbOKOnly, "ClipPaste")
+  Exit Sub
+End If
+For i = 1 To cNumMax
+  If myPos > cStart(i) - 5 And myPos < cEnd(i) + 1 Then Exit For
+Next i
+Set rngClip = clipDoc.Range(cStart(i), cEnd(i) - 1)
+rngClip.Copy
+startDoc.Activate
+If textOnly = True Then
+  Selection.PasteSpecial DataType:=wdPasteText
+  If Right(rngClip.Text, 1) = CR Then _
+       Selection.TypeText Text:=CR
+Else
+  Selection.Paste
+End If
+Exit Sub
+
+ReportIt:
+If Err.Number = 5174 Then
+  Err.Clear
+  Beep
+  myClipFile = Replace(myClipFile, ".docx", "")
+  myResponse = MsgBox("Can't find your clipstore file: """ _
+       & myClipFile & """", vbOKOnly, "ClipPaste")
+Else
+  On Error GoTo 0
+  Resume
+End If
+End Sub
+
+
+

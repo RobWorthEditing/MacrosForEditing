@@ -1,7 +1,7 @@
 Sub SpellcheckWarn()
 ' Paul Beverley - Version 30.04.11
-' Run a spellcheck, but beep if not UK or langauges are mixed
-' F7
+' Runs a spellcheck, but beeps if not UK or the languages are mixed
+
 langHere = Selection.LanguageID
 If langHere <> wdEnglishUK Then Beep
 

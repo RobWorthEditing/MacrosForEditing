@@ -1,0 +1,349 @@
+
+Sub DocumentDifferencesHighlight()
+' Paul Beverley - Version 08.10.25
+' Compares files, highlighting and underlining areas of difference
+
+
+giveInstructions = True
+' giveInstructions = False
+
+myColour = wdYellow
+
+Set myDoc1 = ActiveDocument
+myName1 = Replace(myDoc1.Name, ".docx", "")
+If giveInstructions = True Then
+  myResponse = MsgBox("Starting with file: >" & myName1 & "<" & vbCr _
+       & "Is the cursor in the exact same paragraph in the other two files?" & vbCr _
+       & "If so, you can now click in the other two files." & vbCr _
+       & "(Or click back in the first file if comparing only two files.)", _
+       vbOK + vbDefaultButton1, "CompareFiles")
+  If myResponse <> vbOK Then Beep: Exit Sub
+End If
+
+allIdentical = True
+Set rng1 = Selection.Range.Duplicate
+rng1.Collapse wdCollapseStart
+rng1.Expand wdParagraph
+paraFirst1 = myDoc1.Range(0, rng1.End).Paragraphs.Count
+paraLast1 = myDoc1.Paragraphs.Count
+
+Debug.Print "FirstLast myDoc1:", paraFirst1, paraLast1
+
+paraFirst = paraFirst1
+If Selection.Start = Selection.End Then
+  paraLast = paraLast1
+Else
+  paraLast = myDoc1.Range(0, Selection.End).Paragraphs.Count
+End If
+
+Debug.Print "FirstLast ForNext:", paraFirst, paraLast
+myStart = Timer
+Do
+  Set myDoc2 = ActiveDocument
+  myName2 = Replace(myDoc2.Name, ".docx", "")
+  DoEvents
+  nowTime = Timer
+If nowTime - myStart > 5 Then Beep: MsgBox ("Too slow!"): Exit Sub
+Loop Until myName2 <> myName1 Or (nowTime - myStart > 5)
+Set rng2 = Selection.Range.Duplicate
+rng2.Expand wdParagraph
+paraLast2 = myDoc2.Paragraphs.Count
+
+paraFirst2 = myDoc2.Range(0, rng2.End).Paragraphs.Count
+
+myStart = Timer
+Do
+  Set myDoc3 = ActiveDocument
+  myName3 = Replace(myDoc3.Name, ".docx", "")
+  DoEvents
+  nowTime = Timer
+Loop Until myName3 <> myName2 Or (nowTime - myStart > 5)
+If nowTime - myStart > 5 Then Beep: MsgBox ("Too slow!"): Exit Sub
+Set rng3 = Selection.Range.Duplicate
+rng3.Collapse wdCollapseStart
+paraFirst3 = myDoc3.Range(0, rng3.End).Paragraphs.Count
+paraLast3 = myDoc3.Paragraphs.Count
+
+myDoc1.Activate
+myTrack = ActiveDocument.TrackRevisions
+offSet2 = paraFirst2 - paraFirst1
+offSet3 = paraFirst3 - paraFirst1
+Debug.Print paraFirst, paraLast, offSet2, offSet3
+
+threeFiles = (myName1 <> myName3)
+
+For pa = paraFirst To paraLast
+  rng1.Start = myDoc1.Paragraphs(pa).Range.Start
+  rng1.End = myDoc1.Paragraphs(pa).Range.End
+'  rng1.Select
+  rng2.Start = myDoc2.Paragraphs(pa + offSet2).Range.Start
+  rng2.End = myDoc2.Paragraphs(pa + offSet2).Range.End
+'  rng2.Select
+  
+  rng3.Start = myDoc3.Paragraphs(pa + offSet3).Range.Start
+  rng3.End = myDoc3.Paragraphs(pa + offSet3).Range.End
+'  rng3.Select
+  
+  Debug.Print "|" & Replace(rng1, vbCr, "") & "|", "|" & Replace(rng2, vbCr, "") & "|", "|" & Replace(rng3, vbCr, "") & "|"
+  
+  s1 = "CR"
+  e1 = "CR"
+  If Len(rng1) > 4 Then
+    s1 = rng1.Words.First
+    e1 = Right(rng1, 4)
+  End If
+  Debug.Print "A |" & s1 & "|", "|" & e1 & "|"
+  
+  s2 = "CR"
+  e2 = "CR"
+  If Len(rng2) > 4 Then
+    s2 = rng2.Words.First
+    e2 = Right(rng2, 4)
+  End If
+  Debug.Print "B |" & s2 & "|", "|" & e2 & "|"
+  
+  s3 = "CR"
+  e3 = "CR"
+  If Len(rng3) > 4 Then
+    s3 = rng3.Words.First
+    e3 = Right(rng3, 4)
+  End If
+  Debug.Print "C |" & s3 & "|", "|" & e3 & "|" & vbCr & vbCr
+  endGood = (e1 = e2) And (e2 = e3)
+  startGood = (s1 = s2) And (s2 = s3)
+  keepGoing = startGood Or endGood
+  If (pa = paraLast1) Or (pa + offSet2 = paraLast2) Or _
+       (pa + offSet3 = paraLast3) Then keepGoing = False
+  If keepGoing = False Then
+    ' Stop if there's too much mismatch
+    '   or you've reached the end of one of the files
+    rng2.Collapse wdCollapseStart
+    rng2.Select
+    ActiveDocument.ActiveWindow.LargeScroll Down:=1
+    rng2.Select
+    
+    rng3.Collapse wdCollapseStart
+    rng3.Select
+    ActiveDocument.ActiveWindow.LargeScroll Down:=1
+    rng3.Select
+    
+    rng1.Collapse wdCollapseStart
+    rng1.Select
+    ActiveDocument.ActiveWindow.LargeScroll Down:=1
+    rng1.Select
+    Beep
+    ActiveDocument.TrackRevisions = myTrack
+    If allIdentical Then
+     If threeFiles Then
+       myResponse = MsgBox("These three files are identical", _
+            vbOKOnly, "DocumentDifferencesHighlight")
+     Else
+       myResponse = MsgBox("These two files are identical", _
+            vbOKOnly, "DocumentDifferencesHighlight")
+     End If
+    End If
+    GoTo doHighlight
+  End If
+
+  Set rng4 = rng1.Duplicate
+  Set rng5 = rng2.Duplicate
+  Set rng6 = rng3.Duplicate
+  wds4 = rng4.Words.Count
+  wds5 = rng5.Words.Count
+  wds6 = rng6.Words.Count
+  maxWords = wds4
+  If wds5 > maxWords Then maxWords = wds5
+  If wds6 > maxWords Then maxWords = wds6
+  rng4.Collapse wdCollapseStart
+  rng5.Collapse wdCollapseStart
+  rng6.Collapse wdCollapseStart
+  i = 0
+  Do
+    rng4.MoveEnd wdWord, 1
+    rng5.MoveEnd wdWord, 1
+    rng6.MoveEnd wdWord, 1
+    i = i + 1
+    keepGoing = (rng4 = rng5) And (rng5 = rng6)
+    DoEvents
+  Loop Until Not keepGoing Or i = maxWords
+  If Not keepGoing Then
+    allIdentical = False
+    rng4.MoveEnd wdWord, -1
+    rng5.MoveEnd wdWord, -1
+    rng6.MoveEnd wdWord, -1
+    
+    startError1 = rng4.End
+    startError2 = rng5.End
+    startError3 = rng6.End
+    rng4.Collapse wdCollapseEnd
+    rng5.Collapse wdCollapseEnd
+    rng6.Collapse wdCollapseEnd
+    rng4.End = rng1.End
+    rng5.End = rng2.End
+    rng6.End = rng3.End
+    wds4 = rng4.Words.Count
+    wds5 = rng5.Words.Count
+    wds6 = rng6.Words.Count
+    maxWords = wds4
+    If wds5 > maxWords Then maxWords = wds5
+    If wds6 > maxWords Then maxWords = wds6
+    rng4.Collapse wdCollapseEnd
+    rng5.Collapse wdCollapseEnd
+    rng6.Collapse wdCollapseEnd
+    i = 0
+    Do
+      rng4.MoveStart wdWord, -1
+      rng5.MoveStart wdWord, -1
+      rng6.MoveStart wdWord, -1
+      i = i + 1
+      keepGoing = (rng4 = rng5) And (rng5 = rng6)
+    Loop Until Not keepGoing Or i >= maxWords
+    rng4.MoveStart wdWord, 1
+    rng5.MoveStart wdWord, 1
+    rng6.MoveStart wdWord, 1
+    rng4.Collapse wdCollapseStart
+    rng5.Collapse wdCollapseStart
+    rng6.Collapse wdCollapseStart
+    
+    rng4.Start = startError1
+    rng5.Start = startError2
+    rng6.Start = startError3
+  
+    rng4.Font.Underline = True
+    rng5.Font.Underline = True
+    If threeFiles Then rng6.Font.Underline = True
+' Now can we split the highlighted area in the middle
+    numWords = rng4.Words.Count
+    If numWords > 6 Then
+      Set rng7 = rng4.Duplicate
+      midWd = Int(rng4.Words.Count / 2)
+      rng7.MoveStart wdWord, midWd - 1
+      rng7.Collapse wdCollapseStart
+      rng7.MoveEnd wdWord, 2
+      ' If the either word is too short, add another
+      If Len(rng7.Words(2)) < 3 Then rng7.MoveEnd wdWord, 1
+      If Len(rng7.Words(1)) < 3 Then rng7.MoveStart wdWord, -1
+      testText = rng7.Text
+      pos5 = InStr(rng5, testText)
+      pos6 = InStr(rng6, testText)
+      If pos5 > 0 And pos6 > 0 Then
+        rng4.Start = rng7.Start
+        rng4.End = rng7.End
+        rng5.MoveStart , pos5 - 1
+        rng5.End = rng5.Start + Len(testText)
+        rng6.MoveStart , pos6 - 1
+        rng6.End = rng6.Start + Len(testText)
+        Do
+          rng4.MoveEnd wdWord, 1
+          rng5.MoveEnd wdWord, 1
+          rng6.MoveEnd wdWord, 1
+          allGood = (rng4 = rng5) And (rng5 = rng6)
+          DoEvents
+        Loop While allGood
+        rng4.MoveEnd wdWord, -1
+        rng5.MoveEnd wdWord, -1
+        rng6.MoveEnd wdWord, -1
+        
+        Do
+          rng4.MoveStart wdWord, -1
+          rng5.MoveStart wdWord, -1
+          rng6.MoveStart wdWord, -1
+          allGood = (rng4 = rng5) And (rng5 = rng6)
+          DoEvents
+        Loop While allGood
+        rng4.MoveStart wdWord, 1
+        rng5.MoveStart wdWord, 1
+        rng6.MoveStart wdWord, 1
+        rng4.Font.Underline = False
+        rng5.Font.Underline = False
+        If threeFiles Then rng6.Font.Underline = False
+      End If
+    End If
+  End If
+  If Not keepGoing Then
+    myCount = myCount + 1
+    If myCount Mod 5 = 0 Then
+      If threeFiles Then
+        rng3.Select
+        Selection.MoveLeft , 1
+        Selection.MoveRight , 1
+      End If
+      rng2.Select
+      Selection.MoveLeft , 1
+      Selection.MoveRight , 1
+      DoEvents
+    End If
+    rng1.Select
+    Selection.MoveLeft , 1
+    Selection.MoveRight , 1
+  End If
+  DoEvents
+Next pa
+
+rng3.Select
+Selection.MoveLeft , 1
+Selection.MoveRight , 1
+rng2.Select
+Selection.MoveLeft , 1
+Selection.MoveRight , 1
+rng1.Select
+Selection.MoveLeft , 1
+Selection.MoveRight , 1
+Beep
+myTime = Timer
+Do
+  DoEvents
+Loop Until Timer > myTime + 0.2
+ActiveDocument.TrackRevisions = myTrack
+Beep
+
+doHighlight:
+oldColour = Options.DefaultHighlightColorIndex
+Options.DefaultHighlightColorIndex = myColour
+Set rng = myDoc1.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+Set rng = myDoc2.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = ""
+  .Replacement.Highlight = True
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+If threeFiles = True Then
+Set rng = myDoc3.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.Underline = True
+    .Wrap = wdFindContinue
+    .Forward = True
+    .Replacement.Text = ""
+    .Replacement.Highlight = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
+Options.DefaultHighlightColorIndex = oldColour
+End Sub
+

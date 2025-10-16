@@ -1,8 +1,10 @@
 Sub PunctuationToApostrophe()
-' Paul Beverley - Version 01.02.24
-' Changes next quote mark to an apostrophe
+' Paul Beverley - Version 22.09.25
+' Changes next quote mark to an apostrophe or adds apostrophe to certain words
 
 trackIt = True
+
+myWords = "til cause phone etc"
 
 newChar = ChrW(8217)
 
@@ -12,11 +14,18 @@ searchChars = Chr(34) & Chr(39) & ChrW(8216) _
        & ChrW(8242) & ChrW(8243)
 
 Set rng = Selection.Range.Duplicate
+rng.expand wdWord
 
+If Val(rng) + InStr(myWords, Trim(rng)) > 0 Then
+  rng.Collapse wdCollapseStart
+  rng.Select
+  Selection.TypeText Text:=newChar
+  Exit Sub
+End If
 For i = 1 To 1000
   rng.MoveEnd , 1
   If InStr(searchChars, Right(rng, 1)) > 0 Then
-    rng.Start = rng.End - 1
+    rng.start = rng.End - 1
     gotChar = True
     Exit For
   End If
@@ -45,5 +54,4 @@ Selection.Collapse wdCollapseEnd
 
 ActiveDocument.TrackRevisions = myTrack
 End Sub
-
 

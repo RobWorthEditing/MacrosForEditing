@@ -1,0 +1,30 @@
+
+Sub HighlightedUnderlinesRemove()
+' Paul Beverley - Version 04.10.25
+' Removes highlighted underlining (used for DocumentDifferencesHighlight)
+
+If Selection.End = Selection.Start Then
+  Set rng = ActiveDocument.Content
+  myResponse = MsgBox("Remove (highlight + underline) from the WHOLE file?", _
+       vbQuestion + vbYesNo, "HighlightedUnderlinesRemove")
+  If myResponse <> vbYes Then Exit Sub
+Else
+  Set rng = Selection.Range.Duplicate
+End If
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Highlight = True
+  .Wrap = wdFindStop
+  .Replacement.Highlight = False
+  .Replacement.Font.Underline = False
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = False
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+

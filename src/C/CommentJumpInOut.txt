@@ -1,5 +1,6 @@
+
 Sub CommentJumpInOut()
-' Paul Beverley - Version 13.06.22
+' Paul Beverley - Version 16.09.25
 ' Jumps in and out of comment text
 
 inCommentBox = Selection.Range.Information(wdInCommentPane)
@@ -8,11 +9,17 @@ If inCommentBox Then
   Selection.Collapse wdCollapseStart
 Else
   Set rng = ActiveDocument.Range(0, Selection.End)
-  cmtNum = rng.Comments.count + 1
-  If cmtNum > ActiveDocument.Comments.count Then
-    cmtNum = ActiveDocument.Comments.count
+  cmtNum = rng.Comments.Count + 1
+  If cmtNum > ActiveDocument.Comments.Count Then
+    cmtNum = ActiveDocument.Comments.Count
   End If
   ActiveDocument.Comments(cmtNum).Edit
 End If
+Selection.expand wdLine
+Selection.Collapse wdCollapseStart
+Selection.MoveRight , 1
 End Sub
+
+
+
 

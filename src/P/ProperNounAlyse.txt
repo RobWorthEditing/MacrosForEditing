@@ -1,12 +1,14 @@
 
-
 Sub ProperNounAlyse()
-' Paul Beverley - Version 17.07.25
+' Paul Beverley - Version 05.09.25
 ' Analyses similar proper nouns
 
+' addExtraList = False
+addExtraList = True
 
 minLengthCheck = 4
 
+' includeAcronyms = False
 includeAcronyms = True
 
 ' myLanguage = "English(United Kingdom)"
@@ -15,7 +17,7 @@ myLanguage = "English(United States)"
 doUseQuickSort = True
 
 ' Delay to allow Word to catch up with VBA (seconds)
-myDelay = 1
+myDelay = 0.1
 
 ignoreWords = "Also Being The This There Those Their They Then These That" & _
      " Ever Even Four From Have When Where Will While Were Whole Well Would"
@@ -25,9 +27,6 @@ similarChars = "bb,b; b,p; sch,sh; ch,sh; c,k; ph,f; ss,z; s,z;" & _
 
 ' With non-English languages, you might need to make this False
 ignorePlurals = True
-
-' keepWholeList = False
-keepWholeList = True
 
 myScreenOff = True
 CR = vbCr: CR2 = CR & CR
@@ -127,14 +126,14 @@ End If
 Set rng = FUT.Content
 
 Set firstDoc = Documents.Add
-t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 Set fnl = firstDoc.Content
-t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 
 Set allText = Documents.Add
-t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 allText.Content.FormattedText = rng.FormattedText
-t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 allText.Content.Collapse wdCollapseEnd
 
 ' Add notes + shape text
@@ -146,11 +145,11 @@ If shCount > 0 Then
 End If
 
 'Add dummy name
-allText.Content.InsertAfter Text:="Aaaaa" & CR
+allText.Content.InsertBefore Text:="Aaaaa" & CR
 
 Set rng = allText.Content
 rng.Revisions.AcceptAll
-t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 StatusBar = spcs & "Preparing copied file - 1"
 
 ' Delete struck-through text
@@ -185,11 +184,11 @@ End With
 StatusBar = spcs & "Preparing copied file - 2"
 
 allJustText = allText.Content.Text
-t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 allText.Content.Delete
-t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 allText.Content.Text = allJustText
-t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 StatusBar = spcs & "Preparing copied file - 3"
 
 ' Use qqq for apostrophe
@@ -214,29 +213,36 @@ End With
 
 ' Find initial cap words
 StatusBar = spcs & "Preparing copied file - 4"
-myFind = "[A-Z][a-z]*"
-If includeAcronyms = True Then myFind = "[A-Z]*"
+myChopNum = minLengthCheck - 2
+If myChop < 1 Then myChop = 1
+myChop = Trim(Str(myChopNum))
+myFind = "<[A-Z][a-z][a-zA-Z]{" & myChop & ",}"
+If includeAcronyms = True Then myFind = _
+     "<[A-Z][a-zA-Z][a-zA-Z]{" & myChop & ",}"
+Set rng = allText.Range
 
-myPNlist = CR
-ignoreWords = " " & ignoreWords & " "
-quoteClose = ChrW(8217)
-For Each wd In allText.Words
-  wdText = Trim(wd)
-  If Len(wd) > 2 Then
-    wdText = Replace(wdText, quoteClose, "")
-    doIgnore = (InStr(ignoreWords, " " & wdText & " ") > 0)
-    If Len(wdText) >= minLengthCheck And doIgnore = False Then
-      If wdText Like myFind Then
-        If InStr(myPNlist, CR & wdText & CR) = 0 Then
-          myPNlist = myPNlist & wdText & CR
-        End If
-      End If
-    End If
-    i = i + 1: If i Mod 100 = 1 Then DoEvents
-  End If
-Next wd
-myPNlist = Replace(myPNlist, CR2, CR)
-myPNlist = Replace(myPNlist, CR2, CR)
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = myFind
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .MatchWholeWord = False
+  .Execute
+End With
+
+myPNlist = ""
+ignoreWords = ignoreWords & " "
+Do While rng.Find.Found = True
+  myWd = rng.Text
+  If InStr(ignoreWords, myWd & " ") = 0 Then _
+       myPNlist = myPNlist & myWd & CR
+  rng.Collapse wdCollapseEnd
+  i = i + 1: If i Mod 100 = 0 Then DoEvents
+  rng.Find.Execute
+Loop
 
 sortT = Timer
 If useQuickSort = True Then
@@ -248,7 +254,7 @@ If useQuickSort = True Then
   
   ' Clear the content of the document
   allText.Content.Delete
-  t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+  t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
   ' Insert sorted words into the document
   For i = LBound(wordArray) To UBound(wordArray)
     allText.Content.InsertAfter wordArray(i) & CR
@@ -257,10 +263,10 @@ Else
   StatusBar = spcs & "Sorting whole file (simple sort)"
   Debug.Print "Sorting whole file (simple sort)"
   allText.Content.Text = myPNlist
-  t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+  t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
   allText.Content.Sort SortOrder:=wdSortOrderAscending, CaseSensitive:=True
 End If
-t = Timer + delay: Do: DoEvents: Loop Until Timer > t
+t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 StatusBar = spcs & "Finished sorting"
 Debug.Print "Finished sorting"
 Debug.Print Timer - sortT
@@ -292,7 +298,6 @@ For Each myPara In allText.Paragraphs
 Next myPara
 
 allText.Close SaveChanges:=False
-' firstDoc.Activate
 
 ' Remove blank lines
 Set rng = firstDoc.Content
@@ -789,7 +794,6 @@ With rng.Find
 End With
 
 firstDoc.Close SaveChanges:=False
-finalList.Activate
 ' Remove highlighting from second half of words
 ' that are only case changes of one another
 totParas = finalList.Paragraphs.Count
@@ -881,12 +885,11 @@ End With
 
 ' Clear clipboard
 Set rng = finalList.Content
-rng.End = 2
+rng.Start = rng.End - 1
 rng.Copy
 
 StatusBar = "Creating queries list"
 Set rng = finalList.Content
-
 For Each pa In finalList.Paragraphs
   pa.Range.Words(1).HighlightColorIndex = wdNoHighlight
 Next pa
@@ -899,7 +902,7 @@ queriesDoc.Paragraphs(1).Range.Delete
 Set rng = queriesDoc.Content
 rng.Font.StrikeThrough = True
 For Each myPara In queriesDoc.Paragraphs
-  Set ch = myPara.Range.Characters(1)
+  Set ch = myPara.Range.Characters.Last
   chCol = ch.HighlightColorIndex
   If chCol > 0 Then
     myPara.Range.Font.StrikeThrough = False
@@ -944,68 +947,74 @@ With rng.Find
   DoEvents
 End With
 
+Selection.HomeKey Unit:=wdStory
 Set rng = queriesDoc.Content
+rng.HighlightColorIndex = wdNoHighlight
 rng.Font.Bold = False
 rng.Font.Italic = False
 rng.Font.DoubleStrikeThrough = False
 rng.Font.Underline = False
-rng.Font.Color = wdColorBlack
-Selection.HomeKey Unit:=wdStory
-Selection.TypeText title2 & CR
-Set rng = queriesDoc.Content.Paragraphs(2).Range
-If rng.Text = vbCr Then rng.Delete
+rng.Font.Color = wdColorAutomatic
+rng.InsertBefore Text:=title2 & CR
+queriesDoc.Content.Paragraphs(1).Range.Style = _
+     queriesDoc.Styles(wdStyleHeading1)
 
 StatusBar = " "
 Options.DefaultHighlightColorIndex = oldColour
 
-lighterColour = wdGray50
-Set rng = queriesDoc.Content
-With rng.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = " [0-9]{1,}"
-  .Replacement.Font.Italic = False
-  .Replacement.Text = ""
-  .Replacement.Highlight = False
-  .Replacement.Font.Color = wdColorAutomatic
-  .MatchWildcards = True
-  .Execute Replace:=wdReplaceAll
+If addExtraList = True Then
+  Set extraDoc = Documents.Add
+  Selection.FormattedText = finalList.Content.FormattedText
   
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "[a-zA-Z]{1,} "
-  .Replacement.Text = ""
-  .Replacement.Font.Italic = False
-  .Replacement.Font.Color = wdColorAutomatic
-  .Execute Replace:=wdReplaceAll
-  DoEvents
+  Set rng = extraDoc.Content
+  rng.Font.StrikeThrough = True
+  For Each myPara In extraDoc.Paragraphs
+    If myPara.Range.Font.Bold = 0 And _
+         myPara.Range.HighlightColorIndex = 0 Then _
+         myPara.Range.Font.StrikeThrough = False
+    i = i + 1
+    If i Mod 50 = 0 Then DoEvents
+  Next myPara
+  rng.Paragraphs(1).Range.Font.StrikeThrough = True
+  rng.Paragraphs(1).Range.Text = "Query list coloured" & CR2
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = ""
+    .Font.StrikeThrough = False
+    .Wrap = wdFindContinue
+    .Replacement.Text = "^p"
+    .Forward = True
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+  
+  rng.Font.StrikeThrough = False
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = "[^13]{3,}"
+    .Wrap = wdFindContinue
+    .Replacement.Text = "^p^p"
+    .Forward = True
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+End If
 
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = ""
-  .Font.Color = wdColorBlue
-  .Replacement.Text = ""
-  .Replacement.Font.Underline = True
-  .MatchWildcards = False
-  .Execute Replace:=wdReplaceAll
-End With
-Set rng = queriesDoc.Content.Paragraphs(1).Range
-rng.Style = queriesDoc.Styles(wdStyleHeading1)
 Beep
-If keepWholeList = False Then _
-     finalList.Close SaveChanges:=False
-
+If InStr(FUT.Name, "zzTestFile") > 0 Then
+  FUT.Activate
+Else
+  queriesDoc.Activate
+End If
 Application.ScreenUpdating = True
 If doingSeveralMacros = False Then
   myTime = (Int(10 * (Timer - timeStart) / 60) / 10)
   Beep
   If myTime > 0 Then MsgBox myTime & "  minutes"
-End If
-Debug.Print
-If InStr(FUT.Name, "zzTestFile") > 0 Then
-  FUT.Activate
-Else
-  queriesDoc.Activate
 End If
 Exit Sub
 
@@ -1016,8 +1025,8 @@ Resume
 End Sub
 
 Sub QuickSort(arr As Variant, ByVal low As Long, ByVal high As Long)
-' Paul Beverley - Version 14.12.24
-' High speed sorting algorithm pinched from an AI!
+' Paul Beverley - Version 21.12.24
+' Sorts an array of text at high speed
 
 Dim i As Long
 Dim j As Long
@@ -1030,10 +1039,10 @@ pivot = arr((low + high) \ 2)
 
 Do While i <= j
   Do While arr(i) < pivot
-    i = i + 1
+      i = i + 1
   Loop
   Do While arr(j) > pivot
-    j = j - 1
+      j = j - 1
   Loop
   If i <= j Then
     temp = arr(i)
@@ -1043,7 +1052,6 @@ Do While i <= j
     j = j - 1
   End If
 Loop
-DoEvents
 
 If low < j Then QuickSort arr, low, j
 If i < high Then QuickSort arr, i, high

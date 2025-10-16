@@ -1,0 +1,42 @@
+
+Sub DashesParenthicalToCommas()
+' Paul Beverley - Version 30.08.25
+' Changes a pair of parenthetical (hyphens or) dashes to commas
+
+Selection.Collapse wdCollapseStart
+myStart = Selection.Start
+Selection.Expand wdParagraph
+Selection.Start = myStart
+dashPosn = InStr(Selection, " -")
+If dashPosn = 0 Then dashPosn = InStr(Selection, " " _
+     & ChrW(8211))
+If dashPosn = 0 Then
+  Beep
+  MsgBox "Can't find a hyphen or an en dash"
+  Exit Sub
+End If
+
+paraEnd = Selection.End
+
+' Select first dash and type comma instead
+Selection.MoveStart , dashPosn - 1
+Selection.End = Selection.Start + 2
+Selection.TypeText Text:=","
+
+Selection.End = paraEnd
+dashPosn = InStr(Selection, " -")
+If dashPosn = 0 Then dashPosn = InStr(Selection, " " _
+     & ChrW(8211))
+If dashPosn = 0 Then
+  Beep
+  MsgBox "Can't find the second hyphen or en dash"
+  Selection.Collapse wdCollapseStart
+  Exit Sub
+End If
+
+' Select second dash and type comma instead
+Selection.MoveStart , dashPosn - 1
+Selection.End = Selection.Start + 2
+Selection.TypeText Text:=","
+End Sub
+

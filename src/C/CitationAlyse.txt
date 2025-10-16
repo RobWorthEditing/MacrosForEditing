@@ -1,6 +1,6 @@
 
 Sub CitationAlyse()
-' Paul Beverley - Version 18.07.25
+' Paul Beverley - Version 27.09.25
 ' Checks citations against references
 
 myFontColour = wdColorBlue
@@ -8,9 +8,7 @@ myDateColour = wdColorRed
 
 includeNotes = True
 
-myDelay = 1
-
-notNames = "In From For Act Jan January Feb February "
+notNames = "In From For When Act Jan January Feb February "
 notNames = notNames & " Mar March Apr April NotMay June "
 notNames = notNames & " July Aug August Sept September Oct Initially "
 notNames = notNames & " October Nov November Dec December Finally "
@@ -28,62 +26,6 @@ myCol(1) = wdBrightGreen
 myCol(2) = wdRed
 myCol(3) = wdTurquoise
 myCol(4) = wdGray25
-
-' If text is selected, sort it
-If Selection.Start <> Selection.End Then
-  Set rng = Selection.Range.Duplicate
-  rng.Collapse wdCollapseStart
-  rng.Expand wdParagraph
-  Selection.Start = rng.Start
-  Set rng = Selection.Range.Duplicate
-  If Right(rng.Text, 1) <> vbCr Then
-    rng.Collapse wdCollapseEnd
-    rng.Expand wdParagraph
-    Selection.End = rng.End
-  End If
-  
-  myResponse = MsgBox("Sort selection by year?", vbQuestion _
-       + vbOK, "CitationAlyse")
-  If myResponse <> vbOK Then Exit Sub
-  If myScreenOff = True Then
-    Application.ScreenUpdating = False
-    On Error GoTo ReportIt
-  End If
-  
-  Dim myPara As Paragraph
-  Set rng = Selection.Range.Duplicate
-  For Each myPara In rng.Paragraphs
-    myText = myPara.Range.Text
-    For i = 2 To Len(myText) - 3
-      myYearText = Mid(myText, i, 5)
-      If InStr("abcdefghijkl", Right(myYearText, 1)) = 0 Then _
-           myYearText = Left(myYearText, 4)
-      myYear = Val(myYearText)
-      If myYear > 1000 And Left(myYearText, 1) <> " " Then
-        myPara.Range.InsertBefore Text:="]" & myYearText & "["
-        Exit For
-      End If
-      DoEvents
-    Next i
-    DoEvents
-  Next myPara
-  Selection.Sort
-  With Selection.Find
-    .ClearFormatting
-    .Replacement.ClearFormatting
-    .Text = "\][0-9a-h]@\["
-    .Wrap = wdFindStop
-    .Forward = True
-    .Replacement.Text = ""
-    .MatchWildcards = True
-    .Execute Replace:=wdReplaceAll
-    DoEvents
-  End With
-  Application.ScreenUpdating = True
-  Exit Sub
-End If
-
-' Main citation listing section
 
 Beep
 myResponse = MsgBox("Is the cursor placed in the first item" _
@@ -106,9 +48,9 @@ rngOld.Start = 0
 
 ' create new file of the text (not refs) + notes
 Set newDoc = Documents.Add
-For i = 1 To myDelay * 100: DoEvents: Next i
+For i = 1 To 100: DoEvents: Next i
 newDoc.Content.Text = rngOld.Text
-For i = 1 To myDelay * 100: DoEvents: Next i
+For i = 1 To 100: DoEvents: Next i
 
 ' Copy footnotes and endnotes, text only
 gotFoots = (mainDoc.Footnotes.Count > 0)
@@ -122,7 +64,7 @@ If gotEnds = True And includeNotes = True Then _
        mainDoc.StoryRanges(wdEndnotesStory).Text
 DoEvents
 Debug.Print "Searching the text for possible citations"
-Debug.Print "This will take quite a while..." & CR
+Debug.Print "This could take quite a while..." & CR
 
 Set rng = newDoc.Content
 With rng.Find
@@ -215,7 +157,7 @@ For i = 1 To UBound(FandR)
     DoEvents
   End If
   myNmbr = UBound(FandR) - i
-  If myNmbr Mod 5 = 0 Then Debug.Print "Preping " & Str(myNmbr)
+  If myNmbr Mod 5 = 0 Then Debug.Print "Prepping " & Str(myNmbr)
 Next i
 
 Set rng = newDoc.Content
@@ -280,14 +222,12 @@ getNext:
   rng.End = myEnd
   rng.Find.Execute
   myLeft = Int((ActiveDocument.Content.End - rng.Start) / 100) * 10
-  myDelay = myDelay + 1
-  If myDelay Mod 10 = 0 Then Debug.Print Str(myLeft)
 Loop
 
 newDoc.Content.Delete
-For i = 1 To myDelay * 100: DoEvents: Next i
+For i = 1 To 100: DoEvents: Next i
 newDoc.Content.Text = citeList1 & citeList2
-For i = 1 To myDelay * 100: DoEvents: Next i
+For i = 1 To 100: DoEvents: Next i
 Set rng = newDoc.Content
 ' rng.Start = myEnd
 ' rng.Font.Italic = True
@@ -318,10 +258,10 @@ For i = 1 To UBound(FandR)
   End If
 Next i
 
-Debug.Print CR & "Started sorting"
+Debug.Print CR & "Started sorting (first sort of many!)"
 rng.Sort SortOrder:=wdSortOrderAscending, _
      SortFieldType:=wdSortFieldAlphanumeric
-For i = 1 To myDelay * 100: DoEvents: Next i
+For i = 1 To 100: DoEvents: Next i
 
 ' Remove duplicates
 numPars = ActiveDocument.Paragraphs.Count
@@ -331,7 +271,7 @@ For j = numPars To 2 Step -1
   If rng1 = rng2 Then rng1.Delete
   If j Mod 10 = 1 Then DoEvents
 Next j
-Debug.Print "Finished sorting" & CR
+Debug.Print "Finished first sorting – more to follow" & CR
 
 ' Highlight multiple part citations
 numPars = newDoc.Paragraphs.Count
@@ -370,8 +310,6 @@ For i = 1 To numPars
   End If
   DoEvents
   myLeft = numPars - i
-  myDelay = myDelay + 1
-  If myDelay Mod 100 = 0 Then Debug.Print myLeft
 Next i
 Options.DefaultHighlightColorIndex = oldColour
 
@@ -420,8 +358,8 @@ Debug.Print "More sorting"
 Set rng = newDoc.Content
 rng.Sort SortOrder:=wdSortOrderAscending, _
      SortFieldType:=wdSortFieldAlphanumeric
-For i = 1 To myDelay * 100: DoEvents: Next i
-Debug.Print "Finished sorting" & CR
+For i = 1 To 100: DoEvents: Next i
+Debug.Print "Finished this sorting, but more to come!" & CR
 
 rng.InsertAfter Text:=CR2
 rng.ParagraphFormat.LineSpacingRule = wdLineSpaceSingle
@@ -488,7 +426,7 @@ For i = myStart To 1 Step -1
   Set rng2 = rng.Paragraphs(i).Range
   If Len(rng2.Text) < 2 Then rng2.Delete
 Next i
-For i = 1 To myDelay * 100: DoEvents: Next i
+For i = 1 To 100: DoEvents: Next i
 Debug.Print "Nearly there, honest!"
 
 ' Add blank line at year change
@@ -534,6 +472,14 @@ End With
 newDoc.Paragraphs(2).Range.Text = ""
 Beep
 Application.ScreenUpdating = True
+Set rng = ActiveDocument.Content
+With rng.ParagraphFormat
+  .SpaceBefore = 0
+  .SpaceBeforeAuto = False
+  .SpaceAfter = 0
+  .SpaceAfterAuto = False
+  .LineSpacingRule = wdLineSpace1pt5
+End With
 Exit Sub
 
 ReportIt:

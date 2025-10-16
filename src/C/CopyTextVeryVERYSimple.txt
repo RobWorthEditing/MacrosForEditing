@@ -1,0 +1,12 @@
+
+Sub CopyTextVeryVERYSimple()
+' Paul Beverley - Version 19.07.25
+' Creates a text-only copy, with no features preserved
+
+Set rngOld = ActiveDocument.Content
+
+Set newDoc = Documents.Add
+newDoc.Content.Text = rngOld.Text
+Beep
+End Sub
+

@@ -1,0 +1,80 @@
+
+Sub DocumentFormatCashmore()
+' Paul Beverley - Version 09.10.25
+' Adds top text, headers and various formatting bits
+
+
+' Add top text
+topText = "Name^tapproximately xxxx words^pAddress line 1^pAddress line 2^p" _
+     & "E: ^pT: ^p^p^p^p^p^p^p<c>Title^p<c>By^p<c>Author^p^p"
+
+' Add the headers, page 2 onwards
+ActiveDocument.PageSetup.DifferentFirstPageHeaderFooter = True
+Set hdr = ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary)
+Set rng = hdr.Range
+rng.Text = "Author / Text / "
+rng.Collapse wdCollapseEnd
+rng.Fields.Add Range:=rng, Type:=wdFieldPage
+rng.ParagraphFormat.Alignment = wdAlignParagraphRight
+
+' Set global parameters
+Set rng = ActiveDocument.Content
+rng.Font.Name = "Times New Roman"
+With rng.ParagraphFormat
+  .SpaceBefore = 0
+  .SpaceBeforeAuto = False
+  .SpaceAfter = 0
+  .SpaceAfterAuto = False
+  .FirstLineIndent = InchesToPoints(0.5)
+  .LeftIndent = CentimetersToPoints(0)
+  .RightIndent = CentimetersToPoints(0)
+  .LineSpacingRule = wdLineSpaceDouble
+  .Alignment = wdAlignParagraphLeft
+End With
+
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "^p^p"
+  .Wrap = wdFindContinue
+  .Replacement.Text = "^p#^p"
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+End With
+
+For Each myPara In rng.Paragraphs
+  If Left(myPara.Range.Text, 1) = "#" Then
+    With myPara.Range.ParagraphFormat
+      .Alignment = wdAlignParagraphCenter
+      .FirstLineIndent = InchesToPoints(0.5)
+    End With
+  End If
+  DoEvents
+Next myPara
+
+' add top text
+Selection.HomeKey Unit:=wdStory
+topText = Replace(topText, "^t", vbTab)
+topText = Replace(topText, "^p", vbCr)
+Selection.InsertAfter Text:=topText
+
+' Zero indent on heading information
+' plus centre the <c> items
+For i = 1 To Selection.Range.Paragraphs.Count
+  Set rng = Selection.Range.Paragraphs(i).Range
+  With rng.ParagraphFormat
+    .FirstLineIndent = InchesToPoints(0)
+    If i = 1 Then
+      .TabStops.Add Position:=InchesToPoints(3.8)
+    End If
+    If InStr(rng.Text, "<c>") > 0 Then
+       rng.Text = Replace(rng.Text, "<c>", "")
+      .Alignment = wdAlignParagraphCenter
+    End If
+  End With
+Next i
+Selection.Collapse wdCollapseStart
+End Sub
+
+
