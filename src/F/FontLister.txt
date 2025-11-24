@@ -1,5 +1,6 @@
+
 Sub FontLister()
-' Paul Beverley - Version 07.04.21
+' Paul Beverley - Version 17.11.25
 ' Lists all font names in selected text or whole file
 
 ' stopWhenFound = True
@@ -47,14 +48,58 @@ If doAll = True Then
         End If
       Next wd
     End If
+    t = t + 1
+    If t Mod 50 = 0 Then myPar.Range.Select
     DoEvents
   Next myPar
+  For Each myPar In rng.Paragraphs
+    sz = Trim(Str(myPar.Range.Font.Size))
+    If InStr(sz, "999") = 0 Then
+      If InStr(szList, sz & CR) = 0 Then
+        If Len(sz) = 1 Then sz = "0" & sz
+        szList = szList & sz & CR
+      End If
+    Else
+      For Each wd In myPar.Range.Words
+        sz = Trim(Str(wd.Font.Size))
+        If InStr(sz, "999") = 0 Then
+          If InStr(szList, sz & CR) = 0 Then
+            If Len(sz) = 1 Then sz = "0" & sz
+            szList = szList & sz & CR
+          End If
+        Else
+          For Each ch In wd.Characters
+            sz = Trim(Str(ch.Font.Size))
+            If InStr(sz, "999") = 0 Then
+              If InStr(szList, sz & CR) = 0 Then
+                If Len(sz) = 1 Then sz = "0" & sz
+                szList = szList & sz & CR
+              End If
+            End If
+          Next ch
+        End If
+      Next wd
+    End If
+    DoEvents
+  Next myPar
+
   Documents.Add
   Selection.HomeKey Unit:=wdStory
   Selection.TypeText CR
   Selection.TypeText fontList
   Selection.Start = 0
   Selection.Sort SortOrder:=wdSortOrderAscending
+  Selection.EndKey Unit:=wdStory
+  Selection.TypeText CR & "Sizes:" & CR
+  myStart = Selection.Start
+  Selection.Collapse wdCollapseEnd
+  Selection.TypeText szList
+  Selection.Start = myStart
+  Selection.Sort
+  Selection.MoveStart , -1
+  myText = Selection.Text
+  myText = Replace(myText, vbCr & "0", vbCr)
+  Selection.Text = myText
   Selection.HomeKey Unit:=wdStory
   Selection.TypeText myFileTitle
   ActiveDocument.Paragraphs(1).Range.Style = wdStyleHeading2
@@ -66,4 +111,7 @@ Else
   MsgBox fontList
 End If
 End Sub
+
+
+
 

@@ -1,6 +1,5 @@
-
 Sub DocAlyse()
-' Paul Beverley - Version 18.01.25
+' Paul Beverley - Version 10.11.25
 ' Analyses various aspects of a document
 
 ' prompts to count number of tests
@@ -245,17 +244,17 @@ End If
 cc = cc - 1
 DoEvents
 StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
-rng.Find.Text = "mid [0-9]{4}"
+rng.Find.Text = "<mid [0-9]{4}"
 rng.Find.Execute Replace:=wdReplaceAll
 i = ActiveDocument.Range.End - myTot
 If i > 0 Then WordBasic.EditUndo
 
-rng.Find.Text = "mid-[0-9]{4}"
+rng.Find.Text = "<mid-[0-9]{4}"
 rng.Find.Execute Replace:=wdReplaceAll
 g = ActiveDocument.Range.End - myTot
 If g > 0 Then WordBasic.EditUndo
 
-rng.Find.Text = "mid[0-9]{4}"
+rng.Find.Text = "<mid[0-9]{4}"
 rng.Find.Execute Replace:=wdReplaceAll
 k = ActiveDocument.Range.End - myTot
 If k > 0 Then WordBasic.EditUndo
@@ -724,7 +723,6 @@ DoEvents
 StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[a-zA-Z]: [A-Z][a-z]"
 rng.Find.Execute Replace:=wdReplaceAll
-dfgsdfg = ActiveDocument.Range.End
 i = ActiveDocument.Range.End - myTot
 If i > 0 Then WordBasic.EditUndo
 
@@ -885,7 +883,6 @@ DoEvents
 StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[snrt][tdh] order"
 rng.Find.Execute Replace:=wdReplaceAll
-dfgsdfg = ActiveDocument.Range.End
 i = ActiveDocument.Range.End - myTot
 If i > 0 Then WordBasic.EditUndo
 
@@ -907,7 +904,6 @@ DoEvents
 StatusBar = ss & "  " & Trim(Str(cc)) & vbCr
 rng.Find.Text = "[oweunvt ][eonrN1-4i] dimensional"
 rng.Find.Execute Replace:=wdReplaceAll
-dfgsdfg = ActiveDocument.Range.End
 i = ActiveDocument.Range.End - myTot
 If i > 0 Then WordBasic.EditUndo
 

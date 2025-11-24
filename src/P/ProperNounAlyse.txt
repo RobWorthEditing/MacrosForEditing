@@ -1,7 +1,16 @@
 
 Sub ProperNounAlyse()
-' Paul Beverley - Version 05.09.25
+' Paul Beverley - Version 18.11.25
 ' Analyses similar proper nouns
+
+doWait = False
+' If Word crashes, try again, but with
+' doWait = True
+
+' Delay to allow Word to catch up with VBA (seconds)
+myDelay = 1
+
+myScreenOff = False
 
 ' addExtraList = False
 addExtraList = True
@@ -16,9 +25,6 @@ myLanguage = "English(United States)"
 
 doUseQuickSort = True
 
-' Delay to allow Word to catch up with VBA (seconds)
-myDelay = 0.1
-
 ignoreWords = "Also Being The This There Those Their They Then These That" & _
      " Ever Even Four From Have When Where Will While Were Whole Well Would"
 
@@ -28,7 +34,6 @@ similarChars = "bb,b; b,p; sch,sh; ch,sh; c,k; ph,f; ss,z; s,z;" & _
 ' With non-English languages, you might need to make this False
 ignorePlurals = True
 
-myScreenOff = True
 CR = vbCr: CR2 = CR & CR
 Set FUT = ActiveDocument
 doingSeveralMacros = (InStr(FUT.Name, "zzTestFile") + _
@@ -136,6 +141,8 @@ allText.Content.FormattedText = rng.FormattedText
 t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 allText.Content.Collapse wdCollapseEnd
 
+If doWait = True Then MsgBox "Next step 1"
+
 ' Add notes + shape text
 allText.Content.InsertAfter Text:=endText & CR & footText & CR
 If shCount > 0 Then
@@ -162,6 +169,7 @@ With rng.Find
   .Replacement.Text = " "
   .Execute Replace:=wdReplaceAll
 End With
+If doWait = True Then MsgBox "Next step 2"
 
 With rng.Find
   .ClearFormatting
@@ -182,6 +190,7 @@ With rng.Find
   .Execute Replace:=wdReplaceAll
 End With
 StatusBar = spcs & "Preparing copied file - 2"
+If doWait = True Then MsgBox "Next step 3"
 
 allJustText = allText.Content.Text
 t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
@@ -190,6 +199,7 @@ t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 allText.Content.Text = allJustText
 t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 StatusBar = spcs & "Preparing copied file - 3"
+If doWait = True Then MsgBox "Next step 4"
 
 ' Use qqq for apostrophe
 Set rng = allText.Content
@@ -232,6 +242,7 @@ With rng.Find
   .MatchWholeWord = False
   .Execute
 End With
+If doWait = True Then MsgBox "Next step 5"
 
 myPNlist = ""
 ignoreWords = ignoreWords & " "
@@ -270,6 +281,7 @@ t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
 StatusBar = spcs & "Finished sorting"
 Debug.Print "Finished sorting"
 Debug.Print Timer - sortT
+If doWait = True Then MsgBox "Next step 6"
 
 ' delete initial blank line
 If Len(allText.Paragraphs(1)) < 3 Then _
@@ -1024,6 +1036,7 @@ On Error GoTo 0
 Resume
 End Sub
 
+
 Sub QuickSort(arr As Variant, ByVal low As Long, ByVal high As Long)
 ' Paul Beverley - Version 21.12.24
 ' Sorts an array of text at high speed
@@ -1056,5 +1069,4 @@ Loop
 If low < j Then QuickSort arr, low, j
 If i < high Then QuickSort arr, i, high
 End Sub
-
 

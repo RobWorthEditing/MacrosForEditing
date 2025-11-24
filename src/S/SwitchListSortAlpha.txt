@@ -1,0 +1,45 @@
+
+Sub SwitchListSortAlpha()
+' Paul Beverley - Version 14.11.25
+' Sorts the current MultiSwitch list into alpha order
+
+myResponse = MsgBox("Sort this document?!", _
+     vbQuestion + vbYesNo, "SwitchListSortAlpha")
+If myResponse <> vbYes Then Exit Sub
+
+Set rng = ActiveDocument.Content
+
+Selection.InsertBefore Text:=vbCr & vbCr
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[^13]{2,}"
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "zczc"
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "^p"
+  .Replacement.Text = "zzzpqpq"
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  
+  .Text = "zczc"
+  .Replacement.Text = "^pzzzpqpq"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+
+rng.Sort SortOrder:=wdSortOrderAscending, _
+     SortFieldType:=wdSortFieldAlphanumeric
+rng.InsertAfter Text:="zzzpqpqzzzpqpq"
+  .Text = "zzzpqpq"
+  .Replacement.Text = "^p"
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+
+End Sub
+

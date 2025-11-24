@@ -1,0 +1,40 @@
+
+Sub DifferentAlyse()
+' Paul Beverley - Version 23.10.25
+' Analyses the use of "different from/to/than"
+
+Set rng = ActiveDocument.Content
+myTot = rng.End
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "different to"
+  .Replacement.Text = "^&!"
+  .MatchCase = False
+  .Execute Replace:=wdReplaceAll
+
+numTos = ActiveDocument.Range.End - myTot
+If numTos > 0 Then WordBasic.EditUndo
+  
+  .Text = "different from"
+  .Replacement.Text = "^&!"
+  .MatchCase = False
+  .Execute Replace:=wdReplaceAll
+
+numFroms = ActiveDocument.Range.End - myTot
+If numFroms > 0 Then WordBasic.EditUndo
+
+  .Text = "different than"
+  .Replacement.Text = "^&!"
+  .MatchCase = False
+  .Execute Replace:=wdReplaceAll
+End With
+numThans = ActiveDocument.Range.End - myTot
+If numThans > 0 Then WordBasic.EditUndo
+CR = vbCr
+Beep
+myPrompt = "To: " & numTos & CR & "Than: " & numThans & CR & "From: " & numFroms
+myResponse = MsgBox(myPrompt, vbOKOnly, "DifferentAlyse")
+End Sub
+
+

@@ -1,17 +1,23 @@
 
 Sub Dash()
-' Paul Beverley - Version 30.12.24
+' Paul Beverley - Version 29.10.25
 ' Makes adjacent words into dash-separated
 
-newBit = " " & ChrW(8212) & " "
-newBit = ChrW(8212)
+
+' Spaced en-dash
 newBit = " " & ChrW(8211) & " "
 
+' Space em-dash
+' newBit = " " & ChrW(8212) & " "
+
+' Unspace em-dash
+' newBit = ChrW(8212)
+
 myQuotes = Chr(34) & Chr(39) & ChrW(8220) & ChrW(8216)
-oldBits = ");:.,!?" & ChrW(8211) & ChrW(8212)
+oldBits = ";:.,!?" & ChrW(8211) & ChrW(8212)
 Set rng = Selection.Range.Duplicate
 rng.MoveEnd , 50
-For i = 1 To rng.Characters.count
+For i = 1 To rng.Characters.Count
   If InStr(oldBits, rng.Characters(i)) > 0 Then Exit For
 Next i
 If i > 50 Then
@@ -22,21 +28,21 @@ End If
 rng.Characters(i).Select
 Selection.Collapse wdCollapseStart
 If i > 1 Then
-  If rng.Characters(i - 1) = " " Then _
+  If rng.Characters(i) = " " Then _
        rng.Characters(i - 1).Delete
 End If
-myStart = Selection.start
+myStart = Selection.Start
 If Selection = ChrW(8217) Then myStart = myStart + 1
 Do
   Selection.MoveRight 1
   DoEvents
-  If Selection.start = ActiveDocument.Content.End - 1 _
+  If Selection.Start = ActiveDocument.Content.End - 1 _
      Then Beep: Exit Sub
 Loop Until LCase(Selection) <> UCase(Selection) Or Asc(Selection) = 1
-myEnd = Selection.start
+myEnd = Selection.Start
 If LCase(Selection) <> Selection Then
 ' It needs lowercasing
-  Selection.start = Selection.start - 1
+  Selection.Start = Selection.Start - 1
   preChar = Selection
   Selection.MoveStart 1
   Selection.MoveEnd 1
@@ -48,9 +54,9 @@ If LCase(Selection) <> Selection Then
   Else
     newBit = newBit & newLetter
   End If
-  Selection.start = myStart
+  Selection.Start = myStart
 End If
-Selection.start = myStart
+Selection.Start = myStart
 If Selection.End <> myStart Then Selection.Delete
 Selection.TypeText newBit
 End Sub

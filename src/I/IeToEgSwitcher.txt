@@ -1,0 +1,31 @@
+
+Sub IeToEgSwitcher()
+' Paul Beverley - Version 10.11.25
+' Switches between i.e. and e.g.
+
+Set rng = Selection.Range.Duplicate
+rng.End = rng.Start + 100
+myPosIE = InStr(rng, "i.e.")
+myPosEG = InStr(rng, "e.g.")
+If myPosIE + myPosEG = 0 Then
+  Beep
+  MsgBox "Can't find an i.e. or e.g.!"
+  Exit Sub
+End If
+If myPosIE > 0 Then
+  rng.MoveStart , myPosIE - 1
+  rng.End = rng.Start + 4
+  rng.Text = "e.g."
+  rng.Select
+End If
+If myPosEG > 0 Then
+  rng.MoveStart , myPosEG - 1
+  rng.End = rng.Start + 4
+  rng.Text = "i.e."
+  rng.Select
+End If
+End Sub
+
+
+
+

@@ -1,0 +1,55 @@
+
+Sub ParaNumbersAddRemove()
+' Paul Beverley - Version 21.10.25
+' Adds and removes paragraph numbering
+
+' ignoreBlankLines = False
+ignoreBlankLines = True
+
+useAngleBrackets = False
+' If False, it will use square brackets
+
+
+If useAngleBrackets = True Then
+  openBr = ">"
+  closeBr = "< "
+  openFind = "\>"
+  closeFind = "\< "
+Else
+  openBr = "]"
+  closeBr = "[ "
+  openFind = "\]"
+  closeFind = "\[ "
+End If
+If ActiveDocument.Characters(1) = openBr Then
+  Set rng = ActiveDocument.Content
+  With rng.Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = openFind & "[0-9]{1,}" & closeFind
+    .Wrap = wdFindContinue
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .Execute Replace:=wdReplaceAll
+    DoEvents
+  End With
+Else
+  i = 0
+  For Each para In ActiveDocument.Paragraphs
+    Set rng = para.Range
+    doNumber = False
+    If Len(rng) > 1 Or (ignoreBlankLines = False) Then doNumber = True
+    If doNumber And (rng.Information(wdWithInTable) = False) Then
+      i = i + 1
+      para.Range.InsertBefore Text:=openBr & Trim(Str(i)) & closeBr
+    End If
+    If i Mod 20 = 0 Then para.Range.Select
+    DoEvents
+  Next para
+End If
+Beep
+Selection.HomeKey Unit:=wdStory
+End Sub
+
+
+

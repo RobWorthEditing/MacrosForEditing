@@ -1,6 +1,6 @@
 
 Sub CopyToListAlphaMenu()
-' Paul Beverley - Version 18.01.25
+' Paul Beverley - Version 10.11.25
 ' Copies selected text into various alphabetic lists
 
 ' Filename contains (case INsensitive)
@@ -42,7 +42,7 @@ For i = 1 To numLists
 Next i
 Do
   myChar = InputBox(myPrompt, "CopyToListAlphaMenu")
-  If myChar = vbCr Or myChar = "" Then Beep: Exit Sub
+  If Len(myChar) = 0 Then Beep: Exit Sub
   If InStr(myInputs, myChar) = 0 Then Beep
   DoEvents
 Loop Until InStr(myInputs, myChar) > 0
@@ -63,7 +63,7 @@ Dim sourceText As Range, tgt As Range
 Set thisDoc = ActiveDocument
 wds = Split("," & LCase(wordsToAvoid), ",")
 
-If Selection.start = Selection.End Then
+If Selection.Start = Selection.End Then
   If LCase(Selection) = UCase(Selection) Then Selection.MoveLeft , 1
   If copyWholePara = True Then
     Selection.Expand wdParagraph
@@ -102,13 +102,13 @@ Else
   Selection.Collapse wdCollapseStart
   Selection.Expand wdWord
   Selection.Collapse wdCollapseStart
-  rng.start = Selection.start
+  rng.Start = Selection.Start
   rng.Select
 End If
 
 Set sourceText = Selection.Range.Duplicate
 myText = sourceText.Text
-numTracks = Selection.Range.Revisions.count
+numTracks = Selection.Range.Revisions.Count
 sourceText.Copy
 Selection.Collapse wdCollapseEnd
 
@@ -153,7 +153,7 @@ listStart = rng.End
 If rng.Find.Found = False Then
   Beep
   MsgBox "Can't find heading: """ & followHeading & """"
-  rng.start = 0
+  rng.Start = 0
   rng.End = 0
   listStart = 0
   Selection.HomeKey Unit:=wdStory
@@ -179,10 +179,10 @@ If rng.Find.Found = True Then
   Exit Sub
 End If
 
-rng.start = listStart
+rng.Start = listStart
 rng.End = myListDoc.Content.End
 If LCase(rng) <> UCase(rng) Then
-  For i = 1 To rng.Paragraphs.count
+  For i = 1 To rng.Paragraphs.Count
     myNextItem = Replace(rng.Paragraphs(i).Range.Text, vbCr, "")
     If LCase(myNextItem) > LCase(myText) Or _
         LCase(myNextItem) = UCase(myNextItem) Then

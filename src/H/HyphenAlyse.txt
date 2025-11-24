@@ -1,10 +1,14 @@
 
 Sub HyphenAlyse()
-' Paul Beverley - Version 17.07.25
+' Paul Beverley - Version 19.11.25
 ' Creates a frequency list of all possible hyphenations
 
 myList = "anti,cross,eigen,hyper,inter,meta,mid,multi," _
      & "non,over,post,pre,pseudo,quasi,semi,sub,super,un"
+
+doWait = False
+' If Word crashes, try again, but with
+' doWait = True
 
 includeNumbers = True
 
@@ -13,7 +17,7 @@ tableBorders = True
 lighterColour = wdGray25
 ' lighterColour = wdColor50
 
-doStopScreenUpdate = False
+doStopScreenUpdate = True
 
 myDelay = 1
 
@@ -122,7 +126,7 @@ Do While rng.Find.Found = True
            Debug.Print rng.Text & "     " & myPairs
       StatusBar = sp & rng.Text & "     " & myPairs
         t = Timer + myDelay: Do: DoEvents: Loop Until Timer > t
-        asdf = 0
+If doWait = True Then MsgBox "Step " & Str(i): i = i + 1
       
       ' Here is where the problem appears...............
     End If
@@ -480,6 +484,4 @@ Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub
-
-
 

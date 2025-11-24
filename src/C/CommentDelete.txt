@@ -1,0 +1,14 @@
+
+
+Sub CommentDelete()
+' Paul Beverley - Version 15.11.25
+' Deletes current comment
+
+Set rng = Selection.Range.Duplicate
+rng.Start = 0
+n = rng.Comments.Count + 1
+ActiveDocument.Comments(n).Scope.Select
+ActiveDocument.Comments(n).DeleteRecursively
+Selection.Collapse wdCollapseEnd
+End Sub
+

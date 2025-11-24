@@ -1,7 +1,9 @@
 
 Sub CitationAlyse()
-' Paul Beverley - Version 27.09.25
+' Paul Beverley - Version 15.11.25
 ' Checks citations against references
+
+doWait = False
 
 myFontColour = wdColorBlue
 myDateColour = wdColorRed
@@ -40,21 +42,23 @@ Set mainDoc = ActiveDocument
 Selection.Expand wdParagraph
 Selection.Collapse wdCollapseStart
 startRefs = Selection.Start
-Set rngOld = mainDoc.Content
-rngOld.Start = startRefs
-rngOld.Copy
-rngOld.Collapse wdCollapseStart
-rngOld.Start = 0
+Set rngRefs = mainDoc.Content
+rngRefs.Start = startRefs
+Set rngText = mainDoc.Content
+rngText.Collapse wdCollapseStart
+rngText.End = rngRefs.Start
 
 ' create new file of the text (not refs) + notes
 Set newDoc = Documents.Add
 For i = 1 To 100: DoEvents: Next i
-newDoc.Content.Text = rngOld.Text
+newDoc.Content.Text = rngText.Text
 For i = 1 To 100: DoEvents: Next i
 
 ' Copy footnotes and endnotes, text only
 gotFoots = (mainDoc.Footnotes.Count > 0)
 gotEnds = (mainDoc.Endnotes.Count > 0)
+
+If doWait = True Then MsgBox "Next step"
 
 If gotFoots = True And includeNotes = True Then _
   newDoc.Content.InsertAfter Text:=vbCr & _
@@ -63,19 +67,26 @@ If gotEnds = True And includeNotes = True Then _
   newDoc.Content.InsertAfter Text:=vbCr & _
        mainDoc.StoryRanges(wdEndnotesStory).Text
 DoEvents
+newDoc.Activate
+Selection.EndKey Unit:=wdStory
 Debug.Print "Searching the text for possible citations"
 Debug.Print "This could take quite a while..." & CR
+If doWait = True Then MsgBox "Next step Wait for it!"
 
 Set rng = newDoc.Content
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = ",([0-9]{4})"
-  .Wrap = wdFindStop
-  .Replacement.Text = ", \1"
+  .Text = ","
+  .Replacement.Text = ", "
   .Forward = True
-  .MatchWildcards = True
+  .Wrap = wdFindContinue
+  .Format = False
+  .MatchCase = False
   .MatchWholeWord = False
+  .MatchWildcards = False
+  .MatchSoundsLike = False
+  .MatchAllWordForms = False
   .Execute Replace:=wdReplaceAll
 End With
 
@@ -90,6 +101,7 @@ With rng.Find
   .MatchWholeWord = False
   .Execute
 End With
+If doWait = True Then MsgBox "Next step!!!!!!!!!!!!"
 
 Do While rng.Find.Found = True
   endNow = rng.End
@@ -109,6 +121,7 @@ Do While rng.Find.Found = True
   rng.End = endNow + 2
   rng.Find.Execute
   DoEvents
+If doWait = True Then MsgBox "Next step2"
 Loop
 
 Debug.Print "Preparing the text" & CR
@@ -159,6 +172,7 @@ For i = 1 To UBound(FandR)
   myNmbr = UBound(FandR) - i
   If myNmbr Mod 5 = 0 Then Debug.Print "Prepping " & Str(myNmbr)
 Next i
+If doWait = True Then MsgBox "Next step " & Str(UBound(FandR))
 
 Set rng = newDoc.Content
 With rng.Find
@@ -222,7 +236,9 @@ getNext:
   rng.End = myEnd
   rng.Find.Execute
   myLeft = Int((ActiveDocument.Content.End - rng.Start) / 100) * 10
+ ' If doWait = True Then MsgBox "Next step " & Str(UBound(FandR) - i)
 Loop
+If doWait = True Then MsgBox "Next step " & Str(UBound(FandR))
 
 newDoc.Content.Delete
 For i = 1 To 100: DoEvents: Next i
@@ -257,6 +273,7 @@ For i = 1 To UBound(FandR)
     DoEvents
   End If
 Next i
+If doWait = True Then MsgBox "Next step"
 
 Debug.Print CR & "Started sorting (first sort of many!)"
 rng.Sort SortOrder:=wdSortOrderAscending, _
@@ -272,6 +289,7 @@ For j = numPars To 2 Step -1
   If j Mod 10 = 1 Then DoEvents
 Next j
 Debug.Print "Finished first sorting – more to follow" & CR
+If doWait = True Then MsgBox "Next step33"
 
 ' Highlight multiple part citations
 numPars = newDoc.Paragraphs.Count
@@ -312,21 +330,20 @@ For i = 1 To numPars
   myLeft = numPars - i
 Next i
 Options.DefaultHighlightColorIndex = oldColour
+If doWait = True Then MsgBox "Next step44"
 
-newDoc.Content.Select
-wasEnd = Selection.End
-Selection.EndKey Unit:=wdStory
-Selection.TypeText Text:=vbCr
-Selection.Paste
 Set rng = newDoc.Content
-rng.Start = wasEnd
+rng.Collapse wdCollapseEnd
+rng.InsertBefore Text:=vbCr
+rng.FormattedText = rngRefs.FormattedText
+Set rng = newDoc.Content
 rng.Fields.Unlink
 
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "^p "
-  .Wrap = wdFindStop
+  .Wrap = wdFindContinue
   .Forward = True
   .Replacement.Text = "^p"
   .MatchWildcards = False
@@ -353,6 +370,7 @@ For i = 1 To rng.Paragraphs.Count
   End If
   DoEvents
 Next i
+If doWait = True Then MsgBox "Next step55"
 
 Debug.Print "More sorting"
 Set rng = newDoc.Content
@@ -383,6 +401,7 @@ Set para2 = newDoc.Paragraphs(2)
 Do While Len(para2.Range.Text) < 3
   para2.Range.Delete
 Loop
+If doWait = True Then MsgBox "Next step66"
 
 notNames = notNames & " "
 For i = newDoc.Paragraphs.Count To 2 Step -1
@@ -408,6 +427,7 @@ For Each myPara In rng.Paragraphs
   Next i
   DoEvents
 Next myPara
+If doWait = True Then MsgBox "Next step77"
 
 ' Sort
 Debug.Print "Sorting again ... lots to do, eh?!"
@@ -441,6 +461,8 @@ For i = rng.Paragraphs.Count To 1 Step -1
   wasYear = myYear
   DoEvents
 Next i
+If doWait = True Then MsgBox "Next step88"
+
 
 ' Remove the year markers
 myBar = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"

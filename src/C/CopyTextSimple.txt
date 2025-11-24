@@ -1,9 +1,11 @@
 
 Sub CopyTextSimple()
-' Paul Beverley - Version 08.09.25
+' Paul Beverley - Version 11.11.25
 ' Creates a text-only copy, with some features preserved
 
-ActiveDocument.TrackRevisions = False
+doWait = False
+' If Word crashes, try again, but with
+' doWait = True
 
 doItalic = True
 doBold = True
@@ -13,12 +15,23 @@ doListNumbers = True
 
 myColour = wdYellow
 
+ActiveDocument.TrackRevisions = False
 oldColour = Options.DefaultHighlightColorIndex
 Options.DefaultHighlightColorIndex = myColour
 Set rngOld = ActiveDocument.Content
 myLanguage = rngOld.Characters(1).LanguageID
 Set newDoc = Documents.Add
 newDoc.Content.FormattedText = rngOld.FormattedText
+
+myScreenOff = True
+' myScreenOff = False
+
+If myScreenOff = True Then
+  Application.ScreenUpdating = False
+  On Error GoTo ReportIt
+End If
+Application.ScreenUpdating = False
+
 
 If doListNumbers = True Then newDoc.ConvertNumbersToText
 Set rng = newDoc.Content
@@ -64,8 +77,8 @@ If numNotes > 0 Then
   rng.Collapse wdCollapseEnd
   rng.InsertAfter Text:=vbCr & "Endnotes:" & vbCr & vbCr
   rng.Collapse wdCollapseEnd
-  rng.FormattedText = _
-       newDoc.StoryRanges(wdEndnotesStory).FormattedText
+  rng.Text = _
+       newDoc.StoryRanges(wdEndnotesStory).Text
   ' Delete all notes
   For j = numNotes To 1 Step -1
     newDoc.Endnotes(j).Delete
@@ -81,8 +94,8 @@ If numNotes > 0 Then
   rng.Collapse wdCollapseEnd
   rng.InsertAfter Text:=vbCr & "Footnotes:" & vbCr & vbCr
   rng.Collapse wdCollapseEnd
-  rng.FormattedText = _
-       newDoc.StoryRanges(wdFootnotesStory).FormattedText
+  rng.Text = _
+       newDoc.StoryRanges(wdFootnotesStory).Text
   ' Delete all notes
   For j = numNotes To 1 Step -1
     newDoc.Footnotes(j).Delete
@@ -96,6 +109,8 @@ tbCount = 0
 If shCount > 0 Then
   Selection.EndKey Unit:=wdStory
   Selection.TypeText vbCr & "Textboxes:" & vbCr & vbCr
+  Set rngTxt = Selection.Range.Duplicate
+  rngTxt.Collapse wdCollapseEnd
   For j = 1 To shCount
     Set shp = newDoc.Shapes(j)
     If shp.Type <> 24 And shp.Type <> 3 Then
@@ -103,8 +118,8 @@ If shCount > 0 Then
         Set rng = shp.TextFrame.TextRange
         If Len(rng.Text) > 1 Then
           tbCount = tbCount + 1
-          Selection.FormattedText = rng.FormattedText
-          Selection.EndKey Unit:=wdStory
+          rngTxt.Text = rng.Text
+          rngTxt.Collapse wdCollapseEnd
         End If
       End If
     End If
@@ -116,12 +131,20 @@ If shCount > 0 Then
 End If
 
 ' Add a newline for safety
-Selection.TypeText vbCr
+rngText = vbCr
 Selection.HomeKey Unit:=wdStory
 If myComments > "" Then Selection.TypeText myComments & vbCr
 
+Application.ScreenUpdating = True
+StatusBar = "                                                                       Number 1"
+For i = 1 To 100
+  DoEvents
+Next i
+Application.ScreenUpdating = False
+
 ' Watch out for hard spaces and spaced dots for ellipses
-With Selection.Find
+Set rng = ActiveDocument.Content
+With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "^s"
@@ -130,9 +153,7 @@ With Selection.Find
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
   DoEvents
-End With
-
-With Selection.Find
+  
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = ". . ."
@@ -140,9 +161,7 @@ With Selection.Find
   .Replacement.Text = "…"
   .Execute Replace:=wdReplaceAll
   DoEvents
-End With
-
-With Selection.Find
+  
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = ""
@@ -153,10 +172,8 @@ With Selection.Find
   .MatchWildcards = False
   .Execute Replace:=wdReplaceAll
   DoEvents
-End With
 
-If doItalic = True Then
-  With Selection.Find
+  If doItalic = True Then
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = ""
@@ -167,11 +184,9 @@ If doItalic = True Then
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
     DoEvents
-  End With
-End If
+  End If
 
-If doBold = True Then
-  With Selection.Find
+  If doBold = True Then
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = ""
@@ -182,11 +197,9 @@ If doBold = True Then
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
     DoEvents
-  End With
-End If
+  End If
 
-If doSub = True Then
-  With Selection.Find
+  If doSub = True Then
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = ""
@@ -197,11 +210,9 @@ If doSub = True Then
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
     DoEvents
-  End With
-End If
+  End If
 
-If doSuper = True Then
-  With Selection.Find
+  If doSuper = True Then
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = ""
@@ -211,28 +222,58 @@ If doSuper = True Then
     .Replacement.Text = "xsxs^&sxsx"
     .MatchWildcards = False
     .Execute Replace:=wdReplaceAll
-  End With
-End If
-
-' Copy pure text after the end of the formatted text
-allText = newDoc.Content.Text
-newDoc.Content.Text = vbCr
-newDoc.Content.Style = newDoc.Styles(wdStyleNormal)
-newDoc.Content.Text = allText
-newDoc.Content.HighlightColorIndex = wdNoHighlight
-Selection.HomeKey Unit:=wdStory
-With Selection.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "[^12^14]"
-  .Wrap = wdFindContinue
-  .Replacement.Text = "^p"
-  .MatchWildcards = True
-  .Execute Replace:=wdReplaceAll
+  End If
 End With
 
-If doSuper = True Then
-  With Selection.Find
+Application.ScreenUpdating = True
+StatusBar = "                                                                       Number 2"
+For i = 1 To 100
+  DoEvents
+Next i
+Application.ScreenUpdating = False
+
+' Copy pure text after the end of the formatted text
+If doWait = True Then MsgBox "Difficult step"
+allText = newDoc.Content.Text
+sdasd = Len(allText)
+allText = Replace(allText, Asc(12), vbCr)
+sasd = Len(allText)
+
+If doWait = True Then MsgBox "Next step"
+newDoc.Close SaveChanges:=False
+If doWait = True Then MsgBox "Next step"
+Set newDoc2 = Documents.Add
+If doWait = True Then MsgBox "Next step"
+Selection.TypeText Text:=allText
+
+Application.ScreenUpdating = True
+StatusBar = "                                                                       Number 3"
+For i = 1 To 100
+  DoEvents
+Next i
+Application.ScreenUpdating = False
+
+If doWait = True Then MsgBox "One more step"
+Set rng = newDoc2.Content
+If doWait = False Then On Error Resume Next
+
+With rng.Find
+ ' .ClearFormatting
+ ' .Replacement.ClearFormatting
+ ' .Text = "^12"
+ ' .Wrap = wdFindContinue
+ ' .Replacement.Text = "vbnvbn"
+ ' .MatchWildcards = False
+ ' .Execute
+ ' If .Found = True Then .Execute Replace:=wdReplaceAll
+  
+ ' .Text = "^14"
+ ' .Execute
+ ' If .Found = True Then .Execute Replace:=wdReplaceAll
+  
+If doWait = True Then MsgBox ("Count to 20")
+
+  If doSuper = True Then
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "xsxs(*)sxsx"
@@ -240,9 +281,10 @@ If doSuper = True Then
     .Replacement.Text = "\1"
     .Replacement.Font.Superscript = True
     .MatchWildcards = True
-    .Execute Replace:=wdReplaceAll
-  End With
-  With Selection.Find
+    .Execute
+    If .Found = True Then .Execute Replace:=wdReplaceAll
+    
+If doWait = True Then MsgBox ("1")
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "XSXS(*)SXSX"
@@ -250,12 +292,12 @@ If doSuper = True Then
     .Replacement.Text = "\1"
     .Replacement.Font.Superscript = True
     .MatchWildcards = True
-    .Execute Replace:=wdReplaceAll
-  End With
-End If
+    .Execute
+    If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("2")
+  End If
 
-If doSub = True Then
-  With Selection.Find
+  If doSub = True Then
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "xbxb(*)bxbx"
@@ -263,10 +305,10 @@ If doSub = True Then
     .Replacement.Text = "\1"
     .Replacement.Font.Subscript = True
     .MatchWildcards = True
-    .Execute Replace:=wdReplaceAll
-  End With
-  
-  With Selection.Find
+    .Execute
+    If .Found = True Then .Execute Replace:=wdReplaceAll
+
+If doWait = True Then MsgBox ("3")
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "XBXB(*)BXBX"
@@ -274,12 +316,12 @@ If doSub = True Then
     .Replacement.Text = "\1"
     .Replacement.Font.Subscript = True
     .MatchWildcards = True
-    .Execute Replace:=wdReplaceAll
-  End With
-End If
+    .Execute
+    If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("4")
+  End If
 
-If doBold = True Then
-  With Selection.Find
+  If doBold = True Then
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "jqjq(*)qjqj"
@@ -288,10 +330,9 @@ If doBold = True Then
     .Replacement.Font.Bold = True
     .MatchCase = True
     .MatchWildcards = True
-    .Execute Replace:=wdReplaceAll
-  End With
-  
-  With Selection.Find
+    .Execute
+    If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("5")
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "JQJQ(*)QJQJ"
@@ -300,12 +341,12 @@ If doBold = True Then
     .Replacement.Font.Bold = True
     .MatchCase = True
     .MatchWildcards = True
-    .Execute Replace:=wdReplaceAll
-  End With
-End If
+    .Execute
+    If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("6")
+  End If
 
-If doItalic = True Then
-  With Selection.Find
+  If doItalic = True Then
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "zczc(*)czcz"
@@ -314,10 +355,9 @@ If doItalic = True Then
     .Replacement.Font.Italic = True
     .MatchCase = True
     .MatchWildcards = True
-    .Execute Replace:=wdReplaceAll
-  End With
-
-  With Selection.Find
+    .Execute
+    If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("7")
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "ZCZC(*)CZCZ"
@@ -326,13 +366,12 @@ If doItalic = True Then
     .Replacement.Font.Italic = True
     .MatchCase = True
     .MatchWildcards = True
-    .Execute Replace:=wdReplaceAll
-  End With
-End If
+    .Execute
+    If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("8")
+  End If
 
-Selection.HomeKey Unit:=wdStory
 ' Restore Highlight
-With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "vkvk(*)kvkv"
@@ -342,44 +381,78 @@ With Selection.Find
   .Replacement.Highlight = True
   .MatchCase = False
   .MatchWildcards = True
-  .Execute Replace:=wdReplaceAll
-End With
+  .Execute
+  If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("9")
 
 Options.DefaultHighlightColorIndex = oldColour
-
 ' Tidy up picture markers
-With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
   .Text = "^1"
   .Wrap = wdFindContinue
   .Replacement.Text = ""
   .MatchWildcards = False
-  .Execute Replace:=wdReplaceAll
-End With
+  .Execute
+  If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("10")
 
-With Selection.Find
   .ClearFormatting
   .Replacement.ClearFormatting
-  .Text = "[^13]{3,}"
-  .Wrap = wdFindContinue
-  .Replacement.Text = "^p^p"
-  .MatchWildcards = True
-  .Execute Replace:=wdReplaceAll
-End With
-
-With Selection.Find
-  .ClearFormatting
-  .Replacement.ClearFormatting
-  .Text = "[vkjzcqxbsVKJZCQXBS]{4}"
+  .Text = "vkvk"
   .Wrap = wdFindContinue
   .Replacement.Text = ""
-  .MatchWildcards = True
-  .Execute Replace:=wdReplaceAll
-End With
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute
+  If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("11")
 
-If tbCount = 0 Then
-  With Selection.Find
+  .Text = "kvkv"
+  .Execute
+  If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("12")
+
+  .Text = "xbxb"
+  .Execute
+  If .Found = True Then .Execute Replace:=wdReplaceAll
+
+If doWait = True Then MsgBox ("13")
+  .Text = "bxbx"
+  .Execute
+  If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("14")
+
+  .Text = "xsxs"
+  .Execute
+  If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("15")
+
+  .Text = "sxsx"
+  .Execute
+  If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("16")
+
+  .Text = "jqjq"
+  .Execute
+  If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("17")
+
+  .Text = "qjqj"
+  .Execute
+  If .Found = True Then .Execute Replace:=wdReplaceAll
+If doWait = True Then MsgBox ("18")
+
+  .Text = "zczc"
+  .Execute
+  If .Found = True Then .Execute Replace:=wdReplaceAll
+
+If doWait = True Then MsgBox ("19")
+  .Text = "czcz"
+  .Execute
+  If .Found = True Then .Execute Replace:=wdReplaceAll
+
+  If tbCount = 0 Then
     .ClearFormatting
     .Replacement.ClearFormatting
     .Text = "Textboxes:"
@@ -387,9 +460,22 @@ If tbCount = 0 Then
     .Replacement.Text = ""
     .MatchCase = True
     .MatchWildcards = True
-    .Execute Replace:=wdReplaceAll
-  End With
-End If
+    .Execute
+    If .Found = True Then .Execute Replace:=wdReplaceAll
+  End If
+End With
+If doWait = True Then MsgBox ("20")
+Application.ScreenUpdating = True
+Selection.HomeKey Unit:=wdStory
 Beep
+Exit Sub
+
+' Switch the screen back on if there's an error
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
+
+
 

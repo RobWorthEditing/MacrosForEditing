@@ -1,0 +1,255 @@
+
+Sub FReditListCleanUp()
+' Paul Beverley - Version 17.11.25
+' Creates a cleaned-up copy of the current FRedit list
+
+doAllowFontNameSizeChanges = False
+
+Set oldList = ActiveDocument
+nmlFontName = oldList.Styles(wdStyleNormal).Font.Name
+nmlFontSize = oldList.Styles(wdStyleNormal).Font.Size
+
+Set rng = oldList.Content
+If doAllowFontNameSizeChanges = True Then
+  If rng.Font.Size <> nmlFontSize Then
+    myResponse = MsgBox("Some of your F&Rs will also change the font size!" _
+         & vbCr & "Was that deliberate?", _
+         vbQuestion + vbYesNo, "FReditListCleanUp")
+    If myResponse = vbNo Then
+      rng.Font.Size = nmlFontSize
+    Else
+      myResponse = MsgBox("That's OK. The font size changes will be included.", _
+           vbQuestion + vbOKCancel, "FReditListCleanUp")
+      If myResponse = vbCancel Then Beep: Exit Sub
+    End If
+  End If
+  
+  If oldList.Content.Font.Name <> nmlFontName Then
+    myResponse = MsgBox("Some of your F&Rs will also change the font name!" _
+         & vbCr & "Was that deliberate?", _
+         vbQuestion + vbYesNo, "FReditListCleanUp")
+    If myResponse = vbNo Then
+      rng.Font.Name = nmlFontName
+    Else
+      myResponse = MsgBox("That's OK. The font name changes will be included.", _
+           vbQuestion + vbOKCancel, "FReditListCleanUp")
+      If myResponse = vbCancel Then Beep: Exit Sub
+    End If
+  End If
+End If
+
+Set newList = Documents.Add
+newList.Content.Text = oldList.Content.Text
+
+For i = 1 To newList.Paragraphs.Count - 2
+  numChars = Len(oldList.Paragraphs(i).Range.Text)
+  If numChars > 2 Then
+    If Left(oldList.Paragraphs(i).Range.Text, 1) = "|" Then
+      ' It's a comment line, so copy it verbatim
+      newList.Paragraphs(i).Range.FormattedText = oldList.Paragraphs(i).Range.FormattedText
+    Else
+      padPos = InStr(oldList.Paragraphs(i).Range, "|")
+      Set sampleCharRight = oldList.Paragraphs(i).Range.Characters(numChars - 1)
+      Set sampleCharLeft = oldList.Paragraphs(i).Range.Characters(padPos - 1)
+      Set nLine = newList.Paragraphs(i).Range
+      
+      If sampleCharRight.Font.StrikeThrough = True Then
+        nLine.Font.StrikeThrough = True
+      End If
+
+      If sampleCharRight.Font.Bold = True Then
+        nLine.Font.Bold = True
+      Else
+        If sampleCharLeft.Font.Bold = True Then
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.Bold = True
+        End If
+      End If
+
+      If sampleCharRight.Font.Italic = True Then
+        nLine.Font.Italic = True
+      Else
+        If sampleCharLeft.Font.Italic = True Then
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.Italic = True
+        End If
+      End If
+
+      If sampleCharRight.Font.Underline = True Then
+        nLine.Font.Underline = True
+      Else
+        If sampleCharLeft.Font.Underline = True Then
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.Underline = True
+        End If
+      End If
+
+      If sampleCharRight.Font.SmallCaps = True Then
+        nLine.Font.SmallCaps = True
+      Else
+        If sampleCharLeft.Font.SmallCaps = True Then
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.SmallCaps = True
+        End If
+      End If
+
+      If sampleCharRight.Font.AllCaps = True Then
+        nLine.Font.AllCaps = True
+      Else
+        If sampleCharLeft.Font.AllCaps = True Then
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.AllCaps = True
+        End If
+      End If
+
+      If sampleCharRight.Font.DoubleStrikeThrough = True Then
+        nLine.Font.DoubleStrikeThrough = True
+      Else
+        If sampleCharLeft.Font.DoubleStrikeThrough = True Then
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.DoubleStrikeThrough = True
+        End If
+      End If
+
+      If sampleCharRight.Font.DoubleStrikeThrough = True Then
+        nLine.Font.DoubleStrikeThrough = True
+      Else
+        If sampleCharLeft.Font.DoubleStrikeThrough = True Then
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.DoubleStrikeThrough = True
+        End If
+      End If
+
+      If sampleCharRight.Font.Superscript = True Then
+        nLine.Font.Superscript = True
+      Else
+        If sampleCharLeft.Font.Superscript = True Then
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.Superscript = True
+        End If
+      End If
+
+      If sampleCharRight.Font.Subscript = True Then
+        nLine.Font.Subscript = True
+      Else
+        If sampleCharLeft.Font.Subscript = True Then
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.Subscript = True
+        End If
+      End If
+
+      highColRight = sampleCharRight.HighlightColorIndex
+      highColLeft = sampleCharLeft.HighlightColorIndex
+      Debug.Print highColLeft, highColRight
+      If (highColRight > 0) And ((highColRight = highColLeft) Or _
+           (highColLeft = 0)) Then
+        nLine.HighlightColorIndex = highColRight
+      End If
+      If (highColRight = 0 And highColLeft > 0) Then
+        Set leftBit = nLine.Duplicate
+        leftBit.End = leftBit.Start + padPos - 1
+        leftBit.HighlightColorIndex = highColLeft
+      End If
+      If (highColLeft > 0 And highColRight > 0) _
+           And (highColLeft <> highColRight) Then
+        nLine.HighlightColorIndex = highColRight
+        Set leftBit = nLine.Duplicate
+        leftBit.End = leftBit.Start + padPos - 1
+        leftBit.HighlightColorIndex = highColLeft
+        leftBit.Collapse wdCollapseEnd
+        leftBit.MoveEnd , 1
+        leftBit.HighlightColorIndex = 0
+      End If
+
+      fontColRight = sampleCharRight.Font.ColorIndex
+      fontColLeft = sampleCharLeft.Font.ColorIndex
+      Debug.Print fontColLeft, fontColRight
+      If (fontColRight > 0) And ((fontColRight = fontColLeft) Or _
+           (fontColLeft = 0)) Then
+        nLine.Font.ColorIndex = fontColRight
+      End If
+      If (fontColRight = 0 And fontColLeft > 0) Then
+        Set leftBit = nLine.Duplicate
+        leftBit.End = leftBit.Start + padPos - 1
+        leftBit.Font.ColorIndex = fontColLeft
+      End If
+      If (fontColLeft > 0 And fontColRight > 0) _
+           And (fontColLeft <> fontColRight) Then
+        nLine.Font.ColorIndex = fontColRight
+        Set leftBit = nLine.Duplicate
+        leftBit.End = leftBit.Start + padPos - 1
+        leftBit.Font.ColorIndex = fontColLeft
+        leftBit.Collapse wdCollapseEnd
+        leftBit.MoveEnd , 1
+        leftBit.Font.ColorIndex = 0
+      End If
+      If doAllowFontNameSizeChanges = True Then
+        fontSizeRight = sampleCharRight.Font.Size
+        fontSizeLeft = sampleCharLeft.Font.Size
+        If (fontSizeRight <> nmlFontSize) And ((fontSizeRight = fontSizeLeft) Or _
+             (fontSizeLeft = nmlFontSize)) Then
+          nLine.Font.Size = fontSizeRight
+        End If
+        If (fontSizeRight = nmlFontSize And fontSizeLeft <> nmlFontSize) Then
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.Size = fontSizeLeft
+        End If
+        If (fontSizeLeft <> nmlFontSize And fontSizeRight <> nmlFontSize) _
+             And (fontSizeLeft <> fontSizeRight) Then
+          nLine.Font.Size = fontSizeRight
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.Size = fontSizeLeft
+          leftBit.Collapse wdCollapseEnd
+          leftBit.MoveEnd , 1
+          leftBit.Font.Size = nmlFontSize
+        End If
+  
+        fontNameRight = sampleCharRight.Font.Name
+        fontNameLeft = sampleCharLeft.Font.Name
+        If (fontNameRight <> nmlFontName) And ((fontNameRight = fontNameLeft) Or _
+             (fontNameLeft = nmlFontName)) Then
+          nLine.Font.Name = fontNameRight
+        End If
+        If (fontNameRight = nmlFontName And fontNameLeft <> nmlFontName) Then
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.Name = fontNameLeft
+        End If
+        If (fontNameLeft <> nmlFontName And fontNameRight <> nmlFontName) _
+             And (fontNameLeft <> fontNameRight) Then
+          nLine.Font.Name = fontNameRight
+          Set leftBit = nLine.Duplicate
+          leftBit.End = leftBit.Start + padPos - 1
+          leftBit.Font.Name = fontNameLeft
+          leftBit.Collapse wdCollapseEnd
+          leftBit.MoveEnd , 1
+          leftBit.Font.Name = nmlFontName
+        End If
+      End If
+      DoEvents
+      If i Mod 20 = 0 Then
+      nLine.Select
+      nLine.Collapse wdCollapseEnd
+      End If
+    End If
+  End If
+Next i
+Selection.HomeKey Unit:=wdStory
+Beep
+myTime = Timer
+Do
+Loop Until Timer > myTime + 0.2
+Beep
+End Sub
+

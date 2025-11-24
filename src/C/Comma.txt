@@ -16,10 +16,10 @@ If i > 50 Then
   MsgBox "No relevant punctuation found."
   Exit Sub
 End If
-rng.Characters(i).Select
+rng.Characters(i - 1).Select
 Selection.Collapse wdCollapseStart
 If i > 1 Then
-  If rng.Characters(i - 1) = " " Then _
+  If rng.Characters(i) = " " Then _
        rng.Characters(i - 1).Delete
 End If
 myStart = Selection.start
