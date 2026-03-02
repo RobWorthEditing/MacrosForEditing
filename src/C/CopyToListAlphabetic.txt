@@ -1,15 +1,24 @@
 
 Sub CopyToListAlphabetic()
-' Paul Beverley - Version 18.08.25
+' Paul Beverley - Version 21.12.25
 ' Copies selected text into an alphabetic list file
 
-' Exact capitalisation(i.e. case sensitive)
+' Exact capitalisation (i.e. case sensitive)
 followHeading = "Word list"
 
 ' To locate list file (not case sensitive)
 ' keyWord = "queries"
 keyWord = "list"
 keyWord = "sheet"
+
+' doSwitchNames = True
+doSwitchNames = False
+
+includeFormatting = False
+' includeFormatting = True
+
+' preText = ChrW(8226) & " "
+preText = ""
 
 wordsToAvoid = "switch"
 ' wordsToAvoid = "FRedit,switch"
@@ -18,9 +27,6 @@ beepIfAlreadyListed = True
 
 ' copyWholePara = True
 copyWholePara = False
-
-includeFormatting = False
-' includeFormatting = True
 
 goBackToSource = True
 
@@ -72,7 +78,7 @@ Else
 End If
 
 Set sourceText = Selection.Range.Duplicate
-myText = sourceText.Text
+myText = preText & sourceText.Text
 Selection.Collapse wdCollapseEnd
 
 gottaList = False
@@ -98,8 +104,7 @@ End If
 
 ' Decide where to put the item
 Set rng = sSheetDoc.Content
-numCRs = Len(rng) - Len(Replace(rng, CR, ""))
-If numCRs < 3 Then rng.InsertAfter Text:=CR2
+
 With rng.Find
   .ClearFormatting
   .Replacement.ClearFormatting
@@ -160,19 +165,32 @@ End If
 rng.Collapse wdCollapseStart
 
 ' Paste it in
-If includeFormatting = True Then
-  rng.FormattedText = sourceText.FormattedText
-  If InStr(myText, vbCr) = 0 Then
-    rng.InsertAfter vbCr
-  End If
-Else
+spPos = InStrRev(myText, " ")
+If doSwitchNames = True And InStr(myText, " ") > 0 Then
+  mySurname = Mid(myText, spPos + 1)
+  myFornames = Trim(Left(myText, spPos))
+  myText = mySurname & ", " & " " & myFornames
   rng.InsertAfter myText
   If InStr(myText, vbCr) = 0 Then rng.InsertAfter vbCr
+Else
+  If includeFormatting = True Then
+    If preText > "" Then
+      rng.InsertBefore preText
+      rng.Collapse wdCollapseEnd
+    End If
+    rng.FormattedText = sourceText.FormattedText
+    If InStr(myText, vbCr) = 0 Then
+      rng.InsertAfter vbCr
+    End If
+  Else
+    rng.InsertAfter myText
+    If InStr(myText, vbCr) = 0 Then rng.InsertAfter vbCr
+  End If
 End If
 
+rng.Revisions.AcceptAll
 rng.Collapse Direction:=wdCollapseEnd
 rng.Select
-rng.Revisions.AcceptAll
 If goBackToSource = True Then
   sourceDoc.Activate
 Else

@@ -1,10 +1,15 @@
-Sub QuestionMark()
-' Paul Beverley - Version 09.11.24
-' Makes adjacent words into sentence end
 
-newBit = "? "
+Sub QuestionMark()
+' Paul Beverley - Version 14.02.26
+' Makes adjacent words into question mark break
+
+newPunc = "? "
+nextWordCapital = True
+
+
 myQuotes = Chr(34) & Chr(39) & ChrW(8220) & ChrW(8216)
-oldBits = ";:.,!?" & ChrW(8211) & ChrW(8211)
+oldBits = ";:.,!?-" & ChrW(8212) & ChrW(8211)
+
 Set rng = Selection.Range.Duplicate
 rng.MoveEnd , 50
 For i = 1 To rng.Characters.Count
@@ -15,43 +20,33 @@ If i > 50 Then
   MsgBox "No relevant punctuation found."
   Exit Sub
 End If
-rng.Characters(i - 2).Select
-While (LCase(Selection) <> UCase(Selection))
-  Selection.MoveRight 1
-  DoEvents
-Wend
-myStart = Selection.Start
-If Selection = ChrW(8217) Then myStart = myStart + 1
+
+moveBack = (rng.Characters(i - 1) = " ")
+rng.MoveStart , i - 1
+If moveBack = True Then rng.MoveStart , -1
+rng.Collapse wdCollapseStart
+
 Do
-  Selection.MoveRight 1
+  rng.MoveEnd , 1
+  lastChar = rng.Characters.Last
   DoEvents
-Loop Until LCase(Selection) <> UCase(Selection) Or Asc(Selection) = 1
-myEnd = Selection.Start
-If UCase(Selection) <> Selection Then
-' It needs uppercasing
-  Selection.Start = Selection.Start - 1
-  preChar = Selection
-  Selection.MoveStart 1
-  Selection.MoveEnd 1
-  newLetter = UCase(Selection)
-  If InStr(myQuotes, preChar) > 0 Then
-    Selection.Delete
-    Selection.TypeText Text:=newLetter
-    Selection.End = myEnd - 1
-  Else
-    newBit = newBit & newLetter
-  End If
-  Selection.Start = myStart
-Else
-  newBit = Trim(newBit)
-  Selection.MoveLeft 1
+Loop Until UCase(lastChar) <> LCase(lastChar)
+
+Set initChar = rng.Duplicate
+initChar.Start = initChar.End - 1
+rng.MoveEnd , -1
+If nextWordCapital = True And UCase(lastChar) <> lastChar Then
+  initChar.Text = UCase(lastChar)
 End If
-Selection.Start = myStart
-If Right(Selection, 1) = " " And Len(Selection) > 1 Then
-  Selection.End = Selection.End - 1
-  newBit = Trim(newBit)
+If nextWordCapital = False And LCase(lastChar) <> lastChar Then
+  initChar.Text = LCase(lastChar)
 End If
-If Selection.End <> myStart Then Selection.Delete
-Selection.TypeText Text:=newBit
+If InStr(myQuotes, rng.Characters.Last) Then rng.MoveEnd , -1
+rng.Text = newPunc
+initChar.Collapse wdCollapseStart
+initChar.Select
 End Sub
+
+
+
 

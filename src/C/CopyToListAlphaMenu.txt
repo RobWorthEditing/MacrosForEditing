@@ -1,11 +1,13 @@
 
 Sub CopyToListAlphaMenu()
-' Paul Beverley - Version 10.11.25
+' Paul Beverley - Version 26.01.26
 ' Copies selected text into various alphabetic lists
 
 ' Filename contains (case INsensitive)
 ' keyWord = "list"
 keyWord = "sheet"
+
+moveToEnd = "a,an,the"
 
 Dim myList(10) As String
 
@@ -148,9 +150,28 @@ With rng.Find
   DoEvents
 End With
 
+moveToEnd = "," & moveToEnd & ","
+endbit = " ["
+spPos = InStr(myText, " ")
+firstWord = Left(myText, spPos)
+If InStr(moveToEnd, "," & LCase(Trim(firstWord) & ",")) > 0 Then
+  myText = Mid(myText, spPos + 1)
+  endbit = endbit & firstWord
+End If
+
+firstChar = Left(myText, 1)
+If firstChar = ChrW(8220) Or firstChar = ChrW(8216) Then
+  endbit = endbit & firstChar
+  myText = Mid(myText, 2)
+End If
+
+If endbit > " [" Then
+  myText = myText & endbit & "]"
+End If
+
 rng.Expand wdParagraph
 listStart = rng.End
-If rng.Find.Found = False Then
+If rng.Find.found = False Then
   Beep
   MsgBox "Can't find heading: """ & followHeading & """"
   rng.Start = 0
@@ -169,7 +190,7 @@ With rng.Find
   DoEvents
 End With
 
-If rng.Find.Found = True Then
+If rng.Find.found = True Then
   If goBackToSource = False Then
     rng.Select
     rng.MoveStart , 1

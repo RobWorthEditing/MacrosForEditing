@@ -1,0 +1,60 @@
+
+Sub HighlightedTextCollect()
+' Paul Beverley - Version 09.12.25
+' Collects all the text in the current highlight colour
+
+allowCollectUnhighlighted = False
+
+nowColour = Selection.Range.HighlightColorIndex
+If nowColour = 0 And allowCollectUnhighlighted = False Then
+  Beep
+  myResponse = MsgBox("Please place the cursor in a highlighted area and rerun the macro.", _
+       vbExclamation + vbOKOnly, "HighlightedTextCollect")
+  Exit Sub
+End If
+
+Set rngOld = ActiveDocument.Content
+Set rng = Documents.Add.Content
+rng.FormattedText = rngOld.FormattedText
+rng.Font.Underline = True
+For Each pa In rng.Paragraphs
+  If pa.Range.HighlightColorIndex = nowColour Then
+    pa.Range.Font.Underline = False
+    i = i + 1: If i Mod 10 = 0 Then pa.Range.Select
+  End If
+  If pa.Range.HighlightColorIndex = 9999999 Then
+    For Each wd In pa.Range.words
+      If wd.HighlightColorIndex = nowColour Then
+        wd.Font.Underline = False
+        i = i + 1: If i Mod 10 = 0 Then pa.Range.Select
+      End If
+      If wd.HighlightColorIndex = 9999999 Then
+        For Each ch In wd.Characters
+          If ch.HighlightColorIndex = nowColour Then _
+               ch.Font.Underline = False
+        Next ch
+      End If
+    Next wd
+  End If
+  DoEvents
+Next pa
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = ""
+  .Font.Underline = True
+  .Wrap = wdFindContinue
+  .Forward = True
+  .Replacement.Text = "^p"
+  .Replacement.Font.Underline = False
+  .MatchWildcards = True
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+End With
+rng.HighlightColorIndex = wdNoHighlight
+Selection.HomeKey Unit:=wdStory
+Beep
+End Sub
+
+

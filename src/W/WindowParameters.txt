@@ -1,0 +1,15 @@
+
+Sub WindowParameters()
+' Paul Beverley - Version 15.12.25
+' Shows the parameters of the currently open window
+
+Set wnd = ActiveWindow
+Documents.Add
+
+Selection.TypeText "myZoom = " & wnd.View.Zoom.Percentage & vbCrLf
+Selection.TypeText "myLeft = " & wnd.Left & vbCrLf
+Selection.TypeText "myTop = " & wnd.Top & vbCrLf
+Selection.TypeText "myWidth = " & wnd.Width & vbCrLf
+Selection.TypeText "myHeight = " & wnd.Height & vbCrLf
+End Sub
+

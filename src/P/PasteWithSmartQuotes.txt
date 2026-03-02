@@ -1,0 +1,28 @@
+
+Sub PasteWithSmartQuotes()
+' Paul Beverley - Version 05.01.26
+' Pastes the clipboard and smartens its quotes (makes curly), or smartens selected text
+
+Set rng = Selection.Range.Duplicate
+If Len(rng) < 2 Then
+  Selection.Paste
+  rng.End = Selection.End
+End If
+Debug.Print rng
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "'"
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = "'"
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  .Text = """"
+  .Replacement.Text = """"
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+

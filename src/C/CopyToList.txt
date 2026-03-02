@@ -1,33 +1,97 @@
+
 Sub CopyToList()
-' Paul Beverley - Version 01.09.23
+' Paul Beverley - Version 07.02.26
 ' Copies selected text into a list file
 
-addReturn = True
-' addBlankLine = True
-addBlankLine = False
-
 ' keyWord = "queries"
+keyWord = "tmp"
 keyWord = "list"
+
+' copyWholePara = False
+copyWholePara = True
+
+copySentenceInstead = False
+
+addPageLineNumbers = False
+
+includeFormatting = True
+' includeFormatting = False
+
+addReturn = True
+' addBlankLine = False
+addBlankLine = True
+
+alwaysCopyAtEnd = False
+' alwaysCopyAtEnd = True
+
+goBackToSource = True
+' goBackToSource = False
 
 wordsToAvoid = "switch"
 ' wordsToAvoid = "FRedit,switch"
 
-copyWholePara = False
-' copyWholePara = True
-
-copySentenceInstead = False
-
-includeFormatting = True
-
-myHighlightColour = wdColorBlack
+myHighlightColour = wdNoHighlight
 ' To add highlight, use:
 ' myHighlightColour = wdYellow
 
-goBackToSource = True
-alwaysCopyAtEnd = False
-
-
+addPageLineNumbers = True
 Set thisDoc = ActiveDocument
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+If addPageLineNumbers = True Then
+  totalPages = thisDoc.ComputeStatistics(wdStatisticPages)
+  thisPage = rng.Information(wdActiveEndAdjustedPageNumber)
+  rng.End = Selection.End
+  thisPageEnd = rng.Information(wdActiveEndAdjustedPageNumber)
+  Set thisDoc = ActiveDocument
+  If addPageLineNumbers = True Then
+    totalPages = thisDoc.ComputeStatistics(wdStatisticPages)
+    If pbPageCount <> totalPages Then
+      myResponse = MsgBox("Page count mismatch. Is the cursor in the right document?", _
+         vbQuestion + vbYesNo, "CopyToList")
+      If myResponse <> vbYes Then Exit Sub
+      ReDim pbLineCount(totalPages) As Long
+      myResponse = MsgBox("Recount the lines on each page?", _
+         vbQuestion + vbYesNo, "CopyToList")
+      If myResponse <> vbYes Then Exit Sub
+      
+      Set rngNow = Selection.Range.Duplicate
+      Selection.HomeKey Unit:=wdStory
+      Application.ScreenUpdating = False
+      On Error GoTo ReportIt
+      myCount = 1
+      For myPage = 1 To totalPages - 1
+        Do
+          Selection.MoveDown , 1
+          thisPage = Selection.Range.Information(wdActiveEndAdjustedPageNumber)
+          myCount = myCount + 1
+        Loop Until thisPage > myPage
+        pbLineCount(thisPage) = myCount - 1
+        DoEvents
+        displayCount = displayCount + 1
+        If thisPage Mod 10 = 0 Then
+          Application.ScreenUpdating = True
+          For i = 1 To 10: DoEvents: Next i
+          Application.ScreenUpdating = False
+        End If
+      Next myPage
+      rngNow.Select
+      pbPageCount = totalPages
+      Application.ScreenUpdating = True
+      Exit Sub
+    Else
+      Set rng = Selection.Range.Duplicate
+      myStLine = Selection.Range.Information(wdFirstCharacterLineNumber)
+      Selection.Collapse wdCollapseEnd
+      Selection.MoveEnd , -1
+      myEndLine = Selection.Range.Information(wdFirstCharacterLineNumber)
+      myCount = pbLineCount(thisPage) + myStLine
+      myEndCount = pbLineCount(thisPageEnd) + myEndLine
+      rng.Select
+    End If
+  End If
+End If
+
 wds = Split("," & LCase(wordsToAvoid), ",")
 
 If Selection.Start = Selection.End Then
@@ -49,19 +113,19 @@ Else
   rng.Collapse wdCollapseEnd
   rng.MoveEnd , -1
   rng.Expand wdWord
-  Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
-    rng.MoveEnd , -1
-    DoEvents
-  Loop
+  If LCase(rng) <> UCase(rng) Then
+    Do While InStr(ChrW(8217) & "' ", Right(rng.Text, 1)) > 0
+      rng.MoveEnd , -1
+      DoEvents
+    Loop
+  End If
   Selection.Collapse wdCollapseStart
   Selection.Expand wdWord
   Selection.Collapse wdCollapseStart
   rng.Start = Selection.Start
   rng.Select
 End If
-
-
-Set sourceText = Selection.Range
+Set sourceText = Selection.Range.Duplicate
 
 gottaList = False
 For Each myDoc In Application.Documents
@@ -72,10 +136,7 @@ For Each myDoc In Application.Documents
   For i = 1 To UBound(wds)
     If InStr(nm, wds(i)) > 0 Then gottaList = False
   Next i
-  If gottaList = True Then
-    myDoc.Activate
-    Exit For
-  End If
+  If gottaList = True Then Exit For
 Next myDoc
 
 If gottaList = False Then
@@ -84,39 +145,63 @@ If gottaList = False Then
   Exit Sub
 End If
 
+myDoc.Activate
+Set rng = Selection.Range.Duplicate
+
 If alwaysCopyAtEnd = True Then
-  Selection.EndKey Unit:=wdStory
+  rng.Start = myDoc.Content.End
+  rng.Collapse wdCollapseEnd
 Else
-  hereNow = Selection.Start
-  Selection.Expand wdParagraph
-  If Selection.Start = hereNow Then Selection.Collapse wdCollapseStart
-  If Len(Selection) = 1 Then
-    Selection.Collapse wdCollapseStart
+  hereNow = rng.Start
+  rng.Expand wdParagraph
+  If rng.Start = hereNow Then rng.Collapse wdCollapseStart
+  If Len(rng) = 1 Then
+    rng.Collapse wdCollapseStart
   Else
-    Selection.Collapse wdCollapseEnd
+    rng.Collapse wdCollapseEnd
   End If
 End If
 
+If addPageLineNumbers = True Then
+  myText = vbCr & "(page " & Trim(Str(thisPage)) & _
+  ", lines " & Trim(Str(myCount)) & _
+      ChrW(8211) & Trim(Str(myEndCount)) & ")"
+  rng.InsertBefore Text:=myText & vbCr
+  rng.Collapse wdCollapseEnd
+End If
 
 If includeFormatting = True Then
-  Selection.Range.FormattedText = sourceText.FormattedText
+  rng.FormattedText = sourceText.FormattedText
 Else
-  Selection.Text = sourceText.Text
+  rng.Text = sourceText.Text
 End If
 
-Selection.MoveRight , Len(sourceText)
+rng.Start = rng.Start + Len(sourceText)
+rng.Select
 
 If InStr(sourceText, vbCr) = 0 Then
-  Selection.TypeText vbCr
+  rng.InsertBefore Text:=vbCr
 End If
+
 If addBlankLine = True Then
-  Selection.TypeText vbCr
+  rng.InsertBefore Text:=vbCr
 End If
-If goBackToSource = True Then thisDoc.Activate
+
+thisDoc.Activate
 If myHighlightColour > 0 Then
   sourceText.HighlightColorIndex = myHighlightColour
   Selection.Collapse wdCollapseEnd
 End If
+If goBackToSource = False Then myDoc.Activate
+Exit Sub
+
+
+' Switch the screen back on if there's an error
+ReportIt:
+Application.ScreenUpdating = True
+On Error GoTo 0
+Resume
 End Sub
+
 
 

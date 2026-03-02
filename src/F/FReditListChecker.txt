@@ -1,19 +1,26 @@
+
 Sub FReditListChecker()
-' Paul Beverley - Version 18.02.21
+' Paul Beverley - Version 01.12.25
 ' Checks for possible anomalies in a FRedit list
 
-CR = vbCr
+
 nmlStyle = ActiveDocument.Styles(wdStyleNormal)
 nmlFont = ActiveDocument.Styles(wdStyleNormal).Font.Name
 nmlSize = ActiveDocument.Styles(wdStyleNormal).Font.Size
 Set rng = ActiveDocument.Range(0, Selection.End)
 parNow = rng.Paragraphs.Count
+CR = vbCr
 
 For i = parNow To ActiveDocument.Paragraphs.Count
   foundError = False
   Set rng = ActiveDocument.Paragraphs(i).Range.Duplicate
   Set rng2 = rng.Duplicate
   myCmnt = ""
+  If rng.Hyperlinks.Count > 0 Then
+    ActiveWindow.View.ShowFieldCodes = True
+    myCmnt = " This item has a hyperlink!" & CR
+    GoTo ReportError
+  End If
   If rng.Style <> nmlStyle Then
     myCmnt = myCmnt & CR & "Style: " & rng.Style
   Else
@@ -47,16 +54,16 @@ For i = parNow To ActiveDocument.Paragraphs.Count
     colourRight = rng.Characters(Len(myLine) - 2).HighlightColorIndex
     If colourLeft <> colourRight Then
       myCmnt = myCmnt & CR & _
-           "Did you really mean the CHANGE highlight colour?"
+           "Did you really mean to CHANGE highlight colour?"
     End If
   End If
-  
+ReportError:
   If myCmnt > "" Then
     If Len(myCmnt) - Len(Replace(myCmnt, CR, "")) = 1 Then
       myCmnt = Mid(myCmnt, 2)
     End If
     rng2.Select
-    ActiveDocument.ActiveWindow.LargeScroll down:=2
+    ActiveDocument.ActiveWindow.LargeScroll Down:=2
     rng2.Select
     foundError = True
     Beep

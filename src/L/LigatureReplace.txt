@@ -1,0 +1,42 @@
+
+Sub LigatureReplace()
+' Paul Beverley - Version 01.02.26
+' Replaces all ligatures with normal characters
+
+myColour = wdColorBlue
+' myColour = wdColorBlack
+
+myResponse = MsgBox("Replace all ligatures?", _
+        vbQuestion + vbOKCancel, "LigatureReplace")
+If myResponse <> vbOK Then
+  Beep
+  Exit Sub
+End If
+
+Dim ligCount(4) As Long
+Dim nmlText(4) As String
+ligCode = Array(&HFB00, &HFB01, &HFB02, &HFB03, &HFB04)
+ligText = Array("ff", "fi", "fl", "ffi", "ffl")
+
+Set rng = ActiveDocument.Content
+For i = 0 To 4
+  With rng.Find
+    .ClearFormatting
+    .Text = ChrW$(ligCode(i))
+    .Forward = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = ligText(i)
+    If myColour > 0 Then _
+         .Replacement.Font.Color = myColour
+    .Format = True
+    .MatchCase = False
+    .MatchWholeWord = False
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+Next i
+End Sub
+
+
+
+

@@ -1,0 +1,40 @@
+
+Sub PasteAndFRedit()
+' Paul Beverley - Version 01.03.26
+' Pastes to the current file, then FRedits the new text
+
+' To force text into a specific style:
+forceNewStyle = True
+newStyle = "Normal"
+
+' to keep current text style, use
+' forceNewStyle = False
+
+
+' Provide here the full address of your FRedit list
+
+' On Windows, it will need to be something like:
+myFReditList = "C:\Documents and Settings\Paul\My Documents\Macro stuff\myFReditList.docx"
+
+' On a Mac, it will need to be something like:
+myFReditList = "/Users/Paul/My Documents/Macro stuff/myFReditList.docx"
+
+
+myStart = Selection.Start
+If forceNewStyle = True Then
+  Selection.Style = ActiveDocument.Styles(newStyle)
+End If
+
+Selection.Paste
+Selection.Start = myStart
+
+Set thisDoc = ActiveDocument
+
+Documents.Open FileName:=myFReditList
+For i = 1 To 30
+  DoEvents
+Next i
+thisDoc.Activate
+Application.Run macroName:="FRedit"
+End Sub
+

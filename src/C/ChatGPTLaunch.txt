@@ -1,0 +1,52 @@
+
+Sub ChatGPTlaunch()
+' Paul Beverley - Version 27.01.26
+' Launches short selected text (plus a standard extra comment) to the ChatGPT website
+
+afterText = "Provide URLs for sources."
+
+mySite = "https://chat.openai.com/"
+
+' Default is single word, if nothing is selected
+If Selection.start = Selection.End Then
+  Selection.expand wdParagraph
+  Selection.MoveEnd , -1
+Else
+  endNow = Selection.End
+  Selection.MoveLeft wdWord, 1
+  startNow = Selection.start
+  Selection.End = endNow
+  Selection.expand wdWord
+  Selection.start = startNow
+End If
+
+myText = Selection
+myText = Replace(myText, ChrW(8216), "'")
+myText = Replace(myText, ChrW(8217), "'")
+myText = Replace(myText, ChrW(8220), """")
+myText = Replace(myText, ChrW(8221), """")
+myText = Replace(myText, ChrW(8211), "-")
+myText = Replace(myText, ChrW(8212), "-")
+myText = Replace(myText, vbCr, "")
+
+' URL-encode the text
+For i = 1 To Len(myText)
+  charCode = AscW(Mid(myText, i, 1))
+  Select Case charCode
+    Case 48 To 57, 65 To 90, 97 To 122
+        encodedText = encodedText & Chr(charCode)
+    Case 32
+        encodedText = encodedText & "+"
+    Case Else
+        encodedText = encodedText & "%" & Hex(charCode)
+  End Select
+Next i
+
+' Build ChatGPT URL
+chatGPTUrl = mySite & "?q=" & encodedText & " " & afterText & vbCr
+Debug.Print chatGPTUrl
+' Open in default browser
+ActiveDocument.FollowHyperlink Address:=chatGPTUrl, NewWindow:=True
+End Sub
+
+

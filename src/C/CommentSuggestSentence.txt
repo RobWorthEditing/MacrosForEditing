@@ -1,21 +1,48 @@
 
 Sub CommentSuggestSentence()
-' Paul Beverley - Version 08.10.25
+' Paul Beverley - Version 17.12.25
 ' Adds a comment with current sentence text added
 ' Based on a macro by Jennifer Yankopolus
 
 paneZoom = 200
+usingModernComments = False
+useCommentPane = False
 
 If Selection.Start = Selection.End Then
   Selection.Expand wdSentence
 End If
 Selection.Copy
 Set myComment = Selection.Comments.Add(Range:=Selection.Range)
-    
-Selection.Font.Bold = True
-Selection.TypeText Text:="Suggestion: "
-Selection.Font.Bold = False
-Selection.Paste
+If usingModernComments = True Then
+  Selection.Font.Bold = True
+  Selection.TypeText Text:="Suggestion: "
+  Selection.Font.Bold = False
+  Selection.Paste
+  If useCommentPane = True Then
+    Application.ActiveWindow.View.Zoom.Percentage = paneZoom
+  Else
+    ActiveWindow.ActivePane.Close
+  End If
+Else
+  If useCommentPane = True Then
+    Selection.Font.Bold = True
+    Selection.TypeText Text:="Suggestion: "
+    Selection.Font.Bold = False
+    Selection.Paste
+    Application.ActiveWindow.View.Zoom.Percentage = paneZoom
+  Else
+    Selection.Font.Bold = True
+    Selection.TypeText Text:="Suggestion: "
+    Selection.Font.Bold = False
+    Selection.Paste
+    ActiveWindow.ActivePane.Close
+    Set rng = ActiveDocument.Range(0, Selection.End)
+    cmtNum = rng.Comments.Count + 1
+    If cmtNum > ActiveDocument.Comments.Count Then
+      cmtNum = ActiveDocument.Comments.Count
+    End If
+    ActiveDocument.Comments(cmtNum).Edit
+  End If
+End If
 End Sub
-
 

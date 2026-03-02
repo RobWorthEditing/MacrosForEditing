@@ -1,0 +1,23 @@
+
+Sub SuperscriptEndnotes()
+' Paul Beverley - Version 18.11.25
+' Superscript all note numbers from cursor down
+
+Set rng = Selection.Range.Duplicate
+rng.Expand wdParagraph
+rng.Collapse wdCollapseStart
+rng.End = ActiveDocument.Content.End
+
+For Each pr In rng.Paragraphs
+  Set num = pr.Range.Words(1)
+  If Val(num.Text) > 0 Then
+    num.Font.Superscript = True
+    num.Collapse wdCollapseEnd
+    num.MoveEnd , 1
+    num.Select
+    If num.Text = "." Then num.Delete
+  End If
+  DoEvents
+Next pr
+End Sub
+

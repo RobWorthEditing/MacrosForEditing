@@ -1,0 +1,52 @@
+
+
+Sub IndianNumberingConvertor()
+' Paul Beverley - Version 24.01.26
+' Converts all number to or from Indian numbering
+
+' Indian numbering
+numDigits = 2
+' Western numbering
+' numDigits = 3
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9,]{1,}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.found = True
+  myCount = myCount + 1
+  If myCount Mod 20 = 0 Then rng.Select
+  If Right(rng, 1) = "," Then rng.MoveEnd , -1
+  If InStr(rng, ",") > 0 And Len(rng) > 3 Then
+    myNumber = Replace(rng, ",", "")
+    newNumber = ""
+    charCount = 0
+    For i = Len(myNumber) To 1 Step -1
+      charCount = charCount + 1
+      newNumber = Mid(myNumber, i, 1) & newNumber
+      If charCount = numDigits Then
+        charCount = 0
+        newNumber = "," & newNumber
+      End If
+    Next i
+    If Left(newNumber, 1) = "," Then _
+         newNumber = Mid(newNumber, 2)
+    rng.Text = newNumber
+  End If
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+Loop
+Beep
+rng.Select
+MsgBox "Changed: " & myCount
+End Sub
+

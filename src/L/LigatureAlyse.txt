@@ -1,0 +1,42 @@
+
+Sub LigatureAlyse()
+' Paul Beverley - Version 01.02.26
+' Analyses use of ligatures
+
+ligCode = Array(&HFB00, &HFB01, &HFB02, &HFB03, &HFB04)
+Dim ligCount(4) As Long
+CR = vbCr
+
+' Count each ligature
+Set rng = ActiveDocument.Content
+endNow = rng.End
+For i = 0 To 4
+  With rng.Find
+    .ClearFormatting
+    .Text = ChrW$(ligCode(i))
+    .Forward = True
+    .Wrap = wdFindContinue
+    .Replacement.Text = "!!"
+    .Format = False
+    .MatchCase = False
+    .MatchWholeWord = False
+    .MatchWildcards = False
+    .Execute Replace:=wdReplaceAll
+  End With
+  ligCount(i) = rng.End - endNow
+  If ligCount(i) > 0 Then WordBasic.EditUndo
+Next i
+
+' Create a new document for the report
+Set doc = Documents.Add
+Selection.TypeText "Ligature use" & CR & CR
+startTable = Selection.End
+For i = 0 To 4
+  Selection.TypeText Text:=ChrW$(ligCode(i)) & _
+       vbTab & Str$(ligCount(i)) & CR
+Next i
+ActiveDocument.Paragraphs(1).Style = _
+     ActiveDocument.Styles(wdStyleHeading1)
+Selection.HomeKey Unit:=wdStory
+End Sub
+

@@ -1,6 +1,5 @@
-
 Sub CitationAlyseAlpha()
-' Paul Beverley - Version 28.10.24
+' Paul Beverley - Version 26.04.25
 ' Checks citations against references
 
 myColour = wdBrightGreen
@@ -29,11 +28,11 @@ myCol(3) = wdTurquoise
 myCol(4) = wdGray25
 
 ' If text is selected, sort it
-If Selection.start <> Selection.End Then
+If Selection.Start <> Selection.End Then
   Set rng = Selection.Range.Duplicate
   rng.Collapse wdCollapseStart
   rng.Expand wdParagraph
-  Selection.start = rng.start
+  Selection.Start = rng.Start
   Set rng = Selection.Range.Duplicate
   If Right(rng.Text, 1) <> vbCr Then
     rng.Collapse wdCollapseEnd
@@ -42,7 +41,7 @@ If Selection.start <> Selection.End Then
   End If
   
   myResponse = MsgBox("Sort selection by year?", vbQuestion _
-       + vbOK, "CitationAlyse")
+       + vbOK, "CitationAlyseAlpha")
   If myResponse <> vbOK Then Exit Sub
   If myScreenOff = True Then
     Application.ScreenUpdating = False
@@ -85,7 +84,7 @@ End If
 Beep
 myResponse = MsgBox("Is the cursor placed in the first item" _
      & CR2 & "of the references list?", vbQuestion _
-     + vbYesNoCancel, "CitationAlyse")
+     + vbYesNoCancel, "CitationAlyseAlpha")
 If myResponse <> vbYes Then Exit Sub
 On Error GoTo ReportIt
 Application.ScreenUpdating = False
@@ -93,12 +92,12 @@ Application.ScreenUpdating = False
 ' copy references right to the end
 Selection.Expand wdParagraph
 Selection.Collapse wdCollapseStart
-startRefs = Selection.start
+startRefs = Selection.Start
 Set rngOld = ActiveDocument.Content
-rngOld.start = startRefs
+rngOld.Start = startRefs
 rngOld.Copy
 rngOld.Collapse wdCollapseStart
-rngOld.start = 0
+rngOld.Start = 0
 
 ' create new file of the text (not refs) + notes
 Set mainDoc = ActiveDocument
@@ -161,7 +160,7 @@ Do While rng.Find.Found = True
     rng.Text = LCase(rng.Text)
   End If
   rng.Select
-  rng.start = endNow + 2
+  rng.Start = endNow + 2
   rng.End = endNow + 2
   rng.Find.Execute
   DoEvents
@@ -250,7 +249,7 @@ Do While rng.Find.Found = True
   If gotTwo Then citeList2 = citeList2 & wd2 & _
        " " & wd1 & " " & myYear & CR
 ' Check if another date follows
-  rng.start = myEnd
+  rng.Start = myEnd
   rng.End = myEnd
   Do
     rng.MoveEnd wdWord, 1
@@ -266,11 +265,11 @@ Do While rng.Find.Found = True
            " " & wd1 & " " & myYear & CR
     End If
     rng.MoveStart wdWord, 1
-    myEnd = rng.start
+    myEnd = rng.Start
     DoEvents
   Loop Until myYearNumber < 1000
 getNext:
-  rng.start = myEnd
+  rng.Start = myEnd
   rng.End = myEnd
   rng.Find.Execute
 Loop
@@ -281,7 +280,7 @@ Selection.TypeText Text:=citeList1
 myEnd = ActiveDocument.Content.End
 Selection.TypeText Text:=citeList2
 Set rng = ActiveDocument.Content
-rng.start = myEnd
+rng.Start = myEnd
 ' rng.Font.Italic = True
 Set rng = ActiveDocument.Content
 rng.Font.Color = myFontColour
@@ -369,7 +368,7 @@ Selection.TypeText Text:=vbCr
 wasEnd = Selection.End
 Selection.Paste
 Set rng = ActiveDocument.Content
-rng.start = wasEnd
+rng.Start = wasEnd
 rng.Fields.Unlink
 
 With rng.Find
@@ -419,8 +418,8 @@ With rng.ParagraphFormat
   .LeftIndent = CentimetersToPoints(2.5)
   .FirstLineIndent = CentimetersToPoints(-2.5)
 End With
-oldColour = Options.DefaultHighlightColorIndex
-Options.DefaultHighlightColorIndex = myColour
+rng.HighlightColorIndex = wdColorBlack
+
 ' Do F&R
 With rng.Find
   .ClearFormatting
@@ -429,12 +428,11 @@ With rng.Find
   .Wrap = wdFindContinue
   .Forward = True
   .Replacement.Text = ""
-  .Replacement.Highlight = True
+  .Replacement.Font.Color = myDateColour
   .MatchWildcards = True
   .Execute Replace:=wdReplaceAll
   DoEvents
 End With
-Options.DefaultHighlightColorIndex = oldColour
 
 Beep
 Application.ScreenUpdating = True
@@ -445,6 +443,5 @@ Application.ScreenUpdating = True
 On Error GoTo 0
 Resume
 End Sub
-
 
 

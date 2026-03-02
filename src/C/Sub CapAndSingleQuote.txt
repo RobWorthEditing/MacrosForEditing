@@ -1,0 +1,14 @@
+Sub CapAndSingleQuote()
+' Paul Beverley - Version 08.01.26
+' Capitalises the current word and adds a quote mark before
+
+myQuote = ChrW(8216)
+' or double
+' myQuote = ChrW(8220)
+
+Set rng = Selection.Range.Duplicate
+rng.expand wdWord
+rng.Characters(1) = UCase(rng.Characters(1))
+rng.InsertBefore Text:=myQuote
+End Sub
+

@@ -1,0 +1,28 @@
+
+Sub FReditLocal()
+' Paul Beverley - Version 14.02.26
+' Executes FRedit on current paragraph or selected text
+
+' Provide here the full address of your FRedit list
+
+' On Windows, it will need to be something like:
+myFReditList = "C:\Documents and Settings\Paul\My Documents\Macro stuff\myFReditList.docx"
+
+' On a Mac, it will need to be something like:
+myFReditList = "/Users/Paul/My Documents/Macro stuff/myFReditList.docx"
+
+
+If Selection.Start = Selection.End Then
+  Selection.Expand wdParagraph
+End If
+
+Set thisDoc = ActiveDocument
+
+Documents.Open FileName:=myFReditList
+For i = 1 To 30
+  DoEvents
+Next i
+thisDoc.Activate
+Application.Run macroName:="FRedit"
+End Sub
+

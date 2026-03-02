@@ -1,20 +1,18 @@
 
 Sub Dash()
-' Paul Beverley - Version 29.10.25
-' Makes adjacent words into dash-separated
+' Paul Beverley - Version 14.02.26
+' Makes adjacent words into dash break
 
+' Spaced en dash
+newPunc = " " & ChrW(8211) & " "
+' Unspaced em dash
+' newPunc = ChrW(8212)
 
-' Spaced en-dash
-newBit = " " & ChrW(8211) & " "
-
-' Space em-dash
-' newBit = " " & ChrW(8212) & " "
-
-' Unspace em-dash
-' newBit = ChrW(8212)
+nextWordCapital = False
 
 myQuotes = Chr(34) & Chr(39) & ChrW(8220) & ChrW(8216)
-oldBits = ";:.,!?" & ChrW(8211) & ChrW(8212)
+oldBits = ";:.,!?-" & ChrW(8212) & ChrW(8211)
+
 Set rng = Selection.Range.Duplicate
 rng.MoveEnd , 50
 For i = 1 To rng.Characters.Count
@@ -25,39 +23,30 @@ If i > 50 Then
   MsgBox "No relevant punctuation found."
   Exit Sub
 End If
-rng.Characters(i).Select
-Selection.Collapse wdCollapseStart
-If i > 1 Then
-  If rng.Characters(i) = " " Then _
-       rng.Characters(i - 1).Delete
-End If
-myStart = Selection.Start
-If Selection = ChrW(8217) Then myStart = myStart + 1
+
+moveBack = (rng.Characters(i - 1) = " ")
+rng.MoveStart , i - 1
+If moveBack = True Then rng.MoveStart , -1
+rng.Collapse wdCollapseStart
+
 Do
-  Selection.MoveRight 1
+  rng.MoveEnd , 1
+  lastChar = rng.Characters.Last
   DoEvents
-  If Selection.Start = ActiveDocument.Content.End - 1 _
-     Then Beep: Exit Sub
-Loop Until LCase(Selection) <> UCase(Selection) Or Asc(Selection) = 1
-myEnd = Selection.Start
-If LCase(Selection) <> Selection Then
-' It needs lowercasing
-  Selection.Start = Selection.Start - 1
-  preChar = Selection
-  Selection.MoveStart 1
-  Selection.MoveEnd 1
-  newLetter = LCase(Selection)
-  If InStr(myQuotes, preChar) > 0 Then
-    Selection.Delete
-    Selection.TypeText newLetter
-    Selection.End = myEnd - 1
-  Else
-    newBit = newBit & newLetter
-  End If
-  Selection.Start = myStart
+Loop Until UCase(lastChar) <> LCase(lastChar)
+
+Set initChar = rng.Duplicate
+initChar.Start = initChar.End - 1
+rng.MoveEnd , -1
+If nextWordCapital = True And UCase(lastChar) <> lastChar Then
+  initChar.Text = UCase(lastChar)
 End If
-Selection.Start = myStart
-If Selection.End <> myStart Then Selection.Delete
-Selection.TypeText newBit
+If nextWordCapital = False And LCase(lastChar) <> lastChar Then
+  initChar.Text = LCase(lastChar)
+End If
+If InStr(myQuotes, rng.Characters.Last) Then rng.MoveEnd , -1
+rng.Text = newPunc
+initChar.Collapse wdCollapseStart
+initChar.Select
 End Sub
 

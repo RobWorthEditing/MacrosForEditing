@@ -1,0 +1,53 @@
+
+Sub CopyToListSquareBracketsRestore()
+' Paul Beverley - Version 28.01.26
+' Puts square bracketted articles and quote marks back to the line start
+
+Set rng = Selection.Range.Duplicate
+rng.Collapse wdCollapseStart
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .text = "^p^p"
+  .Wrap = wdFindStop
+  .Forward = False
+  .Replacement.text = ""
+  .MatchWildcards = False
+  .Execute
+  DoEvents
+End With
+rng.Select
+rng.Collapse wdCollapseEnd
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .text = " \[*\]^13"
+  .Wrap = wdFindStop
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+myCount = 0
+Do While rng.Find.found = True
+' If you want to count them...
+  myCount = myCount + 1
+  rng.MoveEnd , -1
+  myExtra = rng
+rng.Select
+rng.Delete
+  myExtra = Mid(myExtra, 3, Len(myExtra) - 3)
+  Debug.Print "!" & myExtra & "!"
+  If myCount Mod 20 = 0 Then rng.Select
+  rng.expand wdParagraph
+  rng.Collapse wdCollapseStart
+  rng.InsertAfter text:=myExtra
+  rng.Collapse wdCollapseEnd
+  rng.Find.Execute
+  DoEvents
+Loop
+End Sub
+
+
+
+

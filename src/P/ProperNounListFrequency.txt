@@ -1,0 +1,50 @@
+
+Sub ProperNounListFrequency()
+' Paul Beverley - Version 04.02.26
+' Updates the frequency counts of the list at the document top
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = " . . . "
+  .Wrap = wdFindStop
+  .Replacement.Text = "^&!"
+  .Forward = True
+  .MatchWildcards = False
+  .MatchWholeWord = True
+  .MatchCase = True
+  .Execute
+End With
+myCount = 0
+Do While rng.Find.found = True
+  myCount = myCount + 1
+  
+  If myCount Mod 10 = 0 Then rng.Select
+  rng.MoveStart wdWord, -1
+  rng.MoveEnd wdWord, 1
+  myWord = Trim(rng.Words.First)
+  endRng = rng.End
+  rng.Collapse wdCollapseEnd
+  endNow = ActiveDocument.Content.End
+  rng.Find.Text = myWord
+  rng.Find.Wrap = wdFindContinue
+  rng.Find.Execute Replace:=wdReplaceAll
+  numWords = ActiveDocument.Content.End - endNow -1
+  WordBasic.EditUndo
+  rng.Start = endRng
+  rng.MoveStart , -1
+  rng.Expand wdWord
+  rng.Text = Trim(Str$(numWords))
+  rng.Collapse wdCollapseEnd
+  rng.Find.Text = " . . . "
+  rng.Find.Wrap = wdFindStop
+  rng.Find.Execute
+  DoEvents
+Loop
+Selection.HomeKey Unit:=wdStory
+MsgBox "Changed: " & myCount
+End Sub
+
+
+

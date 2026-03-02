@@ -1,7 +1,8 @@
 
 Sub CaseNextChar()
-' Paul Beverley - Version 13.05.24
+' Paul Beverley - Version 25.02.26
 ' Changes case of the next character/selection
+
 
 trackIt = True
 trackIfSelected = False
@@ -14,25 +15,33 @@ myTrack = ActiveDocument.TrackRevisions
 If myTrack = False Then trackIt = False
 
 ' If an area of text is NOT selected ...
-If Asc(Selection) = 32 Then
-  Selection.MoveRight , 1
-  Exit Sub
-End If
 If Selection.End = Selection.Start Then
   If trackIt = False Then _
        ActiveDocument.TrackRevisions = False
   Set rng = Selection.Range.Duplicate
-  rng.MoveEnd , 1
-  If UCase(rng) = rng Then
-    myNewChar = LCase(rng)
+  rng.MoveEnd , 6
+  For i = 1 To 6
+    Set ch = rng.Characters(i)
+    If LCase(ch) <> UCase(ch) Then Exit For
+  Next i
+  If UCase(ch) = ch Then
+    myNewChar = LCase(ch)
   Else
-    myNewChar = UCase(rng)
+    myNewChar = UCase(ch)
   End If
-  rng.InsertAfter Text:=myNewChar
-  rng.Select
-  Selection.Collapse wdCollapseEnd
-  rng.MoveEnd , -1
-  rng.Delete
+  ch.Delete
+  ch.Select
+  doBold = ch.Font.Bold
+  doItalic = ch.Font.Italic
+  Selection.TypeText Text:=myNewChar
+  If doItalic Then
+    ch.End = ch.Start + 1
+    ch.Font.Italic = True
+  End If
+  If doBold Then
+    ch.End = ch.Start + 1
+    ch.Font.Bold = True
+  End If
 Else
 ' If an area of text is selected ...
   If trackIfSelected = False Then trackIt = False

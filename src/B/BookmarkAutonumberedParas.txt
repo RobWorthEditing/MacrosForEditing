@@ -1,0 +1,22 @@
+
+Sub BookmarkAutonumberedParas()
+' Paul Beverley - Version 17.01.26
+' Adds bookmarks to all autonumbered paragraphs
+
+Set myDoc = ActiveDocument
+Set rng = myDoc.Content
+
+For i = 1 To myDoc.Paragraphs.Count
+  mySectionName = myDoc.Paragraphs(i).Range.ListFormat.ListString
+  ' If this para has an autonumber, get it
+  If mySectionName > "" Then
+    ' bookmark names must start with an aplpha character
+    mySectionName = "bm" & Replace(mySectionName, ".", "_")
+    Set rng = myDoc.Paragraphs(i).Range.Duplicate
+    rng.Collapse wdCollapseStart
+    myDoc.Bookmarks.Add Name:=mySectionName, Range:=rng
+  End If
+  If i Mod 50 = 0 Then Debug.Print i, mySectionName
+Next i
+End Sub
+

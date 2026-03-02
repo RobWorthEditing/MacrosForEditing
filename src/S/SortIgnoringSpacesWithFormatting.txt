@@ -1,0 +1,77 @@
+
+Sub SortIgnoringSpacesWithFormatting()
+' Paul Beverley - Version 27.02.26
+' Copies the selected list but sorted letter by letter
+
+Dim para As Paragraph
+Dim tmp As String
+Dim i As Long
+Dim paraNum() As Long
+Dim keyArr() As String
+Dim n As Long
+
+If Selection.Range.Paragraphs.Count < 3 Then
+  Beep
+  myResponse = MsgBox("Please select the list items to be sorted.", _
+       vbInformation, "SortIgnoringSpacesWithFormatting")
+  Exit Sub
+End If
+
+' Collect all paragraph texts
+Set rng = Selection.Range.Duplicate
+Set doc = ActiveDocument
+paraStart = doc.Range(0, Selection.Start).Paragraphs.Count
+
+n = rng.Paragraphs.Count
+ReDim paraNum(1 To n)
+ReDim keyArr(1 To n)
+For i = 1 To n
+  tmp = Trim(rng.Paragraphs(i).Range.Text)
+  tmp = Replace(tmp, Chr(13), "") ' remove end of paragraph mark
+  keyArr(i) = Replace(tmp, " ", "") ' remove spaces for sorting key
+  paraNum(i) = paraStart + i
+Next i
+
+' Sort arrays using the key array
+Dim j As Long, k As Long
+Dim keyTmp As String, valTmp As String
+
+For j = 1 To n - 1
+  For k = j + 1 To n
+    If StrComp(keyArr(j), keyArr(k), vbTextCompare) > 0 Then
+      keyTmp = keyArr(j)
+      keyArr(j) = keyArr(k)
+      keyArr(k) = keyTmp
+      
+      valTmp = paraNum(j)
+      paraNum(j) = paraNum(k)
+      paraNum(k) = valTmp
+    End If
+  Next k
+Next j
+
+' Write sorted lines back into the document
+Set rng2 = rng.Duplicate
+rng2.Collapse wdCollapseEnd
+rng2.InsertBefore vbCr
+rng2.Collapse wdCollapseEnd
+myStart = rng2.Start
+
+For i = 1 To n
+  doc.Paragraphs(paraNum(i)).Range.Copy
+  rng2.Paste
+  rng2.Collapse wdCollapseEnd
+Next i
+rng2.Start = myStart
+rng2.Select
+Beep
+myTime = Timer
+Do
+Loop Until Timer > myTime + 0.2
+Beep
+End Sub
+
+
+
+
+

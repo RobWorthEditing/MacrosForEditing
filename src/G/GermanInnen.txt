@@ -1,0 +1,36 @@
+
+Sub GermanInnen()
+' Paul Beverley - Version 19.12.25
+' Adds gender-non-specific ending
+
+myExtra = "*innen"
+' myExtra = "Innen"
+' myExtra = "etc"
+
+Set rng = Selection.Range.Duplicate
+rng.expand wdWord
+If rng.Text = vbCr Then
+  rng.MoveEnd , -2
+  rng.expand wdWord
+End If
+Do While UCase(Right(rng.Text, 1)) = LCase(Right(rng.Text, 1))
+  rng.MoveEnd , -1
+  DoEvents
+Loop
+If Right(rng.Text, 2) = "rn" Then
+  rng.start = rng.End - 2
+Else
+  rng.start = rng.End - 1
+End If
+Select Case rng
+  Case "r": rng.InsertAfter Text:=myExtra
+  Case "e": rng.Text = myExtra
+  Case "s": rng.Text = myExtra
+  Case "n": rng.MoveStart , -1: rng.Text = myExtra
+  Case "rn": rng.MoveStart , 1: rng.Text = myExtra
+  Case Else: Beep
+End Select
+End Sub
+
+
+

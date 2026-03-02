@@ -1,0 +1,34 @@
+
+Sub OpenSpecificFileAtSpecificPlace()
+' Paul Beverley - Version 08.01.26
+' Opens a specific file at a specific place on screen
+
+myZoom = 120
+myLeft = 1234
+myTop = 270
+myWidth = 210
+myHeight = 508
+
+' Put the full name of the specific file here.
+' On Windows, it will need to be something like:
+myFile = "C:\Documents and Settings\Paul\My Documents\MyLists\zzSwitchList.docx"
+
+' On a Mac, it will need to be something like:
+myFile = "/Users/Paul/My Documents/MyLists/zzSwitchList.docx"
+
+' For just me now, just testing...
+
+Documents.Open FileName:=myFile
+ActiveWindow.View.ShowParagraphs = False
+ActiveWindow.View.ShowTabs = False
+Application.WindowState = wdWindowStateNormal
+Application.ActiveWindow.View.Zoom.Percentage = myZoom
+Application.Move Left:=myLeft, Top:=myTop
+Application.Resize Width:=210, Height:=myHeight
+' To centre the display at the top of the file
+Selection.TypeText Text:="Hello! How are you doing?"
+Selection.HomeKey Unit:=wdLine
+Selection.EndKey Unit:=wdLine
+WordBasic.EditUndo
+End Sub
+

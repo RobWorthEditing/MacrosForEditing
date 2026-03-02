@@ -1,0 +1,83 @@
+
+Sub ListAllURLs()
+' Paul Beverley - Version 24.02.26
+' Lists all URLs, including in notes
+
+' Needs a copy of the QuickSort macro to be loaded into your VBA
+
+Dim dict As Object
+Dim matches As Object
+Dim regex As Object
+Dim key As Variant
+Dim arr() As String
+
+' Dictionary for deduplication
+Set dict = CreateObject("Scripting.Dictionary")
+
+' Regex for plain-text URLs
+Set regex = CreateObject("VBScript.RegExp")
+With regex
+  .Pattern = "(https?://[^\s<>]+)"
+  .Global = True
+  .IgnoreCase = True
+End With
+
+' Loop through all story ranges including footnotes & endnotes
+For Each story In ActiveDocument.StoryRanges
+  
+  ' Hyperlinked URLs
+  For Each h In story.Hyperlinks
+    url = Trim(h.Address)
+    If url <> "" Then
+      If Not dict.Exists(url) Then dict.Add url, url
+    End If
+    DoEvents
+  Next h
+  
+  ' Plain-text URLs
+  Set matches = regex.Execute(story.Text)
+  For i = 0 To matches.Count - 1
+    url = matches(i).Value
+    If Not dict.Exists(url) Then dict.Add url, url
+    DoEvents
+  Next i
+  
+  ' Continue into linked story ranges (footnotes/endnotes/etc.)
+  While Not story.NextStoryRange Is Nothing
+    Set story = story.NextStoryRange
+  Wend
+Next story
+
+' If nothing found
+If dict.Count = 0 Then
+Beep
+  MsgBox "No URLs found in the document, including notes.", vbInformation
+  Exit Sub
+End If
+
+' Sort alphabetically
+ReDim arr(0 To dict.Count - 1)
+i = 0
+For Each key In dict.Keys
+  arr(i) = key
+  i = i + 1
+Next key
+
+QuickSort arr, LBound(arr), UBound(arr)
+
+' Output to a new document
+Set outDoc = Documents.Add
+For i = LBound(arr) To UBound(arr)
+  outDoc.Content.InsertAfter arr(i) & vbCr
+Next i
+' Link each URL
+For Each p In outDoc.Paragraphs
+  Set rng = p.Range.Duplicate
+  If Len(rng) > 2 Then
+    rng.MoveEnd , -1
+    outDoc.Hyperlinks.Add Anchor:=rng, Address:=rng.Text
+  End If
+Next p
+MsgBox dict.Count & " URLs extracted.", vbInformation
+End Sub
+

@@ -1,0 +1,52 @@
+
+Sub YearAlyse()
+' Paul Beverley - Version 12.02.26
+' Finds how often different years are mentioned
+
+Dim myCount(3000) As Integer
+
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "<[12][0-9]{3}>"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+thisMany = 0
+myMin = 2999
+Do While rng.Find.found = True
+' If you want to count them...
+  thisMany = thisMany + 1
+  myYear = Val(rng)
+  If myYear < myMin Then myMin = myYear
+  myCount(myYear) = myCount(myYear) + 1
+' Note where the end of the found item is
+  
+  If thisMany Mod 20 = 0 Then rng.Select
+  
+  ' Restart searching AFTER the previous occurrence
+  rng.Collapse wdCollapseEnd
+  
+' Go and find the next occurrence (if there is one)
+  rng.Find.Execute
+  DoEvents
+Loop
+myOutput = vbCr & vbCr & vbCr
+For i = myMin To 2030
+  If myCount(i) > 0 Then
+    myOutput = myOutput & Trim(Str$(i)) & vbTab & Trim(Str$(myCount(i))) & vbCr
+  End If
+Next i
+Selection.EndKey Unit:=wdStory
+Selection.TypeText Text:=myOutput
+End Sub
+
+
+
+
+

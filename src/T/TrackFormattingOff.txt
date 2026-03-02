@@ -1,0 +1,9 @@
+
+Sub TrackFormattingOff()
+' Paul Beverley - Version 22.01.26
+' Stops Word tracking any of the format changes
+
+ActiveDocument.TrackRevisions = True
+ActiveDocument.TrackFormatting = False
+End Sub
+

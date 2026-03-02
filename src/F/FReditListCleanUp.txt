@@ -1,11 +1,22 @@
 
 Sub FReditListCleanUp()
-' Paul Beverley - Version 17.11.25
+' Paul Beverley - Version 01.12.25
 ' Creates a cleaned-up copy of the current FRedit list
 
 doAllowFontNameSizeChanges = False
 
 Set oldList = ActiveDocument
+If oldList.Fields.Count > 0 Then
+  Beep
+  myResponse = MsgBox("The list has one or more hyperlinks!" _
+       & vbCr & "Shall I delete them?", _
+       vbQuestion + vbYesNo, "FReditListCleanUp")
+  If myResponse = vbNo Then Exit Sub
+  For Each fld In oldList.Fields
+    fld.Unlink
+  Next fld
+End If
+
 nmlFontName = oldList.Styles(wdStyleNormal).Font.Name
 nmlFontSize = oldList.Styles(wdStyleNormal).Font.Size
 
@@ -36,6 +47,9 @@ If doAllowFontNameSizeChanges = True Then
       If myResponse = vbCancel Then Beep: Exit Sub
     End If
   End If
+Else
+  rng.Font.Size = nmlFontSize
+  rng.Font.Name = nmlFontName
 End If
 
 Set newList = Documents.Add
@@ -49,7 +63,7 @@ For i = 1 To newList.Paragraphs.Count - 2
       newList.Paragraphs(i).Range.FormattedText = oldList.Paragraphs(i).Range.FormattedText
     Else
       padPos = InStr(oldList.Paragraphs(i).Range, "|")
-      Set sampleCharRight = oldList.Paragraphs(i).Range.Characters(numChars - 1)
+      Set sampleCharRight = oldList.Paragraphs(i).Range.Characters(numChars - 2)
       Set sampleCharLeft = oldList.Paragraphs(i).Range.Characters(padPos - 1)
       Set nLine = newList.Paragraphs(i).Range
       
@@ -149,7 +163,6 @@ For i = 1 To newList.Paragraphs.Count - 2
 
       highColRight = sampleCharRight.HighlightColorIndex
       highColLeft = sampleCharLeft.HighlightColorIndex
-      Debug.Print highColLeft, highColRight
       If (highColRight > 0) And ((highColRight = highColLeft) Or _
            (highColLeft = 0)) Then
         nLine.HighlightColorIndex = highColRight
@@ -172,7 +185,7 @@ For i = 1 To newList.Paragraphs.Count - 2
 
       fontColRight = sampleCharRight.Font.ColorIndex
       fontColLeft = sampleCharLeft.Font.ColorIndex
-      Debug.Print fontColLeft, fontColRight
+'      Debug.Print fontColLeft, fontColRight
       If (fontColRight > 0) And ((fontColRight = fontColLeft) Or _
            (fontColLeft = 0)) Then
         nLine.Font.ColorIndex = fontColRight

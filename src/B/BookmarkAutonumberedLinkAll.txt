@@ -1,0 +1,106 @@
+
+Sub BookmarkAutonumberedLinkAll()
+' Paul Beverley - Version 17.01.26
+' Finds citations of (sub)sections and adds links to them
+
+maxChapter = 13
+myColour = wdYellow
+
+On Error GoTo ReportIt
+' First find the sub-subsections, e.g. 1.2.3.4
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{1,2}.[0-9]{1,2}.[0-9]{1,2}.[0-9]{1,2}"
+  .Wrap = wdFindStop
+  .Replacement.Text = ""
+  .Forward = True
+  .MatchWildcards = True
+  .Execute
+End With
+
+i = 0
+Do While rng.Find.found = True
+  i = i + 1
+  If i < 20 Then rng.Select: DoEvents
+  If i > 20 Then
+    If i Mod 50 = 0 Then rng.Select: DoEvents
+  End If
+  mySectionName = rng
+  Set rngNext = rng.Duplicate
+  rngNext.Collapse wdCollapseEnd
+  rngNext.MoveStart wdWord, 1
+  dotPos = InStr(rng, ".")
+  chapText = Left(rng, dotPos - 1)
+  chapNum = Val(chapText)
+  If chapNum <= maxChapter And rng.HighlightColorIndex <> myColour Then
+    mySectionName = "bm" & Replace(mySectionName, ".", "_")
+    ActiveDocument.Hyperlinks.Add _
+        Anchor:=rng, _
+        Address:="", _
+        SubAddress:=mySectionName
+    rng.HighlightColorIndex = myColour
+  End If
+  rng.Start = rngNext.Start
+  rng.Find.Execute
+Loop
+
+' Then the subsections, e.g. 1.2.3
+Set rng = ActiveDocument.Content
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "[0-9]{1,2}.[0-9]{1,2}.[0-9]{1,2}"
+  .Wrap = wdFindStop
+  ' If it's already highlighted, it'll be a 1.2.3.4 type
+  .Highlight = False
+  .MatchWildcards = True
+  .Execute
+End With
+
+i = 0
+Do While rng.Find.found = True
+  i = i + 1
+  If i < 20 Then rng.Select: DoEvents
+  If i > 20 Then
+    If i Mod 50 = 0 Then rng.Select: DoEvents
+  End If
+  mySectionName = rng
+  Set rngNext = rng.Duplicate
+  rngNext.Collapse wdCollapseEnd
+  rngNext.MoveStart wdWord, 1
+  dotPos = InStr(rng, ".")
+  chapText = Left(rng, dotPos - 1)
+  chapNum = Val(chapText)
+  If chapNum <= maxChapter Then
+    mySectionName = "bm" & Replace(mySectionName, ".", "_")
+    ActiveDocument.Hyperlinks.Add _
+        Anchor:=rng, _
+        Address:="", _
+        SubAddress:=mySectionName
+    rng.HighlightColorIndex = myColour
+  End If
+  rng.Start = rngNext.Start
+  rng.Find.Execute
+Loop
+Beep
+Selection.HomeKey Unit:=wdStory
+Exit Sub
+
+ReportIt:
+If Err.Number = 450 Then
+  DoEvents
+  rng.Select
+  myResponse = MsgBox("Can't find this paragraph." & vbCr & vbCr _
+       & "To ""hide"" it, highlight it, then rerun.", _
+       vbOKOnly, "Bookmark_Autonumbered_Link_All")
+  Exit Sub
+Else
+  On Error GoTo 0
+  DoEvents
+  Resume
+End If
+
+End Sub
+

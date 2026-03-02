@@ -1,0 +1,191 @@
+
+Sub URLchecker()
+' Paul Beverley - Version 26.02.26
+' Checks the URLs, reporting errors
+
+testTime = 0.1
+
+Dim dict As Object
+Dim matches As Object
+Dim regex As Object
+Dim http As Object
+Dim key As Variant
+Dim arr() As String
+
+Set myDoc = ActiveDocument
+' Dictionary for deduplication
+Set dict = CreateObject("Scripting.Dictionary")
+
+' Regex for plain-text URLs
+Set regex = CreateObject("VBScript.RegExp")
+With regex
+  .Pattern = "(https?://[^\s<>]+)"
+  .Global = True
+  .IgnoreCase = True
+End With
+
+numErrored = 0
+Set rng = ActiveDocument.Content
+' Loop through paragraphs in this story range
+For Each para In rng.Paragraphs
+  gottaFunny = False
+  Set rng2 = para.Range.Duplicate
+  ' Hyperlinked URLs
+  For Each h In para.Range.Hyperlinks
+    url = Trim(h.Address)
+    If url <> "" And url <> h.TextToDisplay Then
+      ' Create HTTP request object
+      On Error Resume Next
+      Set http = CreateObject("WinHttp.WinHttpRequest.5.1")
+      On Error GoTo 0
+      
+      If http Is Nothing Then
+          MsgBox "Unable to create WinHttp request object.", vbCritical, "Error"
+          Exit Sub
+      End If
+      
+      ' Configure and send request
+      On Error Resume Next
+      http.Open "GET", url, False
+      http.SetTimeouts 5000, 5000, 5000, 5000 ' 5-second timeouts
+      t = Timer
+      http.send
+      myStatus = http.status
+      On Error GoTo 0
+      ' Rapid response means it couldn't find the website
+      myTime = Timer - t
+      Debug.Print url
+      If myStatus = 200 And myTime < testTime Then
+        Debug.Print myTime & "    1"
+        myStatus = 0
+      End If
+      ' Interpret result
+      Select Case myStatus
+        Case 200
+            ' Do nowt
+        Case 404
+            msg = "Error 404 (Not Found)."
+        Case 0
+            msg = "This might need checking."
+        Case Else
+            msg = "URL returned HTTP status: " & myStatus
+      End Select
+      If myStatus <> 200 Then
+        gottaFunny = True
+        rng2.Font.Italic = True
+        urlStart = InStr(para.Range, url) - 1
+        urlEnd = urlStart + Len(url)
+        rng2.Start = para.Range.Start + urlStart
+        rng2.End = para.Range.Start + urlEnd
+        If rng2.Comments.Count = 0 Then
+          myDoc.Comments.Add Range:=rng2, Text:=msg
+        End If
+        If Not dict.Exists(url) Then dict.Add url, url
+        numErrored = numErrored + 1
+      End If
+      DoEvents
+    End If
+    StatusBar = url
+  Next h
+  
+  ' Plain-text URLs
+  Set matches = regex.Execute(para.Range.Text)
+  For i = 0 To matches.Count - 1
+    url = matches(i).Value
+    url = Replace(url, vbCr, "")
+    ' Here check and report if there's a 404
+    ' Create HTTP request object
+    On Error Resume Next
+    Set http = CreateObject("WinHttp.WinHttpRequest.5.1")
+    On Error GoTo 0
+    
+    If http Is Nothing Then
+        MsgBox "Unable to create WinHttp request object.", vbCritical, "Error"
+        Exit Sub
+    End If
+    
+    ' Configure and send request
+    On Error Resume Next
+    http.Open "GET", url, False
+    http.SetTimeouts 5000, 5000, 5000, 5000 ' 5-second timeouts
+    t = Timer
+    http.send
+    myStatus = http.status
+    If myStatus = 200 And myTime < testTime Then
+      Debug.Print myTime & "    1"
+      myStatus = 0
+    End If
+    On Error GoTo 0
+    ' Rapid response means it couldn't find the website
+    ' Interpret result
+    Select Case myStatus
+      Case 200
+          ' Do nowt
+      Case 404
+          msg = "Error 404 (Not Found)."
+      Case 0
+          msg = "This might need checking."
+      Case Else
+          msg = "URL returned HTTP status: " & myStatus
+    End Select
+    If myStatus <> 200 Then
+      gottaFunny = True
+      urlStart = InStr(para.Range, url) - 1
+      urlEnd = urlStart + Len(url)
+      rng2.Start = para.Range.Start + urlStart
+      rng2.End = para.Range.Start + urlEnd
+      If rng2.Comments.Count = 0 Then
+        myDoc.Comments.Add Range:=rng2, Text:=msg
+      End If
+      If Not dict.Exists(url) Then dict.Add url, url
+      numErrored = numErrored + 1
+    End If
+    DoEvents
+    StatusBar = url
+  Next i
+  If gottaFunny = True Then para.Range.Select
+  DoEvents
+Next para
+doThis = False
+If doThis = True Then
+  For i = myDoc.Comments.Count To 2 Step -1
+  Debug.Print myDoc.Comments(i).Range.Start, myDoc.Comments(i - 1).Range.Start
+    If myDoc.Comments(i).Range = myDoc.Comments(i - 1).Range Then
+      myDoc.Comments(i).Range.Select
+      myDoc.Comments(i).Delete
+    End If
+  Next i
+End If
+Beep
+
+If dict.Count > 0 Then
+  ' Sort alphabetically
+  ReDim arr(0 To dict.Count - 1)
+  i = 0
+  For Each key In dict.Keys
+    arr(i) = key
+    i = i + 1
+  Next key
+  
+  QuickSort arr, LBound(arr), UBound(arr)
+  Set outDoc = Documents.Add
+  For i = LBound(arr) To UBound(arr)
+    outDoc.Content.InsertAfter arr(i) & vbCr
+  Next i
+  ' Link each URL
+  For Each p In outDoc.Paragraphs
+    Set rng = p.Range.Duplicate
+    If Len(rng) > 2 Then
+      rng.MoveEnd , -1
+      outDoc.Hyperlinks.Add Anchor:=rng, Address:=rng.Text
+    End If
+  Next p
+  
+  MsgBox "Possible errors... " & vbCr & vbCr & _
+       "Number of comments added: " & numErrored & vbCr & vbCr _
+       & "Number of different URLs: " & dict.Count, vbInformation
+Else
+  MsgBox "No error URLs found."
+End If
+End Sub
+

@@ -1,0 +1,32 @@
+
+Sub SmartenQuotes()
+' Paul Beverley - Version 08.01.26
+' Smartens the quotes (makes curly) the whole text or the selected text
+
+If Selection.Start = Selection.End Then
+  myResponse = MsgBox("Smarten quotes in the whole document?!", _
+       vbQuestion + vbYesNo, "SmartenQuotes")
+  If myResponse <> vbYes Then Exit Sub
+  Set rng = ActiveDocument.Content
+Else
+  Set rng = Selection.Range.Duplicate
+End If
+With rng.Find
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Text = "'"
+  .Wrap = wdFindStop
+  .Forward = True
+  .Replacement.Text = "'"
+  .MatchCase = False
+  .MatchWildcards = False
+  .Execute Replace:=wdReplaceAll
+  DoEvents
+  .Text = """"
+  .Replacement.Text = """"
+  .Execute Replace:=wdReplaceAll
+End With
+End Sub
+
+
+

@@ -1,0 +1,17 @@
+
+Sub NotesCopyIntoNewFile()
+' Paul Beverley - Version 23.02.26
+' Creates a copy of the document's foot/endnotes into a new document
+
+Set myDoc = ActiveDocument
+Documents.Add
+Set rng = ActiveDocument.Content
+If myDoc.Footnotes.Count > 0 Then rng.FormattedText = _
+     myDoc.StoryRanges(wdFootnotesStory).FormattedText
+rng.Collapse wdCollapseEnd
+If myDoc.Endnotes.Count > 0 Then rng.FormattedText = _
+     myDoc.StoryRanges(wdEndnotesStory).FormattedText
+End Sub
+
+
+
