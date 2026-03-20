@@ -1,0 +1,31 @@
+
+Sub CitationInserter()
+' Paul Beverley - Version 09.03.26
+' Moves past current word and punctuation, then adds superscript text
+
+myCiteText = "[41]"
+selectCore = True
+
+Set rng = Selection.Range.Duplicate
+rng.End = ActiveDocument.Content.End
+
+spPos = InStr(rng, " ")
+paraPos = InStr(rng, vbCr)
+
+If spPos < paraPos Then
+  rng.MoveStart , spPos - 1
+Else
+  rng.MoveStart , paraPos - 1
+End If
+rng.Collapse wdCollapseStart
+rng.Select
+Selection.InsertBefore Text:=myCiteText
+
+Selection.Range.Font.Superscript = True
+If selectCore = True Then
+  Selection.MoveStart , 1
+  Selection.MoveEnd , -1
+End If
+End Sub
+
+

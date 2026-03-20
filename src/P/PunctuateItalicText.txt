@@ -1,0 +1,101 @@
+
+Sub PunctuateItalicText()
+' Paul Beverley - Version 17.03.26
+' Provides formatting for Maori dictionary
+
+maxWordsHeadwords = 20
+maxWordsEnglish = 30
+
+myLanguage = wdEnglishUK
+colourHeadword = wdYellow
+colourEnglish = wdColorBlue
+
+' Find headwords/English sentences and format them
+For Each sn In ActiveDocument.sentences
+  i = i + 1
+  If i Mod 10 = 1 Then sn.Select
+  If sn.Font.Bold = 9999999 And InStr(sn, "[") > 0 Then
+  ' Alternatively NOT to insist on there being a "["...
+  ' If sn.Font.Bold = 9999999 Then
+    
+    ' This is a headword
+    Do
+      sn.MoveStart wdWord, 1
+    Loop Until sn.Font.Bold = 0
+    If Left(sn, 1) = "[" Then
+      closeBrkt = InStr(sn, "]")
+      sn.MoveStart , closeBrkt + 1
+    End If
+    If sn.Words.Count < maxWordsHeadwords Then
+      For Each wd In sn.Words
+        chTest = Left(wd, 1)
+        If chTest = "." Then
+          sn.Font.Italic = True
+          sn.HighlightColorIndex = colourHeadword
+          Exit For
+        End If
+        If UCase(chTest) = chTest _
+             And LCase(chTest) <> chTest Then
+          sn.End = wd.Start - 1
+          sn.InsertAfter Text:="."
+          sn.Font.Italic = True
+          sn.HighlightColorIndex = colourHeadword
+          Exit For
+        End If
+      Next wd
+      For Each wd In sn.Words
+        If UCase(wd) = wd Then
+          wd.Font.Italic = False
+          wd.HighlightColorIndex = False
+        End If
+      Next wd
+    End If
+  Else
+    ' Is it a long sentence? i.e. not a text sample
+    If sn.Words.Count < maxWordsEnglish Then
+      ' Is it in English?
+      ' Find longest word in sentence
+      longWordA = ""
+      For Each wd In sn.Words
+        thisWd = Trim(wd)
+        charTest = Left(thisWd, 1)
+        If UCase(charTest) <> charTest Then
+          If Len(thisWd) > Len(longWordA) Then longWordA = thisWd
+        End If
+        DoEvents
+      Next wd
+      ' Find second longest word in sentence
+      longWordB = ""
+      For Each wd In sn.Words
+        thisWd = Trim(wd)
+        charTest = Left(thisWd, 1)
+        If UCase(charTest) <> charTest And thisWd <> longWordA Then
+          If Len(thisWd) > Len(longWordB) Then longWordB = thisWd
+        End If
+        DoEvents
+      Next wd
+'      Debug.Print longWordA, longWordB
+      isEnglishA = False
+      If Len(longWordA) > 2 Then
+        isEnglishA = Application.CheckSpelling(longWordA, _
+             MainDictionary:=Languages(myLanguage).NameLocal)
+      End If
+      isEnglishB = False
+      If Len(longWordB) > 2 Then
+        isEnglishB = Application.CheckSpelling(longWordB, _
+             MainDictionary:=Languages(myLanguage).NameLocal)
+      End If
+      ' If both words are English, this is English text
+      If isEnglishA And isEnglishB Then
+        sn.Font.Italic = True
+        sn.Font.Color = colourEnglish
+      End If
+    End If
+  End If
+  DoEvents
+Next sn
+Selection.EndKey Unit:=wdStory
+Beep
+End Sub
+
+

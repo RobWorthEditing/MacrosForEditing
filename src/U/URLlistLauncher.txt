@@ -1,0 +1,41 @@
+
+Sub URLlistLauncher()
+' Paul Beverley - Version 03.03.26
+' Launches successive URLs from a list
+
+maxURLs = 10
+myColour = wdColorBlue
+
+Selection.Expand wdParagraph
+paraNum = ActiveDocument.Range(0, Selection.End).Paragraphs.Count
+
+myInput = InputBox("How many to launch?", "URL list launcher", _
+     Trim(Str(maxURLs)))
+numberOfURLs = Val(myInput)
+If numberOfURLs = 0 Then Exit Sub
+Set doc = ActiveDocument
+lastPara = paraNum + numberOfURLs
+If lastPara > doc.Paragraphs.Count Then _
+     lastPara = doc.Paragraphs.Count
+
+For i = paraNum To lastPara
+  myURL = doc.Paragraphs(i).Range.Text
+  myURL = Replace(myURL, vbCr, "")
+  If Len(myURL) > 5 Then
+    doc.FollowHyperlink Address:=myURL
+    If myColour > 0 Then _
+         doc.Paragraphs(i).Range.Font.Color = myColour
+  Else
+    doc.Paragraphs(i).Range.Select
+    Beep
+    Exit Sub
+  End If
+  DoEvents
+Next i
+Beep
+doc.Paragraphs(lastPara).Range.Select
+Selection.Collapse wdCollapseEnd
+End Sub
+
+
+

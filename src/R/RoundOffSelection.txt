@@ -1,0 +1,21 @@
+
+Sub RoundOffSelection()
+' Paul Beverley - Version 18.01.26
+' Rounds off the selection to whole words
+
+doCopy = True
+
+endNow = Selection.End
+Selection.MoveLeft wdWord, 1
+startNow = Selection.Start
+Selection.End = endNow
+Selection.Expand wdWord
+Do While InStr(ChrW(8217) & "' ", Right(Selection.Text, 1)) > 0
+  Selection.MoveEnd , -1
+  DoEvents
+Loop
+Selection.Start = startNow
+If doCopy = True Then Selection.Copy
+End Sub
+
+
